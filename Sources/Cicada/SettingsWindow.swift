@@ -3,13 +3,14 @@ import Carbon.HIToolbox
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case overlay, language, speak, records, ai, diagnostics
+    case overlay, language, speak, screen, records, ai, diagnostics
     var id: String { rawValue }
     var title: String {
         switch self {
         case .overlay: L("显示")
         case .language: L("语言")
         case .speak: L("同声传译")
+        case .screen: L("屏幕识别")
         case .records: L("通用")
         case .ai: L("AI 服务")
         case .diagnostics: L("诊断")
@@ -20,6 +21,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .overlay: "captions.bubble"
         case .language: "globe"
         case .speak: "mic"
+        case .screen: "rectangle.dashed.badge.record"
         case .records: "gearshape"
         case .ai: "key"
         case .diagnostics: "waveform.path.ecg"
@@ -429,6 +431,10 @@ struct SettingsView: View {
                 Text(model.settingsSection.title).font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.ink)
                 Spacer()
                 if model.settingsSection == .ai { AIServiceMenu(model: model, settings: settings) }
+                if model.settingsSection == .screen {
+                    Toggle("识别共享屏幕", isOn: Binding(get: { settings.screenNotes }, set: { model.setScreenNotes($0) }))
+                        .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
+                }
                 if model.settingsSection == .speak {
                     Toggle("把我说的翻译给对方", isOn: Binding(get: { settings.speakEnabled }, set: { model.enableSpeaking($0) }))
                         .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
@@ -438,6 +444,7 @@ struct SettingsView: View {
             case .speak: speak
             case .overlay: overlay
             case .language: LanguageSettings(model: model, settings: settings)
+            case .screen: ScreenSettings(settings: settings, screen: model.screen)
             case .records: records
             case .ai: AISettingsView(model: model, ling: model.ling, settings: settings)
             case .diagnostics: DiagnosticsView(diagnostics: model.diagnostics, service: settings.aiConfig)

@@ -155,6 +155,7 @@ final class AppModel: ObservableObject {
     lazy var importer = FileImporter(store: store, settings: settings, translator: translator)
     let sample = SamplePlayer()
     let speakers = SpeakerTagger()
+    let screen = ScreenWatch()
     lazy var speakerNamer = SpeakerNamer(ling: ling, store: store)
     /// The last speaker edit, offered as 撤销 at the bottom of both windows for a few seconds.
     @Published var speakerUndo: SpeakerUndo?
@@ -666,6 +667,7 @@ final class AppModel: ObservableObject {
         if listen.isRunning, settings.hearsBoth { startRoomSide() }
         if settings.hearsRoom { store.markLiveInRoom() }
         notes.begin(session.id)
+        if listen.isRunning, settings.screenNotes { startScreen() }
         if listen.isRunning {
             showDisplay(force: byUser)
         } else {
@@ -680,6 +682,7 @@ final class AppModel: ObservableObject {
         endWatch = nil
         setEnding(nil)
         diagnostics.end()
+        screen.stop()
         stopRoomSide()
         listen.stop()
         listen.router.setRecording(nil)
@@ -736,7 +739,7 @@ final class AppModel: ObservableObject {
 
     /// The language the other side spoke most in a meeting (the detected one while nothing is recorded yet).
     func meetingLanguage(_ id: String?) -> String? {
-        let heard = id.flatMap { store.session($0) }?.lines.filter { $0.speaker != "me" }.map(\.srcLang) ?? []
+        let heard = id.flatMap { store.session($0) }?.lines.filter { $0.speaker == "them" }.map(\.srcLang) ?? []
         let counts = Dictionary(heard.map { ($0, 1) }, uniquingKeysWith: +)
         return counts.max { $0.value < $1.value }?.key ?? (id == store.liveID ? listen.activeLang?.code : nil)
     }
@@ -1477,6 +1480,28 @@ final class AppModel: ObservableObject {
         heardWords()
     }
 
+    /// 设置 › 屏幕识别's switch: takes effect in the meeting going on too.
+    func setScreenNotes(_ on: Bool) {
+        settings.screenNotes = on
+        guard listen.isRunning else { return }
+        if on { startScreen() } else { screen.stop() }
+    }
+
+    /// 识别共享屏幕: each new page of the meeting window becomes a "screen" line.
+    private func startScreen() {
+        guard let started = store.liveStart else { return }
+        screen.onPage = { [weak self] shown, text, jpeg in
+            guard let self else { return }
+            // Reading a page takes seconds; the line never goes before one already noted (notes
+            // count the lines they have covered), so it is dated no earlier than the last line.
+            let t = max(shown, self.store.liveID.flatMap { self.store.session($0) }?.lines.last?.t ?? 0)
+            self.lineCounter += 1
+            self.store.append(TranscriptLine(id: "s\(self.lineCounter)", t: t, speaker: "screen", src: text, dst: nil,
+                                             srcLang: "", dstLang: "", shot: self.store.saveShot(jpeg, secondsIn: t)))
+        }
+        screen.start(startedAt: started, model: settings.screenModel.trimmingCharacters(in: .whitespaces))
+    }
+
     private func recordSaid(_ src: String, _ dst: String, from: String, to: String, secondsAgo: Double) {
         guard let start = store.liveStart else { return }
         lineCounter += 1
@@ -1592,6 +1617,15 @@ final class AppModel: ObservableObject {
         switch parts.first ?? "" {
         // start:user is a click on 开始听; plain start is listening starting by itself.
         case "start": start(byUser: arg == "user")
+        case "screenfile":
+            // screenfile:<image path> reads one page as if the meeting window showed it, into the live meeting.
+            guard let img = NSImage(contentsOfFile: arg)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else { break }
+            let model = settings.screenModel.trimmingCharacters(in: .whitespaces)
+            if !model.isEmpty { screen.server.start(model: model) }
+            Task {
+                guard let page = await ScreenWatch.read(img, model: model), let start = store.liveStart else { return }
+                screen.onPage?(Date().timeIntervalSince(start), page.line, page.jpeg)
+            }
         case "models":
             // models:<installed,…>/<system languages,…> pretends the Mac has only these speech models
             // and languages, to test the fetch of a second model and 听不出; models:off ends it.

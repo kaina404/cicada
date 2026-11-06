@@ -62,6 +62,14 @@ final class AppSettings: ObservableObject {
     @Published var recordAudio: Bool {
         didSet { save() }
     }
+    /// 识别共享屏幕: read the meeting window's slides on the Mac into the transcript (ScreenNotes.swift),
+    /// with this MLX model (mlx-vlm) for what a page means ("" = the text alone).
+    @Published var screenNotes: Bool {
+        didSet { save() }
+    }
+    @Published var screenModel: String {
+        didSet { save() }
+    }
     /// Imported files: the language they are in ("auto" or a locale), and whether notes are written
     /// once one is transcribed.
     @Published var importLanguage: String {
@@ -233,6 +241,10 @@ final class AppSettings: ObservableObject {
         speakMic = defaults.string(forKey: "speakMic") ?? ""
         savedSystemInput = defaults.string(forKey: "savedSystemInput") ?? ""
         recordAudio = defaults.object(forKey: "recordAudio") as? Bool ?? true
+        // Off until asked for: it needs the Screen Recording permission on top of system audio.
+        screenNotes = defaults.bool(forKey: "screenNotes")
+        // Gemma 4 E4B, instruction-tuned, 4-bit QAT for MLX (mlx-community on Hugging Face).
+        screenModel = defaults.string(forKey: "screenModel") ?? "mlx-community/gemma-4-E4B-it-qat-4bit"
         importLanguage = defaults.string(forKey: "importLanguage") ?? "auto"
         importNotes = defaults.object(forKey: "importNotes") as? Bool ?? true
         overlayAuto = defaults.object(forKey: "overlayAuto") as? Bool ?? true
@@ -286,6 +298,8 @@ final class AppSettings: ObservableObject {
         defaults.set(speakMic, forKey: "speakMic")
         defaults.set(savedSystemInput, forKey: "savedSystemInput")
         defaults.set(recordAudio, forKey: "recordAudio")
+        defaults.set(screenNotes, forKey: "screenNotes")
+        defaults.set(screenModel, forKey: "screenModel")
         defaults.set(importLanguage, forKey: "importLanguage")
         defaults.set(importNotes, forKey: "importNotes")
         defaults.set(overlayAuto, forKey: "overlayAuto")
