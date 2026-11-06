@@ -254,7 +254,7 @@ enum SpeakerLabels {
     static func runStarts(_ lines: [TranscriptLine], _ numbers: [String: Int]) -> Set<String> {
         var out: Set<String> = [], last: String?
         for l in lines {
-            let key = l.speaker == "me" ? "me" : numbers[l.id].map { "n\($0)" } ?? "?"
+            let key = l.speaker == "me" ? "me" : l.isScreen ? "screen" : numbers[l.id].map { "n\($0)" } ?? "?"
             if key != last { out.insert(l.id) }
             last = key
         }
@@ -335,7 +335,7 @@ enum SpeakerNameGuess {
         let lines = s.lines.suffix(400)
         var out = "Meeting transcript. Speakers: 你 = the user; 说话人N = one person on the other side, told apart by voice; 对方 = someone on the other side, not identified.\n"
         for (i, l) in lines.enumerated() {
-            let who = l.speaker == "me" ? "你" : numbers[l.id].map { "说话人\($0)" } ?? "对方"
+            let who = l.speaker == "me" ? "你" : l.isScreen ? "屏幕" : numbers[l.id].map { "说话人\($0)" } ?? "对方"
             out += "[L\(i + 1) \(TranscriptExport.clock(l.t)) \(who)] \(l.src)\n"
         }
         return out

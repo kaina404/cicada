@@ -332,6 +332,7 @@ struct SpeakerPreview: View {
                 VStack(alignment: .leading, spacing: 3) {
                     if !starts.contains(l.id) {
                     } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
+                    else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if let n = numbers[l.id] { SpeakerTag(number: n) }
                     else if !numbers.isEmpty { UnknownSpeakerTag() }
                     Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.ink)

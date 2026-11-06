@@ -475,7 +475,7 @@ final class NotesEngine: ObservableObject {
         func line(_ i: Int) -> String {
             let l = lines[i]
             // A named voice goes as its name: notes then say "George" rather than "说话人2".
-            let who = l.speaker == "me" ? "你" : numbers[l.id].map { names[$0] ?? "说话人\($0)" } ?? (numbers.isEmpty ? "对方" : "未识别")
+            let who = l.speaker == "me" ? "你" : l.isScreen ? "屏幕" : numbers[l.id].map { names[$0] ?? "说话人\($0)" } ?? (numbers.isEmpty ? "对方" : "未识别")
             return "[L\(i + 1) \(clock(l.t)) \(who)] \(l.src)"
         }
         var current = "{}"
@@ -500,7 +500,7 @@ final class NotesEngine: ObservableObject {
         if context < from {
             p += "Already covered (context only):\n" + (context..<from).map(line).joined(separator: "\n") + "\n\n"
         }
-        p += "\(final ? "Transcript" : "New lines") (id, mm:ss, speaker 对方=the other side / 你=me / a name or 说话人N=one person on the other side, told apart by voice and possibly wrong / 未识别=someone on the other side not identified, text). Speech recognition makes mistakes, often in names: correct them from context, and write a public figure's name as the news spells it.\n"
+        p += "\(final ? "Transcript" : "New lines") (id, mm:ss, speaker 对方=the other side / 你=me / a name or 说话人N=one person on the other side, told apart by voice and possibly wrong / 未识别=someone on the other side not identified / 屏幕=what the shared screen showed at that moment, not said: its 原文 is read exactly off the screen, its 含义 is an AI's reading, text). Speech recognition makes mistakes, often in names: correct them from context, and write a public figure's name as the news spells it.\n"
         p += (from..<lines.count).map(line).joined(separator: "\n")
         // The model splits too eagerly when only told how long a topic should be: say plainly
         // whether this update may start one.
@@ -539,6 +539,7 @@ final class NotesEngine: ObservableObject {
         - Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.
         - terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used; note is a few words.
         - Write the meeting title and every summary, title, point, branch, conclusion and to-do in \(language), even when the transcript is in another language. Only term names keep the transcript's spelling.
+        - 屏幕 lines: use them to complete what speakers refer to ("as you can see", "this chart"). Copy numbers, units and periods from 原文 exactly ($1.28M, (1,284), YoY +12.3%, Q3 FY26); never round, convert or recompute them, and never state a number that 原文 does not show.
         - Write about what was said, never about the transcript or recognition quality.
         - Use empty arrays when there is nothing. No markdown, no text outside the JSON.
         """

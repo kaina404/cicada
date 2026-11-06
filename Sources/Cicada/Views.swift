@@ -1282,16 +1282,22 @@ struct MainWindowView: View {
             // Only once voices are told apart (or for your own lines): one speaker needs no label;
             // and only where the speaker changes.
             if !label {
-            } else if let speaker { SpeakerTag(number: speaker).padding(.bottom, 2) }
+            } else if l.isScreen {
+                Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.bottom, 2)
+            }
+            else if let speaker { SpeakerTag(number: speaker).padding(.bottom, 2) }
             else if voices, l.speaker != "me" { UnknownSpeakerTag().padding(.bottom, 2) }
             else if l.speaker == "me" {
                 Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk).padding(.bottom, 2)
             }
             Text(l.src).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineSpacing(1)
                 .textSelection(.enabled)
-            Text(l.dst ?? L("翻译中…")).font(.system(size: 14)).lineSpacing(2)
-                .foregroundStyle(l.dst == nil ? Palette.secondary : Palette.ink)
-                .textSelection(.enabled)
+            // What the screen showed is read, not heard: it is never translated.
+            if !l.isScreen {
+                Text(l.dst ?? L("翻译中…")).font(.system(size: 14)).lineSpacing(2)
+                    .foregroundStyle(l.dst == nil ? Palette.secondary : Palette.ink)
+                    .textSelection(.enabled)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8).padding(.horizontal, 8)
@@ -1376,6 +1382,8 @@ struct MainWindowView: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
                     if !label {
+                    } else if l.isScreen {
+                        Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
                     } else if voices, !me, let s = shownSession {
                         // A click on whose line it is: say it was someone else's.
                         Menu { assignMenu(s, l, SpeakerLabels.voiceNumbers(s.lines)) } label: {
@@ -1389,16 +1397,21 @@ struct MainWindowView: View {
                         Text(me ? L("你") : L("对方")).font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(me ? Palette.accentInk : Palette.secondary)
                     }
-                    if place, label, !me { PlaceTag(line: l) }
+                    if place, label, l.speaker == "them" { PlaceTag(line: l) }
                 }
-                if view != "dst" {
+                if l.isScreen {
+                    // Read off the screen, never translated: shown as it is in every view.
+                    Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.secondary).lineSpacing(2)
+                        .textSelection(.enabled)
+                }
+                if view != "dst", !l.isScreen {
                     Text(l.src)
                         .font(.system(size: view == "src" ? 15 : 13))
                         .foregroundStyle(view == "src" ? Palette.ink : Palette.tertiary)
                         .lineSpacing(2)
                         .textSelection(.enabled)
                 }
-                if view != "src" {
+                if view != "src", !l.isScreen {
                     Text(l.dst ?? L("翻译中…"))
                         .font(.system(size: 15)).lineSpacing(3)
                         .foregroundStyle(l.dst == nil ? Palette.tertiary : Palette.ink)

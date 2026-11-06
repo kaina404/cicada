@@ -48,8 +48,8 @@ enum RecordList {
     static func placeStarts(_ lines: [TranscriptLine]) -> Set<String> {
         var out: Set<String> = [], last: String??
         for l in lines {
-            let key: String? = l.speaker == "me" ? "me" : l.via
-            if l.speaker != "me", key != last { out.insert(l.id) }
+            let key: String? = l.speaker == "me" ? "me" : l.isScreen ? "screen" : l.via
+            if l.speaker == "them", key != last { out.insert(l.id) }
             last = key
         }
         return out

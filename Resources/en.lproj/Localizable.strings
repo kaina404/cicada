@@ -1244,3 +1244,4 @@
 "翻一句要 %@ 秒，超过 6 秒这句就不等它了。换一个更小的模型会快一些。" = "One sentence takes %@ s, and anything over 6 s isn't waited for. A smaller model will be faster.";
 "译文等 %@ 恢复 · 字幕先显示原文" = "Translation waits for %@ · subtitles show the original for now";
 "译文和纪要等 %@ 恢复 · 字幕先显示原文" = "Translation and notes wait for %@ · subtitles show the original for now";
+"屏幕" = "Screen";

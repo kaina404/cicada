@@ -759,6 +759,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                 HStack(spacing: 6) {
                     if !label {
                     } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
+                    else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if onAssign != nil, !voices.isEmpty {
                         Button { assigning = assigning == l.id ? nil : l.id } label: {
                             HStack(spacing: 4) {
@@ -773,7 +774,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     }
                     else if let n = speakers[l.id] { SpeakerTag(number: n) }
                     else if !speakers.isEmpty { UnknownSpeakerTag() }
-                    if places, label, l.speaker != "me" { PlaceTag(line: l) }
+                    if places, label, l.speaker == "them" { PlaceTag(line: l) }
                 }
                 Text(highlighted(src, current: isMatch)).font(.system(size: 14)).lineSpacing(2).textSelection(.enabled)
                 if bilingual, !dst.isEmpty {
@@ -824,7 +825,7 @@ enum TranscriptParagraphs {
         var out: [[TranscriptLine]] = []
         var key: String?
         for l in lines {
-            let k = (l.speaker == "me" ? "me" : speakers[l.id].map { "n\($0)" } ?? "?") + (l.via ?? "")
+            let k = (l.speaker == "me" ? "me" : l.isScreen ? "screen" : speakers[l.id].map { "n\($0)" } ?? "?") + (l.via ?? "")
             if k == key, let first = out.last?.first, l.t - first.t <= span {
                 out[out.count - 1].append(l)
             } else {

@@ -17,6 +17,11 @@ struct TranscriptLine: Codable, Identifiable, Equatable {
     var voice: Int? = nil
     /// 电脑和会议室: "room" when the room mic heard it; absent for the Mac's audio (or older records).
     var via: String? = nil
+    /// 屏幕识别: a "screen" line is what the shared screen showed, not what was said; `shot` is its
+    /// screenshot, relative to the meeting folder ("screens/0125.jpg").
+    var shot: String? = nil
+
+    var isScreen: Bool { speaker == "screen" }
 }
 
 /// A name Ling found for a voice, and the line it is based on ("00:06 “Sure, Emma…”").
@@ -188,6 +193,15 @@ final class SessionStore: ObservableObject {
         guard let id = liveID, let i = index(id), sessions[i].room != true else { return }
         sessions[i].room = true
         scheduleSave(id)
+    }
+
+    /// 识别共享屏幕: a page's screenshot, kept in the live meeting's folder; the path the line keeps.
+    func saveShot(_ jpeg: Data, secondsIn: Double) -> String? {
+        guard let id = liveID else { return nil }
+        let name = "screens/\(String(format: "%05d", Int(secondsIn))).jpg"
+        let url = folder(id).appendingPathComponent(name)
+        try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+        return (try? jpeg.write(to: url)) != nil ? name : nil
     }
 
     func append(_ line: TranscriptLine) {
@@ -407,6 +421,7 @@ enum TranscriptExport {
 
     static func speakerName(_ line: TranscriptLine, _ numbers: [String: Int] = [:], _ names: [Int: String] = [:]) -> String {
         if line.speaker == "me" { return L("你") }
+        if line.isScreen { return L("屏幕") }
         if let n = numbers[line.id] { return SpeakerLabels.label(n, names) }
         return numbers.isEmpty ? L("对方") : L("未识别")
     }
@@ -463,8 +478,10 @@ enum TranscriptExport {
             return String(format: "%02d:%02d:%02d,%03d", ms / 3_600_000, (ms / 60_000) % 60, (ms / 1000) % 60, ms % 1000)
         }
         var out = ""
-        for (i, l) in s.lines.enumerated() {
-            let next = i + 1 < s.lines.count ? s.lines[i + 1].t : l.t + 4
+        // What the screen showed was never heard: it is no subtitle.
+        let lines = s.lines.filter { !$0.isScreen }
+        for (i, l) in lines.enumerated() {
+            let next = i + 1 < lines.count ? lines[i + 1].t : l.t + 4
             let end = max(l.t + 1, min(next, l.t + 8))
             out += "\(i + 1)\n\(ts(l.t)) --> \(ts(end))\n\(l.src)\n"
             if let d = l.dst, d != l.src { out += "\(d)\n" }
