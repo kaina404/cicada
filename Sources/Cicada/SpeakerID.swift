@@ -254,7 +254,7 @@ enum SpeakerLabels {
     static func runStarts(_ lines: [TranscriptLine], _ numbers: [String: Int]) -> Set<String> {
         var out: Set<String> = [], last: String?
         for l in lines {
-            let key = l.speaker == "me" ? "me" : l.isScreen ? "screen" : numbers[l.id].map { "n\($0)" } ?? "?"
+            let key = l.speaker == "me" ? "me" : l.isScreen ? "screen" : l.isAI ? "ai" : numbers[l.id].map { "n\($0)" } ?? "?"
             if key != last { out.insert(l.id) }
             last = key
         }
@@ -301,13 +301,7 @@ final class SpeakerTagger {
 
     func merge(_ from: Int, into: Int) { queue.async { [self] in clusterer.merge(from, into: into) } }
 
-    func tag(lineID: String, samples: [Float]) {
-        voice(of: samples) { [weak self] voice in
-            if let voice { self?.onVoice?(lineID, voice) }
-        }
-    }
-
-    /// The voice of a line not recorded yet; nil when unsure. Like `tag`, it counts towards that voice.
+    /// The voice of a line; nil when unsure. It counts towards that voice.
     func voice(of samples: [Float], _ done: @escaping @MainActor (Int?) -> Void) {
         let seconds = Double(samples.count) / 16000
         queue.async { [self] in
@@ -332,7 +326,7 @@ enum SpeakerNameGuess {
     static func content(_ s: Session) -> String? {
         let numbers = SpeakerLabels.numbers(s.lines)
         guard !numbers.isEmpty else { return nil }
-        let lines = s.lines.suffix(400)
+        let lines = s.lines.filter(\.isSpoken).suffix(400)
         var out = "Meeting transcript. Speakers: 你 = the user; 说话人N = one person on the other side, told apart by voice; 对方 = someone on the other side, not identified.\n"
         for (i, l) in lines.enumerated() {
             let who = l.speaker == "me" ? "你" : l.isScreen ? "屏幕" : numbers[l.id].map { "说话人\($0)" } ?? "对方"

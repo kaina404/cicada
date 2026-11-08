@@ -21,7 +21,10 @@ struct AISettingsView: View {
     @State private var open: Set<String> = []
 
     var body: some View {
-        if provider.id == .custom { customPage } else { servicePage }
+        VStack(alignment: .leading, spacing: 20) {
+            if provider.id == .custom { customPage } else { servicePage }
+            InterviewCoachSettingsView(model: model, settings: settings)
+        }
     }
 
     private var servicePage: some View {
@@ -41,7 +44,7 @@ struct AISettingsView: View {
             }
             .buttonStyle(.plain)
             if model.aiModelsOpen { SettingsCard { models } }
-            Text(footnote).font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+            Text(name + " · " + footnote).font(.system(size: 12)).foregroundStyle(Palette.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .onAppear { syncDrafts() }
@@ -74,7 +77,7 @@ struct AISettingsView: View {
                         .buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Palette.secondary)
                 }
             }
-            Text(footnote).font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+            Text(name + " · " + footnote).font(.system(size: 12)).foregroundStyle(Palette.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .onAppear {
@@ -174,7 +177,7 @@ struct AISettingsView: View {
                         TextField(L("例如 qwen3:14b"), text: $textDraft)
                             .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                             .padding(.horizontal, 12).frame(height: 32)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                            .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                             .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                             .onSubmit(save)
                     } else {
@@ -191,14 +194,14 @@ struct AISettingsView: View {
                     if let key = ling.key, !key.isEmpty, !editing {
                         Text(AIKey.masked(key)).font(.system(size: 13, design: .monospaced)).foregroundStyle(Palette.ink)
                             .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 32, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                            .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                             .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                         SoftButton(L("更换")) { draft = ""; editing = true }
                     } else {
                         SecureField(keyPlaceholder, text: $draft)
                             .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                             .padding(.horizontal, 12).frame(height: 32)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                            .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                             .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                             .onSubmit(save)
                     }
@@ -214,7 +217,7 @@ struct AISettingsView: View {
                 if showSteps {
                     AICheckSteps(model: model_, ling: ling, recheckInStep: false) { draft = ""; editing = true }
                         .padding(.horizontal, 12).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
                 } else if check.passed {
                     Text(textFacts).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
@@ -387,7 +390,7 @@ struct AISettingsView: View {
                 HStack(spacing: 8) {
                     Text(AIKey.masked(key)).font(.system(size: 13, design: .monospaced)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
                     SoftButton(L("更换")) { draft = ""; editing = true }
                     SoftButton(ling.aiCheck.running ? L("正在检查…") : L("重新检查")) { Task { await ling.check() } }
@@ -396,7 +399,7 @@ struct AISettingsView: View {
                 if showSteps {
                     AICheckSteps(model: model, ling: ling, recheckInStep: false) { draft = ""; editing = true }
                         .padding(.horizontal, 12).padding(.vertical, 2)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
                 }
                 if let low = ling.aiCheck.balanceLine(service: name) {
@@ -416,7 +419,7 @@ struct AISettingsView: View {
                     SecureField(keyPlaceholder, text: $draft)
                         .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                         .padding(.horizontal, 12).frame(height: 36)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
                         .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.ink.opacity(0.6), lineWidth: 1))
                         .onSubmit(save)
                     SoftButton(L("保存并检查"), dark: true, action: save)
@@ -462,7 +465,7 @@ struct AISettingsView: View {
             TextField(placeholder, text: text)
                 .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                 .padding(.horizontal, 12).frame(height: 32)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                 .onSubmit(save)
         }
@@ -710,7 +713,7 @@ struct ModelMenu: View {
                 TextField(L("模型名"), text: $typed)
                     .textFieldStyle(.plain).font(.system(size: 12, design: .monospaced))
                     .padding(.horizontal, 8).frame(width: 220, height: 28)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
+                    .background(RoundedRectangle(cornerRadius: 7).fill(Palette.surface))
                     .overlay(RoundedRectangle(cornerRadius: 7).stroke(Palette.line, lineWidth: 1))
                     .onSubmit(commit)
                 SoftButton(L("好"), dark: true, action: commit)
@@ -778,7 +781,7 @@ private struct CommitField: View {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                 .padding(.horizontal, 12).frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                 .focused($focused)
                 .onSubmit { commit() }

@@ -23,7 +23,8 @@ enum EchoMatch {
     /// Share of the room line found in the Mac's lines that makes it an echo.
     static let contained = 0.6
 
-    static func isEcho(_ room: Heard, online: [Heard]) -> Bool {
+    static func isEcho(_ room: Heard, online: [Heard], headphones: Bool = false) -> Bool {
+        guard !headphones else { return false }
         let near = online.filter { $0.end >= room.start - window && $0.start <= room.end + window }
         guard !near.isEmpty else { return false }
         let r = units(room.text)

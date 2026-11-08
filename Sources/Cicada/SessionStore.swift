@@ -22,6 +22,8 @@ struct TranscriptLine: Codable, Identifiable, Equatable {
     var shot: String? = nil
 
     var isScreen: Bool { speaker == "screen" }
+    var isAI: Bool { speaker == "ai" }
+    var isSpoken: Bool { !isScreen && !isAI }
 }
 
 /// A name Ling found for a voice, and the line it is based on ("00:06 “Sure, Emma…”").
@@ -103,6 +105,23 @@ final class SessionStore: ObservableObject {
     }
 
     func folder(_ id: String) -> URL { root.appendingPathComponent(id, isDirectory: true) }
+    #if os(macOS)
+    private let coachWriter = DispatchQueue(label: "cicada.coach.journal", qos: .utility)
+    func appendCoachEvent(_ event: CoachEvent, to id: String) {
+        let url = folder(id).appendingPathComponent("coach.jsonl")
+        coachWriter.async {
+            do {
+                var data = try JSONEncoder().encode(event); data.append(10)
+                if !FileManager.default.fileExists(atPath: url.path) {
+                    FileManager.default.createFile(atPath: url.path, contents: nil, attributes: [.posixPermissions: 0o600])
+                }
+                let file = try FileHandle(forWritingTo: url)
+                defer { try? file.close() }
+                try file.seekToEnd(); try file.write(contentsOf: data)
+            } catch { debugLog("coach: journal write failed") }
+        }
+    }
+    #endif
     func systemAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("system.m4a") }
     func micAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("mic.m4a") }
 
@@ -422,6 +441,7 @@ enum TranscriptExport {
     static func speakerName(_ line: TranscriptLine, _ numbers: [String: Int] = [:], _ names: [Int: String] = [:]) -> String {
         if line.speaker == "me" { return L("你") }
         if line.isScreen { return L("屏幕") }
+        if line.isAI { return L("AI") }
         if let n = numbers[line.id] { return SpeakerLabels.label(n, names) }
         return numbers.isEmpty ? L("对方") : L("未识别")
     }
@@ -464,7 +484,7 @@ enum TranscriptExport {
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
             // An imported file has no "other side" to name.
-            let who = s.sourceFile == nil ? " \(speakerName(l, numbers, names))" : ""
+            let who = s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""
             out += "**[\(clock(l.t))]\(who)**  \n\(l.src)\n"
             if let d = l.dst, d != l.src { out += "> \(d)\n" }
             out += "\n"
@@ -479,7 +499,7 @@ enum TranscriptExport {
         }
         var out = ""
         // What the screen showed was never heard: it is no subtitle.
-        let lines = s.lines.filter { !$0.isScreen }
+        let lines = s.lines.filter(\.isSpoken)
         for (i, l) in lines.enumerated() {
             let next = i + 1 < lines.count ? lines[i + 1].t : l.t + 4
             let end = max(l.t + 1, min(next, l.t + 8))
@@ -530,7 +550,7 @@ enum TranscriptExport {
         }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
-            add("[\(clock(l.t))]" + (s.sourceFile == nil ? " \(speakerName(l, numbers, names))" : ""), size: 9, weight: .semibold, color: .darkGray, after: 2)
+            add("[\(clock(l.t))]" + (s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""), size: 9, weight: .semibold, color: .darkGray, after: 2)
             add(l.src, size: 11, after: 2)
             if let d = l.dst, d != l.src { add(d, size: 11, color: NSColor(calibratedWhite: 0.3, alpha: 1), after: 10) }
         }

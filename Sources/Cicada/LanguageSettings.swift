@@ -80,7 +80,7 @@ struct LanguageSettings: View {
         }
         .padding(.horizontal, 18).padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.strong))
         .accessibilityElement(children: .combine)
     }
 

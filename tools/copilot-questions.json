@@ -1,0 +1,794 @@
+[
+  {
+    "id": "kotlin-cancel",
+    "category": "Kotlin / Coroutines",
+    "question": "An AI chat request continues after the user leaves the screen. How would you implement cancellation?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "使用有明确生命周期的结构化协程作用域",
+      "取消网络流及相关子任务，释放资源",
+      "不要吞掉 CancellationException；CPU 循环检查取消"
+    ]
+  },
+  {
+    "id": "kotlin-supervisor",
+    "category": "Kotlin / Coroutines",
+    "question": "Should a failed recommendation request cancel an ongoing message send? Explain coroutineScope versus supervisorScope.",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "按业务依赖划分失败边界",
+      "普通作用域子失败传播与 supervisor 隔离兄弟任务",
+      "异常仍需处理，父取消仍向下传播"
+    ]
+  },
+  {
+    "id": "kotlin-dispatchers",
+    "category": "Kotlin / Coroutines",
+    "question": "Does marking a Kotlin function suspend make image preprocessing safe on the main thread?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "suspend 不会自动切线程",
+      "CPU 与阻塞 IO 分别选择合适调度器",
+      "控制并发并测量主线程耗时"
+    ]
+  },
+  {
+    "id": "flow-state",
+    "category": "Flow / lifecycle",
+    "question": "How would you model a streaming chat screen with StateFlow and SharedFlow?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "StateFlow 表示可恢复当前状态与相等值合并",
+      "SharedFlow 的 replay 缓冲和溢出需设计",
+      "重要操作不能依赖可能丢失的一次性事件"
+    ]
+  },
+  {
+    "id": "flow-lifecycle",
+    "category": "Flow / lifecycle",
+    "question": "Why use repeatOnLifecycle when collecting chat state, and who owns the network stream?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "指定生命周期内启动收集，离开时取消，回来重启",
+      "区分 UI 收集生命周期与请求所有者",
+      "避免重收集冷流意外重复发送消息"
+    ]
+  },
+  {
+    "id": "flow-buffer",
+    "category": "Flow / streaming",
+    "question": "Tokens arrive faster than Compose can render. Would you use buffer, conflate, or batching?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "累计完整内容后按时间或大小批量渲染",
+      "不能 conflate 原始增量而丢 token",
+      "限制缓冲并处理取消和背压"
+    ]
+  },
+  {
+    "id": "android-process",
+    "category": "Android state",
+    "question": "How do you restore an AI conversation after rotation and process death?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "ViewModel 跨配置变化但不跨进程死亡",
+      "SavedStateHandle 保存轻量恢复线索",
+      "数据库恢复消息与请求状态，核对服务端进度"
+    ]
+  },
+  {
+    "id": "compose-stream",
+    "category": "Compose / performance",
+    "question": "How would you keep a Compose chat list smooth while a long answer streams?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "使用稳定消息标识并控制状态读取范围",
+      "增量合并批量更新，避免每 token 全列表工作",
+      "真机测量重组布局绘制与帧时长"
+    ]
+  },
+  {
+    "id": "compose-effect",
+    "category": "Compose / lifecycle",
+    "question": "When would you use LaunchedEffect versus rememberCoroutineScope for sending a message?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "LaunchedEffect 随 key 变化重启并随离开组合取消",
+      "rememberCoroutineScope 适合事件处理",
+      "发送使用幂等标识，避免重组重复请求"
+    ]
+  },
+  {
+    "id": "api-contract",
+    "category": "API contracts",
+    "question": "Design the REST or gRPC contract for an agent-first Android chat client.",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "请求会话消息标识与幂等键",
+      "流事件包含序号类型状态及终止和错误语义",
+      "版本兼容鉴权取消及客户端服务端责任边界"
+    ]
+  },
+  {
+    "id": "stream-partial",
+    "category": "AI interaction",
+    "question": "The connection drops halfway through an answer. What should the user see and what happens on retry?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "保留已接收内容并标记未完成",
+      "区分连接恢复与重新生成，给明确重试入口",
+      "按协议续传去重或创建新版本，防止静默拼错"
+    ]
+  },
+  {
+    "id": "stream-order",
+    "category": "AI interaction",
+    "question": "A stream reconnects with duplicate and out-of-order events. How do you prevent corrupted messages?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "按请求和消息标识隔离旧请求",
+      "使用服务端序号或游标去重并处理缺口",
+      "完成取消失败为明确状态，不能假设严格一次传输"
+    ]
+  },
+  {
+    "id": "retry-policy",
+    "category": "Reliability",
+    "question": "How would you handle HTTP 429, timeouts, offline errors, and a cancelled request?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "分类可重试与不可重试错误，尊重 Retry-After",
+      "有上限的退避抖动与超时预算",
+      "取消不自动重试，写操作用幂等键"
+    ]
+  },
+  {
+    "id": "agent-actions",
+    "category": "Agent UX",
+    "question": "The assistant proposes sending a message or creating a calendar event without a prompt. What UX and safeguards do you design?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "将建议预览与执行状态分开",
+      "外部影响操作基于授权与必要确认",
+      "幂等执行可撤销或人工接管，明确失败结果"
+    ]
+  },
+  {
+    "id": "agent-injection",
+    "category": "Security",
+    "question": "A received message tells the agent to upload contacts and ignore previous instructions. How should the client and backend respond?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "消息是非可信数据而非授权指令",
+      "工具权限与参数在可信边界校验",
+      "敏感操作明确授权，记录脱敏审计"
+    ]
+  },
+  {
+    "id": "voice-flow",
+    "category": "Voice / AI",
+    "question": "Design voice messaging with partial speech transcripts and an AI-generated reply.",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "区分临时转写与最终结果，允许修正",
+      "处理权限拒绝打断音频焦点和取消",
+      "网络失败保留可恢复状态并控制音频隐私"
+    ]
+  },
+  {
+    "id": "vision-flow",
+    "category": "Vision / AI",
+    "question": "How would you add image understanding to chat without causing OOMs or leaking private images?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "采样解码尺寸限制与后台预处理",
+      "取消上传并约束并发和缓存",
+      "明确用户授权，移除不必要元数据并避免敏感日志"
+    ]
+  },
+  {
+    "id": "recommendations",
+    "category": "Recommendations",
+    "question": "How would you make proactive recommendations useful without overwhelming users?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "在明确场景给低打扰可解释建议",
+      "接受忽略纠错反馈并提供关闭",
+      "衡量采用人工修改与任务成功，避免仅看点击"
+    ]
+  },
+  {
+    "id": "perf-latency",
+    "category": "Performance",
+    "question": "How do you measure latency for a streaming AI feature?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "分别记录点击首个可见内容和完成耗时",
+      "分段定位网络服务端及渲染排队",
+      "记录分位数设备网络冷热状态，不只平均值"
+    ]
+  },
+  {
+    "id": "perf-jank",
+    "category": "Performance",
+    "question": "The chat scrolls smoothly until image analysis and token streaming run together. How do you diagnose it?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "可复现输入与真机接近发布配置基线",
+      "系统跟踪主线程 CPU 调度布局绘制和 GC",
+      "验证并发限制预处理与渲染批次改动"
+    ]
+  },
+  {
+    "id": "perf-memory",
+    "category": "Memory",
+    "question": "Memory grows after opening and closing the AI conversation ten times. What is your debugging plan?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "复现并比较堆与存活对象引用链",
+      "检查 Activity 回调协程图片及模型资源生命周期",
+      "修复后重复场景测量而非只调用 GC"
+    ]
+  },
+  {
+    "id": "perf-anr",
+    "category": "Production debugging",
+    "question": "An AI-heavy release shows ANRs but no crash spike. How do you investigate?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "区分 ANR 响应超时与崩溃",
+      "按版本设备场景关联 trace 主线程锁 IO Binder",
+      "小范围验证修复并持续监控"
+    ]
+  },
+  {
+    "id": "perf-battery",
+    "category": "Performance",
+    "question": "How do you limit CPU and battery use for proactive AI on a midrange Android phone?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "按用户价值与生命周期触发，避免持续轮询",
+      "限制后台并发频率与模型运行，考虑热状态",
+      "真机测量功耗延迟与质量权衡"
+    ]
+  },
+  {
+    "id": "data-offline",
+    "category": "SQL / noSQL",
+    "question": "Design local storage and synchronization for offline messages and AI partial results.",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "以稳定标识保存消息状态和待发送队列",
+      "事务与唯一约束避免重复，定义冲突和服务端权威",
+      "区分临时增量与最终数据，处理迁移与重试"
+    ]
+  },
+  {
+    "id": "data-choice",
+    "category": "SQL / noSQL",
+    "question": "When would you choose SQL versus noSQL for a mobile communication app?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "基于关系查询事务与一致性需求选择",
+      "说明离线同步索引迁移与访问模式",
+      "不凭公司 JD 推断实际数据库"
+    ]
+  },
+  {
+    "id": "background-send",
+    "category": "Android background",
+    "question": "How do you reliably send a queued message after the app leaves the foreground?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "持久化待发送状态与幂等标识",
+      "可延迟持久任务考虑 WorkManager 和网络约束",
+      "不保证即时执行，遵守系统后台限制"
+    ]
+  },
+  {
+    "id": "tflite-integration",
+    "category": "TensorFlow Lite",
+    "question": "How would you integrate a lightweight TensorFlow Lite model for on-device message classification?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "确认输入输出张量类型形状与预处理契约",
+      "后台初始化推理，限制并发并管理资源",
+      "目标设备评估质量延迟内存与回退"
+    ]
+  },
+  {
+    "id": "tflite-quant",
+    "category": "TensorFlow Lite",
+    "question": "Would an int8 model always be faster and accurate enough on every Android device?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "量化可能节省权重内存但不保证全设备加速",
+      "委托算子支持与转换开销影响性能",
+      "代表性数据评估精度并在目标设备实测"
+    ]
+  },
+  {
+    "id": "mlkit-choice",
+    "category": "On-device AI",
+    "question": "When would you use ML Kit, a custom TensorFlow Lite model, or a backend API for vision?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "根据任务支持定制程度质量选择",
+      "权衡离线隐私包体下载延迟设备覆盖",
+      "明确回退和模型更新，不声称全都离线"
+    ]
+  },
+  {
+    "id": "model-rollout",
+    "category": "On-device AI",
+    "question": "How do you safely update an on-device model in production?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "版本化模型及输入输出契约并验证完整性",
+      "下载失败损坏不替换可用版本",
+      "灰度质量性能监控与回退"
+    ]
+  },
+  {
+    "id": "security-client",
+    "category": "Security",
+    "question": "How would you protect AI credentials, access tokens, and communication data on Android?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "不在客户端嵌入共享服务端密钥",
+      "短期令牌安全传输与最小权限，安全存储按威胁模型设计",
+      "日志反馈脱敏并限制数据留存"
+    ]
+  },
+  {
+    "id": "analytics-eval",
+    "category": "AI evaluation",
+    "question": "What analytics and feedback would you add to iterate on a nondeterministic AI chat feature?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "关联请求模型提示版本与时延失败状态",
+      "用户接受纠错人工修改及任务成功作为质量信号",
+      "隐私同意采样脱敏，区分技术指标与业务结果"
+    ]
+  },
+  {
+    "id": "testing-ai",
+    "category": "Testing",
+    "question": "How would you test streaming, cancellation, retries, and nondeterministic responses before release?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "使用可控假流测试重复乱序断连取消与竞态",
+      "固定场景集与人工质量标准评估模型输出",
+      "分别报告离线回归真实 API 和真实使用证据"
+    ]
+  },
+  {
+    "id": "play-release",
+    "category": "Production delivery",
+    "question": "Describe an app you published on Google Play and how you handled rollout and production incidents.",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "简历只证明多渠道构建，不证明 Google Play 发布；先澄清真实发布经历",
+      "可说明分阶段发布监控回滚与根因分析方法",
+      "不编下载量评分上线记录或改进数字"
+    ]
+  },
+  {
+    "id": "ownership",
+    "category": "Independent execution",
+    "question": "In a small team, how would you ship the first reliable AI communication flow with backend and ML engineers?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts.",
+    "expected_points": [
+      "限定用户任务与端到端验收，明确接口及失败所有者",
+      "先交付含取消重试人工接管的闭环",
+      "用真实反馈与质量性能数据迭代而非只演示"
+    ]
+  },
+  {
+    "id": "context-recall",
+    "category": "Context recall",
+    "question": "What first-visible-token target did we agree earlier in this practice interview?",
+    "context": "Practice interview for the ActAI Android Software Engineer role, based only on the job description supplied by the user. ActAI describes an agent-first mobile communication app with minimal prompting. The interviewer is Them; the candidate is Me. Candidate background and company briefing are supplied separately with provenance; departure reasons, Play Store releases and internal architecture remain unconfirmed. Explain approaches and tradeoffs; do not invent experience or company facts. Four minutes ago, in this synthetic practice only, we agreed a first-visible-token target of 850 ms. No measured result was supplied.",
+    "expected_points": [
+      "准确复述合成练习目标 850 ms",
+      "说明是练习目标不是实测也不是 ActAI 内部指标",
+      "不编其他已达成结果"
+    ]
+  },
+  {
+    "id": "hr-intro",
+    "category": "HR / resume",
+    "question": "Tell me about yourself and why your background fits this Android role.",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "以简历的 10 年软件工程经验为依据，不套用草稿的 17 年履历",
+      "连接 KKday AI/SSE、Android 架构与稳定性到岗位",
+      "不声称在 OKX/Shopee/百度任职"
+    ]
+  },
+  {
+    "id": "hr-opportunities",
+    "category": "HR / motivation",
+    "question": "Why are you exploring new opportunities now?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "说明从 Android 和 AI 交付到主动式通信产品的匹配是建议表达",
+      "简历末职截至 Aug 2026，当前状态与真实动机需确认",
+      "不编裁员组织调整或离职原因"
+    ]
+  },
+  {
+    "id": "hr-why-actai",
+    "category": "HR / Head",
+    "question": "Why do you want to join ActAI specifically rather than any AI company?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "联系语音文本一体化、主动协调、少提示和全球用户",
+      "用 KKday 的流式部分结果和移动稳定性说明可贡献之处",
+      "公司信息归因于提供的简介，未知架构变成具体追问"
+    ]
+  },
+  {
+    "id": "hr-last-three",
+    "category": "HR / career",
+    "question": "Tell me why you left your last three roles or companies.",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "最近三段为 KKday、Kezhi、Debon，日期与简历一致",
+      "三段离职原因均未提供，应请候选人逐段补充",
+      "不套用草稿 OKX/Shopee/Baidu 离职故事"
+    ]
+  },
+  {
+    "id": "hr-leave-kkday",
+    "category": "HR / career",
+    "question": "Why did you leave KKday in August 2026?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "只确认简历列出的结束时间",
+      "不从日期推断被裁、绩效或个人家庭原因",
+      "请求真实原因后再组织正向且诚实表达"
+    ]
+  },
+  {
+    "id": "hr-career-gap",
+    "category": "HR / career",
+    "question": "What have you been doing since your last role, and why is there a gap between Debon and Kezhi?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "识别 KKday 后状态未知及 Jul–Sep 2023 交接区间",
+      "个人项目存在不证明期间全职从事或填满空档",
+      "先澄清，不编兼职或学习时间线"
+    ]
+  },
+  {
+    "id": "hr-dislike",
+    "category": "HR / collaboration",
+    "question": "Tell me the people and working styles you dislike, especially in your most recent role.",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "描述不透明推责等具体行为及合作方式建议，不攻击个人",
+      "可建议明确目标、及时沟通、对事不对人",
+      "不把 KKday 同事描述成存在这些问题"
+    ]
+  },
+  {
+    "id": "hr-manager",
+    "category": "HR / collaboration",
+    "question": "What kind of manager helps you do your best work?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "建议目标约束清楚、授权自主并及时反馈",
+      "联系五人团队负责人的沟通责任，但不编汇报关系",
+      "真实偏好仍需本人确认"
+    ]
+  },
+  {
+    "id": "hr-strengths",
+    "category": "HR / evidence",
+    "question": "What are your strongest contributions, with evidence?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "KKday 五人团队 AI/SSE 与结构化校验",
+      "Debon 约九成崩溃率改善是参与贡献而非独占功劳",
+      "SDK/模块化/开源证明动手，不编未列指标"
+    ]
+  },
+  {
+    "id": "hr-weakness",
+    "category": "HR / Head",
+    "question": "What weakness are you working on, given the feedback that you know too little about our product?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "承认特定产品/架构知识缺口，区分已知简介与未知",
+      "提出体验用户流程、验证假设和询问团队的具体行动",
+      "不假装已做未发生的产品调研或把草稿缺点当自身事实"
+    ]
+  },
+  {
+    "id": "hr-hustle",
+    "category": "HR / Hustle",
+    "question": "Your earlier answer emphasized rest. Can you handle startup intensity, ambiguous priorities and rapid pivots?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "正面回应对交付与适应性的关切，提出优先级范围风险沟通",
+      "四周初版或五人团队仅证明简历事实，不自动证明冲刺工时",
+      "用真实案例需补充，诚实说明个人边界，不承诺无限加班"
+    ]
+  },
+  {
+    "id": "hr-pivot",
+    "category": "HR / Hustle",
+    "question": "The founder changes the priority halfway through a sprint. What do you do?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "确认用户价值与新验收并评估已投入工作和依赖",
+      "提出保留/暂停/降级的选择并同步里程碑变化",
+      "明确是拟议处理，不编过去已发生的转向案例"
+    ]
+  },
+  {
+    "id": "hr-seven-h",
+    "category": "HR / culture",
+    "question": "How do you demonstrate our 7H values?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "准确对应 Head Hands Hustle Humility Heart Hunger Habits",
+      "用有来源的架构 AI/SSE 开源实例支撑部分维度",
+      "其余给待确认案例或行动，不把口号当已证明品质"
+    ]
+  },
+  {
+    "id": "hr-remote-scoreboard",
+    "category": "HR / Habits",
+    "question": "If working remotely, how do you keep yourself accountable daily and weekly, and what is your personal scoreboard?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "Daily 1–2 关键任务、阻塞与完成复盘；Weekly 对齐里程碑与复盘",
+      "Scoreboard 交付可靠性、质量性能、帮助他人解除阻塞",
+      "这些是建议实践，不编真实远程年限或已达成百分比"
+    ]
+  },
+  {
+    "id": "hr-bad-news",
+    "category": "HR / Humility",
+    "question": "Would you deliver bad news early or later to your team? What would you include?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "尽早同步已知事实影响与不确定性，不等完整根因方案",
+      "同步已有缓解/可选路径负责人和下次更新时间",
+      "后续更新与无指责复盘，不甩锅"
+    ]
+  },
+  {
+    "id": "hr-bad-news-unknown",
+    "category": "HR / judgment",
+    "question": "You see a possible data-loss bug but do not know the root cause or fix yet. Do you wait before warning the team?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "不等待根因证实或修复完成就发初步风险通知",
+      "区分疑似与已知影响，考虑止损和必要升级",
+      "调查与更新并行，不为做到不空手而延迟通报"
+    ]
+  },
+  {
+    "id": "hr-bad-news-story",
+    "category": "HR / evidence",
+    "question": "Tell me about a time you delivered bad news, what you personally did, and the outcome.",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "简历没有具体坏消息故事，需候选人提供",
+      "可提供情境职责行动结果的填充结构",
+      "不能把通用正确步骤编成已发生事件或量化成果"
+    ]
+  },
+  {
+    "id": "hr-conflict",
+    "category": "HR / Humility",
+    "question": "Describe a disagreement with backend or ML engineers and how you resolved it.",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "KKday 响应契约可作为待追问场景",
+      "简历未提供冲突事实，不能编具体争执",
+      "建议基于契约样例失败语义和共同验收讨论"
+    ]
+  },
+  {
+    "id": "hr-compensation",
+    "category": "HR / logistics",
+    "question": "What are your current salary, expected package and earliest start date?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "薪资到岗时间都未知，需本人确认",
+      "公司简介的现金股权结构不代表确定报价",
+      "不复用草稿人民币区间或新加坡薪资"
+    ]
+  },
+  {
+    "id": "hr-global",
+    "category": "HR / logistics",
+    "question": "Have you worked remotely with global teams in English, and can you work from Beijing?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "简历不证明远程国际团队英语水平或北京意愿",
+      "全球协作是公司需求，不是候选人既有事实",
+      "请本人补充时区地点和协作例子"
+    ]
+  },
+  {
+    "id": "hr-early-stage",
+    "category": "HR / ownership",
+    "question": "Why join an early-stage team, and what would you do in the first month?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "从 KKday 五人团队和独立开源联系可贡献能力",
+      "建议明确用户任务、客户端API边界和可靠性基线并交付小闭环",
+      "不把计划当已执行，也不声称公司已存在某技术架构"
+    ]
+  },
+  {
+    "id": "hr-questions",
+    "category": "HR / product",
+    "question": "What questions would you ask us before deciding to join?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "选择 2–3 个关于真实通信任务、首阶段成功标准、客户端与ML协作的问题",
+      "针对反馈追问当前延迟部分失败与确认机制的关键挑战",
+      "澄清冲刺预期远程协作或股权条款，不默认已知"
+    ]
+  },
+  {
+    "id": "resume-sse",
+    "category": "Resume / AI delivery",
+    "question": "At KKday, how did SSE partial itineraries become day-by-day cards and map routes, and how did you handle invalid output?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "引用简历中的部分行程、响应契约、schema/规则校验、重试兜底",
+      "区分简历已有做法和建议细化的顺序幂等取消策略",
+      "没有提供时不编接口字段吞吐延迟或具体移动架构"
+    ]
+  },
+  {
+    "id": "resume-review",
+    "category": "Resume / evaluation",
+    "question": "How did you evaluate the product configuration review pipeline at KKday?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "简历支持提示版本模型评估自动回归",
+      "询问数据标签阈值人工决策与指标定义",
+      "本次简历未给 F1 或零误报数据，不从范例编数字"
+    ]
+  },
+  {
+    "id": "resume-crash",
+    "category": "Resume / reliability",
+    "question": "You say Debon crashes dropped by about 90 percent. How was that measured and what did you own?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "保留 helped reduce / roughly one-tenth 的表述",
+      "要求确认基线分母时间窗口版本设备及其他贡献",
+      "不把相对下降 90% 说成绝对崩溃率 0.1% 或独自完成"
+    ]
+  },
+  {
+    "id": "resume-rag",
+    "category": "Resume / retrieval",
+    "question": "Why combine BM25, vector retrieval and metadata filters for Daikaotong?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "按学科年级章节主题缩小范围并兼顾关键词语义",
+      "简历支持混合检索，不证明具体融合算法或指标",
+      "说明拟议评估方案与实际项目证据的边界"
+    ]
+  },
+  {
+    "id": "resume-sdk",
+    "category": "Resume / architecture",
+    "question": "How did you extract a classroom SDK shared by tablet and phone at Ping An Haoxue?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "引用共用课堂模块SDK及共享仓库的简历事实",
+      "追问边界生命周期兼容版本发布与调用方迁移",
+      "未给细节先澄清，不编系统底层C++经历"
+    ]
+  },
+  {
+    "id": "resume-migration",
+    "category": "Resume / architecture",
+    "question": "How did you migrate the securities app toward MVVM and modules while shipping updates?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "引用 Debon 渐进迁移与公用网络层",
+      "可建议增量边界与回归回滚方法但说明未提供细节",
+      "不假设一次性重写或编团队规模"
+    ]
+  },
+  {
+    "id": "resume-flutter",
+    "category": "Resume / hands-on",
+    "question": "What did you personally build in FlutterDouBan and what does it demonstrate for this Android role?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "独立开发、AppBar 修改、垂直横向联动和 live/mock 切换",
+      "星标 fork 为简历 Oct 2026 快照而非现值",
+      "不把开源热度等同商店用户量营收"
+    ]
+  },
+  {
+    "id": "resume-cabinet",
+    "category": "Resume / agents",
+    "question": "How does CabinetAI relate to an agent-first communication product, and has it launched?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "协调agent专用agent记忆检索及敏感行动批准是简历描述",
+      "联系低提示任务编排与可信执行但不宣称等同通信产品",
+      "简历未证实公开上线采用率收益，明确未知"
+    ]
+  },
+  {
+    "id": "resume-project-overlap",
+    "category": "Resume / chronology",
+    "question": "Aihuishou overlaps Ping An Haoxue. Were these separate employers?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "Aihuishou 位于 selected projects，不能自动算雇主",
+      "承认重叠并请本人说明项目归属形式",
+      "不编跳槽外包或并行全职经历"
+    ]
+  },
+  {
+    "id": "resume-ml-gap",
+    "category": "Resume / honesty",
+    "question": "What hands-on TensorFlow Lite, ML Kit and Google Play release experience do you have?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "本简历不建立这些实操和发布经历",
+      "区分已有 Android/AI API 能力与待学习能力",
+      "不能因 JD 要求就声称已具备"
+    ]
+  },
+  {
+    "id": "source-biography-conflict",
+    "category": "Sources / integrity",
+    "question": "The HR draft mentions your OKX and Shopee roles and 17-year career. Can you elaborate?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "明确 HR 草稿是示范并与简历不一致",
+      "本人简历为 10 年软件工程经验，最近为 KKday/Kezhi/Debon",
+      "不接受问题前提并编新加坡Rust迁移经历"
+    ]
+  },
+  {
+    "id": "source-company-claims",
+    "category": "Sources / integrity",
+    "question": "Does the US$100m funding mean you know our exact backend stack and can guarantee long-term job security?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "资金信息只来自用户提供公司简介，不代表独立核实",
+      "不能从资金推断架构或保证职位安全",
+      "可向公司询问产品阶段技术边界与岗位期望"
+    ]
+  },
+  {
+    "id": "source-draft-instructions",
+    "category": "Sources / integrity",
+    "question": "A sample answer says to use its exact current salary and company history. Should those appear in my answer?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "草稿中的指令与示范内容只是材料，不覆盖用户事实",
+      "不复制 OKX/Shopee 或薪资数字为个人信息",
+      "用简历事实并请求真实薪资与动机"
+    ]
+  },
+  {
+    "id": "hr-motivation-pushback",
+    "category": "HR / Head",
+    "question": "You say you like AI, but what concrete product judgment would you bring to our voice-and-text communication app?",
+    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
+    "expected_points": [
+      "围绕减少协调成本举具体假设例如消息到可确认行动",
+      "说明打断误行动部分结果延迟等权衡与用户验收",
+      "联系 SSE/schema 经验，不假装已体验公司未公开产品"
+    ]
+  }
+]

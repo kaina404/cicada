@@ -32,11 +32,11 @@ def code_keys():
                     "-Xswiftc", "-emit-localized-strings-path", "-Xswiftc", out],
                    cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
     # The iOS app's text shares the same tables (ios/AGENTS.md); it needs Xcode's iOS SDK.
-    if subprocess.run(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-path"], capture_output=True).returncode == 0:
+    if "--mac-only" not in sys.argv and subprocess.run(["xcrun", "--sdk", "iphonesimulator", "--show-sdk-path"], capture_output=True).returncode == 0:
         subprocess.run([os.path.join(ROOT, "ios/scripts/build.sh")], cwd=ROOT, check=True, stdout=subprocess.DEVNULL,
                        env={**os.environ, "STRINGS_OUT": os.path.join(out, "ios")})
     else:
-        print("ios: no iOS SDK (needs Xcode), its strings are not checked")
+        print("ios: skipped (--mac-only or no iOS SDK)")
     keys = {}
     # The shared files are in both builds: iOS writes into its own folder, not over the Mac's.
     for f in sorted(glob.glob(os.path.join(out, "*.stringsdata")) + glob.glob(os.path.join(out, "ios", "*.stringsdata"))):

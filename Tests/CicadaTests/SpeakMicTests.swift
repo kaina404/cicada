@@ -18,7 +18,7 @@ private final class MicFrames: RecognitionStream, @unchecked Sendable {
 
 // Requires microphone permission and a virtual system input with a different format from
 // the real mic. Opt in locally: CI has neither these devices nor microphone permission.
-@MainActor @Suite(.enabled(if: ProcessInfo.processInfo.environment["CICADA_TEST_MIC"] == "1"))
+@MainActor @Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["CICADA_TEST_MIC"] == "1"))
 struct SpeakMicTests {
     /// The system input (BlackHole) and this Mac's own microphone.
     private func devices() throws -> (original: OutputDevice, mic: OutputDevice) {
@@ -67,13 +67,43 @@ struct SpeakMicTests {
         #expect(AudioDevices.defaultInput?.uid == original.uid)
     }
 
+    @Test func roomMicAndRepeatedPressesKeepCapturingWithoutRebuildingVoiceIO() async throws {
+        let (_, device) = try devices()
+        let voiceMic = VoiceMic()
+        let room = RoomMic(device: device, voiceMic: voiceMic)
+        let roomFrames = MicFrames()
+        room.onAudio = { roomFrames.append($0) }
+        try room.start()
+        defer { room.stop() }
+        let pressFrames = MicFrames()
+        let previousHost = Recognition.host
+        Recognition.host = { _, _ in pressFrames }
+        defer { Recognition.host = previousHost }
+        let speak = SpeakEngine(settings: AppSettings(), voiceMic: voiceMic)
+        speak.inputDevice = { device }
+        speak.probe = SpeakProbe()
+        defer { speak.pressCancelled() }
+        await speak.prepare()
+        try await Task.sleep(for: .seconds(1))
+        for _ in 0..<5 {
+            let beforeRoom = roomFrames.count
+            let beforePress = pressFrames.count
+            speak.pressBegan()
+            try await Task.sleep(for: .milliseconds(600))
+            speak.pressCancelled()
+            #expect(pressFrames.count > beforePress)
+            #expect(roomFrames.count > beforeRoom)
+            #expect(!voiceMic.inUse)
+        }
+    }
+
     @Test func voiceSampleRecordsFromTheRealMic() async throws {
         let (original, device) = try devices()
         let recorder = VoiceRecorder()
         for _ in 0..<2 {
             recorder.start(locale: "zh-CN", device: device)
+            try await Task.sleep(for: .milliseconds(800))
             #expect(recorder.phase == .recording)
-            try await Task.sleep(for: .milliseconds(500))
             let size = (try? FileManager.default.attributesOfItem(atPath: recorder.url.path)[.size] as? Int) ?? 0
             #expect(size > 8_000)  // a quarter second of 16 kHz 16-bit audio
             // Cancel: the sample is deleted, never transcribed or uploaded.

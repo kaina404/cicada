@@ -4,7 +4,7 @@ import SwiftUI
 
 /// The live notes window: floats over the meeting app, can be dragged and resized anywhere,
 /// stays out of screen sharing (unless 录屏时可见 is on), and remembers its frame. Three layouts by width: a small card
-/// (< 360), a sidebar with 纪要 / 文字记录 tabs, and notes beside the transcript (≥ 760).
+/// (< 360), a sidebar with 纪要 / 文字记录 tabs, and notes beside the transcript and assistant (≥ 760).
 @MainActor
 final class NotesWindowController: NSObject, NSWindowDelegate {
     enum Layout: CaseIterable { case card, sidebar, wide }
@@ -68,7 +68,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
             p.sharingType = model.settings.notesCapturable ? .readOnly : .none
             p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             p.minSize = NSSize(width: Self.minWidth, height: 180)
-            p.backgroundColor = .white
+            p.backgroundColor = Palette.adaptiveNS(0xFFFFFF, 0x22252B)
             p.contentView = FirstClickHostingView(rootView: NotesWindowView(
                 model: model, engine: model.notes, store: model.store, settings: model.settings,
                 commands: commands.eraseToAnyPublisher(),
@@ -172,6 +172,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         guard let p = panel, let screen = p.screen ?? NSScreen.main else { return }
         var f = p.frame
         let top = f.maxY, right = f.maxX
+        let width = min(width, screen.visibleFrame.width)
         f.size.width = width
         if let height { f.size.height = min(height, screen.visibleFrame.height - 24) }
         f.origin.x = min(max(screen.visibleFrame.minX, right - width), screen.visibleFrame.maxX - width)
@@ -267,6 +268,12 @@ struct NotesWindowView: View {
                         meetingBar.padding(.horizontal, 24).padding(.bottom, 4)
                         banner.padding(.horizontal, 24).padding(.bottom, 4)
                         if live { liveAsks.padding(.horizontal, 24).padding(.bottom, 4) }
+                        if live { ScreenStrip(screen: model.screen).padding(.horizontal, 24).padding(.bottom, 8) }
+                        if live && geo.size.width < 760 {
+                            CandidateFeed(engine: model.candidate, settings: settings,
+                                        compactHeight: min(250, max(120, geo.size.height * 0.3)),
+                                        microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(true) })
+                        }
                         if live { LanguageNotice(model: model).padding(.horizontal, 24).padding(.bottom, 8) }
                         // Where the scrolling starts: a hairline, and each column fades in under it (`topFade`).
                         Rectangle().fill(MainWindowView.hairline).frame(height: 1)
@@ -275,6 +282,12 @@ struct NotesWindowView: View {
                                 notesPane.frame(maxWidth: .infinity)
                                 Divider()
                                 transcript.padding(.horizontal, 20).padding(.top, 12).frame(maxWidth: .infinity)
+                                if live {
+                                    Divider()
+                                    CandidateFeed(engine: model.candidate, settings: settings, expanded: true,
+                                                  microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(true) })
+                                        .padding(.top, 12).frame(maxWidth: .infinity)
+                                }
                             }
                         } else if tab == "notes" {
                             notesPane
@@ -293,7 +306,7 @@ struct NotesWindowView: View {
             .onAppear { width = geo.size.width }
             .onChange(of: geo.size.width) { _, w in width = w }
         }
-        .background(Color.white)
+        .background(Palette.surface)
         .foregroundStyle(Palette.ink)
         .onReceive(tick) { now = $0 }
         .onReceive(commands) { run($0) }
@@ -321,7 +334,7 @@ struct NotesWindowView: View {
         case .layout(.sidebar):
             setWidth(460, card ? 760 : nil)
         case .layout(.wide):
-            setWidth(820, card ? 760 : nil)
+            setWidth(1200, card ? 760 : nil)
         }
     }
 
@@ -354,6 +367,9 @@ struct NotesWindowView: View {
                         .lineLimit(1).minimumScaleFactor(0.75)
                     Spacer(minLength: 8)
                     if live {
+                        // An icon: the header is full in English already. Without the local model it
+                        // still answers, with the card saying what's missing (tooltips don't show here).
+                        iconButton("questionmark.bubble", help: L("回答刚才的问题")) { model.askNow() }
                         MicButton(model: model, settings: settings, inHeader: true).padding(.trailing, 2)
                         Button(action: askToEnd) {
                             Text("结束").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
@@ -364,7 +380,7 @@ struct NotesWindowView: View {
                         .buttonStyle(.plain).help("结束这场会议").padding(.trailing, 4)
                     }
                     iconButton(wide ? "rectangle.split.2x1.fill" : "rectangle.split.2x1", help: wide ? L("收窄") : L("纪要和原话并排")) {
-                        setWidth(wide ? 460 : 820, nil)
+                        setWidth(wide ? 460 : 1200, nil)
                     }
                     iconButton("minus", help: L("收成小卡")) { collapse() }
                 }
@@ -433,7 +449,7 @@ struct NotesWindowView: View {
                 Text(on ? L("对方可见 · 点击关闭") : L("仅自己可见 · 点击共享"))
                     .font(.system(size: 11)).foregroundStyle(.white).lineLimit(1).fixedSize()
                     .padding(.horizontal, 8).frame(height: 20)
-                    .background(Capsule().fill(Palette.ink.opacity(0.88)))
+                    .background(Capsule().fill(Palette.strong.opacity(0.88)))
                     .offset(x: -28).allowsHitTesting(false).transition(.opacity)
             }
         }
@@ -458,7 +474,7 @@ struct NotesWindowView: View {
             }
         }
         .padding(.leading, 12).padding(.trailing, 2).frame(height: 34)
-        .background(RoundedRectangle(cornerRadius: 10).fill(searchFocused ? Color.white : Palette.fill))
+        .background(RoundedRectangle(cornerRadius: 10).fill(searchFocused ? Palette.surface : Palette.fill))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(searchFocused ? Palette.accent : .clear, lineWidth: 1.5))
     }
 
@@ -496,7 +512,7 @@ struct NotesWindowView: View {
             Text(title).font(.system(size: 13, weight: tab == id ? .semibold : .regular))
                 .foregroundStyle(tab == id ? Palette.ink : Palette.secondary)
                 .frame(maxWidth: .infinity).frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 9).fill(tab == id ? Color.white : .clear)
+                .background(RoundedRectangle(cornerRadius: 9).fill(tab == id ? Palette.surface : .clear)
                     .shadow(color: .black.opacity(tab == id ? 0.08 : 0), radius: 1.5, y: 1))
                 .contentShape(Rectangle())
         }
@@ -671,6 +687,10 @@ struct NotesWindowView: View {
 
     @ViewBuilder
     private var banner: some View {
+        if live, model.candidateASRFailed {
+            StatusLine(tone: .needsYou, text: L("Gemma 语音识别暂不可用，正在重试"),
+                       action: (L("重试"), { model.retryCandidateRecognition() }))
+        }
         // 语音和文字只发给你的服务, and nothing translates finished sentences: it picks up by itself, and
         // no 改用 Ling, which would send the meeting elsewhere. A dead key or a missing local network
         // permission is the user's to fix: those lines come first.
@@ -793,7 +813,7 @@ struct NotesWindowView: View {
                 SecureField("sk-…", text: $keyDraft)
                     .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                     .padding(.horizontal, 10).frame(height: 34)
-                    .background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Palette.surface))
                     .overlay(RoundedRectangle(cornerRadius: 9).stroke(Palette.line, lineWidth: 1))
                     .onSubmit(saveKey)
                 SoftButton(L("保存并开始"), dark: true, action: saveKey)
@@ -898,7 +918,7 @@ struct NotesWindowView: View {
                 SpeakerStrip(model: model, session: s, editing: $editingVoice)
             }
             TranscriptListView(lines: lines, topics: engine.notes.topics, terms: searchTerms,
-                               currentMatch: ms.isEmpty ? nil : ms[currentIndex], live: live,
+                               currentMatch: ms.isEmpty ? nil : ms[currentIndex], showAIGloss: settings.askGloss, live: live,
                                partialShown: TranscriptPartial.shows(model.liveSource, live: live, after: lines.last?.src),
                                jumpTo: jumpTo, speakers: speakers, startedAt: store.liveStart,
                                identifying: model.identifyingLanguage,
@@ -926,7 +946,7 @@ struct NotesWindowView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 14).fill(Palette.strong))
             .padding(.horizontal, 16).padding(.bottom, 16).padding(.top, 8)
         }
     }
@@ -948,6 +968,7 @@ struct NotesWindowView: View {
                 capturableBadge
                 iconButton("arrow.up.left.and.arrow.down.right", help: L("展开纪要")) { setWidth(460, 760) }
             }
+            if live { ScreenStrip(screen: model.screen, compact: true) }
             if live, let p = model.ending {
                 MeetingEndingStrip(model: model, pending: p, compact: true)
                 Spacer(minLength: 0)

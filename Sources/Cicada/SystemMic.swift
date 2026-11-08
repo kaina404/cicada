@@ -6,6 +6,14 @@ import Foundation
 extension AudioDevices {
     static func inputs() -> [OutputDevice] { devices(scope: kAudioObjectPropertyScopeInput) }
 
+    /// Core Audio may report input streams on output-only devices while VoiceProcessingIO
+    /// is prepared. Capture discovery only exposes devices that can actually record audio.
+    static func recordingInputs() -> [OutputDevice] {
+        let capture = AVCaptureDevice.DiscoverySession(deviceTypes: [.microphone], mediaType: .audio, position: .unspecified)
+        let uids = Set(capture.devices.map(\.uniqueID))
+        return inputs().filter { uids.contains($0.uid) && !$0.isVirtualMic }
+    }
+
     static var defaultInput: OutputDevice? {
         var id = AudioObjectID(0)
         var size = UInt32(MemoryLayout<AudioObjectID>.size)
@@ -17,16 +25,19 @@ extension AudioDevices {
 
     /// Points an engine's input at a device. Call while the engine is stopped and before reading the
     /// input format, which then follows the device. nil leaves it where it is.
-    static func pinInput(_ engine: AVAudioEngine, to device: OutputDevice?) {
-        guard let device, let unit = engine.inputNode.audioUnit else { return }
+    @discardableResult
+    static func pinInput(_ engine: AVAudioEngine, to device: OutputDevice?) -> Bool {
+        guard let device else { return true }
+        guard let unit = engine.inputNode.audioUnit else { return false }
         var cur = AudioObjectID(0)
         var size = UInt32(MemoryLayout<AudioObjectID>.size)
         AudioUnitGetProperty(unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0, &cur, &size)
-        guard cur != device.id else { return }
+        guard cur != device.id else { return true }
         var id = device.id
         let status = AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
                                           &id, UInt32(MemoryLayout<AudioObjectID>.size))
         debugLog("mic: recording from \(device.name) status=\(status)")
+        return status == noErr
     }
 
     /// The device an engine's input is reading now (for the debug log).

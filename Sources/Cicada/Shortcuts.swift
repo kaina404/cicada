@@ -11,6 +11,7 @@ struct Shortcut: Equatable {
     static let rightOption = Shortcut(keyCode: kVK_RightOption, modifiers: 0)
     static let defaultTalk = rightOption
     static let defaultToggle = Shortcut(keyCode: kVK_ANSI_S, modifiers: controlKey | optionKey)
+    static let defaultAsk = Shortcut(keyCode: kVK_ANSI_A, modifiers: controlKey | optionKey)
 
     var isRightOption: Bool { self == .rightOption }
 

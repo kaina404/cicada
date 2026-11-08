@@ -70,6 +70,10 @@ struct AppRows: View {
                 Toggle("登录时打开", isOn: Binding(get: { loginItem.enabled }, set: { loginItem.set($0) }))
                     .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
             }
+            SettingsRow(title: L("在 Dock 中显示"), detail: L("关掉后只在菜单栏，打开窗口时才出现")) {
+                Toggle("在 Dock 中显示", isOn: Binding(get: { model.settings.showInDock }, set: { model.settings.showInDock = $0 }))
+                    .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+            }
             SettingsRow(title: L("版本 \(Updates.current)"), detail: checkDetail) {
                 if updates.update != nil {
                     SoftButton(L("安装并重新打开"), dark: true) { updates.install(model: model) }

@@ -1,35 +1,6 @@
 import AppKit
 import SwiftUI
 
-enum Palette {
-    static let ink = Color(red: 0.08, green: 0.09, blue: 0.11)
-    static let ground = Color(red: 0.953, green: 0.957, blue: 0.965)
-    static let line = Color(red: 0.894, green: 0.902, blue: 0.918)
-    static let secondary = Color(red: 0.353, green: 0.373, blue: 0.42)
-    static let tertiary = Color(red: 0.42, green: 0.44, blue: 0.50)
-    /// Body text in the records window: darker than the greys, lighter than headings.
-    static let body = Color(red: 0.239, green: 0.255, blue: 0.29)
-    /// Times you can click to jump to the original, and the numbers that order notes: the logo's
-    /// orange as ink, so text stays in the brand's family while the bright accent stays "live".
-    static let link = Color(red: 0.70, green: 0.23, blue: 0.08)
-    /// Highlighter behind numbers and dates in the conclusions.
-    static let mark = Color(red: 1.0, green: 0.906, blue: 0.639)
-    static let accent = Color(red: 0.91, green: 0.33, blue: 0.17)
-    static let accentInk = Color(red: 0.70, green: 0.23, blue: 0.08)
-    static let accentPale = Color(red: 0.99, green: 0.93, blue: 0.906)
-    /// Controls, chips, search fields.
-    static let fill = Color(red: 0.949, green: 0.953, blue: 0.961)
-    /// Emphasis blocks (summary, setting cards).
-    static let raised = Color(red: 0.961, green: 0.965, blue: 0.973)
-    /// Current row while something is live.
-    static let accentWash = Color(red: 1.0, green: 0.98, blue: 0.973)
-    static let ok = Color(red: 0.122, green: 0.478, blue: 0.271)
-    static let okPale = Color(red: 0.906, green: 0.961, blue: 0.925)
-    static let error = Color(red: 0.706, green: 0.137, blue: 0.094)
-    static let errorPale = Color(red: 0.992, green: 0.925, blue: 0.918)
-    /// Headings over placeholder shapes while notes are being written.
-    static let placeholder = Color(red: 0.722, green: 0.741, blue: 0.776)
-}
 
 /// A service in trouble, said the same way wherever it shows: a dot, what waits for what · what
 /// still works, and at most one action. Colour sits in the dot only, so a passing wait doesn't
@@ -180,7 +151,7 @@ struct MenuPanelView: View {
         })
         .onPreferenceChange(PanelHeightKey.self) { contentHeight = $0 }
         if contentHeight > maxHeight {
-            ScrollView { measured }.frame(width: 320, height: maxHeight).background(Color.white)
+            ScrollView { measured }.frame(width: 320, height: maxHeight).background(Palette.surface)
         } else {
             measured
         }
@@ -196,7 +167,7 @@ struct MenuPanelView: View {
                         if let dev = DevBuild.label {
                             Text("DEV").font(.system(size: 9, weight: .heavy)).foregroundStyle(.white)
                                 .padding(.horizontal, 5).padding(.vertical, 1)
-                                .background(Capsule().fill(Palette.ink))
+                                .background(Capsule().fill(Palette.strong))
                                 .help(dev)
                         }
                     }
@@ -287,7 +258,7 @@ struct MenuPanelView: View {
         }
         .padding(16)
         .frame(width: 320)
-        .background(Color.white)
+        .background(Palette.surface)
     }
 
     /// The panel's actions as three equal buttons, so they read as buttons rather than loose
@@ -475,7 +446,7 @@ struct MicButton: View {
 
     private func background(_ on: Bool) -> Color {
         if inHeader { return on ? Palette.accentPale : .clear }
-        return on ? Color.white : Palette.ink
+        return on ? Palette.surface : Palette.strong
     }
 
     private func border(_ on: Bool) -> Color {
@@ -636,7 +607,7 @@ extension MenuPanelView {
         }
         .padding(.horizontal, 14).padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 11).fill(live ? Palette.accentWash : Color.white))
+        .background(RoundedRectangle(cornerRadius: 11).fill(live ? Palette.accentWash : Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 11).stroke(live ? Palette.accent : Palette.line, lineWidth: 1))
         .animation(.easeOut(duration: 0.15), value: live)
     }
@@ -654,9 +625,9 @@ struct TalkKeyCap: View {
             .lineLimit(1).fixedSize()
             .padding(.horizontal, 8)
             .frame(minWidth: 44, minHeight: 32)
-            .background(RoundedRectangle(cornerRadius: 7).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(live ? Palette.accent : Color(white: 0.82), lineWidth: 1))
-            .background(RoundedRectangle(cornerRadius: 7).fill(live ? Palette.accent : Color(white: 0.82)).offset(y: pressed ? 0 : 2))
+            .background(RoundedRectangle(cornerRadius: 7).fill(Palette.surface))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(live ? Palette.accent : Palette.line, lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 7).fill(live ? Palette.accent : Palette.line).offset(y: pressed ? 0 : 2))
             .offset(y: pressed ? 2 : 0)
             .padding(.bottom, 2)
     }
@@ -696,7 +667,7 @@ struct DisplayTile: View {
             .padding(.top, 10).padding(.bottom, 8).padding(.horizontal, 4)
             // The row grows by the caption; every tile takes the row's height.
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Color.white : Palette.ground))
+            .background(RoundedRectangle(cornerRadius: 11).fill(selected ? Palette.surface : Palette.ground))
             .overlay(RoundedRectangle(cornerRadius: 11).stroke(selected ? Palette.ink : .clear, lineWidth: 2))
             .contentShape(Rectangle())
         }
@@ -709,7 +680,7 @@ struct DisplayTile: View {
     @ViewBuilder private var glyph: some View {
         switch mode {
         case "bar":
-            RoundedRectangle(cornerRadius: 4).fill(Color.white)
+            RoundedRectangle(cornerRadius: 4).fill(Palette.surface)
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
                 .overlay(alignment: .bottom) {
                     RoundedRectangle(cornerRadius: 2).fill(Palette.ink).frame(width: 26, height: 6).padding(.bottom, 3)
@@ -726,7 +697,7 @@ struct DisplayTile: View {
             }
             .padding(5)
             .frame(width: 34, height: 26, alignment: .topLeading)
-            .background(RoundedRectangle(cornerRadius: 4).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 4).fill(Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(frameLine, lineWidth: 1))
         }
     }
@@ -740,8 +711,8 @@ struct KeyCap: View {
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(RoundedRectangle(cornerRadius: 5).fill(Color.white))
-            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color(white: 0.82), lineWidth: 1))
+            .background(RoundedRectangle(cornerRadius: 5).fill(Palette.surface))
+            .overlay(RoundedRectangle(cornerRadius: 5).stroke(Palette.line, lineWidth: 1))
     }
 }
 
@@ -833,7 +804,7 @@ struct MainWindowView: View {
                 .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { detailWidth = $0 }
                 .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: selection) }
         }
-        .background(Color.white.ignoresSafeArea())
+        .background(Palette.surface.ignoresSafeArea())
         .background(Button("") { searchFocused = true }.keyboardShortcut("f").opacity(0))
         // Recordings and videos dropped anywhere on the window become records.
         .dropDestination(for: URL.self) { urls, _ in
@@ -858,8 +829,8 @@ struct MainWindowView: View {
         }
     }
 
-    static let hairline = Color(red: 0.941, green: 0.945, blue: 0.957)
-    static let listTint = Color(red: 0.98, green: 0.98, blue: 0.984)
+    static let hairline = Palette.adaptive(0xF0F1F4, 0x383C45)
+    static let listTint = Palette.adaptive(0xFAFAFB, 0x1E2126)
 
     // MARK: Sidebar
 
@@ -952,7 +923,7 @@ struct MainWindowView: View {
                 if let status = importer.status(of: s) { Tag(rowTag(status), live: status == .running) }
             }
             .padding(.horizontal, 12).padding(.vertical, 9)
-            .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Color.white : Color.clear)
+            .background(RoundedRectangle(cornerRadius: 8).fill(selected ? Palette.surface : Color.clear)
                 .shadow(color: selected ? Palette.ink.opacity(0.06) : .clear, radius: 1.5, y: 1))
             .contentShape(Rectangle())
         }
@@ -1049,7 +1020,7 @@ struct MainWindowView: View {
                     Text("开始听").font(.system(size: 15, weight: .semibold))
                 }
                 .foregroundStyle(.white).padding(.horizontal, 22).frame(height: 44)
-                .background(Capsule().fill(Palette.ink))
+                .background(Capsule().fill(Palette.strong))
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain).padding(.top, 32)
@@ -1186,7 +1157,7 @@ struct MainWindowView: View {
         .frame(maxWidth: column)
         .padding(.horizontal, inset).frame(height: 44)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background(Palette.surface)
         .overlay(alignment: .bottom) { Rectangle().fill(Self.hairline).frame(height: 1) }
         .transition(.opacity)
     }
@@ -1282,6 +1253,8 @@ struct MainWindowView: View {
             // Only once voices are told apart (or for your own lines): one speaker needs no label;
             // and only where the speaker changes.
             if !label {
+            } else if l.isAI {
+                Text("AI").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
             } else if l.isScreen {
                 Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.bottom, 2)
             }
@@ -1293,7 +1266,7 @@ struct MainWindowView: View {
             Text(l.src).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineSpacing(1)
                 .textSelection(.enabled)
             // What the screen showed is read, not heard: it is never translated.
-            if !l.isScreen {
+            if !l.isScreen, !l.isAI || (model.settings.askGloss && l.dst != nil) {
                 Text(l.dst ?? L("翻译中…")).font(.system(size: 14)).lineSpacing(2)
                     .foregroundStyle(l.dst == nil ? Palette.secondary : Palette.ink)
                     .textSelection(.enabled)
@@ -1382,6 +1355,8 @@ struct MainWindowView: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 6) {
                     if !label {
+                    } else if l.isAI {
+                        Text("AI").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
                     } else if l.isScreen {
                         Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
                     } else if voices, !me, let s = shownSession {
@@ -1404,14 +1379,14 @@ struct MainWindowView: View {
                     Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.secondary).lineSpacing(2)
                         .textSelection(.enabled)
                 }
-                if view != "dst", !l.isScreen {
+                if view != "dst" || (l.isAI && !model.settings.askGloss), !l.isScreen {
                     Text(l.src)
                         .font(.system(size: view == "src" ? 15 : 13))
                         .foregroundStyle(view == "src" ? Palette.ink : Palette.tertiary)
                         .lineSpacing(2)
                         .textSelection(.enabled)
                 }
-                if view != "src", !l.isScreen {
+                if view != "src", !l.isScreen, !l.isAI || (model.settings.askGloss && l.dst != nil) {
                     Text(l.dst ?? L("翻译中…"))
                         .font(.system(size: 15)).lineSpacing(3)
                         .foregroundStyle(l.dst == nil ? Palette.tertiary : Palette.ink)

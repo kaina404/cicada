@@ -115,7 +115,7 @@ struct OnboardingKeyStep: View {
             .background(RoundedRectangle(cornerRadius: 8).fill(Palette.raised))
         }
         .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -155,7 +155,7 @@ struct OnboardingKeyStep: View {
             .padding(.top, 18)
         }
         .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -232,7 +232,7 @@ struct OnboardingKeyStep: View {
             Text("开会时，纪要会跟着字幕一起更新。").font(.system(size: 12)).foregroundStyle(Palette.secondary)
         }
         .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -264,7 +264,7 @@ struct OnboardingKeyStep: View {
             }
         }
         .padding(22)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -288,7 +288,7 @@ struct OnboardingKeyStep: View {
             SecureField(placeholder, text: $draft)
                 .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
                 .padding(.horizontal, 12).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.ink.opacity(0.35), lineWidth: 1))
                 .onSubmit { save(draft) }
             Button(action: pasteAndCheck) {
@@ -298,7 +298,7 @@ struct OnboardingKeyStep: View {
                 }
                 .font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 14).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.strong))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -375,8 +375,8 @@ struct OnboardingKeyFooter: View {
                     Text("回去接上")
                         .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 20).frame(height: 44)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(white: 0.84), lineWidth: 1))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -386,7 +386,7 @@ struct OnboardingKeyFooter: View {
                 Text("接上后继续")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.87)))
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.line))
             }
         }
     }
@@ -399,7 +399,7 @@ struct OnboardingKeyFooter: View {
             }
             .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 28).frame(height: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.strong))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

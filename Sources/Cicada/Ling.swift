@@ -874,6 +874,54 @@ final class LingClient: ObservableObject {
         }
     }
 
+    #if os(macOS)
+    /// Coach text and validity updates use the shared priority/start gate and protected key storage.
+    func streamCoachTest(_ messages: [[String: Any]]) -> AsyncThrowingStream<String, Error> {
+        AsyncThrowingStream { continuation in
+            let work = Task { @MainActor in
+                do {
+                    guard CoachDeepSeekTest.enabled, let key = AIKey.read("deepseek") else { throw Failure.noKey }
+                    await acquire(.speak)
+                    try Task.checkCancellation()
+                    guard let endpoint = URL(string: "https://api.deepseek.com/chat/completions") else { throw Failure.network }
+                    var request = URLRequest(url: endpoint, timeoutInterval: 60)
+                    request.httpMethod = "POST"
+                    request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                    request.httpBody = try JSONSerialization.data(withJSONObject: CoachDeepSeekTest.body(messages))
+                    let started = Date()
+                    let (bytes, response) = try await session.bytes(for: request)
+                    guard let http = response as? HTTPURLResponse else { throw Failure.network }
+                    if http.statusCode == 429 { pausedUntil = Date().addingTimeInterval(5) }
+                    guard http.statusCode == 200 else { throw Failure.http(http.statusCode) }
+                    var first = true
+                    var done = false
+                    for try await line in bytes.lines {
+                        try Task.checkCancellation()
+                        guard line.hasPrefix("data:") else { continue }
+                        let value = String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+                        if value == "[DONE]" { done = true; break }
+                        if let data = value.data(using: .utf8),
+                           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], object["error"] != nil {
+                            throw Failure.parse
+                        }
+                        if let delta = AskPrompt.delta(value), !delta.isEmpty {
+                            if first {
+                                debugLog("coach: deepseek request_first_token_ms=\(Int(Date().timeIntervalSince(started) * 1000))")
+                                first = false
+                            }
+                            continuation.yield(delta)
+                        }
+                    }
+                    guard done, !first else { throw Failure.parse }
+                    continuation.finish()
+                } catch { continuation.finish(throwing: error) }
+            }
+            continuation.onTermination = { _ in work.cancel() }
+        }
+    }
+    #endif
+
     // MARK: Start gate
 
     private var lastStart = Date.distantPast

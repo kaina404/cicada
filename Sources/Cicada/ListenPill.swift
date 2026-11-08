@@ -92,7 +92,7 @@ struct ListenPill: View {
                 Text("⌘R").font(.system(size: 11)).foregroundStyle(Palette.secondary)
             }
             .padding(.leading, 6).padding(.trailing, 12).frame(height: 32)
-            .background(Capsule().fill(Color.white))
+            .background(Capsule().fill(Palette.surface))
             .overlay(Capsule().stroke(Palette.line, lineWidth: 1))
             .contentShape(Capsule())
         }
@@ -128,7 +128,7 @@ struct ListenPill: View {
         }
         .foregroundStyle(.white)
         .padding(.leading, 5).padding(.trailing, 4).frame(height: 32)
-        .background(Capsule().fill(Palette.ink))
+        .background(Capsule().fill(Palette.strong))
     }
 
     /// The pill's left part: shows what this meeting is on screen as. The languages stay one hover
@@ -167,14 +167,14 @@ struct ListenPill: View {
                 Button { model.keepRecording() } label: {
                     Text("继续记录").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.ink)
                         .padding(.horizontal, 12).frame(height: 24)
-                        .background(Capsule().fill(Color.white))
+                        .background(Capsule().fill(Palette.surface))
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
             .foregroundStyle(.white)
             .padding(.leading, 4).padding(.trailing, 4).frame(height: 32)
-            .background(Capsule().fill(Palette.ink))
+            .background(Capsule().fill(Palette.strong))
         }
     }
 }

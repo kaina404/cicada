@@ -36,7 +36,7 @@ struct SettingsCard<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
         VStack(spacing: 0) { content }
-            .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 }
@@ -84,7 +84,7 @@ struct Segments: View {
                     Text(o.title).font(.system(size: 12, weight: on ? .semibold : .regular))
                         .foregroundStyle(on ? Palette.ink : Palette.secondary).lineLimit(1)
                         .padding(.horizontal, fill ? 6 : 10).frame(maxWidth: fill ? .infinity : nil).frame(height: 26)
-                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Color.white : .clear)
+                        .background(RoundedRectangle(cornerRadius: 7).fill(on ? Palette.surface : .clear)
                             .shadow(color: .black.opacity(on ? 0.08 : 0), radius: 1.5, y: 1))
                         .contentShape(Rectangle())
                 }
@@ -152,7 +152,7 @@ struct SoftButton: View {
             Text(title).font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
                 .padding(.horizontal, 12).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 7).fill(dark ? Palette.ink : onGrey ? Color.white : Color(white: 0.925)))
+                .background(RoundedRectangle(cornerRadius: 7).fill(dark ? Palette.strong : onGrey ? Palette.surface : Palette.fill))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -171,8 +171,14 @@ struct ShortcutField: View {
     @State private var monitor: Any?
     @State private var rightDown = false
 
-    private var current: Shortcut { role == .talk ? model.settings.talkKey : model.settings.toggleKey }
-    private var standard: Shortcut { role == .talk ? .defaultTalk : .defaultToggle }
+    private var current: Shortcut { model.shortcut(for: role) }
+    private var standard: Shortcut {
+        switch role {
+        case .talk: .defaultTalk
+        case .toggle: .defaultToggle
+        case .ask: .defaultAsk
+        }
+    }
 
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
@@ -362,7 +368,7 @@ struct MicSetupCard: View {
     private func step(_ n: Int, _ title: String, _ detail: String, done: Bool, active: Bool, activeText: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             ZStack {
-                Circle().fill(done ? Palette.ink : active ? Palette.accentPale : Palette.ground)
+                Circle().fill(done ? Palette.strong : active ? Palette.accentPale : Palette.ground)
                 if done {
                     Image(systemName: "checkmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
                 } else if active {
@@ -421,7 +427,7 @@ struct SettingsView: View {
             ScrollView { page }
         }
         .frame(width: 720, height: 600)
-        .background(Color(red: 0.965, green: 0.969, blue: 0.976))
+        .background(Palette.canvas)
     }
 
     /// The current section without the scroll view (also drawn by the `settingsRender` debug command).
@@ -431,10 +437,6 @@ struct SettingsView: View {
                 Text(model.settingsSection.title).font(.system(size: 20, weight: .bold)).foregroundStyle(Palette.ink)
                 Spacer()
                 if model.settingsSection == .ai { AIServiceMenu(model: model, settings: settings) }
-                if model.settingsSection == .screen {
-                    Toggle("识别共享屏幕", isOn: Binding(get: { settings.screenNotes }, set: { model.setScreenNotes($0) }))
-                        .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
-                }
                 if model.settingsSection == .speak {
                     Toggle("把我说的翻译给对方", isOn: Binding(get: { settings.speakEnabled }, set: { model.enableSpeaking($0) }))
                         .toggleStyle(.switch).labelsHidden().tint(Palette.ink)
@@ -444,7 +446,7 @@ struct SettingsView: View {
             case .speak: speak
             case .overlay: overlay
             case .language: LanguageSettings(model: model, settings: settings)
-            case .screen: ScreenSettings(settings: settings, screen: model.screen)
+            case .screen: ScreenSettings(settings: settings)
             case .records: records
             case .ai: AISettingsView(model: model, ling: model.ling, settings: settings)
             case .diagnostics: DiagnosticsView(diagnostics: model.diagnostics, service: settings.aiConfig)
@@ -472,7 +474,7 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.horizontal, 10).frame(height: 32)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(on ? Color.white : .clear))
+                    .background(RoundedRectangle(cornerRadius: 8).fill(on ? Palette.surface : .clear))
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(on ? Palette.line : .clear, lineWidth: 1))
                     .contentShape(Rectangle())
                 }
@@ -604,7 +606,7 @@ struct SettingsView: View {
                         Text("试一句").font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundStyle(ok ? Color.white : Palette.ink).padding(.horizontal, 12).frame(height: 28)
-                    .background(RoundedRectangle(cornerRadius: 7).fill(ok ? Palette.ink : Palette.fill))
+                    .background(RoundedRectangle(cornerRadius: 7).fill(ok ? Palette.strong : Palette.fill))
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -691,8 +693,14 @@ struct SettingsView: View {
                     Segments(options: [("notes", L("实时纪要")), ("bar", L("字幕条")), ("none", L("不显示"))],
                              value: settings.displayMode) { model.setDisplayMode($0) }
                 }
-                SettingsRow(title: L("切换显示方式"), detail: model.toggleKeyTaken ? L("被其他应用占用了，点右边换一个") : L("实时纪要 → 字幕条 → 不显示"), divider: false) {
+                SettingsRow(title: L("切换显示方式"), detail: model.toggleKeyTaken ? L("被其他应用占用了，点右边换一个") : L("实时纪要 → 字幕条 → 不显示")) {
                     ShortcutField(model: model, role: .toggle)
+                }
+                SettingsRow(title: L("回答刚才的问题"),
+                            detail: model.askKeyTaken ? L("被其他应用占用了，点右边换一个")
+                                : model.canAsk ? L("听的时候按，用本机模型回答") : L("要先在屏幕识别里装好本机模型"),
+                            divider: false) {
+                    ShortcutField(model: model, role: .ask)
                 }
             }
             Text("实时纪要").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.top, 4)

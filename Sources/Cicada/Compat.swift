@@ -12,12 +12,12 @@ extension View {
         }
     }
 
-    /// Where a scroll view's content sits against its bottom edge (15 and later; 14 has
+    /// Where a scroll view's content sits against the chosen edge (15 and later; 14 has
     /// `onLegacyBottomDistance` below).
-    @ViewBuilder func onScrollEdgeChange(_ action: @escaping (ScrollEdge, ScrollEdge) -> Void) -> some View {
+    @ViewBuilder func onScrollEdgeChange(fromTop: Bool = false, _ action: @escaping (ScrollEdge, ScrollEdge) -> Void) -> some View {
         if #available(macOS 15, *) {
             onScrollGeometryChange(for: ScrollEdge.self) { g in
-                ScrollEdge(distance: g.contentSize.height - g.contentOffset.y - g.containerSize.height,
+                ScrollEdge(distance: fromTop ? g.contentOffset.y : g.contentSize.height - g.contentOffset.y - g.containerSize.height,
                            height: g.contentSize.height, container: g.containerSize.height)
             } action: { old, new in action(old, new) }
         } else {
@@ -36,9 +36,9 @@ extension View {
 }
 
 extension View {
-    /// macOS 14: how far `bottomMarker` (the content's last view) is below the visible area,
+    /// macOS 14: distance from the chosen content marker to the visible edge,
     /// measured by geometry since `onScrollGeometryChange` is 15 and later. Does nothing on 15+.
-    @ViewBuilder func onLegacyBottomDistance(_ action: @escaping (CGFloat) -> Void) -> some View {
+    @ViewBuilder func onLegacyBottomDistance(fromTop: Bool = false, _ action: @escaping (CGFloat) -> Void) -> some View {
         if #available(macOS 15, *) {
             self
         } else {
@@ -49,19 +49,27 @@ extension View {
                 .onPreferenceChange(LegacyScrollEdge.Container.self) { LegacyScrollEdge.container = $0 }
                 // The lazy stack doesn't draw a marker scrolled far out of view: that's far from the bottom.
                 .onPreferenceChange(LegacyScrollEdge.Bottom.self) { y in
-                    action(y < 0 ? .greatestFiniteMagnitude : y - LegacyScrollEdge.container)
+                    if !fromTop { action(y < 0 ? .greatestFiniteMagnitude : y - LegacyScrollEdge.container) }
+                }
+                .onPreferenceChange(LegacyScrollEdge.Top.self) { y in
+                    if fromTop { action(y == .greatestFiniteMagnitude ? y : -y) }
                 }
         }
     }
 
-    /// Put on the content's last view (macOS 14, with `onLegacyBottomDistance` on the scroll view).
-    @ViewBuilder func bottomMarker() -> some View {
+    /// Put on the content's first or last view to match the scroll view's chosen edge.
+    @ViewBuilder func bottomMarker(fromTop: Bool = false) -> some View {
         if #available(macOS 15, *) {
             self
         } else {
             background(GeometryReader { g in
-                Color.clear.preference(key: LegacyScrollEdge.Bottom.self,
-                                       value: g.frame(in: .named(LegacyScrollEdge.space)).maxY)
+                if fromTop {
+                    Color.clear.preference(key: LegacyScrollEdge.Top.self,
+                                           value: g.frame(in: .named(LegacyScrollEdge.space)).minY)
+                } else {
+                    Color.clear.preference(key: LegacyScrollEdge.Bottom.self,
+                                           value: g.frame(in: .named(LegacyScrollEdge.space)).maxY)
+                }
             })
         }
     }
@@ -74,6 +82,10 @@ enum LegacyScrollEdge {
         static let defaultValue: CGFloat = 0
         static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
     }
+    struct Top: PreferenceKey {
+        static let defaultValue: CGFloat = .greatestFiniteMagnitude
+        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = min(value, nextValue()) }
+    }
     /// -1 while the marker isn't drawn.
     struct Bottom: PreferenceKey {
         static let defaultValue: CGFloat = -1
@@ -81,7 +93,7 @@ enum LegacyScrollEdge {
     }
 }
 
-/// How far the content's bottom is below the visible area, the content's height and the view's.
+/// Distance from the followed edge, the content's height and the view's.
 struct ScrollEdge: Equatable {
     var distance: CGFloat
     var height: CGFloat

@@ -215,7 +215,7 @@ final class TranslationService {
         // translation a moment later, and on-device translation would be slower and rougher.
         if kind == .draft { return nil }
         let started = Date()
-        if let out = await viaApple(text, source: source, target: target) {
+        if let out = await Self.appleOnly(text, source: source, target: target) {
             trace?.attempts.append(.init(provider: "apple", seconds: Date().timeIntervalSince(started), failure: nil))
             debugLog("translate via=apple kind=\(kind)")
             return out
@@ -384,7 +384,7 @@ final class TranslationService {
     }
 
     /// Apple's on-device translation, made outside a SwiftUI view: only on macOS 26.
-    private func viaApple(_ text: String, source: String, target: String) async -> String? {
+    static func appleOnly(_ text: String, source: String, target: String) async -> String? {
         guard #available(macOS 26, *) else { return nil }
         guard source != "auto" else { return nil }
         let from = Locale.Language(identifier: Self.appleCode(source))

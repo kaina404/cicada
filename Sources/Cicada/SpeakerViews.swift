@@ -5,8 +5,8 @@ import SwiftUI
 /// Colours for 说话人 1, 2, 3…, cycling after four: not the accent ("live", and 你) nor link blue
 /// (times in the records window), distinct in lightness, all ≥ 4.5:1 on white.
 enum SpeakerColor {
-    private static let inks: [Color] = [Color(red: 0.059, green: 0.482, blue: 0.424), Color(red: 0.478, green: 0.298, blue: 0.761),
-                                        Color(red: 0.690, green: 0.227, blue: 0.478), Color(red: 0.541, green: 0.353, blue: 0)]
+    private static let inks: [Color] = [Palette.adaptive(0x0F7B6C, 0x7CD8C5), Palette.adaptive(0x7A4CC2, 0xC3A1F4),
+                                        Palette.adaptive(0xB03A7A, 0xF399C7), Palette.adaptive(0x8A5A00, 0xE9C36C)]
     static func ink(_ n: Int) -> Color { inks[(max(1, n) - 1) % inks.count] }
 }
 
@@ -77,9 +77,9 @@ struct SpeakerStrip: View {
                             if let editing { editing.wrappedValue = on ? nil : voice } else { popover = voice }
                         } label: {
                             HStack(spacing: 5) {
-                                Circle().fill(on ? Color.white : SpeakerColor.ink(n)).frame(width: 6, height: 6)
+                                Circle().fill(on ? Palette.surface : SpeakerColor.ink(n)).frame(width: 6, height: 6)
                                 Text(SpeakerLabels.label(n, names)).font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(on ? Color.white : SpeakerColor.ink(n))
+                                    .foregroundStyle(on ? Palette.surface : SpeakerColor.ink(n))
                             }
                             .fixedSize()
                             .padding(.horizontal, 8).frame(height: 22)
@@ -219,7 +219,7 @@ struct SpeakerEditor: View {
             .frame(maxWidth: inline ? .infinity : nil, alignment: .leading)
             .background {
                 if inline {
-                    RoundedRectangle(cornerRadius: 14).fill(Color.white)
+                    RoundedRectangle(cornerRadius: 14).fill(Palette.surface)
                         .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
                 }
@@ -233,7 +233,7 @@ struct SpeakerEditor: View {
             Text(title).font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(dark ? Color.white : Palette.ink)
                 .padding(.horizontal, 10).frame(height: 28)
-                .background(RoundedRectangle(cornerRadius: 8).fill(dark ? Palette.ink : Color.white))
+                .background(RoundedRectangle(cornerRadius: 8).fill(dark ? Palette.strong : Palette.surface))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(dark ? Palette.ink : Palette.line, lineWidth: 1))
                 .fixedSize()
                 .contentShape(Rectangle())
@@ -286,7 +286,7 @@ struct LineSpeakerPicker: View {
                             Text(SpeakerLabels.label(n, names)).font(.system(size: 12, weight: .semibold)).foregroundStyle(SpeakerColor.ink(n))
                         }
                         .padding(.horizontal, 9).frame(height: 28)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Palette.surface))
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(v == current ? SpeakerColor.ink(n) : Palette.line, lineWidth: 1))
                         .fixedSize()
                         .contentShape(Rectangle())
@@ -311,7 +311,7 @@ struct SpeakerUndoToast: View {
                     .buttonStyle(.plain).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.accentPale)
             }
             .padding(.horizontal, 14).frame(minHeight: 38)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink).shadow(color: .black.opacity(0.2), radius: 12, y: 6))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.strong).shadow(color: .black.opacity(0.2), radius: 12, y: 6))
             .padding(.bottom, 18)
             .transition(.opacity)
         }
@@ -333,6 +333,7 @@ struct SpeakerPreview: View {
                     if !starts.contains(l.id) {
                     } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
                     else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
+                    else if l.isAI { Text("AI").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if let n = numbers[l.id] { SpeakerTag(number: n) }
                     else if !numbers.isEmpty { UnknownSpeakerTag() }
                     Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.ink)

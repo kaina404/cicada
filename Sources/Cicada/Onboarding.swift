@@ -325,7 +325,7 @@ struct SampleCallCard: View {
             }
             .foregroundStyle(Palette.ink)
             .padding(.horizontal, 22).frame(height: 44)
-            .background(Capsule().fill(Color.white))
+            .background(Capsule().fill(Palette.surface))
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
@@ -390,7 +390,7 @@ struct OnboardingView: View {
         .padding(.horizontal, 64)
         .padding(.bottom, 36)
         .frame(width: 860, height: 640)
-        .background(Color(red: 0.965, green: 0.969, blue: 0.976))
+        .background(Palette.canvas)
         .onChange(of: step) { _, _ in sample.reset() }
         // Only the moment it turns on moves on by itself: when it was already on (the guide
         // reopened from Settings), step 1 stays put with a plain 继续.
@@ -413,7 +413,7 @@ struct OnboardingView: View {
                 HStack(alignment: .top, spacing: 6) {
                     ForEach(1...Self.steps, id: \.self) { i in
                         VStack(alignment: .leading, spacing: 7) {
-                            Capsule().fill(i <= step ? Palette.ink : Color(white: 0.87)).frame(height: 4)
+                            Capsule().fill(i <= step ? Palette.ink : Palette.line).frame(height: 4)
                             Text(stepNames[i - 1])
                                 .font(.system(size: 11, weight: i == step ? .semibold : .regular))
                                 .foregroundStyle(i == step ? Palette.ink : Palette.tertiary)
@@ -446,7 +446,7 @@ struct OnboardingView: View {
                 Text("打开后自动继续")
                     .font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.secondary)
                     .padding(.horizontal, 24).frame(height: 44)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(white: 0.87)))
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Palette.line))
             case keyStep:
                 OnboardingKeyFooter(ling: model.ling, skipping: $model.onboardingKeySkip, next: { step = keyStep + 1 })
             case 4 where !speakSetupShown:
@@ -479,7 +479,7 @@ struct OnboardingView: View {
             }
             .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 28).frame(height: 44)
-            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 12).fill(Palette.strong))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -516,7 +516,7 @@ struct OnboardingView: View {
         Button(action: action) {
             Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
                 .padding(.horizontal, 16).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.ink))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.strong))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -526,8 +526,8 @@ struct OnboardingView: View {
         Button(action: action) {
             Text(text).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
                 .padding(.horizontal, 16).frame(height: 36)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(white: 0.84), lineWidth: 1))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -535,7 +535,7 @@ struct OnboardingView: View {
 
     private func whiteCard<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         content()
-            .background(RoundedRectangle(cornerRadius: 18).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 18).fill(Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -636,7 +636,7 @@ struct OnboardingView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(22)
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
             .contentShape(Rectangle())
         }
@@ -729,10 +729,10 @@ struct OnboardingView: View {
         .font(.system(size: 11)).foregroundStyle(Palette.secondary)
         .padding(.horizontal, 8).padding(.vertical, 6)
         .frame(width: width, height: 52)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color(white: 0.84), lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
         .overlay(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: 10).fill(Color(white: 0.84)).frame(height: 3).padding(.horizontal, 1)
+            RoundedRectangle(cornerRadius: 10).fill(Palette.line).frame(height: 3).padding(.horizontal, 1)
         }
     }
 
@@ -780,12 +780,12 @@ struct OnboardingView: View {
                     .font(.system(size: 12)).foregroundStyle(Palette.secondary)
             }
             .padding(.horizontal, 18).frame(height: 36)
-            .background(Color(white: 0.93))
+            .background(Palette.fill)
             .zIndex(1)
-            Color.white.frame(height: 64)
+            Palette.surface.frame(height: 64)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 16).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.line, lineWidth: 1))
         .accessibilityHidden(true)
     }
@@ -797,7 +797,7 @@ struct OnboardingView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 14).fill(Palette.surface))
     }
 }
 
@@ -815,7 +815,7 @@ struct OnboardingNotesTeaser: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach([1.0, 0.8, 0.9], id: \.self) { w in
-                        Capsule().fill(Color(white: 0.87)).frame(width: 110 * w, height: 6)
+                        Capsule().fill(Palette.line).frame(width: 110 * w, height: 6)
                     }
                 }
                 .frame(width: 110, alignment: .leading)
@@ -827,7 +827,7 @@ struct OnboardingNotesTeaser: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, 18).padding(.vertical, 12)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 14).fill(Palette.surface))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.line, lineWidth: 1))
         }
     }

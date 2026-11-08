@@ -89,7 +89,7 @@ struct SpeakTestView: View {
             }
             .foregroundStyle(talking ? Palette.accentInk : Color.white)
             .padding(.horizontal, 18).frame(height: 40)
-            .background(RoundedRectangle(cornerRadius: 10).fill(talking ? Palette.accentPale : Palette.ink))
+            .background(RoundedRectangle(cornerRadius: 10).fill(talking ? Palette.accentPale : Palette.strong))
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
                 .onChanged { _ in if !holding { holding = true; tester.beginTalking() } }
@@ -156,7 +156,7 @@ struct SpeakTestView: View {
             ForEach(Array(stages(r).enumerated()), id: \.element.id) { i, s in
                 HStack(spacing: 12) {
                     ZStack {
-                        Circle().fill(s.state == 3 ? Palette.accent : s.state == 2 ? Palette.ink : s.state == 1 ? Palette.accentPale : Palette.fill)
+                        Circle().fill(s.state == 3 ? Palette.accent : s.state == 2 ? Palette.strong : s.state == 1 ? Palette.accentPale : Palette.fill)
                         switch s.state {
                         case 3: Image(systemName: "xmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
                         case 2: Image(systemName: "checkmark").font(.system(size: 9, weight: .bold)).foregroundStyle(.white)
@@ -183,7 +183,7 @@ struct SpeakTestView: View {
             }
         }
         .padding(.horizontal, 14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -244,7 +244,7 @@ struct SpeakTestView: View {
             }
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -281,7 +281,7 @@ struct SpeakTestView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -318,7 +318,7 @@ struct SpeakTestView: View {
             }
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 

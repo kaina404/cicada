@@ -118,6 +118,17 @@ final class AppMenu: NSObject, NSMenuItemValidation {
         main.addItem(top)
     }
 
+    /// Right-click on the Dock icon: the four things reached for most. Titles follow the meeting
+    /// through `validateMenuItem`, as in the menu bar.
+    func dockMenu() -> NSMenu {
+        let m = NSMenu()
+        m.addItem(item(L("停止记录"), #selector(toggleRecording)))
+        m.addItem(item(L("实时纪要"), #selector(openNotes)))
+        m.addItem(item(L("会议记录"), #selector(openRecords)))
+        m.addItem(item(L("设置…"), #selector(openSettings)))
+        return m
+    }
+
     // MARK: State
 
     func validateMenuItem(_ item: NSMenuItem) -> Bool {

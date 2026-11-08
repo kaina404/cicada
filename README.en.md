@@ -1,4 +1,6 @@
 <p align="center">
+
+Cicada stays in the Dock while running, with an orange dot while recording. Right-click to start or stop recording, open Live Notes, Meetings, or Settings. Turn off “Show in Dock” in Settings for menu-bar-only use when other windows are closed.
   <img src="docs/icon.png" width="128" height="128" alt="Cicada icon">
 </p>
 
@@ -31,7 +33,11 @@ Cicada works with whatever is playing on your computer, from Zoom, Teams, and Fe
   <img src="docs/demo.gif" width="800" alt="A Bloomberg English livestream on YouTube with Cicada's live Chinese notes, topics, and fishbone diagram on the right and bilingual subtitles at the bottom">
 </p>
 
+The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
+
 ## Platforms
+
+Each new meeting offers an optional screen selector at the top of Live Notes. Choose a window or display without changing the audio source, or continue without one. You can change it or stop reading during the meeting. Ending the meeting stops capture and clears the selection; the next meeting starts without a screen.
 
 | Platform | Requirements | Notes |
 |---|---|---|
@@ -50,6 +56,16 @@ All four share one version number and one meeting record format; downloads are o
 
 While the meeting runs, the notes window organizes a summary, topics and key points, conclusions, to-dos, a fishbone diagram, and a glossary of names and terms, and every conclusion or to-do clicks straight back to the supporting lines in the bilingual transcript. Cicada unifies names and terms across the notes and remembers misrecognized spellings, so `⌘F` searches both the canonical spelling and the variants. When the AI service has a problem only you can fix (key, credit, model), the notes window says so and the menu bar icon gets an orange dot; when **Turn on mic** can't get the microphone, the notes window, the subtitle bar and the menu bar icon all say so.
 
+Import your resume, job description and company background in Settings › AI Service › Interview Coach. DeepSeek Flash generates answers and checks whether the existing script is still sufficient, using a DeepSeek key. Local `mlx-community/gemma-4-E4B-it-qat-4bit` handles candidate microphone transcription and reading progress. Computer sound belongs to the interviewer; the enabled microphone belongs to the candidate. For answer generation, DeepSeek receives original-language Apple interviewer transcripts and Gemma candidate transcripts, and compressed screen keyframes when Screen Reading is enabled. Translated text is excluded. Original transcripts, retrieved background and selected screen images are sent to DeepSeek; microphone reading audio stays local. Translation and meeting-notes services are configured separately. Automatic answers coalesce the latest transcript until the interviewer endpoint; punctuation and casing revisions do not restart generation. Manual requests still start immediately.
+
+The coach writes a complete, directly speakable English answer in B1–B2 English, with short sentences and the conclusion first. An offline British IPA dictionary adds lighter support for a Chinese final-year high-school student: familiar words stay plain, difficult and technical words are annotated only on their first occurrence in each answer; reading progress and Chinese glosses ignore the IPA. The full teleprompter keeps the script in place, highlights the current sentence and follows your reading. Recognition errors, short fragments and screen changes do not rewrite the script, and ASR revisions do not move reading progress backward. Confirmed speech stays fixed; follow-ups rewrite only the remaining script, while acknowledgements and reading do not cancel completion. Press `⌃⌥A` to regenerate. The coach displays text only and never plays it through the virtual microphone. Settings can install local Silero VAD and Smart Turn detection. A usable opening within one second remains an optimization target, not a guarantee. Microphone sentence merges stay on the candidate channel, and delayed copies after long reading do not trigger a new answer. Local Gemma listens to candidate microphone audio to drive highlighting and scrolling: independent transcription is aligned to the script with tolerance for mispronunciations and repetitions. The transcript column, saved speech and coach context share this Gemma transcript, which is reused for reading alignment. Recognition failures show Retry and never fall back to Apple. Recognition failure preserves the script and position, with Retry available. After a skipped sentence ending, a unique consecutive phrase in the independently transcribed audio can recover the reading position instead of leaving the highlight on the previous sentence. After each interviewer turn, DeepSeek reviews the conversation, actual speech, current script and unread remainder. A valid answer stays unchanged; only an unmet requirement triggers a replacement of the remaining script. Reviews preserve the script while pending, on failure or when superseded; keywords do not decide whether to rewrite. A single response returns only a keep decision or streams the replacement after its decision line, with no local review or second generation call. Requests to simplify, repeat or give another example are checked against the immediate unread opening and the requested form, not just related facts later in the script. Refresh Answer or `⌃⌥A` bypasses review and answers the current question and related follow-ups afresh using the conversation, allowing earlier speech to be restated. Ordinary acknowledgements preserve the script.
+
+In the Live Notes transcript, AI replies start collapsed; expand a reply to read the full text and Chinese gloss. In-progress speech shows live translation in Bilingual or Translation Only mode. Original Only pauses translation; switch back to Bilingual in the window’s language options to resume.
+
+Choose the candidate microphone explicitly or follow the system input, including AirPods, with fallback after disconnection. Interviewer sound is captured through the system audio tap even with headphones. Significant screen changes and code changes detected through OCR produce keyframes; images need no readable text to qualify. Each answer request includes up to three compressed frames and bounded original transcript context. Interviewer audio is used for speech recognition and turn detection, without being sent again for answer generation. Full transcripts remain in local meeting records. Suggestions are stored separately as AI rows, never as spoken evidence; optional Chinese glosses of the next suggestion use on-device translation.
+
+Chinese glosses begin translating on device as complete English sentences arrive and appear when ready. A failed sentence is retried without disabling glosses for the meeting.
+
 ### Live subtitles and language detection
 
 Cicada detects the spoken language on device within seconds and translates into your system language, and pressing `⌃⌥S` switches between the notes window, a compact subtitle bar, and hidden. The subtitle bar appears only when someone speaks and turns see-through under your pointer so you can click right through it.
@@ -65,6 +81,8 @@ In such a meeting each line is marked **In room** or **Online**. If an external 
 ### Speak back in their language
 
 Hold the right `⌥` key and speak so the room hears your translated voice through BlackHole 2ch, a virtual microphone you can install from the app with one click and that Cicada switches to automatically while interpreting is on. With an AI service key the other side hears natural voices (Gemini through OpenRouter or ZenMux, Ming through Ling), and Ling can also clone your own voice from an 8 to 30 second sample; without a key it uses macOS system voices.
+
+On Mac, the meeting microphone and push-to-talk coordinate audio resources: repeated device-change restarts are merged, echo cancellation is not rebuilt during plain recording, and hardware starts and stops run in the background.
 
 <p align="center">
   <img src="docs/interpreting.png" width="640" alt="Interpreting settings showing the right Option talk key, target language, Ming voice previews, and macOS voices">
@@ -112,6 +130,7 @@ Without a key, everything runs on Apple's on-device models plus Google Translate
 | Interpreting: hearing and translating what you say | Ming `Ming-3.0-audio-flash`, one step | Apple on-device transcript, then the translation chain above |
 | Interpreting: the voice the room hears, voice cloning | Ming `Ming-3.0-tts-0.5B` | macOS system voices (`AVSpeechSynthesizer`); no cloning |
 | Speaker identification (说话人识别, on by default) | WeSpeaker ResNet34-LM voiceprints, bundled, on device (Core ML) | same |
+| Assistant (Mac) | DeepSeek Flash · local Gemma reading · Silero VAD / Smart Turn | — |
 
 <a id="ling-api-key"></a>
 ## Setting up an AI service key
@@ -195,3 +214,5 @@ See [AGENTS.md](AGENTS.md) for architecture details and release workflows. The w
 ## License
 
 [Apache-2.0](LICENSE). The BlackHole 2ch virtual audio driver is licensed under the GPL; Cicada does not bundle it and downloads the official release on demand when you choose to install it. The bundled voiceprint model is [WeSpeaker](https://github.com/wenet-e2e/wespeaker)'s ResNet34-LM trained on VoxCeleb, licensed CC BY 4.0, converted to Core ML by `scripts/convert-voiceprint.py`.
+
+When recording your own voice, choose the Mac microphone, AirPods, or an external microphone in the recording dialog. Recording captures the original microphone audio and avoids conflicts with the idle interpreting echo canceller. Missing sound or a disconnected microphone prompts you to record again.

@@ -452,9 +452,9 @@ struct FishboneView: View {
 
     private var spine: some View {
         VStack(spacing: 0) {
-            Rectangle().fill(Color(white: 0.84)).frame(width: 2)
+            Rectangle().fill(Palette.line).frame(width: 2)
             Circle().fill(Palette.ink).frame(width: 7, height: 7)
-            Rectangle().fill(Color(white: 0.84)).frame(width: 2)
+            Rectangle().fill(Palette.line).frame(width: 2)
         }
         .frame(width: 18)
     }
@@ -502,11 +502,11 @@ enum UserScroll {
     static var recent: Bool { Date().timeIntervalSince(last) < 0.6 }
 }
 
-/// The transcript grouped under the notes' topics, oldest first. While live it follows the
-/// newest line; scrolling up pauses that and collects new lines into a "↓ N 句新内容" button.
+/// The transcript grouped under the notes' topics, newest first. While live it follows the
+/// top; scrolling down pauses that and collects new lines into a "↑ N 句新内容" button.
 /// A search highlights matches in place instead of hiding the lines around them.
 ///
-/// Every paragraph is its own lazy child, so a long
+/// Every utterance is its own lazy child, so a long
 /// meeting lays out only what is on screen. What is being said right now is `partial`, a view that
 /// watches the speech itself: with `.equatable()` a new word redraws that row, not the list.
 struct TranscriptListView<Partial: View>: View, Equatable {
@@ -516,6 +516,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
     var terms: [String] = []
     var currentMatch: String?
     var bilingual = true
+    var showAIGloss = true
     var live = false
     /// `partial` is on show (`TranscriptPartial.shows`).
     var partialShown = false
@@ -536,6 +537,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
     @ViewBuilder var partial: Partial
 
     @State private var assigning: String?
+    @State private var expandedAI: Set<String> = []
 
     @State private var following = true
     @State private var seenCount = 0
@@ -543,7 +545,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
 
     static func == (a: Self, b: Self) -> Bool {
         a.lines == b.lines && a.topics == b.topics && a.terms == b.terms && a.currentMatch == b.currentMatch
-            && a.bilingual == b.bilingual && a.live == b.live && a.partialShown == b.partialShown
+            && a.showAIGloss == b.showAIGloss && a.bilingual == b.bilingual && a.live == b.live && a.partialShown == b.partialShown
             && a.jumpTo == b.jumpTo && a.speakers == b.speakers && a.startedAt == b.startedAt && a.voices == b.voices && a.marked == b.marked
             && a.identifying == b.identifying && a.places == b.places
     }
@@ -575,15 +577,13 @@ struct TranscriptListView<Partial: View>: View, Equatable {
     }
 
     private var items: [Item] {
-        let gs = groups
-        let starts = SpeakerLabels.runStarts(lines, speakers)
+        let gs = Array(groups.reversed())
         var out: [Item] = []
         for (gi, g) in gs.enumerated() {
             if !g.title.isEmpty { out.append(.header(title: g.title, start: g.start, gap: gi > 0)) }
-            for (i, p) in TranscriptParagraphs.group(g.lines, speakers).enumerated() {
-                // With voices told apart, a name only where the speaker changes (and atop each topic).
-                // Every paragraph carries its name when voices are on: it is also where it's corrected.
-                out.append(.paragraph(p, label: speakers.isEmpty || !voices.isEmpty || i == 0 || starts.contains(p[0].id)))
+            // Keep each utterance intact, but put the latest one above earlier speech and AI replies.
+            for line in g.lines.reversed() {
+                out.append(.paragraph([line], label: true))
             }
         }
         return out
@@ -600,6 +600,10 @@ struct TranscriptListView<Partial: View>: View, Equatable {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
+                        Color.clear.frame(height: 1).id("top").bottomMarker(fromTop: true)
+                        if partialShown {
+                            partial.id("partial")
+                        }
                         ForEach(items) { item in
                             switch item {
                             case .header(let title, let start, let gap):
@@ -610,9 +614,6 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                                 row(ls, label: label).padding(.bottom, 4)
                             }
                         }
-                        if partialShown {
-                            partial.id("partial")
-                        }
                         if lines.isEmpty && !partialShown {
                             if live {
                                 TranscriptWaitingView(startedAt: startedAt, identifying: identifying)
@@ -621,13 +622,11 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                                     .frame(maxWidth: .infinity).padding(.top, 40)
                             }
                         }
-                        Color.clear.frame(height: 1).id("bottom").bottomMarker()
                     }
                     .padding(.top, 8).padding(.bottom, 12)
                 }
-                .onLegacyBottomDistance { distance in
-                    // macOS 14: only the reader's own scrolling changes following; anything else that
-                    // moves the bottom (new lines, translations, resizing) is followed.
+                .onLegacyBottomDistance(fromTop: true) { distance in
+                    // Only the reader's own scrolling pauses following the newest content.
                     if UserScroll.recent {
                         if distance < 40 { if !following { following = true } }
                         else if following, distance > 60 { following = false; seenCount = lines.count }
@@ -636,16 +635,14 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     }
                 }
                 .topFade()
-                .onScrollEdgeChange { old, new in
+                .onScrollEdgeChange(fromTop: true) { old, new in
                     if new.height != old.height || new.container != old.container {
-                        // Not only new lines move the bottom: a translation arriving under its line,
-                        // topic headers from a notes update, rows the lazy stack only now measured,
-                        // the window resizing. Following means staying on the newest line through all of them.
+                        // New content and reflow keep the latest utterance at the top while following.
                         if new.distance > 1 { follow(proxy) }
                     } else if new.distance < 40 {
                         if !following { following = true }
                     } else if following, new.distance > 60, UserScroll.recent {
-                        // The reader scrolled up (content growing or reflowing never pauses following).
+                        // The reader scrolled down to older content.
                         following = false
                         seenCount = lines.count
                     }
@@ -669,12 +666,12 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                         following = false
                         reveal(target, anchor: .top, proxy)
                     } else if live {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                        proxy.scrollTo("top", anchor: .top)
                     }
                 }
 
                 if live, !following, !searching, lines.count > seenCount {
-                    newLinesButton { following = true; proxy.scrollTo("bottom", anchor: .bottom) }
+                    newLinesButton { following = true; proxy.scrollTo("top", anchor: .top) }
                 }
             }
         }
@@ -698,16 +695,16 @@ struct TranscriptListView<Partial: View>: View, Equatable {
         DispatchQueue.main.async {
             followQueued = false
             guard following, !searching else { return }
-            proxy.scrollTo("bottom", anchor: .bottom)
+            proxy.scrollTo("top", anchor: .top)
         }
     }
 
     private func newLinesButton(_ action: @escaping () -> Void) -> some View {
         VStack(spacing: 0) {
-            LinearGradient(colors: [.white.opacity(0), .white], startPoint: .top, endPoint: .bottom).frame(height: 40)
+            LinearGradient(colors: [Palette.surface.opacity(0), Palette.surface], startPoint: .top, endPoint: .bottom).frame(height: 40)
             Button(action: action) {
                 HStack(spacing: 10) {
-                    Image(systemName: "arrow.down").font(.system(size: 12, weight: .bold))
+                    Image(systemName: "arrow.up").font(.system(size: 12, weight: .bold))
                     Text("\(lines.count - seenCount) 句新内容").font(.system(size: 13, weight: .semibold))
                     if let last = lines.last {
                         Text(last.src).font(.system(size: 13)).foregroundStyle(Color(white: 0.74)).lineLimit(1)
@@ -715,14 +712,14 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                 }
                 .foregroundStyle(.white)
                 .padding(.leading, 14).padding(.trailing, 18).frame(height: 40)
-                .background(Capsule().fill(Palette.ink).shadow(color: .black.opacity(0.18), radius: 12, y: 6))
+                .background(Capsule().fill(Palette.strong).shadow(color: .black.opacity(0.18), radius: 12, y: 6))
                 .frame(maxWidth: 380)
                 .fixedSize(horizontal: true, vertical: false)
             }
             .buttonStyle(.plain)
             .padding(.bottom, 14)
             .frame(maxWidth: .infinity)
-            .background(Color.white)
+            .background(Palette.surface)
         }
         .transition(.opacity)
     }
@@ -760,6 +757,19 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     if !label {
                     } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
                     else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
+                    else if l.isAI {
+                        Button {
+                            if !expandedAI.insert(l.id).inserted { expandedAI.remove(l.id) }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text("AI").font(.system(size: 11, weight: .semibold))
+                                Text(expandedAI.contains(l.id) ? L("收起") : L("展开"))
+                                    .font(.system(size: 11))
+                                Image(systemName: expandedAI.contains(l.id) ? "chevron.up" : "chevron.down")
+                                    .font(.system(size: 9, weight: .semibold))
+                            }.contentShape(Rectangle())
+                        }.buttonStyle(.plain).foregroundStyle(Palette.secondary)
+                    }
                     else if onAssign != nil, !voices.isEmpty {
                         Button { assigning = assigning == l.id ? nil : l.id } label: {
                             HStack(spacing: 4) {
@@ -767,7 +777,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                                 Image(systemName: "chevron.down").font(.system(size: 8, weight: .bold)).foregroundStyle(Palette.tertiary)
                             }
                             .padding(.horizontal, assigning == l.id ? 6 : 0).frame(height: 20)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(assigning == l.id ? Color.white : .clear))
+                            .background(RoundedRectangle(cornerRadius: 6).fill(assigning == l.id ? Palette.surface : .clear))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain).help(ls.count > 1 ? L("这段是谁说的") : L("这句是谁说的"))
@@ -776,8 +786,10 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     else if !speakers.isEmpty { UnknownSpeakerTag() }
                     if places, label, l.speaker == "them" { PlaceTag(line: l) }
                 }
-                Text(highlighted(src, current: isMatch)).font(.system(size: 14)).lineSpacing(2).textSelection(.enabled)
-                if bilingual, !dst.isEmpty {
+                if !l.isAI || expandedAI.contains(l.id) {
+                    Text(highlighted(src, current: isMatch)).font(.system(size: 14)).lineSpacing(2).textSelection(.enabled)
+                }
+                if bilingual, !dst.isEmpty, !l.isAI || (showAIGloss && expandedAI.contains(l.id)) {
                     Text(highlighted(dst, current: isMatch)).font(.system(size: 13)).foregroundStyle(Palette.secondary)
                         .lineSpacing(2).textSelection(.enabled)
                 }
@@ -825,7 +837,7 @@ enum TranscriptParagraphs {
         var out: [[TranscriptLine]] = []
         var key: String?
         for l in lines {
-            let k = (l.speaker == "me" ? "me" : l.isScreen ? "screen" : speakers[l.id].map { "n\($0)" } ?? "?") + (l.via ?? "")
+            let k = (l.speaker == "me" ? "me" : l.isScreen ? "screen" : l.isAI ? "ai" : speakers[l.id].map { "n\($0)" } ?? "?") + (l.via ?? "")
             if k == key, let first = out.last?.first, l.t - first.t <= span {
                 out[out.count - 1].append(l)
             } else {
@@ -869,14 +881,20 @@ struct LivePartialRow: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { ctx in
             let time = startedAt.map { max(0, ctx.date.timeIntervalSince($0)) }
+            let shown = model.displayed(model.liveSource, model.liveTranslation)
             HStack(alignment: .top, spacing: 12) {
                 Text(time.map(NotesEngine.clock) ?? "").font(.system(size: 12).monospacedDigit())
                     .foregroundStyle(Palette.accentInk)
                     .frame(width: (time ?? 0) >= 3600 ? 56 : 40, alignment: .leading).padding(.top, 2)
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .lastTextBaseline, spacing: 0) {
-                        Text(model.liveSource).font(.system(size: 14)).foregroundStyle(Palette.secondary).lineSpacing(2)
+                        Text(shown.source.isEmpty ? shown.translation : shown.source)
+                            .font(.system(size: 14)).foregroundStyle(Palette.secondary).lineSpacing(2)
                         AnimatedDots().font(.system(size: 14)).foregroundStyle(Palette.secondary)
+                    }
+                    if !shown.source.isEmpty, !shown.translation.isEmpty, shown.translation != shown.source {
+                        Text(shown.translation).font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                            .lineSpacing(2).textSelection(.enabled)
                     }
                     Text("正在说").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                 }
@@ -1173,8 +1191,8 @@ struct SkeletonBar: View {
     var warm = false
 
     var body: some View {
-        let base = warm ? Color(red: 0.965, green: 0.89, blue: 0.86) : Color(red: 0.933, green: 0.941, blue: 0.953)
-        let light = warm ? Color(red: 0.992, green: 0.953, blue: 0.933) : Color(red: 0.969, green: 0.973, blue: 0.98)
+        let base = warm ? Palette.adaptive(0xF6E3DB, 0x493128) : Palette.adaptive(0xEEF0F3, 0x30353E)
+        let light = warm ? Palette.adaptive(0xFDF3EE, 0x5A4035) : Palette.adaptive(0xF7F8FA, 0x3C424D)
         GeometryReader { g in
             TimelineView(.animation(minimumInterval: 1 / 30)) { ctx in
                 let x = phase(ctx.date, period: 1.4) * 2 - 0.5

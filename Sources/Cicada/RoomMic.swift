@@ -24,8 +24,9 @@ enum RoomMicPlan {
     /// The system default, unless it is the virtual mic (同声传译 makes it the default) or a
     /// Bluetooth headset's (AirPods hear the wearer, not the table, and drop to call quality while
     /// their mic is open); then the Mac's own microphone.
-    static func pick(defaultUID: String?, inputs: [Input]) -> String? {
-        if let d = inputs.first(where: { $0.uid == defaultUID }), !d.virtual, !d.bluetooth { return d.uid }
+    /// The interview coach opts into headset input because it hears the wearer as the candidate.
+    static func pick(defaultUID: String?, inputs: [Input], headset: Bool = false) -> String? {
+        if let d = inputs.first(where: { $0.uid == defaultUID }), !d.virtual, headset || !d.bluetooth { return d.uid }
         return inputs.first(where: \.builtIn)?.uid
             ?? inputs.first(where: { !$0.virtual && !$0.bluetooth })?.uid
             ?? inputs.first(where: { !$0.virtual })?.uid
@@ -83,6 +84,10 @@ enum RoomMicLoss {
 }
 
 extension AudioDevices {
+    static func isRealInput(_ device: OutputDevice) -> Bool {
+        !device.isVirtualMic && transport(device.id) != kAudioDeviceTransportTypeVirtual
+            && !device.uid.hasPrefix("CADefaultDeviceAggregate")
+    }
     static func transport(_ device: AudioObjectID) -> UInt32 {
         var value: UInt32 = 0
         var size = UInt32(MemoryLayout<UInt32>.size)
@@ -96,16 +101,17 @@ extension AudioDevices {
     static var roomMic: OutputDevice? { roomMic(excluding: []) }
 
     /// `excluding`: inputs to treat as gone (the debug command's pretend unplug).
-    static func roomMic(excluding: Set<String>) -> OutputDevice? {
+    static func roomMic(excluding: Set<String>, headset: Bool = false, preferred: String = "") -> OutputDevice? {
         let all = inputs().filter { !excluding.contains($0.uid) }
         let plan = all.map { d -> RoomMicPlan.Input in
             let t = transport(d.id)
             return .init(uid: d.uid, builtIn: t == kAudioDeviceTransportTypeBuiltIn,
                          bluetooth: t == kAudioDeviceTransportTypeBluetooth || t == kAudioDeviceTransportTypeBluetoothLE,
                          // The aggregate macOS makes for echo cancellation is no microphone of its own.
-                         virtual: d.isVirtualMic || d.uid.hasPrefix("CADefaultDeviceAggregate"))
+                         virtual: !isRealInput(d))
         }
-        let uid = RoomMicPlan.pick(defaultUID: defaultInput?.uid, inputs: plan)
+        let wanted = plan.first { $0.uid == preferred && !$0.virtual }?.uid ?? defaultInput?.uid
+        let uid = RoomMicPlan.pick(defaultUID: wanted, inputs: plan, headset: headset)
         return all.first { $0.uid == uid }
     }
 }
@@ -153,6 +159,12 @@ final class EchoGate: @unchecked Sendable {
     private var _echo = true
     /// Debug (`roomEchoSim:<on|off>`): pretend the measurement says this.
     var forced: Bool?
+    /// A known headphone output has no speaker-to-mic path; do not mute candidate interruptions.
+    var headphones: Bool {
+        get { lock.withLock { _headphones } }
+        set { lock.withLock { _headphones = newValue; if newValue { until = 0 } } }
+    }
+    private var _headphones = false
 
     /// Forget what was measured: the speakers are taken to echo until measured again (a new
     /// meeting, or the output moved between speakers and headphones).
@@ -193,7 +205,7 @@ final class EchoGate: @unchecked Sendable {
     /// Whether the Mac is playing something loud that has no words in it.
     func playingMusic(now: Double = CFAbsoluteTimeGetCurrent()) -> Bool { lock.withLock { musicLocked(now) } }
 
-    private var echoLocked: Bool { forced ?? _echo }
+    private var echoLocked: Bool { forced ?? (!_headphones && _echo) }
 
     private func musicLocked(_ now: Double) -> Bool {
         now - lastLoud <= Self.stretchGap && now - stretchStart >= Self.music && lastWords < now - Self.music
@@ -244,13 +256,20 @@ final class EchoGate: @unchecked Sendable {
 /// A microphone as an audio source. While `muted`, silence goes on in its place: the Mac reading a
 /// translation aloud, or you holding the talk key, would otherwise come back as someone in the room.
 /// Silence rather than nothing keeps the recognizer's clock and the recording in step.
-final class RoomMic: AudioSource {
+final class RoomMic: AudioSource, @unchecked Sendable {
     var onAudio: ((AVAudioPCMBuffer) -> Void)?
     /// 电脑和会议室 without echo cancellation: silence while the Mac plays speech.
     var echoGate: EchoGate?
-    private var engine = AVAudioEngine()
+    // Only accessed on AudioLifecycle.queue, including creation and final release.
+    private var engine: AVAudioEngine?
+    private let voiceMic: VoiceMic?
+    private let lease = UUID()
+    var onStarted: (() -> Void)?
+    var onFailed: ((Error) -> Void)?
+    var onRestart: ((String) -> Void)?
     private let device: OutputDevice?
     private let lock = NSLock()
+    private var startFinished = false
     private var _muted = false
     var muted: Bool {
         get { lock.withLock { _muted } }
@@ -263,36 +282,63 @@ final class RoomMic: AudioSource {
         mSelector: kAudioHardwarePropertyDefaultInputDevice, mScope: kAudioObjectPropertyScopeGlobal,
         mElement: kAudioObjectPropertyElementMain)
 
-    init(device: OutputDevice?) { self.device = device }
-
-    deinit {
-        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
-        if let defaultInputListener {
-            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &Self.defaultInputAddress, .main, defaultInputListener)
-        }
+    init(device: OutputDevice?, voiceMic: VoiceMic? = nil) {
+        self.device = device
+        self.voiceMic = voiceMic
     }
 
-    /// Pinning the device on a fresh engine itself reports a configuration change: not a reason to go again.
+    /// Notification handlers request recovery from the owner; they never restart hardware.
     private var startedAt = Date.distantPast
 
-    private func restart(_ why: String) {
-        guard !stopped, Date().timeIntervalSince(startedAt) > 1 else { return }
-        debugLog("room mic: \(why), restarting")
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
-        // A fresh engine: the old one still names the pinned device after moving off it, so
-        // pinning it again would be skipped.
-        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
-        configObserver = nil
-        engine = AVAudioEngine()
-        do { try start() } catch { debugLog("room mic restart failed: \(error)") }
+    private func requestRestart(_ why: String) {
+        guard !lock.withLock({ stopped }), Date().timeIntervalSince(startedAt) > 1 else { return }
+        onRestart?(why)
     }
 
-    var deviceName: String { device?.name ?? AudioDevices.inputDevice(of: engine) }
+    var deviceName: String { device?.name ?? "-" }
     var deviceUID: String? { device?.uid }
 
     func start() throws {
-        startedAt = Date()
+        let start: (Bool) -> Void = { [self] acquired in
+            guard acquired else {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.lock.withLock({ self.stopped }) else { return }
+                    self.onFailed?(NSError(domain: "RoomMic", code: -2,
+                        userInfo: [NSLocalizedDescriptionKey: L("请先结束声音录制，再打开麦克风")]))
+                }
+                return
+            }
+            guard !lock.withLock({ stopped }) else { voiceMic?.endPlainInput(lease); return }
+            do {
+                try startHardware()
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.lock.withLock({ self.stopped }) else { return }
+                    self.lock.withLock { self.startFinished = true }
+                    self.startedAt = Date()
+                    self.onStarted?()
+                }
+            } catch {
+                stopHardware()
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, !self.lock.withLock({ self.stopped }) else { return }
+                    self.lock.withLock { self.startFinished = true }
+                    self.onFailed?(error)
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+            guard let self, !self.lock.withLock({ self.stopped || self.startFinished }) else { return }
+            self.onFailed?(NSError(domain: "RoomMic", code: -3,
+                userInfo: [NSLocalizedDescriptionKey: L("麦克风启动超时，请重新连接设备后再试")]))
+            self.stop()
+        }
+        if let voiceMic { voiceMic.acquirePlainInput(lease, ready: start) }
+        else { AudioLifecycle.queue.async { start(true) } }
+    }
+
+    private func startHardware() throws {
+        let engine = AVAudioEngine()
+        self.engine = engine
         silentSince = nil
         silenceChecked = false
         AudioDevices.pinInput(engine, to: device)
@@ -306,7 +352,7 @@ final class RoomMic: AudioSource {
         }
         input.removeTap(onBus: 0)
         input.installTap(onBus: 0, bufferSize: 4096, format: format) { [weak self] buf, _ in
-            guard let self, buf.frameLength > 0,
+            guard let self, !self.lock.withLock({ self.stopped }), buf.frameLength > 0,
                   let out = AVAudioPCMBuffer(pcmFormat: mono, frameCapacity: buf.frameLength),
                   let dst = out.floatChannelData?[0] else { return }
             out.frameLength = buf.frameLength
@@ -334,19 +380,26 @@ final class RoomMic: AudioSource {
         }
         engine.prepare()
         try engine.start()
+        DispatchQueue.main.async { [weak self, weak engine] in
+            guard let self, let engine, !self.lock.withLock({ self.stopped }) else { return }
+            self.observe(engine)
+        }
+    }
+
+    private func observe(_ engine: AVAudioEngine) {
         // A device coming or going, or another app switching the system mic, stops the engine
         // without a word: start it again, or the room would go quiet for the rest of the meeting.
         if configObserver == nil {
             configObserver = NotificationCenter.default.addObserver(
-                forName: .AVAudioEngineConfigurationChange, object: engine, queue: .main) { [weak self] _ in
-                self?.restart("audio configuration changed")
+                forName: .AVAudioEngineConfigurationChange, object: engine, queue: nil) { [weak self] _ in
+                DispatchQueue.main.async { [weak self] in self?.requestRestart("audio configuration changed") }
             }
         }
         // A new system default (AirPods connecting, another app switching to a virtual mic) stops
         // the audio with no notification, though the engine still names the pinned device: start over.
         if defaultInputListener == nil {
             let listener: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-                self?.restart("system input changed")
+                self?.requestRestart("system input changed")
             }
             defaultInputListener = listener
             AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &Self.defaultInputAddress, .main, listener)
@@ -363,7 +416,7 @@ final class RoomMic: AudioSource {
     /// Called on the main queue when the mic stayed silent after being opened again.
     var onSilent: (() -> Void)?
     private var silentSince: Date?
-    private var silentRestarts = 0
+    var retrySilence = true
     private var silenceChecked = false
 
     /// On the audio thread, per block: a mic silent since it started is opened again once, and
@@ -376,11 +429,9 @@ final class RoomMic: AudioSource {
         guard Date().timeIntervalSince(since) >= Self.silentAfter else { return }
         silenceChecked = true
         DispatchQueue.main.async { [weak self] in
-            guard let self, !self.stopped else { return }
-            if self.silentRestarts == 0 {
-                self.silentRestarts += 1
-                self.startedAt = .distantPast
-                self.restart("silent since it started")
+            guard let self, !self.lock.withLock({ self.stopped }) else { return }
+            if self.retrySilence {
+                self.onRestart?("silent since it started")
             } else {
                 debugLog("room mic: still silent after opening it again")
                 self.onSilent?()
@@ -391,8 +442,23 @@ final class RoomMic: AudioSource {
     private var stopped = false
 
     func stop() {
-        stopped = true
-        engine.inputNode.removeTap(onBus: 0)
-        engine.stop()
+        lock.withLock { stopped = true }
+        // Remove listeners now: queued notifications from a stopped source must not request work.
+        if let configObserver { NotificationCenter.default.removeObserver(configObserver) }
+        configObserver = nil
+        if let defaultInputListener {
+            AudioObjectRemovePropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &Self.defaultInputAddress, .main, defaultInputListener)
+        }
+        defaultInputListener = nil
+        AudioLifecycle.queue.async { [self] in stopHardware() }
+    }
+
+    private func stopHardware() {
+        if let engine {
+            engine.inputNode.removeTap(onBus: 0)
+            engine.stop()
+        }
+        engine = nil
+        voiceMic?.endPlainInput(lease)
     }
 }

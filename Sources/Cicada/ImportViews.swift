@@ -195,7 +195,7 @@ struct RecordingLanguageStrip: View {
                             .font(.system(size: 12, weight: other ? .semibold : .regular))
                             .foregroundStyle(other ? Palette.ink : Palette.secondary)
                             .padding(.horizontal, 12).frame(height: 26)
-                            .background(Capsule().fill(Color.white))
+                            .background(Capsule().fill(Palette.surface))
                             .overlay(Capsule().strokeBorder(other ? Palette.ink : Palette.line, lineWidth: 1))
                             .contentShape(Capsule())
                     }
@@ -213,7 +213,7 @@ struct RecordingLanguageStrip: View {
             Text(name).font(.system(size: 12, weight: on ? .semibold : .regular))
                 .foregroundStyle(on ? Palette.ink : Palette.secondary)
                 .padding(.horizontal, 12).frame(height: 26)
-                .background(Capsule().fill(Color.white))
+                .background(Capsule().fill(Palette.surface))
                 .overlay(Capsule().strokeBorder(on ? Palette.ink : Palette.line, lineWidth: 1))
                 .contentShape(Capsule())
         }
@@ -234,7 +234,7 @@ struct RecordingPlayerBar: View {
                 Button { player.toggle() } label: {
                     Image(systemName: player.playing ? "pause.fill" : "play.fill")
                         .font(.system(size: 11)).foregroundStyle(.white)
-                        .frame(width: 28, height: 28).background(Circle().fill(Palette.ink))
+                        .frame(width: 28, height: 28).background(Circle().fill(Palette.strong))
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -268,7 +268,7 @@ struct ImportDropOverlay: View {
             Text("录音或视频，一次可放多个").font(.system(size: 12)).foregroundStyle(Palette.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white.opacity(0.92))
+        .background(Palette.surface.opacity(0.92))
         .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Palette.ink.opacity(0.35), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5])).padding(12))
         .allowsHitTesting(false)
     }

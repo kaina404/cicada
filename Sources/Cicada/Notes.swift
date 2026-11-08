@@ -498,10 +498,10 @@ final class NotesEngine: ObservableObject {
             p += "Current notes (JSON\(frozen > 0 ? ", latest topics only" : "")):\n\(current)\n\n"
         }
         if context < from {
-            p += "Already covered (context only):\n" + (context..<from).map(line).joined(separator: "\n") + "\n\n"
+            p += "Already covered (context only):\n" + (context..<from).filter { !lines[$0].isAI }.map(line).joined(separator: "\n") + "\n\n"
         }
         p += "\(final ? "Transcript" : "New lines") (id, mm:ss, speaker 对方=the other side / 你=me / a name or 说话人N=one person on the other side, told apart by voice and possibly wrong / 未识别=someone on the other side not identified / 屏幕=what the shared screen showed at that moment, not said: its 原文 is read exactly off the screen, its 含义 is an AI's reading, text). Speech recognition makes mistakes, often in names: correct them from context, and write a public figure's name as the news spells it.\n"
-        p += (from..<lines.count).map(line).joined(separator: "\n")
+        p += (from..<lines.count).filter { !lines[$0].isAI }.map(line).joined(separator: "\n")
         // The model splits too eagerly when only told how long a topic should be: say plainly
         // whether this update may start one.
         if final, from < lines.count, let last = lines.last?.t {

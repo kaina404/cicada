@@ -20,6 +20,14 @@ test-shots/
 tools/*
 !tools/*.swift
 !tools/README.md
+!tools/copilot-eval.py
+!tools/copilot-audio-fixture.py
+!tools/coach-reading-fixtures.py
+!tools/qwen-realtime-fixture.py
+!tools/test_deepseek_latency.py
+!tools/copilot-questions.json
+!tools/copilot-prompt.json
+!tools/copilot-interview-background.json
 !tools/macos-vm/
 !tools/audio-probe/
 

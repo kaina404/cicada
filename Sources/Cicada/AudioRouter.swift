@@ -39,6 +39,10 @@ final class AudioRouter: @unchecked Sendable {
     private let voiceConverter = PCMConverter()
     private let voiceFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: 16000, channels: 1, interleaved: false)!
     private var voiceCapture = false
+    private var realtimePCM: (([Float]) -> Void)?
+    func setOnRealtimePCM(_ callback: (([Float]) -> Void)?) {
+        queue.async { [self] in realtimePCM = callback }
+    }
     private var voice: [Float] = []
     private var voiceStart = 0.0
     private let voiceLimit = 90.0
@@ -61,8 +65,11 @@ final class AudioRouter: @unchecked Sendable {
     }
 
     private func keepVoice(_ mono: AVAudioPCMBuffer) {
-        guard voiceCapture, sink != nil,
+        guard (voiceCapture && sink != nil) || realtimePCM != nil,
               let b = voiceConverter.convert(mono, to: voiceFormat), let d = b.floatChannelData else { return }
+        let samples = UnsafeBufferPointer(start: d[0], count: Int(b.frameLength))
+        realtimePCM?(Array(samples))
+        guard voiceCapture, sink != nil else { return }
         if voice.isEmpty { voiceStart = fed }
         voice.append(contentsOf: UnsafeBufferPointer(start: d[0], count: Int(b.frameLength)))
         let over = voice.count - Int(voiceLimit * 16000)
@@ -114,9 +121,9 @@ final class AudioRouter: @unchecked Sendable {
         let voiced = activity.feed(UnsafeBufferPointer(start: data[0], count: n), rate: mono.format.sampleRate,
                                    clock: fed, pauses: sink != nil)
 
+        keepVoice(mono)
         guard let format, let converted = converter.convert(mono, to: format) else { return }
         sink?.append(converted)
-        keepVoice(mono)
         if sink != nil { fed += seconds }
         record(converted)
         ring.append((converted, seconds, voiced))

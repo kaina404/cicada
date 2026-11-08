@@ -1,3 +1,4 @@
+import ScreenCaptureKit
 import AppKit
 import AVFoundation
 import Carbon.HIToolbox
@@ -16,6 +17,16 @@ final class AppModel: ObservableObject {
     let talkCombo = HotKey(id: 1, shortcut: .defaultTalk)
     let talkRight = RightOptionKey()
     let toggleKey = HotKey(id: 2, shortcut: .defaultToggle)
+    /// 会中问答's key: registered only while listening, so it takes nothing from other apps otherwise.
+    let askKey = HotKey(id: 3, shortcut: .defaultAsk)
+    let candidate = InterviewCoach()
+    private var candidateTimer: Timer?
+    private var manualAssistant = false
+    private weak var candidateMicEngine: ListenEngine?
+    private var candidateAudioAttached = false
+    private var screenUsesRealtime = false
+    private var candidateBackground = CandidateBackground.read()
+    private var candidateGlossRows: [(session: String, line: String, text: String, interrupted: Bool)] = []
     lazy var listen = ListenEngine(settings: settings)
     /// The one echo-cancelling mic unit, shared by the talk key and 电脑和会议室's room.
     let voiceMic = VoiceMic()
@@ -138,6 +149,7 @@ final class AppModel: ObservableObject {
     /// Google translation unreachable, and whether sentences go untranslated (`TranslationService.health`).
     @Published var translationHealth = TranslationHealth()
     @Published var toggleKeyTaken = false
+    @Published var askKeyTaken = false
     private var permissionPoll: Timer?
     private var shortcutsSuspended = false
     let installer = VirtualMicInstaller()
@@ -177,20 +189,43 @@ final class AppModel: ObservableObject {
     private var heldJoin: (seg: Segment, t: Double, translation: String?)?
 
     init() {
+        candidate.reading.usesTranscripts = true
+        let candidateTranscript: (String, Bool) -> Void = { [weak self] text, final in
+            self?.candidate.reading.acceptTranscript(text, final: final)
+        }
+        listen.onCandidateTranscript = candidateTranscript
+        roomListen.onCandidateTranscript = candidateTranscript
+        listen.onRecognitionFailure = { [weak self] failed in
+            guard let self, self.listen.gemmaCandidate else { return }
+            self.candidateASRFailed = failed
+        }
+        roomListen.onRecognitionFailure = { [weak self] failed in
+            guard let self, self.roomListen.gemmaCandidate else { return }
+            self.candidateASRFailed = failed
+        }
+        screen.onSelectionChanged = { [weak self] in
+            guard let self, self.listen.isRunning, self.screen.chosen != nil else { return }
+            self.startScreen()
+        }
+        screen.onKeyframesCleared = { [weak self] in self?.candidate.clearPicture() }
         // A meeting or speaking holds the update notification until it ends (see stop()).
         updates.busy = { [weak self] in guard let self else { return false }; return self.running || self.speak.phase != .idle }
         // Words in the Mac's audio: speech, which the room mic is silenced for (music isn't, `EchoGate`).
         listen.onWords = { [gate = roomListen.echoGate] in gate.heardWords() }
+        updateCandidateRecognition()
         roomListen.onStateChange = { [weak self] in self?.refresh() }
         listen.onSubtitle = { [weak self] src, dst in
             guard let self else { return }
+            self.candidate.speech(self.listen.hidesSource ? "" : src,
+                                  role: self.settings.listensToRoom ? "candidate" : "interviewer", now: self.coachTime)
             // Someone is speaking either way; only the wrong model's words aren't shown.
-            self.liveMain = (self.listen.hidesSource ? "" : src, dst, Date())
+            self.liveMain = (self.listen.hidesSource ? "" : src, dst, CopilotRules.speechTime(text: src, previous: self.liveMain.src, last: self.liveMain.at, now: Date()))
             self.showLive(spoke: src)
         }
         roomListen.onSubtitle = { [weak self] src, dst in
             guard let self else { return }
-            self.liveRoom = (self.roomListen.hidesSource ? "" : src, dst, Date())
+            self.candidate.speech(self.roomListen.hidesSource ? "" : src, role: "candidate", now: self.coachTime)
+            self.liveRoom = (self.roomListen.hidesSource ? "" : src, dst, CopilotRules.speechTime(text: src, previous: self.liveRoom.src, last: self.liveRoom.at, now: Date()))
             self.showLive(spoke: src)
         }
         listen.onStatus = { [weak self] text in
@@ -247,8 +282,9 @@ final class AppModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.speak.newOutputEngine()
-                if self.listen.isRunning { self.listen.reconnectAudio() }
-                if self.roomListen.isRunning, !self.roomListen.hearsEchoCancelled { self.roomListen.reconnectAudio() }
+                if self.listen.isRunning, !self.settings.listensToRoom { self.listen.reconnectAudio() }
+                // Plain inputs start after unit disposal on the hardware lane and hold a lease;
+                // reconnecting them here would release/rebuild that lease in a feedback loop.
             }
         }
         translator.glossary = { [weak self] in self?.notes.glossary ?? [] }
@@ -288,7 +324,7 @@ final class AppModel: ObservableObject {
         speak.roomLanguage = { [weak self] in self?.listen.activeLang?.code }
         speak.inputDevice = { [weak self] in self?.systemMic.recordingDevice }
         let roomMic = { [weak self] () -> OutputDevice? in
-            MainActor.assumeIsolated { AudioDevices.roomMic(excluding: self?.fakeGoneMics ?? []) }
+            MainActor.assumeIsolated { self?.selectedRoomMic }
         }
         listen.roomDevice = roomMic
         roomListen.roomDevice = roomMic
@@ -345,6 +381,22 @@ final class AppModel: ObservableObject {
             DispatchQueue.main.async { MainActor.assumeIsolated { self?.cycleDisplay() } }
         }
         applyToggleKey()
+        askKey.onDown = { [weak self] in
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.askNow() } }
+        }
+        candidate.gloss.onUpdate = { [weak self] in self?.saveCandidateGlosses() }
+        candidate.onEvent = { [weak self] event in
+            guard let self, let id = self.store.liveID else { return }
+            self.store.appendCoachEvent(event, to: id)
+        }
+        candidate.onParagraph = { [weak self] paragraph in self?.saveCandidate(paragraph) }
+        candidate.onWillGenerate = { [weak self] in self?.screen.interruptForQuestion() }
+        candidate.reading.onWillRead = { [weak self] in self?.screen.interruptForQuestion() }
+        let assistantWatch = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.tickCandidate() }
+        }
+        candidateTimer = assistantWatch
+        RunLoop.main.add(assistantWatch, forMode: .common)
         refreshOutputs()
         let watch = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
@@ -359,11 +411,13 @@ final class AppModel: ObservableObject {
     /// The room's microphone unplugged: Core Audio moves the engine to the system default without a
     /// word, which may be a headset or the virtual mic. Pick again the way the meeting started, and say so.
     private func watchRoomMic() {
+        updateCoachHeadphones()
         let both = settings.hearsBoth && roomListen.isRunning
         guard let engine = both ? roomListen : settings.listensToRoom && listen.isRunning ? listen : nil,
-              let uid = engine.roomMicUID,
-              fakeGoneMics.contains(uid) || !AudioDevices.inputs().contains(where: { $0.uid == uid }) else { return }
-        let next = AudioDevices.roomMic(excluding: fakeGoneMics)
+              let uid = engine.roomMicUID else { return }
+        let next = selectedRoomMic
+        let missing = fakeGoneMics.contains(uid) || !AudioDevices.inputs().contains(where: { $0.uid == uid })
+        guard missing || coachEnabled && next?.uid != uid else { return }
         debugLog("room mic gone: \(uid) → \(next?.name ?? "none")")
         if next != nil { engine.reconnectAudio() } else if both { stopRoomSide() } else { stop() }
         let note = RoomMicLoss.detail(next: next?.name, builtIn: next.map { AudioDevices.transport($0.id) == kAudioDeviceTransportTypeBuiltIn } ?? false,
@@ -640,6 +694,9 @@ final class AppModel: ObservableObject {
     func start(byUser: Bool = false) {
         guard !listen.isRunning else { return }
         let session = store.begin()
+        screen.beginMeeting(session.id)
+        candidate.endMeeting(); manualAssistant = false; candidateGlossRows = []
+        candidateBackground = CandidateBackground.read()
         diagnostics.begin()
         speakers.reset()
         lineForSegment = [:]
@@ -663,14 +720,17 @@ final class AppModel: ObservableObject {
             listen.router.setRecording(store.systemAudioURL(session.id))
             speak.setRecording(store.micAudioURL(session.id))
         }
+        updateCandidateRecognition()
         listen.start()
         if listen.isRunning, settings.hearsBoth { startRoomSide() }
         if settings.hearsRoom { store.markLiveInRoom() }
         notes.begin(session.id)
-        if listen.isRunning, settings.screenNotes { startScreen() }
+        applyAskKey()
+        tickCandidate()
         if listen.isRunning {
             showDisplay(force: byUser)
         } else {
+            screen.endMeeting()
             store.end()
         }
         refresh()
@@ -682,7 +742,12 @@ final class AppModel: ObservableObject {
         endWatch = nil
         setEnding(nil)
         diagnostics.end()
-        screen.stop()
+        screen.endMeeting()
+        // The local model's memory comes back when the meeting ends (问 and 屏幕识别 share it).
+        screen.server.stop()
+        listen.router.setOnRealtimePCM(nil); candidateAudioAttached = false
+        candidate.stop(); manualAssistant = false
+        askKey.unregister()
         stopRoomSide()
         listen.stop()
         listen.router.setRecording(nil)
@@ -761,7 +826,10 @@ final class AppModel: ObservableObject {
     func setSubtitles(_ mode: String, meetingOnly: Bool = false) {
         let wasOff = subtitles == "original"
         if meetingOnly { meetingSubtitles = mode } else { settings.subtitles = mode; meetingSubtitles = nil }
-        if wasOff && subtitles != "original" { listen.translationResumed() }
+        if wasOff && subtitles != "original" {
+            listen.translationResumed()
+            roomListen.translationResumed()
+        }
         debugLog("subtitles=\(subtitles) meetingOnly=\(meetingOnly)")
         objectWillChange.send()
     }
@@ -877,6 +945,7 @@ final class AppModel: ObservableObject {
         debugLog("mic \(on ? "on" : "off") (\(value))")
         let wasRoomOnly = settings.listensToRoom
         settings.listenSource = value
+        updateCandidateRecognition()
         if listen.isRunning && settings.hearsRoom { store.markLiveInRoom() }
         // The main engine changes only between the Mac and the room alone; "both" adds the room side.
         if wasRoomOnly != settings.listensToRoom { listen.listenSourceChanged() }
@@ -955,7 +1024,7 @@ final class AppModel: ObservableObject {
 
     // MARK: Shortcuts
 
-    enum ShortcutRole { case talk, toggle }
+    enum ShortcutRole { case talk, toggle, ask }
 
     /// Arms the talk key for the current setting. Right ⌥ waits for "输入监控" and
     /// arms itself as soon as it's allowed (no relaunch).
@@ -992,6 +1061,13 @@ final class AppModel: ObservableObject {
         if toggleKeyTaken == ok { toggleKeyTaken = !ok }
     }
 
+    func applyAskKey() {
+        askKey.unregister()
+        guard listen.isRunning, !shortcutsSuspended else { return }
+        let ok = askKey.register(settings.askKey)
+        if askKeyTaken == ok { askKeyTaken = !ok }
+    }
+
     func allowTalkKey() {
         RightOptionKey.requestAccess()
         RightOptionKey.openSystemSettings()
@@ -1002,17 +1078,18 @@ final class AppModel: ObservableObject {
         shortcutsSuspended = on
         applyTalkKey()
         applyToggleKey()
+        applyAskKey()
     }
 
     /// Validates and saves a new shortcut. Returns why it was refused, or nil.
     func setShortcut(_ s: Shortcut, for role: ShortcutRole) -> String? {
-        if role == .toggle && s.isRightOption { return L("右 ⌥ 只能用于“按住说话”") }
+        if role != .talk && s.isRightOption { return L("右 ⌥ 只能用于“按住说话”") }
         if let p = s.typingProblem { return p }
-        let other = role == .talk ? settings.toggleKey : settings.talkKey
-        if s == other { return L("与另一个快捷键冲突") }
+        let others = [ShortcutRole.talk, .toggle, .ask].filter { $0 != role }.map(shortcut(for:))
+        if others.contains(s) { return L("与另一个快捷键冲突") }
         if s.isSystemShortcut { return L("\(s.display) 是系统快捷键，换一个吧") }
         // The one already in use is registered by us: probing it would always fail.
-        let current = role == .talk ? settings.talkKey : settings.toggleKey
+        let current = shortcut(for: role)
         if !s.isRightOption && s != current {
             // Probe: Carbon refuses a combo another app already registered.
             let probe = HotKey(id: 9, shortcut: s)
@@ -1026,11 +1103,130 @@ final class AppModel: ObservableObject {
             if s.isRightOption && settings.speakEnabled && !RightOptionKey.allowed { RightOptionKey.requestAccess() }
         case .toggle:
             settings.toggleKey = s
+        case .ask:
+            settings.askKey = s
         }
         applyTalkKey()
         applyToggleKey()
+        applyAskKey()
         objectWillChange.send()
         return nil
+    }
+
+    func shortcut(for role: ShortcutRole) -> Shortcut {
+        switch role {
+        case .talk: settings.talkKey
+        case .toggle: settings.toggleKey
+        case .ask: settings.askKey
+        }
+    }
+
+    // MARK: 会中问答
+
+    private var coachEnabled: Bool { settings.continuousAssistant || manualAssistant }
+    private var coachTime: Double { store.liveStart.map { max(0, Date().timeIntervalSince($0)) } ?? 0 }
+    private var selectedRoomMic: OutputDevice? {
+        AudioDevices.roomMic(excluding: fakeGoneMics, headset: coachEnabled, preferred: coachEnabled ? settings.coachMic : "")
+    }
+    var coachMicName: String {
+        let uid = (settings.hearsBoth ? roomListen : listen).roomMicUID
+        return AudioDevices.inputs().first { $0.uid == uid }?.name ?? selectedRoomMic?.name ?? L("没有可用的麦克风")
+    }
+    private func updateCoachHeadphones() {
+        let transport = AudioDevices.defaultOutput.map { AudioDevices.transport($0.id) }
+        roomListen.echoGate.headphones = coachEnabled && (transport == kAudioDeviceTransportTypeBluetooth || transport == kAudioDeviceTransportTypeBluetoothLE)
+    }
+    var canAsk: Bool { CoachDeepSeekTest.enabled ? AIKey.read("deepseek") != nil : VisionServer.available(model: CoachPrompt.model) }
+
+    func askNow() {
+        guard listen.isRunning, store.liveID != nil else { return }
+        if settings.displayMode != "notes" { setDisplayMode("notes") } else { showDisplay(force: true) }
+        if notesWindow.layout == .card { notesWindow.send(.layout(.sidebar)) }
+        manualAssistant = true; tickCandidate()
+        candidate.ask()
+    }
+
+    func candidateBackgroundChanged() { candidateBackground = CandidateBackground.read() }
+
+    @Published private(set) var candidateASRFailed = false
+    func retryCandidateRecognition() {
+        (settings.listensToRoom ? listen : roomListen).retryRecognition()
+    }
+
+    private func updateCandidateRecognition() {
+        listen.gemmaCandidate = coachEnabled && settings.listensToRoom
+        roomListen.gemmaCandidate = coachEnabled
+        if !coachEnabled || !micOn { candidateASRFailed = false }
+    }
+
+    private func tickCandidate() {
+        updateCandidateRecognition()
+        candidate.gloss.enabled = settings.askGloss
+        let enabled = listen.isRunning && coachEnabled
+        if listen.isRunning, screen.chosen != nil, screenUsesRealtime != enabled { startScreen() }
+        if enabled {
+            candidate.start(background: candidateBackground, available: canAsk) { [weak self] in
+                guard let self else { return false }
+                if CoachDeepSeekTest.enabled { return AIKey.read("deepseek") != nil }
+                if !(await VisionServer.waitReady(seconds: 0)) { self.screen.server.start(model: CoachPrompt.model) }
+                return await VisionServer.waitReady(seconds: 90)
+            }
+            if let id = store.liveID { candidate.observe(lines: store.session(id)?.lines ?? [], now: coachTime) }
+            candidate.tick(now: coachTime)
+        } else if candidate.state != .idle { candidate.stop() }
+        let micEngine = settings.listensToRoom ? listen : roomListen
+        if enabled, candidateMicEngine !== micEngine {
+            candidateMicEngine?.router.setOnRealtimePCM(nil)
+            candidateMicEngine = micEngine
+            let sessionID = store.liveID
+            micEngine.router.setOnRealtimePCM { [weak self] samples in
+                let pcm = RealtimeMedia.pcm(samples)
+                let voiced = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(max(1, samples.count)) > 0.000025
+                Task { @MainActor [weak self] in
+                    guard let self, self.store.liveID == sessionID, self.coachEnabled else { return }
+                    self.candidate.appendCandidateAudio(pcm, voiced: voiced, now: self.coachTime)
+                }
+            }
+        } else if !enabled {
+            candidateMicEngine?.router.setOnRealtimePCM(nil); candidateMicEngine = nil
+        }
+        let attach = enabled && canAsk && !settings.listensToRoom
+        if attach != candidateAudioAttached {
+            candidateAudioAttached = attach
+            if attach {
+                let sessionID = store.liveID
+                listen.router.setOnRealtimePCM { [weak self] samples in
+                    let pcm = RealtimeMedia.pcm(samples)
+                    let voiced = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(max(1, samples.count)) > 0.000025
+                    Task { @MainActor [weak self] in
+                        guard let self, self.store.liveID == sessionID, self.coachEnabled else { return }
+                        self.candidate.appendAudio(pcm, voiced: voiced, now: self.coachTime)
+                    }
+                }
+            } else if !enabled || micEngine !== listen { listen.router.setOnRealtimePCM(nil) }
+        }
+    }
+
+    private func saveCandidate(_ paragraph: InterviewCoach.Paragraph) {
+        guard let id = store.liveID, let started = store.liveStart else { return }
+        lineCounter += 1
+        let line = "a\(lineCounter)"
+        let text = paragraph.output.next + (paragraph.interrupted ? "\n[Interrupted]" : "")
+        let t = max(Date().timeIntervalSince(started), store.session(id)?.lines.last?.t ?? 0)
+        store.append(TranscriptLine(id: line, t: t, speaker: "ai", src: text, srcLang: "en", dstLang: "zh-CN"))
+        candidateGlossRows.append((id, line, paragraph.output.next, paragraph.interrupted))
+        saveCandidateGlosses()
+    }
+
+    private func saveCandidateGlosses() {
+        candidateGlossRows.removeAll { row in
+            let sentences = CoachScript.sentences(row.text)
+            let translated = sentences.compactMap { candidate.gloss.translations[$0] }
+            guard !sentences.isEmpty, translated.count == sentences.count else { return false }
+            let text = translated.joined(separator: "\n")
+            store.setTranslation(in: row.session, lineID: row.line, text + (row.interrupted ? "\n[Interrupted]" : ""))
+            return true
+        }
     }
 
     /// The room hears the voice chosen for its language (looked up each time it speaks).
@@ -1320,8 +1516,10 @@ final class AppModel: ObservableObject {
         roomListen.echoCancelled = roomEchoCancel
         // Last meeting's measurement may be another room or another output: assume echo until measured.
         roomListen.echoGate.reset()
+        updateCoachHeadphones()
         // A, the gate: only the plain room mic heeds it (echo cancellation keeps talk over a remote speaker).
         listen.router.setOnLoud(roomEchoGate ? { [gate = roomListen.echoGate] in gate.hold() } : nil)
+        updateCandidateRecognition()
         roomListen.start()
         debugLog("hybrid: room side started (echo cancellation \(roomEchoCancel ? "on" : "off"), gate \(roomEchoGate ? "on" : "off"))")
     }
@@ -1340,12 +1538,13 @@ final class AppModel: ObservableObject {
 
     /// A sentence from the Mac's audio: recorded, and remembered to tell the room's copy of it.
     private func heardOnline(_ seg: Segment, duration: Double) {
+        candidate.finalized(role: settings.listensToRoom ? "candidate" : "interviewer")
         if roomListen.isRunning {
             let now = CFAbsoluteTimeGetCurrent()
             recentOnline.append(.init(text: seg.text, start: now - duration, end: now))
             recentOnline.removeAll { $0.end < now - 20 }
             heldRoom.removeAll { h in
-                guard EchoMatch.isEcho(h.heard, online: recentOnline) else { return false }
+                guard EchoMatch.isEcho(h.heard, online: recentOnline, headphones: roomListen.echoGate.headphones) else { return false }
                 debugLog("hybrid: room line dropped as an echo (\(h.seg.text.count) chars)")
                 return true
             }
@@ -1356,14 +1555,15 @@ final class AppModel: ObservableObject {
     /// A sentence from the room mic: an echo of the Mac's audio is dropped; the rest waits a moment
     /// for the Mac's line it may echo (`EchoMatch.hold`), then is recorded where it was said.
     private func heardInRoom(_ seg: Segment, duration: Double) {
+        candidate.finalized(role: "candidate")
         let now = CFAbsoluteTimeGetCurrent()
         let heard = EchoMatch.Heard(text: seg.text, start: now - duration, end: now)
-        if EchoMatch.isEcho(heard, online: recentOnline) {
+        if EchoMatch.isEcho(heard, online: recentOnline, headphones: roomListen.echoGate.headphones) {
             debugLog("hybrid: room line dropped as an echo (\(seg.text.count) chars)")
             return
         }
         // The Mac has played nothing for a while: there is nothing for this to echo, no need to wait.
-        if listen.router.stats().silenceRun >= EchoMatch.window {
+        if roomListen.echoGate.headphones || listen.router.stats().silenceRun >= EchoMatch.window {
             recordRoom((seg.id, seg, duration, heard))
             return
         }
@@ -1413,6 +1613,7 @@ final class AppModel: ObservableObject {
             appendHeard(held.seg, t: held.t, translation: held.translation)
         }
         guard let prev = lastHeard, store.session(store.liveID ?? "")?.lines.last?.id == prev.line,
+              (prev.seg.id >= ListenEngine.roomIDs) == (seg.id >= ListenEngine.roomIDs),
               prev.seg.clock == seg.clock, prev.seg.sourceCode == seg.sourceCode,
               // macOS 14/15: the older recognizer ends a line only at a real pause and often drops
               // the full stop, so a missing one says nothing; only a line Cicada cut is a half sentence.
@@ -1442,7 +1643,7 @@ final class AppModel: ObservableObject {
            voice == nil || last.voice == nil || voice == last.voice {
             join(seg, onto: prev)   // the earlier line's voice stays
         } else {
-            appendHeard(seg, t: held.t, translation: held.translation)
+            appendHeard(seg, t: held.t, translation: held.translation, voice: voice)
             if let voice, let line = lineForSegment[seg.id] { speakers.onVoice?(line, voice) }
         }
     }
@@ -1456,16 +1657,17 @@ final class AppModel: ObservableObject {
         joined.cut = seg.cut
         lastHeard = (joined, prev.line)
         store.setSource(lineID: prev.line, text)
-        listen.join(seg.id, into: prev.seg.id, text: text)
+        let engine = seg.id >= ListenEngine.roomIDs ? roomListen : listen
+        engine.join(seg.id, into: prev.seg.id, text: text)
         contentLog("JOIN \(prev.line) += \(seg.text)")
         heardWords()
     }
 
-    private func appendHeard(_ seg: Segment, t: Double, translation: String? = nil, tag: Bool = false) {
+    private func appendHeard(_ seg: Segment, t: Double, translation: String? = nil, tag: Bool = false, voice: Int? = nil) {
         lineCounter += 1
         let id = "h\(lineCounter)-\(seg.id)"
         lineForSegment[seg.id] = id
-        store.append(TranscriptLine(id: id, t: t, speaker: "them", src: seg.text, dst: translation ?? seg.translation,
+        store.append(TranscriptLine(id: id, t: t, speaker: coachEnabled && (seg.id >= ListenEngine.roomIDs || settings.listensToRoom) ? "me" : "them", src: seg.text, dst: translation ?? seg.translation,
                                     srcLang: seg.sourceCode, dstLang: listen.resolvedTarget,
                                     // 会议室 alone too: a meeting switched to it from 电脑和会议室
                                     // would otherwise mark its later room lines 线上.
@@ -1475,23 +1677,28 @@ final class AppModel: ObservableObject {
         lastHeard = (kept, id)
         // A line with hardly a letter ("." from a breath or a click) gets no voiceprint.
         if tag, settings.speakerVoices, let samples = seg.voiceSamples, seg.text.filter(\.isLetter).count >= 2 {
-            speakers.tag(lineID: id, samples: samples)
+            // The assistant hears the line once its voice is known (a few hundredths of a second):
+            // whose side it is decides whether it gets an answer.
+            speakers.voice(of: samples) { [weak self] voice in
+                guard let self else { return }
+                if let voice { self.speakers.onVoice?(id, voice) }
+            }
         }
         heardWords()
     }
 
-    /// 设置 › 屏幕识别's switch: takes effect in the meeting going on too.
+    /// Debug control follows the live meeting's optional selection, never a saved preference.
     func setScreenNotes(_ on: Bool) {
-        settings.screenNotes = on
-        guard listen.isRunning else { return }
-        if on { startScreen() } else { screen.stop() }
+        guard listen.isRunning, store.liveID != nil else { return }
+        if on { screen.choose() } else { screen.clearSelection() }
     }
 
     /// 识别共享屏幕: each new page of the meeting window becomes a "screen" line.
     private func startScreen() {
-        guard let started = store.liveStart else { return }
+        guard listen.isRunning, let id = store.liveID, screen.meetingID == id,
+              screen.chosen != nil, let started = store.liveStart else { return }
         screen.onPage = { [weak self] shown, text, jpeg in
-            guard let self else { return }
+            guard let self, self.store.liveID == id else { return }
             // Reading a page takes seconds; the line never goes before one already noted (notes
             // count the lines they have covered), so it is dated no earlier than the last line.
             let t = max(shown, self.store.liveID.flatMap { self.store.session($0) }?.lines.last?.t ?? 0)
@@ -1499,7 +1706,18 @@ final class AppModel: ObservableObject {
             self.store.append(TranscriptLine(id: "s\(self.lineCounter)", t: t, speaker: "screen", src: text, dst: nil,
                                              srcLang: "", dstLang: "", shot: self.store.saveShot(jpeg, secondsIn: t)))
         }
-        screen.start(startedAt: started, model: settings.screenModel.trimmingCharacters(in: .whitespaces))
+        screen.isAsking = { [weak self] in
+            self?.candidate.state == .generating || self?.candidate.state == .loading || self?.candidate.reading.busy == true
+        }
+        screen.onKeyframesCleared = { [weak self] in self?.candidate.clearPicture() }
+        screen.onKeyframe = { [weak self] frame in
+            guard let self, self.store.liveID == id, self.screen.chosen != nil else { return }
+            self.candidate.picture(frame)
+        }
+        // The coach sees keyframes directly, including diagrams without OCR. Avoid competing inference.
+        screenUsesRealtime = coachEnabled
+        let model = screenUsesRealtime ? "" : settings.screenModel.trimmingCharacters(in: .whitespaces)
+        screen.start(startedAt: started, model: model)
     }
 
     private func recordSaid(_ src: String, _ dst: String, from: String, to: String, secondsAgo: Double) {
@@ -1611,7 +1829,7 @@ final class AppModel: ObservableObject {
     }
 
     private func debugCommand(_ cmd: String) {
-        debugLog("debug command: \(cmd)")
+        debugLog("debug command: \(cmd.hasPrefix("assistantSay:") ? "assistantSay:<redacted>" : cmd)")
         let parts = cmd.split(separator: ":", maxSplits: 1).map(String.init)
         let arg = parts.count > 1 ? parts[1] : ""
         switch parts.first ?? "" {
@@ -1620,9 +1838,12 @@ final class AppModel: ObservableObject {
         case "screenfile":
             // screenfile:<image path> reads one page as if the meeting window showed it, into the live meeting.
             guard let img = NSImage(contentsOfFile: arg)?.cgImage(forProposedRect: nil, context: nil, hints: nil) else { break }
-            let model = settings.screenModel.trimmingCharacters(in: .whitespaces)
+            let model = settings.continuousAssistant || manualAssistant ? "" : settings.screenModel.trimmingCharacters(in: .whitespaces)
             if !model.isEmpty { screen.server.start(model: model) }
             Task {
+                if screen.chosen != nil, let jpeg = RealtimeMedia.jpeg(img) {
+                    candidate.picture(CoachFrame(jpeg: jpeg, seconds: coachTime))
+                }
                 guard let page = await ScreenWatch.read(img, model: model), let start = store.liveStart else { return }
                 screen.onPage?(Date().timeIntervalSince(start), page.line, page.jpeg)
             }
@@ -1673,6 +1894,102 @@ final class AppModel: ObservableObject {
         case "pickLanguage":
             if let lang = sourceLanguages.first(where: { $0.locale == arg }) { listen.pickLanguage(lang) }
         case "stop": stop()
+        // ask is the 会中问答 key: answers what was just asked.
+        case "ask": askNow()
+        // meSaid:<text>: a line of ours, as the room mic would hear it, without a person in the room.
+        case "meSaid":
+            guard let start = store.liveStart else { break }
+            lineCounter += 1
+            store.append(TranscriptLine(id: "m\(lineCounter)", t: Date().timeIntervalSince(start), speaker: "me", src: arg, srcLang: "en", dstLang: ""))
+            tickCandidate()
+        // themSaid:<text>: a line of the other side, to replay a recorded meeting turn by turn.
+        case "themSaid":
+            guard let start = store.liveStart else { break }
+            lineCounter += 1
+            store.append(TranscriptLine(id: "t\(lineCounter)", t: Date().timeIntervalSince(start), speaker: "them", src: arg, srcLang: "en", dstLang: ""))
+            tickCandidate()
+        case "assistant":
+            settings.continuousAssistant = arg == "on"
+            if arg != "on" { manualAssistant = false }
+            tickCandidate()
+        case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
+        case "assistantReconnect": candidate.retry()
+        case "assistantBackgroundReload": candidateBackgroundChanged()
+        case "assistantRender":
+            // ImageRenderer cannot lay out the interactive scroll view and native controls reliably.
+            let view = CoachSnapshot(engine: candidate, microphoneName: coachMicName)
+                .frame(width: 420, height: 680).padding(20).background(Palette.surface)
+            let renderer = ImageRenderer(content: view.environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
+            renderer.scale = 2
+            if let image = renderer.nsImage, let tiff = image.tiffRepresentation,
+               let rep = NSBitmapImageRep(data: tiff), let png = rep.representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: arg))
+            }
+        case "assistantSay":
+            guard listen.isRunning else { break }
+            manualAssistant = true; tickCandidate()
+            lineCounter += 1
+            store.append(TranscriptLine(id: "t\(lineCounter)", t: coachTime, speaker: "them", src: arg, srcLang: "en", dstLang: ""))
+            tickCandidate(); candidate.ask()
+        case "assistantState":
+            debugLog("coach: state=\(candidate.state.rawValue) response_id=\(candidate.responseID ?? "none") first_ms=\(Int((candidate.firstLatency ?? -1) * 1000)) sentence_ms=\(Int((candidate.firstSentenceLatency ?? -1) * 1000)) committed=\(candidate.script.committed.count) pending_words=\(CoachScript.words(candidate.script.pending).count) acoustic=\(candidate.acousticReady) generations=\(candidate.generationCount) reviews=\(candidate.reviewCount) frames=\(candidate.frameCount) paragraphs=\(candidate.paragraphs.count) mic=\(coachMicName) candidate_asr=\((settings.listensToRoom ? listen : roomListen).gemmaCandidate ? "gemma" : Recognition.name) candidate_asr_failed=\(candidateASRFailed) reading=gemma cursor=\(candidate.script.cursor) sentence=\(candidate.script.currentSentence) reading_failed=\(candidate.readingFailed)")
+        case "assistantRead":
+            // File-only Gemma ASR exercises candidate display, records and shared reading evidence.
+            guard let sessionID = store.liveID else { break }
+            Task { [weak self] in
+                let samples = await Task.detached { Voiceprints.samples(of: URL(fileURLWithPath: arg)) }.value
+                guard let self, self.store.liveID == sessionID, let samples, !samples.isEmpty else { return }
+                let stream = CandidateRecognition()
+                let consume = Task { @MainActor [weak self] in
+                    do {
+                        for try await piece in stream.results {
+                            guard let self, self.store.liveID == sessionID else { await stream.cancel(); return }
+                            self.candidate.reading.acceptTranscript(piece.text, final: piece.isFinal)
+                            if piece.isFinal {
+                                guard piece.text.contains(where: \.isLetter) else { continue }
+                                self.lineCounter += 1
+                                self.store.append(TranscriptLine(id: "m\(self.lineCounter)", t: self.coachTime,
+                                    speaker: "me", src: piece.text, srcLang: piece.language ?? "en", dstLang: ""))
+                                self.candidate.finalized(role: "candidate")
+                                self.tickCandidate()
+                            } else {
+                                self.candidate.speech(piece.text, role: "candidate", now: self.coachTime)
+                                self.liveRoom = (piece.text, "", Date())
+                                self.showLive(spoke: piece.text)
+                            }
+                        }
+                        debugLog("coach: candidate file recognized by Gemma")
+                    } catch { debugLog("coach: candidate file ASR failed (\((error as NSError).code))") }
+                }
+                for start in stride(from: 0, to: samples.count, by: 1600) {
+                    let end = min(samples.count, start + 1600)
+                    guard let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: AVAudioFrameCount(end - start)),
+                          let channel = buffer.floatChannelData else { continue }
+                    buffer.frameLength = AVAudioFrameCount(end - start)
+                    Array(samples[start..<end]).withUnsafeBufferPointer {
+                        if let base = $0.baseAddress { channel[0].update(from: base, count: end - start) }
+                    }
+                    stream.append(buffer)
+                }
+                await stream.finish(); await consume.value
+            }
+        case "screenNotes": setScreenNotes(arg == "on")
+        case "screenPreview":
+            // Uses existing recording permission; does not bypass the system picker grant.
+            guard let meetingID = store.liveID else { break }
+            Task {
+                guard CGPreflightScreenCaptureAccess(),
+                      let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true),
+                      let window = content.windows.first(where: { String($0.windowID) == arg || $0.owningApplication?.bundleIdentifier == arg }) else {
+                    debugLog("screen: preview target unavailable or permission missing")
+                    return
+                }
+                screen.picked(SCContentFilter(desktopIndependentWindow: window), meetingID: meetingID)
+                await screen.refreshPreview()
+                debugLog("screen: preview ready=\(screen.preview != nil) running=\(screen.isRunning)")
+            }
+        case "screenState":
+            debugLog("screen: state meeting=\(screen.meetingID != nil) selected=\(screen.chosen != nil) running=\(screen.isRunning) captures=\(screen.captureCount) preview=\(screen.preview != nil) image=\(screen.latestImage?.size ?? "none")")
         case "source": sourceSelection = arg
         case "listenSource", "mic":
             // mic:<on|off> is the button; listenSource:<system|room|both> the old names for it.
@@ -1707,7 +2024,7 @@ final class AppModel: ObservableObject {
             guard p.count == 2, let s = store.session(p[0]) else { break }
             let out = p[1].split(separator: "@").map(String.init)
             let width = out.count > 1 ? CGFloat(Double(out[1]) ?? 360) : 360
-            let r = ImageRenderer(content: SpeakerPreview(model: self, session: s).environment(\.speakerNames, SpeakerLabels.names(s)).frame(width: width).background(Color.white))
+            let r = ImageRenderer(content: SpeakerPreview(model: self, session: s).environment(\.speakerNames, SpeakerLabels.names(s)).frame(width: width).background(Palette.surface).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                let png = rep.representation(using: .png, properties: [:]) {
@@ -1753,12 +2070,13 @@ final class AppModel: ObservableObject {
         case "micGuide":
             refreshMicUsers()
             if let user = micUsers.first(where: { $0.bundleID == arg || $0.name == arg }) { showMicGuide(user) } else { micGuide = nil }
-        case "talkKey", "toggleKey":
+        case "talkKey", "toggleKey", "askKey":
             let s = arg == "right" ? Shortcut.rightOption : Shortcut(stored: arg)
-            let refusal = s.map { setShortcut($0, for: parts[0] == "talkKey" ? .talk : .toggle) } ?? "bad shortcut"
+            let role: ShortcutRole = parts[0] == "talkKey" ? .talk : parts[0] == "toggleKey" ? .toggle : .ask
+            let refusal = s.map { setShortcut($0, for: role) } ?? "bad shortcut"
             debugLog("\(parts[0]) \(arg): \(refusal ?? "ok")")
         case "shortcuts":
-            debugLog("shortcuts talk=\(settings.talkKey.display) armed=\(talkRight.isRunning || talkCombo.isRegistered) needsPermission=\(talkNeedsPermission) inputMonitoring=\(RightOptionKey.allowed) toggle=\(settings.toggleKey.display) taken=\(toggleKeyTaken)")
+            debugLog("shortcuts talk=\(settings.talkKey.display) armed=\(talkRight.isRunning || talkCombo.isRegistered) needsPermission=\(talkNeedsPermission) inputMonitoring=\(RightOptionKey.allowed) toggle=\(settings.toggleKey.display) taken=\(toggleKeyTaken) ask=\(settings.askKey.display) armed=\(askKey.isRegistered) taken=\(askKeyTaken)")
         case "aiKeyFile":
             // Dev testing: the key comes from a file so it never passes through the log.
             if let k = try? String(contentsOfFile: arg, encoding: .utf8) { Task { await ling.setKey(k) } }
@@ -1812,6 +2130,13 @@ final class AppModel: ObservableObject {
             if !arg.isEmpty { loginItem.set(arg == "on") }
             loginItem.refresh()
             debugLog("login item enabled=\(loginItem.enabled) needsApproval=\(loginItem.needsApproval)")
+        case "appearance":
+            // Test this app only; never change the user's macOS appearance.
+            switch arg {
+            case "dark": NSApp.appearance = NSAppearance(named: .darkAqua)
+            case "light": NSApp.appearance = NSAppearance(named: .aqua)
+            default: NSApp.appearance = nil
+            }
         case "about": AboutPanel.show()
         case "display": setDisplayMode(arg)
         case "notesWindow":
@@ -1823,6 +2148,14 @@ final class AppModel: ObservableObject {
             let parts = arg.split(separator: ",").map(String.init)
             Task { await notes.replay(parts[0], step: parts.count > 1 ? Int(parts[1]) ?? 4 : 4) }
         case "notesShow": notes.show(arg)
+        case "dock": settings.showInDock = arg != "off"  // 在 Dock 中显示
+        case "dockState":
+            debugLog("dock: shown=\(settings.showInDock) live=\(DockIcon.live) policy=\(NSApp.activationPolicy().rawValue) active=\(NSApp.isActive)")
+        case "dockRender":  // dockRender:<png>: the Dock tile as drawn now
+            guard let image = (NSApp.dockTile.contentView as? NSImageView)?.image,
+                  let data = image.tiffRepresentation,
+                  let bitmap = NSBitmapImageRep(data: data) else { debugLog("dock: no tile"); break }
+            try? bitmap.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg))
         case "notesCapturable": notesWindow.setCapturable(arg != "off")
         case "notesShare": setNotesCapturable(arg != "off")  // the setting itself, as its badge or switch does
         case "notesClose": notesWindow.performClose()
@@ -1841,8 +2174,8 @@ final class AppModel: ObservableObject {
             // The whole notes column as a PNG, for checking what is below the fold.
             let view = NotesContentView(notes: notes.notes, fresh: notes.fresh, live: store.liveID != nil,
                                         updating: notes.state == .updating)
-                .padding(24).frame(width: 460).background(Color.white)
-            let r = ImageRenderer(content: view)
+                .padding(24).frame(width: 460).background(Palette.surface)
+            let r = ImageRenderer(content: view.environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff),
                let png = rep.representation(using: .png, properties: [:]) {
@@ -1867,7 +2200,7 @@ final class AppModel: ObservableObject {
             try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg))
             // And the shown meeting's whole notes page beside it, for what is below the fold.
             if let id = mainShow?.split(separator: ",").first.map(String.init), let n = store.session(id)?.notes {
-                let r = ImageRenderer(content: NotesContentView(notes: n, document: true).padding(32).frame(width: 744).background(Color.white))
+                let r = ImageRenderer(content: NotesContentView(notes: n, document: true).padding(32).frame(width: 744).background(Palette.surface).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
                 r.scale = 2
                 if let img = r.nsImage, let tiff = img.tiffRepresentation, let full = NSBitmapImageRep(data: tiff) {
                     try? full.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg + ".notes.png"))
@@ -1897,7 +2230,7 @@ final class AppModel: ObservableObject {
             guard p.count == 2, let section = SettingsSection(rawValue: p[0]) else { break }
             settingsSection = section
             let r = ImageRenderer(content: SettingsView(model: self, settings: settings, installer: installer).page
-                .frame(width: 530).background(Color(red: 0.965, green: 0.969, blue: 0.976)))
+                .frame(width: 530).background(Palette.canvas).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: p[1]))
@@ -1983,7 +2316,10 @@ final class AppModel: ObservableObject {
             // voiceMicRun:<on|off> runs the echo-cancelling unit with nobody listening (what it does to the rest).
             if arg == "off" { voiceMic.detach("debug") } else if let d = AudioDevices.roomMic {
                 voiceMic.prepare(input: d.id) { [voiceMic] ok in
-                    debugLog("voiceMicRun: \(ok && voiceMic.attach("debug", input: d.id) { _ in } ? "running" : "failed")")
+                    guard ok else { debugLog("voiceMicRun: failed"); return }
+                    voiceMic.attach("debug", input: d.id, onAudio: { _ in }) { running in
+                        debugLog("voiceMicRun: \(running ? "running" : "failed")")
+                    }
                 }
             }
         case "roomEcho": roomEchoCancel = arg != "off"
@@ -2017,13 +2353,13 @@ final class AppModel: ObservableObject {
             // micGuideRender:<bundle id>=<png>: the 怎么改 sheet for an app in the list.
             let p = arg.split(separator: "=", maxSplits: 1).map(String.init)
             guard p.count == 2, let user = micUsers.first(where: { $0.bundleID == p[0] }) else { break }
-            let r = ImageRenderer(content: MicGuideView(model: self, bundleID: user.bundleID, name: user.name, close: {}).background(Color.white))
+            let r = ImageRenderer(content: MicGuideView(model: self, bundleID: user.bundleID, name: user.name, close: {}).background(Palette.surface).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: p[1]))
             }
         case "speakTestRender":
-            let r = ImageRenderer(content: SpeakTestView(model: self, tester: speakTester, close: {}).background(Color.white))
+            let r = ImageRenderer(content: SpeakTestView(model: self, tester: speakTester, close: {}).background(Palette.surface).environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             r.scale = 2
             if let img = r.nsImage, let tiff = img.tiffRepresentation, let rep = NSBitmapImageRep(data: tiff) {
                 try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: arg))
@@ -2074,13 +2410,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     private var settingsWindow: NSWindow?
     private var pollTimer: Timer?
     private var runningObserver: Any?
+    private var dockObserver: Any?
     private var popoverClickMonitor: Any?
     private lazy var menu = AppMenu(model: model)
     /// Held here: a toolbar keeps only a weak reference to its delegate.
     private lazy var mainToolbar = MainToolbar(model: model)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
+        NSApp.setActivationPolicy(model.settings.showInDock ? .regular : .accessory)
         menu.showMainWindow = { [weak self] in self?.showMainWindow() }
         menu.showOnboarding = { [weak self] in self?.showOnboarding() }
         menu.install()
@@ -2095,6 +2432,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
             self?.statusItem.button?.image = BrandImage.menuBar(live: live, badge: badge)
             self?.statusItem.button?.toolTip = problem ?? update.map { L("有新版本 \($0.version)") }
             debugLog("menu bar: badge=\(badge) tooltip=\(problem ?? "-")")
+            DockIcon.show(live: live)
+        }
+        dockObserver = model.settings.$showInDock.dropFirst().sink { [weak self] _ in
+            // After the change lands: the observer fires before the property is set.
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.updateActivationPolicy() } }
         }
         let poll = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.model.refreshPermissions() }
@@ -2167,6 +2509,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         if open.isEmpty { showMainWindow() } else { open.forEach { $0.deminiaturize(nil) }; NSApp.activate() }
         return false
     }
+
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? { menu.dockMenu() }
 
     /// Quitting ends the meeting being recorded: ask first.
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -2320,15 +2664,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         }
     }
 
-    /// A regular app (name and menus top left, Dock icon, ⌘Tab) while the main, settings or
-    /// onboarding window is open; only the menu bar item otherwise. The notes window doesn't
-    /// count: it floats beside the meeting app and never takes focus from it.
+    /// A regular app (name and menus top left, Dock icon, ⌘Tab) while 在 Dock 中显示 is on, or
+    /// else while the main, settings or onboarding window is open; only the menu bar item otherwise.
+    /// The notes window doesn't count: it floats beside the meeting app and never takes focus from
+    /// it (a regular app doesn't change that: the panel is non-activating either way).
     func updateActivationPolicy(closing: NSWindow? = nil) {
         let open = [mainWindow, onboardingWindow, settingsWindow].contains { $0 != nil && $0 != closing && $0!.isVisible }
-        let policy: NSApplication.ActivationPolicy = open ? .regular : .accessory
+        let policy: NSApplication.ActivationPolicy = open || model.settings.showInDock ? .regular : .accessory
         guard NSApp.activationPolicy() != policy else { return }
         NSApp.setActivationPolicy(policy)
-        debugLog("activation policy → \(open ? "regular" : "accessory")")
+        debugLog("activation policy → \(policy == .regular ? "regular" : "accessory")")
+        // Back from .accessory the Dock can show a blank icon until the tile is drawn again.
+        DockIcon.show(live: model.running)
     }
 
     // MARK: Output device changes

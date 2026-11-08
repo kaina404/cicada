@@ -255,7 +255,7 @@ enum VoiceReference {
 /// the meter. Stops by itself at 30 s.
 @MainActor
 final class VoiceRecorder: ObservableObject {
-    enum Phase: Equatable { case idle, recording, checking, ready, failed(String) }
+    enum Phase: Equatable { case idle, starting, recording, checking, ready, failed(String) }
 
     @Published private(set) var phase: Phase = .idle
     @Published private(set) var seconds: Double = 0
@@ -266,59 +266,100 @@ final class VoiceRecorder: ObservableObject {
     static let maxSeconds = 30.0
     static let minSeconds = 8.0
 
-    private let engine = AVAudioEngine()
-    private nonisolated(unsafe) var file: AVAudioFile?
-    private nonisolated(unsafe) var converter: AVAudioConverter?
+    private var mic: RoomMic?
+    private var file: AVAudioFile?
     private var timer: Timer?
     private var started = Date()
     private(set) var url = FileManager.default.temporaryDirectory.appendingPathComponent("livesubs-voice-\(UUID().uuidString).wav")
     private let format = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
     private var locale = "zh-CN"
+    private var generation = UUID()
+    private var rawMic: VoiceMic?
+    private var recordingDevice: OutputDevice?
+    private let capture = VoiceRecordingCapture()
 
     /// `device`: the real mic; the system default may be the virtual mic while speaking is on.
-    func start(locale: String, device: OutputDevice?) {
-        stopEngine()
+    func start(locale: String, device: OutputDevice?, voiceMic: VoiceMic? = nil) {
+        cancel()
+        let generation = generation
+        phase = .starting
+        Task {
+            let granted = await AVCaptureDevice.requestAccess(for: .audio)
+            guard self.generation == generation else { return }
+            guard granted else {
+                phase = .failed(L("麦克风没收到声音，请检查麦克风权限"))
+                return
+            }
+            let acquired = await voiceMic?.beginRawRecording() ?? true
+            guard self.generation == generation else {
+                if acquired { voiceMic?.endRawRecording() }
+                return
+            }
+            guard acquired else {
+                phase = .failed(L("请先关闭会议麦克风并松开说话键，再录制声音"))
+                return
+            }
+            rawMic = voiceMic
+            startEngine(locale: locale, device: device)
+            if case .failed = phase { stopEngine() }
+        }
+    }
+
+    private func startEngine(locale: String, device: OutputDevice?) {
+        guard let device, !device.isVirtualMic,
+              AudioDevices.inputs().contains(where: { $0.uid == device.uid }) else {
+            phase = .failed(L("所选麦克风已断开，请重新选择"))
+            return
+        }
+        recordingDevice = device
+        capture.reset()
         self.locale = locale
         transcript = ""
         try? FileManager.default.removeItem(at: url)
-        let input = engine.inputNode
-        AudioDevices.pinInput(engine, to: device)
-        // The hardware format, as in `RoomMic.start`: the client one can still be the system mic's.
-        let inFormat = input.inputFormat(forBus: 0)
-        guard inFormat.sampleRate > 0, inFormat.channelCount > 0,
-              let f = try? AVAudioFile(forWriting: url, settings: format.settings, commonFormat: .pcmFormatInt16, interleaved: true),
-              let conv = AVAudioConverter(from: inFormat, to: format) else {
+        guard let f = try? AVAudioFile(forWriting: url, settings: format.settings, commonFormat: .pcmFormatInt16, interleaved: true) else {
             phase = .failed(L("麦克风没收到声音，请检查麦克风权限"))
             return
         }
         file = f
-        converter = conv
+        let mic = RoomMic(device: device)
+        self.mic = mic
+        let converter = PCMConverter()
         let outFormat = format
-        input.installTap(onBus: 0, bufferSize: 4096, format: inFormat) { [weak self] buffer, _ in
-            guard let self, let conv = self.converter, let file = self.file else { return }
-            let ratio = outFormat.sampleRate / buffer.format.sampleRate
-            guard let out = AVAudioPCMBuffer(pcmFormat: outFormat, frameCapacity: AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 32) else { return }
-            var fed = false
-            conv.convert(to: out, error: nil) { _, status in
-                if fed { status.pointee = .noDataNow; return nil }
-                fed = true
-                status.pointee = .haveData
-                return buffer
-            }
-            try? file.write(from: out)
+        let capture = capture
+        mic.onAudio = { buffer in
+            guard let out = converter.convert(buffer, to: outFormat) else { return }
+            do { try f.write(from: out) } catch { capture.failed() }
             var peak: Float = 0
             if let ch = buffer.floatChannelData?[0] {
                 for i in 0..<Int(buffer.frameLength) { peak = max(peak, abs(ch[i])) }
             }
-            Task { @MainActor in self.level = min(1, peak * 2.5) }
+            capture.append(frames: Int(out.frameLength), peak: peak)
         }
-        do {
-            try engine.start()
-        } catch {
-            input.removeTap(onBus: 0)
-            phase = .failed(L("无法打开麦克风：\(error.localizedDescription)"))
-            return
+        mic.onStarted = { [weak self, weak mic] in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.mic === mic, self.phase == .starting else { return }
+                debugLog("voice recording: started device=\(mic.deviceName)")
+                self.startMeter()
+            }
         }
+        mic.onFailed = { [weak self, weak mic] error in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.mic === mic else { return }
+                self.stopEngine()
+                self.phase = .failed(L("无法打开麦克风：\(error.localizedDescription)"))
+            }
+        }
+        mic.onRestart = { [weak self, weak mic] _ in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.mic === mic else { return }
+                self.stopEngine()
+                self.phase = .failed(L("所选麦克风已断开，请重新选择"))
+            }
+        }
+        try? mic.start()
+    }
+
+    private func startMeter() {
         started = Date()
         seconds = 0
         phase = .recording
@@ -327,6 +368,20 @@ final class VoiceRecorder: ObservableObject {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.seconds = Date().timeIntervalSince(self.started)
+                let state = self.capture.snapshot
+                self.level = min(1, state.currentPeak * 2.5)
+                if Int(self.seconds * 10) % 10 == 0,
+                   let device = self.recordingDevice,
+                   !AudioDevices.inputs().contains(where: { $0.uid == device.uid }) {
+                    self.stopEngine()
+                    self.phase = .failed(L("所选麦克风已断开，请重新选择"))
+                    return
+                }
+                if state.writeFailed || (self.seconds >= 5 && (state.frames < Int((self.seconds - 2) * 16000) || state.peak < 0.003)) {
+                    self.stopEngine()
+                    self.phase = .failed(L("没有收到清晰声音，请检查所选麦克风后重录"))
+                    return
+                }
                 if self.seconds >= Self.maxSeconds { self.finish() }
             }
         }
@@ -338,14 +393,25 @@ final class VoiceRecorder: ObservableObject {
     func finish() {
         guard phase == .recording else { return }
         stopEngine()
-        guard seconds >= Self.minSeconds else {
-            phase = .failed(L("录音太短了，请至少朗读 \(Int(Self.minSeconds)) 秒"))
-            return
-        }
         phase = .checking
-        let url = url, locale = locale
+        let url = url, locale = locale, generation = generation
         Task {
+            await withCheckedContinuation { continuation in
+                AudioLifecycle.queue.async { continuation.resume() }
+            }
+            guard self.generation == generation else { return }
+            let state = capture.snapshot
+            debugLog("voice recording: finished frames=\(state.frames) peak=\(state.peak) writeFailed=\(state.writeFailed)")
+            guard state.frames >= Int(Self.minSeconds * 16000), !state.writeFailed, state.peak >= 0.003 else {
+                phase = .failed(L("没有收到清晰声音，请检查所选麦克风后重录"))
+                return
+            }
+            guard seconds >= Self.minSeconds else {
+                phase = .failed(L("录音太短了，请至少朗读 \(Int(Self.minSeconds)) 秒"))
+                return
+            }
             let text = await Self.transcribe(url, locale: locale)
+            guard self.generation == generation else { return }
             self.transcript = text
             guard text.count >= 6 else { self.phase = .failed(L("没听清录音内容，请换个安静的地方再录一次")); return }
             let pace = VoiceReference.pace(of: url, text: text)
@@ -359,6 +425,7 @@ final class VoiceRecorder: ObservableObject {
     }
 
     func cancel() {
+        generation = UUID()
         stopEngine()
         phase = .idle
         try? FileManager.default.removeItem(at: url)
@@ -367,11 +434,12 @@ final class VoiceRecorder: ObservableObject {
     private func stopEngine() {
         timer?.invalidate()
         timer = nil
-        if engine.isRunning { engine.stop() }
-        engine.inputNode.removeTap(onBus: 0)
+        mic?.stop()
+        mic = nil
         file = nil
-        converter = nil
         level = 0
+        rawMic?.endRawRecording()
+        rawMic = nil
     }
 
     private static func transcribe(_ url: URL, locale: String) async -> String {
@@ -380,5 +448,26 @@ final class VoiceRecorder: ObservableObject {
               (try? f.read(into: buf)) != nil else { return "" }
         return await LoopbackTest.transcribe([buf], locale: locale)
     }
+}
+/// Audio-thread measurements, read by the UI timer without sharing mutable buffers.
+final class VoiceRecordingCapture: @unchecked Sendable {
+    struct Snapshot {
+        var frames = 0
+        var peak: Float = 0
+        var currentPeak: Float = 0
+        var writeFailed = false
+    }
+    private let lock = NSLock()
+    private var state = Snapshot()
+    var snapshot: Snapshot { lock.withLock { state } }
+    func reset() { lock.withLock { state = Snapshot() } }
+    func append(frames: Int, peak: Float) {
+        lock.withLock {
+            state.frames += frames
+            state.peak = max(state.peak, peak)
+            state.currentPeak = peak
+        }
+    }
+    func failed() { lock.withLock { state.writeFailed = true } }
 }
 #endif

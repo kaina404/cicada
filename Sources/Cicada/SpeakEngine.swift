@@ -102,7 +102,9 @@ final class SpeakEngine {
     let settings: AppSettings
     private(set) var phase: Phase = .idle
 
-    private var mic = AVAudioEngine()
+    private var plainMic: RoomMic?
+    private var pressConsumer: String?
+    private var micRevision = AudioRevision()
     /// The mic with echo cancellation, shared with 电脑和会议室's room (`VoiceMic`): used when
     /// `echoCancel` is on, or whenever the room already has it running.
     private let voiceMic: VoiceMic
@@ -138,11 +140,7 @@ final class SpeakEngine {
     private nonisolated static let pressLimit = 16_000 * 60
 
     private let synth = AVSpeechSynthesizer()
-    private var out = AVAudioEngine()
-    private var player = AVAudioPlayerNode()
-    private var outObserver: NSObjectProtocol?
-    private var outFormat: AVAudioFormat?
-    private var outDeviceUID: String?
+    private let output = SpeechOutput()
     /// The device the latest `speak` call played to.
     private(set) var lastDevice: OutputDevice?
     /// Debug: also write synthesized speech here.
@@ -151,39 +149,10 @@ final class SpeakEngine {
     init(settings: AppSettings, voiceMic: VoiceMic) {
         self.settings = settings
         self.voiceMic = voiceMic
-        wireOutput()
     }
 
-    private func wireOutput() {
-        out.attach(player)
-        // Pointing the output at a device (the first sentence, BlackHole installed, headphones
-        // plugged in) stops the engine, and the player stays silent until it is wired up again.
-        outObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: out, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.outputChanged() }
-        }
-    }
-
-    /// Making or letting go of the echo-cancelling unit leaves an output engine that was already
-    /// there silent for good (still running, no notification; a restart doesn't help), so the room
-    /// would hear nothing: a new engine plays again. Not in the middle of a sentence.
-    func newOutputEngine() {
-        // `player.isPlaying` stays true after the last buffer: the phase says whether a sentence is going out.
-        if phase == .speaking {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-                MainActor.assumeIsolated { self?.newOutputEngine() }
-            }
-            return
-        }
-        if let outObserver { NotificationCenter.default.removeObserver(outObserver) }
-        player.stop()
-        out.stop()
-        out = AVAudioEngine()
-        player = AVAudioPlayerNode()
-        outFormat = nil
-        outDeviceUID = nil
-        wireOutput()
-        debugLog("voice output: new engine after the voice mic changed")
-    }
+    func newOutputEngine() { output.rebuild() }
+    func resetOutput() { output.stop() }
 
     var targetCode: String {
         if settings.speakTo != "room" { return settings.speakTo }
@@ -192,7 +161,7 @@ final class SpeakEngine {
     }
 
     /// Debug: the device the mic engine reads.
-    var micDeviceName: String { AudioDevices.inputDevice(of: mic) }
+    var micDeviceName: String { plainMic?.deviceName ?? inputDevice?()?.name ?? "-" }
 
     func setRecording(_ url: URL?) {
         micQueue.sync {
@@ -302,8 +271,12 @@ final class SpeakEngine {
         debugLog("speak: press ended")
         releasedAt = Date()
         // Keep the mic open a moment so the last syllable isn't cut off.
+        let revision = micRevision.value
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-            MainActor.assumeIsolated { self?.finishUtterance() }
+            MainActor.assumeIsolated {
+                guard let self, self.micRevision.accepts(revision), self.phase == .listening else { return }
+                self.finishUtterance()
+            }
         }
     }
 
@@ -349,60 +322,60 @@ final class SpeakEngine {
     }
 
     private func startMic(format: AVAudioFormat, input cont: RecognitionStream) {
-        if echoCancel || voiceMic.inUse, let device = echoInput {
-            let conv = converter
-            let queue = micQueue
-            feeding = true
-            let started = voiceMic.attach("press", input: device) { [weak self] buf in
-                queue.async {
-                    guard let self, self.feeding, let c = conv.convert(buf, to: format) else { return }
-                    cont.append(c)
-                    self.recordMic(c)
-                    self.keepForMing(c)
-                }
-            }
-            debugLog("speak: mic \(started ? "with echo cancellation" : "plain, echo cancellation not ready")")
-            if started { return }
-        }
-        // A unit left over (toggled off mid-press, a virtual mic) would starve the plain mic; one the
-        // room is using stays (the talk key is then on another mic).
-        if !voiceMic.inUse { voiceMic.release() }
-        // A fresh engine each press: one kept from the last press still reports the input's old
-        // format after the device changed it (AirPods drop to call quality when their mic opens),
-        // and installing a tap in that format raises an exception that ends the app.
-        if mic.isRunning { mic.inputNode.removeTap(onBus: 0); mic.stop() }
-        mic = AVAudioEngine()
-        let inputNode = mic.inputNode
-        AudioDevices.pinInput(mic, to: inputDevice?())
-        // Pinning can leave the client format at BlackHole's rate/channels. A tap must use
-        // the real hardware format or AVAudioEngine raises an Objective-C exception.
-        let inFormat = inputNode.inputFormat(forBus: 0)
-        guard inFormat.sampleRate > 0, inFormat.channelCount > 0 else {
-            onStatus?(L("没有可用的麦克风"))
-            phase = .idle
-            return
-        }
-        inputNode.removeTap(onBus: 0)
+        let revision = micRevision.advance()
         let conv = converter
         let queue = micQueue
         feeding = true
-        inputNode.installTap(onBus: 0, bufferSize: 2048, format: inFormat) { [weak self] buf, _ in
+        let deliver: (AVAudioPCMBuffer) -> Void = { [weak self] buf in
             queue.async {
-                guard let self, self.feeding else { return }
-                if let c = conv.convert(buf, to: format) {
-                    cont.append(c)
-                    self.recordMic(c)
-                    self.keepForMing(c)
-                }
+                guard let self, self.feeding, let c = conv.convert(buf, to: format) else { return }
+                cont.append(c)
+                self.recordMic(c)
+                self.keepForMing(c)
             }
         }
-        do {
-            try mic.start()
-        } catch {
-            debugLog("mic start failed: \(error)")
-            onStatus?(L("麦克风无法启动，请在系统设置里允许\(appDisplayName)使用麦克风"))
-            phase = .idle
+        if echoCancel || voiceMic.inUse, let device = echoInput {
+            let key = "press-" + UUID().uuidString
+            pressConsumer = key
+            voiceMic.attach(key, input: device, onAudio: deliver) { [weak self] started in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let self else { return }
+                        guard self.micRevision.accepts(revision), self.phase == .listening else {
+                            if started { self.voiceMic.detach(key) }
+                            return
+                        }
+                        debugLog("speak: mic \(started ? "with echo cancellation" : "plain, echo cancellation not ready")")
+                        if !started { self.startPlainMic(deliver: deliver, revision: revision) }
+                    }
+                }
+            }
+        } else {
+            startPlainMic(deliver: deliver, revision: revision)
         }
+    }
+
+    private func startPlainMic(deliver: @escaping (AVAudioPCMBuffer) -> Void, revision: UInt64) {
+        guard micRevision.accepts(revision), phase == .listening else { return }
+        let mic = RoomMic(device: inputDevice?(), voiceMic: voiceMic)
+        plainMic = mic
+        mic.onAudio = deliver
+        mic.onFailed = { [weak self, weak mic] error in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.plainMic === mic, self.micRevision.accepts(revision) else { return }
+                debugLog("mic start failed: \(error)")
+                self.pressCancelled()
+                self.onStatus?(error.localizedDescription)
+            }
+        }
+        // A device disappearing mid-press cancels that press instead of feeding a stale format.
+        mic.onRestart = { [weak self, weak mic] _ in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.plainMic === mic else { return }
+                self.pressCancelled()
+            }
+        }
+        try? mic.start()
     }
 
     private nonisolated func keepForMing(_ buffer: AVAudioPCMBuffer) {
@@ -440,13 +413,14 @@ final class SpeakEngine {
     }
 
     private func stopMic() {
+        micRevision.advance()
         micQueue.sync { feeding = false }
-        voiceMic.detach("press")
-        if mic.isRunning {
-            mic.inputNode.removeTap(onBus: 0)
-            mic.stop()
-        }
-        if echoCancel, let d = echoInput { voiceMic.prepare(input: d) } else if !echoCancel, !voiceMic.inUse { voiceMic.release() }
+        if let key = pressConsumer { voiceMic.detach(key) }
+        pressConsumer = nil
+        plainMic?.stop()
+        plainMic = nil
+        if echoCancel, let d = echoInput { voiceMic.prepare(input: d) }
+        else if !voiceMic.inUse { voiceMic.release() }
     }
 
     private func finishUtterance() {
@@ -478,7 +452,10 @@ final class SpeakEngine {
         // Pick the voice and ready its output while the sentence is translated: the device switch
         // (and the engine restart it causes) is then over before the first sound.
         let route = route?(to) ?? .system(nil)
-        if case .stream = route { configureOutput(format: Self.streamFormat, device: outputDevice()); try? out.start() }
+        if case .stream = route {
+            let device = outputDevice()
+            Task { _ = await output.prepare(format: Self.streamFormat, device: device) }
+        }
         // Ming hears the audio while the on-device transcriber finishes, so its fallback costs nothing.
         let ming = Task { () -> (original: String, translation: String)? in
             guard let wav, let interpret else { return nil }
@@ -615,23 +592,11 @@ final class SpeakEngine {
             for b in buffers { try? f.write(from: b) }
         }
         let device = override ?? outputDevice()
-        configureOutput(format: first.format, device: device)
-        do {
-            if !out.isRunning { try out.start() }
-        } catch {
-            debugLog("voice output failed: \(error)")
-            return
-        }
-        for b in buffers.dropLast() { player.scheduleBuffer(b, completionHandler: nil) }
+        guard await output.enqueue(Array(buffers.dropLast()), format: first.format, device: device) else { return }
         firstAudioAt = Date()
-        player.play()
         let seconds = buffers.reduce(0) { $0 + Double($1.frameLength) / $1.format.sampleRate }
         await waitPlayed(buffers[buffers.count - 1], limit: seconds + 2)
-        var cur = AudioObjectID(0); var sz = UInt32(MemoryLayout<AudioObjectID>.size)
-        if let unit = out.outputNode.audioUnit {
-            AudioUnitGetProperty(unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0, &cur, &sz)
-        }
-        debugLog("spoke \(buffers.count) buffers to \(device?.name ?? "default output") id=\(device?.id ?? 0) readback=\(cur)")
+        debugLog("spoke \(buffers.count) buffers to \(device?.name ?? "default output")")
     }
 
     /// Core Audio restarted (virtual mic install): device IDs changed, rebuild the output next time.
@@ -660,11 +625,8 @@ final class SpeakEngine {
                 if count == 0 {
                     firstAt = Date().timeIntervalSince(started)
                     firstAudioAt = Date()
-                    configureOutput(format: format, device: device)
-                    if !out.isRunning { try out.start() }
                 }
-                player.scheduleBuffer(buf, completionHandler: nil)
-                if !player.isPlaying { player.play() }
+                guard await output.enqueue([buf], format: format, device: device) else { return false }
                 count += 1
             }
         } catch {
@@ -686,48 +648,7 @@ final class SpeakEngine {
     /// Schedules `buffer` last and waits until it has played, or `limit` seconds. A stalled output
     /// never calls back, and would otherwise hold every later sentence; it is rebuilt instead.
     private func waitPlayed(_ buffer: AVAudioPCMBuffer, limit: TimeInterval) async {
-        let once = Once()
-        let played = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in once.run { cont.resume(returning: true) } }
-            DispatchQueue.main.asyncAfter(deadline: .now() + limit) { once.run { cont.resume(returning: false) } }
-        }
-        if !played {
-            debugLog("voice output stalled (engine running=\(out.isRunning)), rebuilt")
-            resetOutput()
-        }
-    }
-
-    private func outputChanged() {
-        guard let format = outFormat else { return }
-        let playing = player.isPlaying
-        out.disconnectNodeOutput(player)
-        out.connect(player, to: out.mainMixerNode, format: format)
-        do { try out.start() } catch { debugLog("voice output restart failed: \(error)"); return }
-        if playing { player.play() }
-        debugLog("voice output: configuration changed, engine restarted (playing=\(playing))")
-    }
-
-    func resetOutput() {
-        player.stop()
-        out.stop()
-        outFormat = nil
-        outDeviceUID = nil
-    }
-
-    private func configureOutput(format: AVAudioFormat, device: OutputDevice?) {
-        let uid = device?.uid ?? ""
-        guard outFormat != format || outDeviceUID != uid else { return }
-        player.stop()
-        out.stop()
-        if let device, let unit = out.outputNode.audioUnit {
-            var id = device.id
-            AudioUnitSetProperty(unit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
-                                 &id, UInt32(MemoryLayout<AudioObjectID>.size))
-        }
-        out.disconnectNodeOutput(player)
-        out.connect(player, to: out.mainMixerNode, format: format)
-        outFormat = format
-        outDeviceUID = uid
+        _ = await output.drain(buffer, limit: limit)
     }
 
     /// Plays a short sample through the chosen output so the user can check it.
@@ -740,6 +661,7 @@ final class SpeakEngine {
 final class Once: @unchecked Sendable {
     private let lock = NSLock()
     private var done = false
+    var hasRun: Bool { lock.withLock { done } }
     func run(_ body: () -> Void) {
         lock.lock()
         let first = !done

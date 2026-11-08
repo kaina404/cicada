@@ -4,159 +4,316 @@ import ScreenCaptureKit
 import Vision
 
 /// 识别共享屏幕: numbers on a shared slide are often shown, not said. While listening, the meeting
-/// app's window (or the window or display picked in 设置 › 屏幕识别) is captured once a second; when
+/// window or display explicitly picked for this meeting is captured once a second; when
 /// it turns to a new page and holds still, that page is read on the Mac (Vision for the exact text, a
 /// local MLX model for what it means) and goes into the transcript as a "screen" line the notes read
-/// like any other. Nothing leaves the Mac.
+/// like any other. OCR, page records and interview keyframes stay local.
 @MainActor
 final class ScreenWatch: ObservableObject {
-    /// What is captured: a window or display, and how the settings page names it.
+    /// What this meeting captures and displays beside its notes.
     struct Target {
         var filter: SCContentFilter
         var label: String
-        /// The window found by itself; nil for the user's pick.
+        /// Window identity when available; nil for a display.
         var windowID: CGWindowID?
     }
 
     /// A new page was read: the line, and its screenshot (JPEG) to keep with the meeting.
     var onPage: ((_ secondsIn: Double, _ text: String, _ jpeg: Data) -> Void)?
 
-    /// The user's pick, until the app quits or the window closes; nil = find the meeting window.
+    var onRealtimePage: ((Data) -> Void)?
+    var onKeyframe: ((CoachFrame) -> Void)?
+    var onKeyframesCleared: (() -> Void)?
+
+    /// The pick belongs only to the current meeting; nil means no screen capture.
+    @Published private(set) var meetingID: String?
     @Published private(set) var chosen: Target?
-    /// What is watched now (the pick or the window found), and its latest frame, small, for the preview.
+    /// The current selection and its latest thumbnail.
     @Published private(set) var current: String?
     @Published private(set) var preview: CGImage?
     @Published private(set) var isRunning = false
+    @Published private(set) var previewUnavailable = false
+
+    private let captureImage: @MainActor (SCContentFilter) async -> CGImage?
+    private var previewInFlight = false
+    private var pickerID: UUID?
+    private var pickerObserver: PickerObserver?
+    var onSelectionChanged: (() -> Void)?
+
+    init(captureImage: @escaping @MainActor (SCContentFilter) async -> CGImage? = ScreenWatch.capture) {
+        self.captureImage = captureImage
+    }
 
     private var task: Task<Void, Never>?
     let server = VisionServer()
-    private lazy var pickerObserver = PickerObserver(watch: self)
     /// A page is being read (one at a time), and the text of the last page that became a line.
-    private var reading = false
+    private var readTask: Task<Void, Never>?
+    private var readID = UUID()
+    private var runID = UUID()
+    private var retryRead = false
+    private var targetRevision = UUID()
+    var isAsking: (() -> Bool)?
+    private(set) var latestImage: AskPrompt.Image?
+    private(set) var pageImage: AskPrompt.Image?
+    private(set) var isSlide = false
+    private(set) var captureCount = 0
     private var lastText = ""
 
-    /// A pick works without the Screen Recording permission (the system picker grants it);
-    /// finding the meeting window by itself needs it.
-    var needsPermission: Bool { chosen == nil && !CGPreflightScreenCaptureAccess() }
+    func beginMeeting(_ id: String) {
+        endMeeting()
+        meetingID = id
+    }
+
+    func endMeeting() {
+        meetingID = nil
+        clearSelection()
+    }
 
     func start(startedAt: Date, model: String) {
-        stop()
-        if needsPermission {
-            // Asking opens System Settings once; capture starts with the next meeting.
-            CGRequestScreenCaptureAccess()
-            debugLog("screen: no screen recording permission, asked")
-            return
-        }
+        stop(clearPage: false)
+        guard meetingID != nil, chosen != nil else { return }
         isRunning = true
         if !model.isEmpty { server.start(model: model) }
         task = Task { [weak self] in await self?.run(startedAt: startedAt, model: model) }
     }
 
-    func stop() {
+    /// Leaves the model running: 会中问答 answers with it too. The app stops it when the meeting ends.
+    func stop(clearPage: Bool = true) {
         task?.cancel()
         task = nil
         isRunning = false
-        server.stop()
+        runID = UUID()
+        interruptForQuestion()
+        retryRead = false
+        latestImage = nil
+        onKeyframesCleared?()
+        if clearPage { pageImage = nil }
+        isSlide = false
+    }
+
+    /// Cancelling the owning task also cancels URLSession's in-flight local model request.
+    func interruptForQuestion() {
+        readID = UUID()
+        if readTask != nil {
+            retryRead = true
+            debugLog("screen: read cancelled")
+        }
+        readTask?.cancel()
+        readTask = nil
     }
 
     private func run(startedAt: Date, model: String) async {
-        var auto: Target?
-        var lastLook = Date.distantPast
         var watched: String?
+        var watchedWindow: CGWindowID?
         var previous: [UInt8]?
         var steady = 0
         var failures = 0
         var lastRead: [UInt8]?
-        reading = false
+        let generation = runID
+        var policy = ScreenReadPolicy()
+        var keyframes = CoachKeyframePolicy()
+        var frameRevision = targetRevision
         lastText = ""
         debugLog("screen: watching (model \(model))")
         while !Task.isCancelled {
             try? await Task.sleep(for: .seconds(1))
-            // The meeting window can open, close or move to another app mid-meeting: look again every 10 s.
-            if chosen == nil, auto == nil || Date().timeIntervalSince(lastLook) > 10 {
-                lastLook = Date()
-                let found = await Self.meetingTarget()
-                if found?.windowID != auto?.windowID { auto = found }
-            }
-            guard let target = chosen ?? auto else { current = nil; continue }
-            if target.label != watched {
+            guard !Task.isCancelled, generation == runID else { return }
+            guard meetingID != nil, let target = chosen else { return }
+            if target.label != watched || target.windowID != watchedWindow {
                 debugLog("screen: watching \(target.label)")
                 watched = target.label
+                watchedWindow = target.windowID
                 current = target.label
                 previous = nil
+                lastRead = nil
+                lastText = ""
+                latestImage = nil
+                isSlide = false
+                interruptForQuestion()
+                policy = ScreenReadPolicy()
+                keyframes = CoachKeyframePolicy(); onKeyframesCleared?()
                 steady = 0
             }
-            guard let image = await Self.capture(target.filter) else {
-                // The picked window closed: back to finding the meeting window.
+            let revision = targetRevision
+            if frameRevision != revision {
+                keyframes = CoachKeyframePolicy(); frameRevision = revision
+            }
+            captureCount += 1
+            let image = await captureImage(target.filter)
+            guard !Task.isCancelled, generation == runID, revision == targetRevision else { return }
+            guard let image else {
                 failures += 1
-                if failures >= 3, chosen != nil {
-                    debugLog("screen: the picked \(target.label) is gone, finding the meeting window")
-                    chosen = nil
+                preview = nil
+                previewUnavailable = true
+                latestImage = nil
+                pageImage = nil
+                onKeyframesCleared?()
+                if failures >= 3 {
+                    debugLog("screen: selected capture unavailable, stopped")
+                    stop()
+                    return
                 }
                 continue
             }
             failures = 0
-            preview = Self.scaled(image, longSide: 640)
             let at = Date()
-            let sig = Self.signature(image)
-            if let p = previous, Self.difference(p, sig) < 0.015 { steady += 1 } else { steady = 0 }
+            let prepared = await Task.detached(priority: .utility) {
+                (Self.signature(image), Self.scaled(image, longSide: 640), Self.askImage(image, at: at))
+            }.value
+            guard !Task.isCancelled, generation == runID else { return }
+            guard revision == targetRevision else { continue }
+            let sig = prepared.0
+            previewUnavailable = false
+            preview = prepared.1
+            latestImage = prepared.2
+            let difference = previous.map { Self.difference($0, sig) } ?? 1
+            if difference < 0.015 { steady += 1 } else { steady = 0 }
             previous = sig
-            // A page counts once it has held still for a second, and only if it differs from the last one read.
-            guard steady == 1, !reading, lastRead.map({ Self.difference($0, sig) > 0.06 }) ?? true else { continue }
+            if onKeyframe != nil {
+                let accepted = keyframes
+                let result = await Task.detached(priority: .utility) { () -> (CoachKeyframePolicy, Data?, String) in
+                    var policy = accepted
+                    let ocr = Self.recognizeText(image)
+                    let fingerprint = Self.coachSignature(image)
+                    let changed = policy.accept(fingerprint: fingerprint, text: ocr, at: at.timeIntervalSinceReferenceDate)
+                    return (policy, changed ? RealtimeMedia.jpeg(image) : nil, ocr)
+                }.value
+                guard !Task.isCancelled, generation == runID, revision == targetRevision else { continue }
+                keyframes = result.0
+                if let jpeg = result.1 {
+                    onKeyframe?(CoachFrame(jpeg: jpeg, seconds: max(0, at.timeIntervalSince(startedAt)), ocr: result.2))
+                    debugLog("coach: screen keyframe bytes=\(jpeg.count)")
+                }
+            }
+            let trigger = policy.next(now: at.timeIntervalSinceReferenceDate, difference: retryRead ? 1 : difference, steady: steady,
+                                      fromRead: lastRead.map { Self.difference($0, sig) } ?? 1,
+                                      busy: isAsking?() ?? false, reading: readTask != nil)
+            guard trigger != .none else { continue }
+            if trigger == .fallback { debugLog("screen: fallback ocr") }
+            retryRead = false
             lastRead = sig
-            reading = true
             let secondsIn = max(0, at.timeIntervalSince(startedAt) - 1)
-            Task.detached(priority: .utility) { [weak self] in
-                let page = await Self.read(image, model: model)
-                await self?.finish(page, secondsIn: secondsIn)
+            let id = UUID()
+            readID = id
+            let previousText = lastText
+            readTask = Task.detached(priority: .utility) { [weak self] in
+                let ocr = Self.recognizeText(image)
+                let eligible = ocr.filter { $0.isLetter || $0.isNumber }.count >= 20
+                guard !Task.isCancelled else { return }
+                await self?.classified(eligible, id: id)
+                guard ScreenReadPolicy.shouldRead(ocr: ocr, previous: previousText), !Task.isCancelled else {
+                    await self?.finish(nil, secondsIn: secondsIn, at: at, id: id)
+                    return
+                }
+                if trigger == .fallback { debugLog("screen: fallback read") }
+                let page = await Self.read(image, model: model, ocr: ocr)
+                guard !Task.isCancelled else { return }
+                if page == nil { await self?.classified(false, id: id) }
+                await self?.finish(page, secondsIn: secondsIn, at: at, id: id)
             }
         }
     }
 
-    private func finish(_ page: Page?, secondsIn: Double) {
-        reading = false
-        guard isRunning, let page, Self.novel(page.ocr, after: lastText) else { return }
-        lastText = page.ocr
-        onPage?(secondsIn, page.line, page.jpeg)
+    private func classified(_ slide: Bool, id: UUID) {
+        guard readID == id, isRunning else { return }
+        isSlide = slide
     }
 
-    /// The settings page's preview outside a meeting (in one, the watch keeps it fresh).
+    private func finish(_ page: Page?, secondsIn: Double, at: Date, id: UUID) {
+        guard readID == id, isRunning else { return }
+        readTask = nil
+        guard let page else { return }
+        isSlide = true
+        lastText = page.ocr
+        pageImage = page.askImage
+        pageImage?.capturedAt = at
+        onPage?(secondsIn, page.line, page.jpeg)
+        onRealtimePage?(page.jpeg)
+    }
+
+    /// Only the live meeting may request a preview; finishing invalidates any in-flight capture.
     func refreshPreview() async {
-        guard !isRunning else { return }
-        let target: Target? = if let chosen { chosen } else if CGPreflightScreenCaptureAccess() { await Self.meetingTarget() } else { nil }
-        current = target?.label
-        if let target, let image = await Self.capture(target.filter) { preview = Self.scaled(image, longSide: 640) } else { preview = nil }
+        guard meetingID != nil, let target = chosen, !isRunning, !previewInFlight else { return }
+        previewInFlight = true
+        defer { previewInFlight = false }
+        let revision = targetRevision
+        guard !Task.isCancelled, !isRunning, revision == targetRevision else { return }
+        current = target.label
+        captureCount += 1
+        let image = await captureImage(target.filter)
+        // A picker change or meeting start must not let an older capture replace the new target.
+        guard !Task.isCancelled, !isRunning, revision == targetRevision else { return }
+        preview = image.flatMap { Self.scaled($0, longSide: 640) }
+        previewUnavailable = image == nil
     }
 
     // MARK: Picking a window or display
 
     /// The system's own picker, the one meeting apps show for sharing: any window or a whole display.
     func choose() {
+        guard let meetingID else { return }
+        closePicker()
         let picker = SCContentSharingPicker.shared
         var config = SCContentSharingPickerConfiguration()
         config.allowedPickerModes = [.singleWindow, .singleDisplay]
         if let me = Bundle.main.bundleIdentifier { config.excludedBundleIDs = [me] }
         picker.defaultConfiguration = config
-        picker.add(pickerObserver)
+        let id = UUID()
+        let observer = PickerObserver(watch: self, meetingID: meetingID, pickerID: id)
+        pickerID = id
+        pickerObserver = observer
+        picker.add(observer)
         picker.isActive = true
         picker.present()
     }
 
-    func useAutomatic() {
+    func clearSelection() {
+        closePicker()
+        stop()
+        invalidateImages()
         chosen = nil
         current = nil
         preview = nil
-        debugLog("screen: back to finding the meeting window")
+        onSelectionChanged?()
+        debugLog("screen: selection cleared")
     }
 
-    fileprivate func picked(_ filter: SCContentFilter) {
-        SCContentSharingPicker.shared.isActive = false
+    func picked(_ filter: SCContentFilter, meetingID: String, pickerID: UUID? = nil) {
+        guard self.meetingID == meetingID, pickerID == nil || self.pickerID == pickerID else { return }
+        closePicker()
+        invalidateImages()
         chosen = Target(filter: filter, label: Self.label(filter), windowID: nil)
+        current = chosen?.label
         preview = nil
-        debugLog("screen: picked \(chosen!.label)")
+        pageImage = nil
+        onSelectionChanged?()
+        debugLog("screen: picked \(chosen?.label ?? "")")
     }
 
-    fileprivate func pickEnded() { SCContentSharingPicker.shared.isActive = false }
+    private func closePicker() {
+        if let pickerObserver {
+            SCContentSharingPicker.shared.remove(pickerObserver)
+            SCContentSharingPicker.shared.isActive = false
+        }
+        pickerObserver = nil
+        pickerID = nil
+    }
+
+    private func invalidateImages() {
+        previewUnavailable = false
+        targetRevision = UUID()
+        onKeyframesCleared?()
+        interruptForQuestion()
+        retryRead = true
+        latestImage = nil
+        isSlide = false
+        lastText = ""
+    }
+
+    fileprivate func pickEnded(meetingID: String, pickerID: UUID) {
+        guard self.meetingID == meetingID, self.pickerID == pickerID else { return }
+        closePicker()
+    }
 
     static func label(_ filter: SCContentFilter) -> String {
         if #available(macOS 15.2, *) {
@@ -168,30 +325,7 @@ final class ScreenWatch: ObservableObject {
         return filter.style == .display ? L("整个显示器") : L("你选的窗口")
     }
 
-    // MARK: Finding and capturing the meeting window
-
-    /// Meeting apps, and browsers when the tab is a meeting (by its title).
-    static let apps: Set<String> = ["us.zoom.xos", "com.tencent.meeting", "com.tencent.tencentmeeting",
-                                    "com.microsoft.teams2", "com.microsoft.teams", "com.electron.lark",
-                                    "com.bytedance.macos.feishu", "com.alibaba.DingTalkMac", "Cisco-Systems.Spark",
-                                    "com.cisco.webexmeetingsapp", "com.tencent.WeWorkMac"]
-    static let browsers: Set<String> = ["com.google.Chrome", "com.apple.Safari", "com.microsoft.edgemac",
-                                        "company.thebrowser.Browser", "org.mozilla.firefox", "com.brave.Browser"]
-    static let meetingTitles = ["Meet -", "Google Meet", "meet.google.com", "Zoom", "Teams", "腾讯会议", "飞书会议", "Webex"]
-
-    /// The largest meeting window on screen.
-    static func meetingTarget() async -> Target? {
-        guard let content = try? await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true) else { return nil }
-        let w = content.windows.filter { w in
-            guard w.frame.width >= 480, w.frame.height >= 320, let id = w.owningApplication?.bundleIdentifier else { return false }
-            if apps.contains(id) { return true }
-            let title = w.title ?? ""
-            return browsers.contains(id) && meetingTitles.contains { title.contains($0) }
-        }.max { $0.frame.width * $0.frame.height < $1.frame.width * $1.frame.height }
-        guard let w else { return nil }
-        let label = [w.owningApplication?.applicationName, w.title].compactMap { $0?.isEmpty == false ? $0 : nil }.joined(separator: " · ")
-        return Target(filter: SCContentFilter(desktopIndependentWindow: w), label: label, windowID: w.windowID)
-    }
+    // MARK: Capturing the selected window or display
 
     /// Full resolution: small table text is lost when the window is scaled down.
     static func capture(_ filter: SCContentFilter) async -> CGImage? {
@@ -228,6 +362,18 @@ final class ScreenWatch: ObservableObject {
         return px
     }
 
+    /// A finer grid preserves localized code edits that disappear in a 32×32 page thumbnail.
+    nonisolated static func coachSignature(_ image: CGImage) -> [UInt8] {
+        var pixels = [UInt8](repeating: 0, count: 128 * 72)
+        pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(data: buffer.baseAddress, width: 128, height: 72, bitsPerComponent: 8,
+                                          bytesPerRow: 128, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: 0) else { return }
+            context.interpolationQuality = .medium
+            context.draw(image, in: CGRect(x: 0, y: 0, width: 128, height: 72))
+        }
+        return pixels
+    }
+
     /// Mean difference, 0 (same) to 1.
     nonisolated static func difference(_ a: [UInt8], _ b: [UInt8]) -> Double {
         guard a.count == b.count, !a.isEmpty else { return 1 }
@@ -248,21 +394,22 @@ final class ScreenWatch: ObservableObject {
         var ocr: String
         var line: String
         var jpeg: Data
+        var askImage: AskPrompt.Image?
     }
 
     /// nil when the window shows no page (people's video, the meeting app's controls).
-    nonisolated static func read(_ image: CGImage, model: String) async -> Page? {
+    nonisolated static func read(_ image: CGImage, model: String, ocr supplied: String? = nil) async -> Page? {
         let started = Date()
-        let ocr = recognizeText(image)
+        let ocr = supplied ?? recognizeText(image)
         // A video grid or a toolbar reads as a few names and buttons.
         guard ocr.filter({ $0.isLetter || $0.isNumber }).count >= 20 else { return nil }
         guard let jpeg = jpeg(image, longSide: 1600) else { return nil }
         let meaning = model.isEmpty ? nil : await explain(jpeg, ocr: ocr, model: model)
-        if meaning?.slide == false { return nil }
+        if Task.isCancelled || meaning?.slide == false { return nil }
         let line = compose(ocr: ocr, meaning: meaning)
         debugLog("screen: page read in \(String(format: "%.1f", Date().timeIntervalSince(started))) s, \(ocr.count) chars, \(meaning == nil ? "text only" : "with meaning")")
         contentLog("SCREEN \(line)")
-        return Page(ocr: ocr, line: line, jpeg: jpeg)
+        return Page(ocr: ocr, line: line, jpeg: jpeg, askImage: askImage(image, at: started))
     }
 
     /// Vision, on the Mac: the exact text, row by row. Language correction stays off: it "fixes" numbers.
@@ -380,6 +527,12 @@ final class ScreenWatch: ObservableObject {
         return parts.joined(separator: "\n")
     }
 
+    nonisolated static func askImage(_ image: CGImage, at: Date) -> AskPrompt.Image? {
+        guard let small = scaled(image, longSide: 1280),
+              let data = NSBitmapImageRep(cgImage: small).representation(using: .jpeg, properties: [.compressionFactor: 0.8]) else { return nil }
+        return AskPrompt.Image(jpeg: data, width: small.width, height: small.height, capturedAt: at)
+    }
+
     nonisolated static func jpeg(_ image: CGImage, longSide: Int) -> Data? {
         guard let small = scaled(image, longSide: longSide) else { return nil }
         return NSBitmapImageRep(cgImage: small).representation(using: .jpeg, properties: [.compressionFactor: 0.8])
@@ -399,6 +552,13 @@ final class VisionServer {
 
     private var process: Process?
 
+    var isRunning: Bool { process?.isRunning == true }
+
+    /// mlx-vlm is installed and a model is named: 会中问答 and the screen's meaning can work.
+    nonisolated static func available(model: String) -> Bool {
+        !model.isEmpty && FileManager.default.isExecutableFile(atPath: executable.path)
+    }
+
     func start(model: String) {
         guard process?.isRunning != true else { return }
         guard FileManager.default.isExecutableFile(atPath: Self.executable.path) else {
@@ -408,6 +568,18 @@ final class VisionServer {
         let p = Process()
         p.executableURL = Self.executable
         p.arguments = ["--model", model, "--host", "127.0.0.1", "--port", "\(Self.port)"]
+        // Prefix caching in memory only: assistant tasks share the meeting's prefix, and meeting
+        // content must never be written to the server's disk cache.
+        var env = ProcessInfo.processInfo.environment
+        env["APC_ENABLED"] = "1"
+        env["APC_DISK_ENABLED"] = "0"
+        env["APC_MEMORY_MAX_GB"] = "2"
+        // Gemma's sliding-window layers resume only from checkpoints: at the default 2048 tokens a
+        // 1.4k-token request reused just the system prompt (first token 1.27s); every 256 tokens it
+        // reuses the meeting background too (0.68s, measured on Gemma 4 E4B, M4 Pro).
+        env["APC_CHECKPOINT_INTERVAL_TOKENS"] = "256"
+        env["APC_CHECKPOINT_ENTRIES"] = "8"
+        p.environment = env
         FileManager.default.createFile(atPath: Self.log.path, contents: nil)
         let out = try? FileHandle(forWritingTo: Self.log)
         p.standardOutput = out
@@ -437,6 +609,7 @@ final class VisionServer {
                let health = try? JSONSerialization.jsonObject(with: data) as? [String: Any], health["loaded_model"] is String {
                 return true
             }
+            guard Date() < until, !Task.isCancelled else { return false }
             try? await Task.sleep(for: .seconds(2))
         } while Date() < until && !Task.isCancelled
         return false
@@ -446,15 +619,47 @@ final class VisionServer {
 /// The system picker reports on any thread; the watch hears it on the main one.
 private final class PickerObserver: NSObject, SCContentSharingPickerObserver {
     weak var watch: ScreenWatch?
-    init(watch: ScreenWatch) { self.watch = watch }
+    let meetingID: String
+    let pickerID: UUID
+    init(watch: ScreenWatch, meetingID: String, pickerID: UUID) {
+        self.watch = watch
+        self.meetingID = meetingID
+        self.pickerID = pickerID
+    }
 
     func contentSharingPicker(_ picker: SCContentSharingPicker, didUpdateWith filter: SCContentFilter, for stream: SCStream?) {
-        Task { @MainActor in self.watch?.picked(filter) }
+        Task { @MainActor in self.watch?.picked(filter, meetingID: self.meetingID, pickerID: self.pickerID) }
     }
     func contentSharingPicker(_ picker: SCContentSharingPicker, didCancelFor stream: SCStream?) {
-        Task { @MainActor in self.watch?.pickEnded() }
+        Task { @MainActor in self.watch?.pickEnded(meetingID: self.meetingID, pickerID: self.pickerID) }
     }
     func contentSharingPickerStartDidFailWithError(_ error: any Error) {
         debugLog("screen: picker failed \(error.localizedDescription)")
+        Task { @MainActor in self.watch?.pickEnded(meetingID: self.meetingID, pickerID: self.pickerID) }
+    }
+}
+
+/// Cheap detection keeps checking moving screens without monopolizing the shared model.
+struct ScreenReadPolicy {
+    enum Trigger { case none, stable, fallback }
+    private var lastCheck: Double?
+    private var changed = false
+
+    mutating func next(now: Double, difference: Double, steady: Int, fromRead: Double,
+                       busy: Bool, reading: Bool) -> Trigger {
+        if lastCheck == nil { lastCheck = now }
+        if difference > 0.015 { changed = true }
+        guard !busy, !reading else { return .none }
+        let trigger: Trigger
+        if steady == 1 && fromRead > 0.06 { trigger = .stable }
+        else if now - (lastCheck ?? now) >= 5 && changed { trigger = .fallback }
+        else { return .none }
+        lastCheck = now
+        changed = false
+        return trigger
+    }
+
+    static func shouldRead(ocr: String, previous: String) -> Bool {
+        ocr.filter { $0.isLetter || $0.isNumber }.count >= 20 && ScreenWatch.novel(ocr, after: previous)
     }
 }

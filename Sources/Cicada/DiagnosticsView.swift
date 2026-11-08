@@ -62,7 +62,7 @@ struct DiagnosticsView: View {
                 .font(.system(size: 11).monospacedDigit()).foregroundStyle(dark ? Color.white.opacity(0.75) : Palette.tertiary)
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(dark ? Palette.ink : Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(dark ? Palette.strong : Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(dark ? .clear : Palette.line, lineWidth: 1))
     }
 
@@ -94,7 +94,7 @@ struct DiagnosticsView: View {
             }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -144,7 +144,7 @@ struct DiagnosticsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -250,7 +250,7 @@ struct DiagnosticsView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 
@@ -348,7 +348,7 @@ struct DiagnosticsView: View {
             }
         }
         .padding(14)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Palette.surface))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.line, lineWidth: 1))
     }
 

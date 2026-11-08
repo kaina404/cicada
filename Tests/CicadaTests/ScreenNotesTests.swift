@@ -1,8 +1,138 @@
+import AppKit
+import ScreenCaptureKit
 import Foundation
 import Testing
 @testable import Cicada
 
 struct ScreenNotesTests {
+    @Test @MainActor func selectedWindowPreviewsWithoutStartingRecognition() async throws {
+        let image = try #require(CGContext(data: nil, width: 16, height: 16, bitsPerComponent: 8,
+            bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)?.makeImage())
+        let watch = ScreenWatch(captureImage: { _ in image })
+        watch.beginMeeting("meeting")
+        watch.picked(SCContentFilter(), meetingID: "meeting")
+        await watch.refreshPreview()
+        #expect(watch.preview != nil)
+        #expect(watch.current == watch.chosen?.label)
+        #expect(!watch.isRunning)
+        #expect(watch.latestImage == nil)
+        #expect(!watch.previewUnavailable)
+    }
+
+    @Test @MainActor func failedSelectedCaptureIsDifferentFromMissingMeeting() async {
+        let watch = ScreenWatch(captureImage: { _ in nil })
+        watch.beginMeeting("meeting")
+        watch.picked(SCContentFilter(), meetingID: "meeting")
+        await watch.refreshPreview()
+        #expect(watch.chosen != nil)
+        #expect(watch.preview == nil)
+        #expect(watch.previewUnavailable)
+        watch.clearSelection()
+        #expect(!watch.previewUnavailable)
+    }
+
+    @Test @MainActor func oldPreviewCannotRestoreAnUnselectedWindow() async throws {
+        let image = try #require(CGContext(data: nil, width: 16, height: 16, bitsPerComponent: 8,
+            bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)?.makeImage())
+        var captured: CheckedContinuation<CGImage?, Never>?
+        let watch = ScreenWatch(captureImage: { _ in
+            await withCheckedContinuation { captured = $0 }
+        })
+        watch.beginMeeting("meeting")
+        watch.picked(SCContentFilter(), meetingID: "meeting")
+        let refresh = Task { await watch.refreshPreview() }
+        while captured == nil { await Task.yield() }
+        watch.clearSelection()
+        captured?.resume(returning: image)
+        await refresh.value
+        #expect(watch.chosen == nil)
+        #expect(watch.current == nil)
+        #expect(watch.preview == nil)
+    }
+
+    @Test @MainActor func meetingsStartWithoutScreenAndCannotCaptureWithoutSelection() async {
+        var captures = 0
+        let watch = ScreenWatch(captureImage: { _ in captures += 1; return nil })
+        watch.beginMeeting("first")
+        watch.start(startedAt: Date(), model: "")
+        await watch.refreshPreview()
+        #expect(!watch.isRunning)
+        #expect(watch.chosen == nil)
+        #expect(captures == 0)
+    }
+
+    @Test @MainActor func endingClearsAllScreenStateAndRejectsLatePickerResults() async {
+        let watch = ScreenWatch(captureImage: { _ in nil })
+        watch.beginMeeting("first")
+        watch.picked(SCContentFilter(), meetingID: "first")
+        watch.start(startedAt: Date(), model: "")
+        #expect(watch.isRunning)
+        watch.endMeeting()
+        watch.picked(SCContentFilter(), meetingID: "first")
+        await watch.refreshPreview()
+        #expect(watch.meetingID == nil)
+        #expect(watch.chosen == nil)
+        #expect(watch.current == nil)
+        #expect(watch.preview == nil)
+        #expect(watch.latestImage == nil)
+        #expect(watch.pageImage == nil)
+        #expect(!watch.isRunning)
+        #expect(watch.captureCount == 0)
+        watch.beginMeeting("second")
+        watch.picked(SCContentFilter(), meetingID: "first")
+        #expect(watch.chosen == nil)
+        #expect(!watch.isRunning)
+    }
+
+    @Test @MainActor func latePreviewAfterMeetingEndsCannotRestoreItsImage() async throws {
+        let image = try #require(CGContext(data: nil, width: 16, height: 16, bitsPerComponent: 8,
+            bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)?.makeImage())
+        var captured: CheckedContinuation<CGImage?, Never>?
+        let watch = ScreenWatch(captureImage: { _ in
+            await withCheckedContinuation { captured = $0 }
+        })
+        watch.beginMeeting("first")
+        watch.picked(SCContentFilter(), meetingID: "first")
+        let refresh = Task { await watch.refreshPreview() }
+        while captured == nil { await Task.yield() }
+        watch.endMeeting()
+        watch.beginMeeting("second")
+        captured?.resume(returning: image)
+        await refresh.value
+        #expect(watch.chosen == nil)
+        #expect(watch.current == nil)
+        #expect(watch.preview == nil)
+    }
+
+    @Test @MainActor func endingActuallyStopsRepeatedCapture() async throws {
+        let image = try #require(CGContext(data: nil, width: 16, height: 16, bitsPerComponent: 8,
+            bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)?.makeImage())
+        let watch = ScreenWatch(captureImage: { _ in image })
+        watch.beginMeeting("first")
+        watch.picked(SCContentFilter(), meetingID: "first")
+        watch.start(startedAt: Date(), model: "")
+        try await Task.sleep(for: .milliseconds(1200))
+        #expect(watch.captureCount > 0)
+        #expect(watch.preview != nil)
+        watch.endMeeting()
+        let count = watch.captureCount
+        try await Task.sleep(for: .milliseconds(1200))
+        #expect(watch.captureCount == count)
+        #expect(watch.preview == nil)
+        #expect(watch.latestImage == nil)
+    }
+
+    @Test @MainActor func cancelledPickerCannotChangeSelectionInTheSameMeeting() {
+        let watch = ScreenWatch()
+        watch.beginMeeting("meeting")
+        watch.picked(SCContentFilter(), meetingID: "meeting", pickerID: UUID())
+        #expect(watch.chosen == nil)
+    }
+
     @Test func textBoxesReadRowByRowLeftToRight() {
         // Vision's y grows upwards: the title is the highest box.
         let text = ScreenWatch.rows([(y: 0.50, h: 0.04, x: 0.6, text: "$1.28M"),

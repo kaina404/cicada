@@ -71,7 +71,7 @@ struct VoiceSection: View {
             .accessibilityLabel(L("选择对方听到的声音"))
         }
         .padding(.leading, 4).padding(.trailing, 10).frame(height: 36)
-        .background(Capsule().fill(Color.white))
+        .background(Capsule().fill(Palette.surface))
         .overlay(Capsule().stroke(model.voicePickerOpen ? Palette.accent : Palette.line, lineWidth: 1))
         .fixedSize()
     }
@@ -119,7 +119,7 @@ struct VoiceSection: View {
                 }
                 cloneRow
             }
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Palette.surface))
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Palette.line, lineWidth: 1))
             Text(footnote).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
@@ -275,6 +275,8 @@ struct VoiceCloneSheet: View {
     @State private var consent = false
     @State private var player: AVAudioPlayer?
     @State private var clonePlaying = false
+    @State private var microphones: [OutputDevice] = []
+    @State private var microphoneUID = ""
 
     private var ownLocale: String { settings.speakFromLang.locale }
 
@@ -287,8 +289,23 @@ struct VoiceCloneSheet: View {
         }
         .padding(28)
         .frame(width: 560)
-        .background(Color.white)
-        .onDisappear { recorder.cancel(); player?.stop() }
+        .background(Palette.surface)
+        .onAppear {
+            model.suspendShortcuts(true)
+            refreshMicrophones()
+            microphoneUID = model.systemMic.recordingDevice?.uid ?? microphones.first?.uid ?? ""
+        }
+        .task {
+            while !Task.isCancelled {
+                refreshMicrophones()
+                do { try await Task.sleep(for: .seconds(1)) } catch { return }
+            }
+        }
+        .onDisappear {
+            recorder.cancel()
+            player?.stop()
+            model.suspendShortcuts(false)
+        }
     }
 
     // MARK: Record
@@ -299,19 +316,22 @@ struct VoiceCloneSheet: View {
                 Text("录制你的声音").font(.system(size: 18, weight: .bold))
                 Text("请用平时开会的自然语气朗读以下段落，约 15 秒，在安静环境下录制效果最佳。")
                     .font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            microphonePicker
             Text(VoiceReference.passage(for: ownLocale))
                 .font(.system(size: 16)).lineSpacing(7)
                 .padding(.horizontal, 20).padding(.vertical, 16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 14).fill(Palette.raised))
                 .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
             meter
             Toggle(isOn: $consent) {
                 Text("这是我自己的声音。只在我说话时用它替我翻译。").font(.system(size: 12)).foregroundStyle(Palette.secondary)
             }
             .toggleStyle(.checkbox)
-            .disabled(recorder.phase == .recording)
+            .disabled(recorder.phase == .recording || recorder.phase == .starting)
             HStack {
                 SoftButton(L("取消")) { recorder.cancel(); onDone(false) }
                 Spacer()
@@ -319,15 +339,44 @@ struct VoiceCloneSheet: View {
                 case .recording:
                     SoftButton(L("读完了"), dark: true) { recorder.finish() }
                         .disabled(recorder.seconds < VoiceRecorder.minSeconds)
+                case .starting:
+                    HStack(spacing: 8) { Spinner(size: 14); Text("正在打开麦克风…").font(.system(size: 12)) }
                 case .checking:
                     HStack(spacing: 8) { Spinner(size: 14); Text("正在听写…").font(.system(size: 12)).foregroundStyle(Palette.secondary) }
                 default:
                     SoftButton(recorder.phase == .idle ? L("开始录") : L("再录一次"), dark: true) {
-                        recorder.start(locale: ownLocale, device: model.systemMic.recordingDevice)
+                        startRecording()
                     }
-                    .disabled(!consent)
+                    .disabled(!consent || selectedMicrophone == nil)
                 }
             }
+        }
+    }
+
+    private var selectedMicrophone: OutputDevice? {
+        microphones.first { $0.uid == microphoneUID }
+    }
+
+    private func refreshMicrophones() {
+        microphones = AudioDevices.recordingInputs()
+    }
+
+    private func startRecording() {
+        recorder.start(locale: ownLocale, device: selectedMicrophone, voiceMic: model.voiceMic)
+    }
+
+    private var microphonePicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Picker("录音麦克风", selection: $microphoneUID) {
+                if selectedMicrophone == nil {
+                    Text("请选择麦克风").tag(microphoneUID)
+                }
+                ForEach(microphones) { device in Text(device.name).tag(device.uid) }
+            }
+            .disabled(recorder.phase == .starting || recorder.phase == .recording || recorder.phase == .checking)
+            Text("直接录制所选麦克风的原声，不录制电脑播放声。")
+                .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -378,7 +427,7 @@ struct VoiceCloneSheet: View {
             Text("听起来不像或有杂音？换个安静的地方重录一次。录音仅保存在本机，可随时删除。")
                 .font(.system(size: 12)).foregroundStyle(Palette.tertiary)
             HStack {
-                SoftButton(L("重录")) { player?.stop(); recorder.start(locale: ownLocale, device: model.systemMic.recordingDevice) }
+                SoftButton(L("重录")) { player?.stop(); startRecording() }
                 Spacer()
                 SoftButton(L("用这个声音"), dark: true) { save() }
             }

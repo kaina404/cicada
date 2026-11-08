@@ -21,10 +21,12 @@
   - 导出：`export:<目录>`
   - 导入录音或视频：`import:<路径>[,<路径>…]`（等于拖进会议记录窗口），`importState` 把进度写进日志，`importCancel` 停止转写，`importRetry:<会议 id>[=<locale>]` 重新转写（带 locale 等于在“这场会议只留下了录音”里选了这种语言），`importNotify` 把通知权限写进日志
   - 新手引导与窗口：`onboarding:<步骤>[,skip|ask|setup]`（1–5，5 是收尾页；skip 是第 3 步点了“先不接”，ask / setup 是第 4 步的二选一 / 清单）、`samplePlay`、`speakers:<on|off>`（“说话人识别”）、`speakerGuess:<会议 id>`（马上让 Ling 认一遍名字）、`speakersRender:<会议 id>=<png>`、`voiceprintFile:<音频>=<json>`（用 app 里的声纹模型算整个文件的声纹，和参考模型对比）、`closeWindow:<main|settings|onboarding>`、`settings:<overlay|language|speak|records|ai|diagnostics>`、`about`
+  - 外观自查：`appearance:<dark|light|system>` 只切换当前开发实例的外观，不改 macOS 系统设置；检查后用 `appearance:system` 恢复跟随系统。
   - 显示与字幕：`display:<notes|bar|none>`、`subtitles:<both|translation|original>`、`meetingSubtitles:<…>`、`overlayState`、`overlayToggle`、`pillClick`（等于点主窗口顶部的“正在听”）、`overlayAuto[:off]`、`hideAfter:<秒>`
   - 纪要：`notesLang:<mine|source>`、`meetingNotesLang:<…>`、`notesRegenerate:<id>=<mine|source>`、`notesWindow[:x,y,w,h]`、`notesClose`、`notesMinimize`、`notesFrame`、`notesNow`、`notesState`、`notesShow:<id>`、`notesReplay:<id>[,<每次几句>]`（按会议时的节奏重写一遍纪要，默认每次 4 句；回复被 max_tokens 截断时日志写 `cut at max_tokens`）、`notesCapturable[:off]`（只改窗口能否被截屏）、`notesShare:<on|off>`（改“共享屏幕时让对方看到”这个设置，等于点图标或开关）
   - 结束会议：`endSim:<应用名>[,…]` 假装这些会议应用在通话（`endSim:` 全部挂断，`endSim:off` 回到真实情况），`endTimes:<静默秒>,<倒计时秒>,<挂断宽限秒>` 缩短等待（`endTimes:` 回到设置），`endKeep` 等于点“继续记录”，`endState` 写进日志
   - 渲染（不需要录屏权限）：`panelRender:<png>`（菜单栏面板，离屏画）、`windowsRender:<目录>`、`settingsRender:<栏目>=<png>`、`notesRender:<png>`、`mainShow:<id>[,transcript]`、`mainWindow:x,y,宽,高`（摆好主窗口并暂时浮在最上层，方便模拟点击；不带参数恢复）、`mainRender:<png>`、`speakTestRender:<png>`
+  - 会中问答：`ask` 等于按提问键；`screenNotes:on` 在当前会议打开系统画面选择器，`screenNotes:off` 清除本场选择并停止捕获；无会议时不生效。`screenState` 查看 meeting/selected/running、捕获次数与预览状态。`screenPreview:<窗口 ID 或应用 bundle id>` 仅在当前会议用已有录屏权限选择窗口并启动读取，不弹权限。新会议默认不读取画面，结束后所有选择及预览清除。`CICADA_TEST_ASK=1 scripts/test.sh --filter AskModelTests` 用本机模型测 Android 面试指标表及四分钟前的合成目标，各五次，输出 `/tmp/cicada-ask-benchmark.json`；测时保持开发版在听。
   - AI：`aiKeyFile:<路径>`（从 0600 文件读 key，不经过日志；测完就删掉文件）、`aiCheck`、`aiRemove`、`aiHide:<on|off>`（只在内存里当作没有 key，文件不动；用于截图）、`aiState`、`lingSimulate:<429|hijack|timeout|off>`、`translateFail:<n>`（接下来 n 句在所有翻译来源都失败，用来测重试）、`googleDown:<on|off>`（Google 翻译当作连不上，测提示和暂停）
   - 声音：`voice:<语言>[=<id>]`、`voicePreview:<语言>=<id>`、`voiceCloneFile:<wav>`、`voicePicker:<on|off>`
   - 诊断：`diagnostics:<on|off>`、`diagReport`
@@ -49,3 +51,60 @@
 - `transcribe <音频> <locale>`：用本机模型转写一个文件，用来核对输出。
 
 
+
+## 本机面试教练验证
+
+- DeepSeek V4.1 Flash 开发版对照实验：以 `CICADA_COACH_PROVIDER=deepseek` 启动开发版（正式版忽略此开关），密钥文件为 `~/Library/Application Support/LiveSubs Dev/ai-key-deepseek`，权限 0600。只上传双方原文、历史、背景及已选窗口的截图，不上传声音；本机 Gemma 继续负责跟读。取消环境变量并重启即回到本机生成。界面标明云端处理与 TTFT。
+- 实际 Swift 链路测首 token：`CICADA_COACH_PROVIDER=deepseek CICADA_TEST_DEEPSEEK=1 scripts/test.sh --filter CoachDeepSeekModelTests`。六次合成 ActAI Android 请求（短上下文、30 轮历史，各带三张 1600×900 图片），报告 `/tmp/cicada-deepseek-coach-results.json`。日志 `request_first_token_ms` 从 HTTP 发出计时；`pipeline_first_token_ms` 从生成流程开始计时，含准备和排队；均忽略元数据与思考 token。此探针不包含真实语音断句耗时。
+
+- 设置 › AI 服务 › 面试教练使用已安装的本机 Gemma 4 E4B。电脑原声、双方原文与压缩屏幕关键帧发往本机 MLX；不使用旧百炼实时模型。
+- `assistant:<on|off>` 开关教练；`ask` 手动分析；`askGloss:<on|off>` 开关建议的本机中文对照。教练只输出文字。
+- `assistantSay:<问题>` 注入面试官原文并分析；`themSaid:<原文>` / `meSaid:<原文>` 写入双方原文。后两者不模拟声音。`assistantState` 写出状态、帧数、原声音频秒数、实际候选人麦克风、声学就绪、生成次数、首句耗时与 committed/pending 数量；`assistantReconnect` 重试失败请求；`assistantBackgroundReload` 重读背景。
+- `screenfile:<图片路径>` 注入关键帧；`assistantRender:<png>` 生成当前建议的被动截图；`screenNotes:on` 在当前会议打开画面选择器，`screenNotes:off` 清除选择并停止捕获。关闭、换窗口或结束会议后不沿用旧窗口图片。
+- 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；设置里可跟随系统输入或指定 AirPods。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
+- 行为与多模态入参测试：`scripts/test.sh --filter InterviewCoachTests`。
+- 本机模型探针：先用 `say -v Samantha -o /tmp/cicada-coach-question.aiff 'For this Android interview, look at the slide. How would you keep messages reliable when the app goes offline, and what is the first visible token target?'` 生成合成题，再运行 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`。测试传原声音频、指标图片和候选人原文，报告在 `/tmp/cicada-interview-coach-benchmark.json`。
+- 模型探针与文字注入不替代真人麦克风、AirPods 热切换、实际共享窗口和长时间面试验收。设计及验证记录见 `docs/interview-coach-local.md`。
+- 旧 Candidate / Copilot / AnswerPlan / Qwen 工具保留作历史参考，未接入当前教练；旧云服务探针不会由教练调用。
+
+## Qwen Realtime 阶段 0 探针
+
+独立工具 `qwen-realtime-probe.swift`，不依赖或修改 App。联网需要北京或新加坡业务空间 ID，以及同区 DashScope Key 文件 `~/Library/Application Support/LiveSubs Dev/ai-key-dashscope`（0600）。当前面试教练设置页不再提供该云模型；历史探针可直接读取已有文件。不要通过命令行参数、聊天或 UserDefaults 传 Key。
+
+```bash
+# 离线检查解码/分包，不读 Key、不连接网络；不代表服务端验证通过。
+swift tools/qwen-realtime-probe.swift Resources/sample/sample.m4a --dry-run --seconds 1
+python3 -m unittest discover -s Tests -p test_qwen_realtime_probe.py -v
+# 联网：仅在提供真实业务空间和同区 Key 后运行。音频会上传百炼，可能产生费用。
+swift tools/qwen-realtime-probe.swift AndroidEngineerMockInterview.mp4 --workspace <WorkspaceId> --region cn-beijing --seconds 60
+```
+
+默认请求纯文字输出。`--audio-output` 显式请求文字与音频以做对照，会产生音频输出用量；收到的音频直接丢弃，绝不播放。`--seconds` 限制输入时长（默认 60 秒、最多 7200 秒），联网按真实时间推流，文件结束后补 5 秒静音并等待 15 秒回复。报告默认写入 `docs/evaluations/qwen-realtime-probe-<UTC时间>.json`，可用 `--report <path>` 指定；只包含事件时间、文字长度、数字用量，不保存 Key、音频、完整转写或台词。网络故障和缺 Key 也写失败报告。
+
+报告的首字时延从收到 `speech_stopped` 开始计算，**不包含服务端 VAD 判停耗时**，不能当作从面试官实际说完开始的端到端成绩。每次 `speech_started` 都显式发 cancel，因此不能据此推断服务端是否自动取消。连接最大时长、上下文上限、暂停误判和小时费用仍需对应的长会话、标注输入及价格数据；报告的 `pending` 保留这七项验证提醒。`--server-vad` 使用 900 ms 静音判停；不带此参数可对比 semantic_vad。旧链路仅在全部验收后删除。
+
+
+全文教练回归：`scripts/test.sh --filter InterviewCoachTests`、`scripts/test.sh --filter CoachScriptTests`；历史本机模型对照探针 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`；声学模型测试 `~/.cicada-mlx/bin/python -m pytest -q Tests/test_coach_audio.py`（先在设置安装语音检测）。`meSaid` 验证实际发言入 committed；`themSaid:Okay` 会进行 AI 覆盖审查，keep 不增加正文生成次数；已被剩余稿件覆盖的追问同样保留原稿，未覆盖的要求才重新生成 pending。`assistantState` 的 reviews 为审查次数，generations 为正文生成次数。会议目录 `coach.jsonl` 保存过程事件及延迟，完整规格与限制见 `docs/interview-coach-local.md`。
+
+
+## Gemma 原声跟读验证
+
+- `python3 tools/coach-reading-fixtures.py` 生成十段合成 WAV（只写文件，不播放）。本机模型已就绪时运行 `CICADA_TEST_READING=1 scripts/test.sh --filter CoachReadingModelTests`；报告为 `/tmp/cicada-gemma-reading-evaluation.json`。这是合成语音基准，不代表真人口音准确率。
+- `assistantRead:<音频绝对路径>` 将本地音频最多前十秒送入候选人原声链路；不注入 Apple 转写、不改稿、不播放音频。先生成回答，再用它的开头制作语音文件，观察 `assistantState` 的 `reading=gemma cursor=… sentence=… reading_failed=…`；生成次数和 response_id 应保持不变。`meSaid` 不再推进朗读位置。
+- 跟读只用本机 Gemma，两阶段独立转写/稿件对齐；纯静音不请求，重复与无关发言不推进，新问题取消旧结果。发生识别错误时保留位置并可重试。
+
+- 照片回归：`CICADA_TEST_READING=1 scripts/test.sh --filter CoachReadingModelTests/photoSentenceAfterSkippedWords`，用 Samantha / Tingting 合成声音跳过 feed screen 句尾，读到 scalability；报告 `/tmp/cicada-reading-photo-evaluation.json`。原声独立转写中唯一的连续词组可在前方 180 词内恢复位置；不会用 Apple 转写或稿件猜测未听见的词。
+
+- AI 覆盖审查本机模型回归：`CICADA_TEST_COACH_REVIEW=1 scripts/test.sh --filter CoachReviewModelTests`，需本机 Gemma 就绪；报告 `/tmp/cicada-deepseek-answer-update.json`，含同一句追问在不同稿件覆盖情况下的 keep/replace 对照。
+
+教练默认使用 DeepSeek Flash，AI 服务设置可保存专用 DeepSeek key。更新请求的首行是私有 JSON 决定，keep 后没有正文，replace 后在同一响应流式输出新稿；没有第二次正文请求。本机 Gemma 只负责麦克风跟读，开发对照可设 `CICADA_COACH_PROVIDER=local`。
+
+## 候选人 Gemma 主转写
+
+- 面试教练开启时，候选人麦克风的主转写使用本机 Gemma，面试官保留 Apple。中间列、会议记录和教练上下文使用同一份转写，跟读只做文本对齐，不再重复识别音频。
+- `assistantRead:<wav>` 静音文件注入：Gemma 识别后写入候选人文字记录，并驱动跟读；无需外放，不验证实体麦克风或回声消除。
+- `CICADA_TEST_CANDIDATE_ASR=1 scripts/test.sh --filter CandidateRecognition` 验证主转写流、取消、失败重试、连续发言与合成语音；音频先由 `tools/coach-reading-fixtures.py` 生成。报告 `/tmp/cicada-candidate-asr-evaluation.json`，不代表真人口音准确率。
+
+- 追问澄清回归：`CICADA_TEST_COACH_REVIEW=1 scripts/test.sh --filter CoachReviewModelTests` 使用实际 DeepSeek，涵盖截图识别句、简化、再举例、指标追问及普通附和；新增结果写入 `/tmp/cicada-clarification-review.json`。`ask` 跳过覆盖审查，结合对话重新生成当前问题及追问，允许必要的复述；不是只补完旧稿。
+
+- Dock：`dock:<on|off>` 设置是否常驻 Dock；`dockRender:<png>` 导出当前图标；`notesFrame` 可查看当前激活策略。

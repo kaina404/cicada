@@ -62,10 +62,19 @@ final class AppSettings: ObservableObject {
     @Published var recordAudio: Bool {
         didSet { save() }
     }
-    /// 识别共享屏幕: read the meeting window's slides on the Mac into the transcript (ScreenNotes.swift),
-    /// with this MLX model (mlx-vlm) for what a page means ("" = the text alone).
-    @Published var screenNotes: Bool {
-        didSet { save() }
+    @Published var askGloss: Bool { didSet { save() } }
+    @Published var continuousAssistant: Bool { didSet { save() } }
+    /// Interview microphone, including AirPods; empty follows the real system default.
+    @Published var coachMic: String { didSet { save() } }
+    @Published var realtimeRegion: String { didSet { save() } }
+    @Published var realtimeWorkspace: String { didSet { save() } }
+    @Published var realtimeModel: String { didSet { save() } }
+    // A short pause makes room for an interruption; each paragraph stays at 1–4 sentences.
+    static let candidateContinueDelay = 1.2
+    static let candidateMaxContinues = 8
+    var realtimeConfiguration: RealtimeConfiguration {
+        RealtimeConfiguration(workspace: realtimeWorkspace.trimmingCharacters(in: .whitespacesAndNewlines),
+                              region: realtimeRegion, model: realtimeModel.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     @Published var screenModel: String {
         didSet { save() }
@@ -92,6 +101,10 @@ final class AppSettings: ObservableObject {
     }
     /// Hide / show the subtitle bar.
     @Published var toggleKey: Shortcut {
+        didSet { save() }
+    }
+    /// 会中问答: answers what was just asked (only while listening).
+    @Published var askKey: Shortcut {
         didSet { save() }
     }
 
@@ -178,6 +191,12 @@ final class AppSettings: ObservableObject {
     /// The text model in use, for display.
     var textModel: String { aiConfig.textModel }
 
+    /// Keep the icon in the Dock while Cicada runs. Off: menu bar only, the icon showing just while
+    /// the main, settings or onboarding window is open.
+    @Published var showInDock: Bool {
+        didSet { save() }
+    }
+
     /// End the meeting when the meeting app it was heard through hangs up.
     @Published var endWithApp: Bool {
         didSet { save() }
@@ -242,7 +261,16 @@ final class AppSettings: ObservableObject {
         savedSystemInput = defaults.string(forKey: "savedSystemInput") ?? ""
         recordAudio = defaults.object(forKey: "recordAudio") as? Bool ?? true
         // Off until asked for: it needs the Screen Recording permission on top of system audio.
-        screenNotes = defaults.bool(forKey: "screenNotes")
+        askGloss = defaults.object(forKey: "askGloss") as? Bool ?? true
+        continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
+        coachMic = defaults.string(forKey: "coachMic") ?? ""
+        // Import only non-secret configuration. The key stays in AIKey's 0600 file.
+        let configFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(DevBuild.supportFolder).appendingPathComponent("dashscope-config.json")
+        let imported = (try? Data(contentsOf: configFile)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
+        realtimeRegion = defaults.string(forKey: "realtimeRegion") ?? imported?["region"] as? String ?? "cn-beijing"
+        realtimeWorkspace = defaults.string(forKey: "realtimeWorkspace") ?? imported?["workspaceId"] as? String ?? ""
+        realtimeModel = defaults.string(forKey: "realtimeModel") ?? "qwen3.8-omni-flash-realtime"
         // Gemma 4 E4B, instruction-tuned, 4-bit QAT for MLX (mlx-community on Hugging Face).
         screenModel = defaults.string(forKey: "screenModel") ?? "mlx-community/gemma-4-E4B-it-qat-4bit"
         importLanguage = defaults.string(forKey: "importLanguage") ?? "auto"
@@ -251,6 +279,7 @@ final class AppSettings: ObservableObject {
         overlayHideAfter = defaults.object(forKey: "overlayHideAfter") as? Double ?? 4
         talkKey = Shortcut(stored: defaults.string(forKey: "talkKey")) ?? .defaultTalk
         toggleKey = Shortcut(stored: defaults.string(forKey: "toggleKey")) ?? .defaultToggle
+        askKey = Shortcut(stored: defaults.string(forKey: "askKey")) ?? .defaultAsk
         aiModel = defaults.string(forKey: "aiModel") ?? "Ling-3.1-flash"
         aiProvider = defaults.string(forKey: "aiProvider") ?? "ling"
         aiModels = defaults.dictionary(forKey: "aiModels") as? [String: String] ?? [:]
@@ -265,6 +294,7 @@ final class AppSettings: ObservableObject {
         displayMode = defaults.string(forKey: "displayMode") ?? "notes"
         speakVoices = defaults.dictionary(forKey: "speakVoices") as? [String: String] ?? [:]
         endWithApp = defaults.object(forKey: "endWithApp") as? Bool ?? true
+        showInDock = defaults.object(forKey: "showInDock") as? Bool ?? true
         silenceEnd = defaults.string(forKey: "silenceEnd") ?? "prompt"
         silenceMinutes = defaults.object(forKey: "silenceMinutes") as? Double ?? 10
         listenSource = ["room", "both"].contains(defaults.string(forKey: "listenSource")) ? defaults.string(forKey: "listenSource")! : "system"
@@ -298,7 +328,12 @@ final class AppSettings: ObservableObject {
         defaults.set(speakMic, forKey: "speakMic")
         defaults.set(savedSystemInput, forKey: "savedSystemInput")
         defaults.set(recordAudio, forKey: "recordAudio")
-        defaults.set(screenNotes, forKey: "screenNotes")
+        defaults.set(askGloss, forKey: "askGloss")
+        defaults.set(continuousAssistant, forKey: "continuousAssistant")
+        defaults.set(coachMic, forKey: "coachMic")
+        defaults.set(realtimeRegion, forKey: "realtimeRegion")
+        defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")
+        defaults.set(realtimeModel, forKey: "realtimeModel")
         defaults.set(screenModel, forKey: "screenModel")
         defaults.set(importLanguage, forKey: "importLanguage")
         defaults.set(importNotes, forKey: "importNotes")
@@ -306,6 +341,7 @@ final class AppSettings: ObservableObject {
         defaults.set(overlayHideAfter, forKey: "overlayHideAfter")
         defaults.set(talkKey.stored, forKey: "talkKey")
         defaults.set(toggleKey.stored, forKey: "toggleKey")
+        defaults.set(askKey.stored, forKey: "askKey")
         defaults.set(aiModel, forKey: "aiModel")
         defaults.set(aiProvider, forKey: "aiProvider")
         defaults.set(aiModels, forKey: "aiModels")
@@ -320,6 +356,7 @@ final class AppSettings: ObservableObject {
         defaults.set(displayMode, forKey: "displayMode")
         defaults.set(speakVoices, forKey: "speakVoices")
         defaults.set(endWithApp, forKey: "endWithApp")
+        defaults.set(showInDock, forKey: "showInDock")
         defaults.set(silenceEnd, forKey: "silenceEnd")
         defaults.set(silenceMinutes, forKey: "silenceMinutes")
         defaults.set(listenSource, forKey: "listenSource")

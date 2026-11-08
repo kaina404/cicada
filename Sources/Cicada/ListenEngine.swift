@@ -30,6 +30,8 @@ final class ListenEngine {
     // Outputs
     var onSubtitle: ((_ source: String, _ translation: String) -> Void)?
     var onStatus: ((String) -> Void)?
+    var onCandidateTranscript: ((String, Bool) -> Void)?
+    var onRecognitionFailure: ((Bool) -> Void)?
     var onStateChange: (() -> Void)?
     /// A finished sentence; `secondsAgo` ≈ how long ago it started.
     var onFinal: ((Segment, _ secondsAgo: Double) -> Void)?
@@ -93,7 +95,7 @@ final class ListenEngine {
     private var serverFellBack = false
     /// The meeting is recognized by the user's own service (`Recognition.serverPreferred`).
     var serverHears: Bool {
-        Recognition.serverPreferred && !serverFellBack && translator?.ling.transcribes == true
+        !gemmaCandidate && Recognition.serverPreferred && !serverFellBack && translator?.ling.transcribes == true
     }
     /// Back on this Mac after the service listened (its name), shown for a few seconds.
     private(set) var cloudBack: (name: String, at: Date)?
@@ -105,7 +107,7 @@ final class ListenEngine {
     }
     /// 先用○○听 is offered: a model listening needs has been downloading a while, or couldn't be had.
     var offersCloud: Bool {
-        guard isRunning, !cloudListening, cloudService != nil else { return false }
+        guard !gemmaCandidate, isRunning, !cloudListening, cloudService != nil else { return false }
         // Something already shows the meeting in its language: the download only adds a comparison.
         guard recognizer == nil || !recordable else { return false }
         if modelProblem != nil { return true }
@@ -123,11 +125,26 @@ final class ListenEngine {
     private var askShown = false
 
     private var audioTap: AudioSource?
+    private let audioReconnect = AudioReconnect()
+    private var roomSilentRetries = 0
+    private var screenAudioFailed = false
     /// 会议室: the microphone Cicada listens to the room with; nil leaves the input on its default.
     var roomDevice: (() -> OutputDevice?)?
     /// The Mac reading a translation aloud, or the talk key held: the room mic hears silence then.
     private var roomMuted = false
     private var startedAt = Date()
+    /// Only the interview candidate microphone; never falls back to Apple ASR.
+    var gemmaCandidate = false {
+        didSet {
+            guard oldValue != gemmaCandidate, isRunning else { return }
+            generation += 1
+            router.detach()
+            resultsTask?.cancel()
+            if let recognizer { Task { await recognizer.cancel() } }
+            recognizer = nil
+            Task { await switchTranscriber(to: activeLang ?? settings.speakFromLang) }
+        }
+    }
     private var recognizer: RecognitionStream?
     private var resultsTask: Task<Void, Never>?
     /// The room engine's clocks and segment ids start far above the main one's, so lines from the two
@@ -143,7 +160,7 @@ final class ListenEngine {
     /// language they were heard in, dropped on a switch (the replay into the new model redoes them).
     private var unconfirmed: [(seg: Segment, at: Date, duration: Double)] = []
     private var recordable: Bool {
-        settings.sourceMode != .auto || languageConfirmed || (ambiguousDetections >= 2 && !mismatch)
+        gemmaCandidate || settings.sourceMode != .auto || languageConfirmed || (ambiguousDetections >= 2 && !mismatch)
             || legacySingleLanguage || cloudListening
             // The room side's 听不出 never reaches the panel (it reads the main engine): held lines would
             // stay held all meeting. Measured: a show from a phone across the table scored 0.56–0.71 for
@@ -317,16 +334,16 @@ final class ListenEngine {
 
     func start() {
         guard !isRunning else { return }
-        guard Recognition.isAvailable else {
+        guard gemmaCandidate || Recognition.isAvailable else {
             setStatus(L("此 Mac 不支持本机语音识别"))
             return
         }
-        guard !Recognition.authorizationDenied else {
+        guard gemmaCandidate || !Recognition.authorizationDenied else {
             setStatus(Recognition.notAllowed.localizedDescription)
             return
         }
         // An Intel Mac hears only through the service: without its key there is nothing to listen with.
-        guard !Recognition.cloudOnly || cloudService != nil else {
+        guard gemmaCandidate || !Recognition.cloudOnly || cloudService != nil else {
             setStatus(L("请先在设置 › AI 服务里填入 Ling key"))
             return
         }
@@ -351,6 +368,7 @@ final class ListenEngine {
         updateHold()
         debugLog("listen start mode=\(settings.sourceMode) target=\(resolvedTarget)")
 
+        roomSilentRetries = 0
         guard startTap() else { return }
         router.setVoiceCapture(settings.speakerVoices)
         isRunning = true
@@ -378,6 +396,7 @@ final class ListenEngine {
     private(set) var heardSpeech = false
 
     func stop() {
+        audioReconnect.cancel()
         // Lines still waiting for the language are recorded rather than dropped: the meeting
         // ended before detection settled it. Not when the only model said the audio isn't its
         // language: those lines are noise, and the recording keeps what was said.
@@ -410,13 +429,12 @@ final class ListenEngine {
 
     func reconnectAudio() {
         guard isRunning else { return }
-        audioTap?.stop()
-        audioTap = nil
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.isRunning else { return }
-                if self.startTap() { self.setStatus(L("正在听")) }
-            }
+        // Keep the current source reserved until its replacement is requested. This avoids a
+        // moment with no plain consumer in which a deferred VoiceProcessingIO build could run.
+        audioReconnect.schedule { [weak self] in
+            guard let self, self.isRunning else { return }
+            debugLog("audio: reconnect")
+            if self.startTap() { self.setStatus(L("正在听")) }
         }
     }
 
@@ -428,6 +446,19 @@ final class ListenEngine {
         let room = role == .room || settings.listensToRoom
         router.setRoomGate(room)
         if room { return startRoomMic() }
+        if settings.continuousAssistant, !screenAudioFailed, CGPreflightScreenCaptureAccess() {
+            let source = ScreenAudioSource()
+            let router = self.router
+            source.onAudio = { pcm in router.push(pcm) }
+            source.onFailed = { [weak self, weak source] in
+                guard let self, let source, self.audioTap === source else { return }
+                self.screenAudioFailed = true
+                debugLog("coach: ScreenCaptureKit unavailable, falling back to process tap")
+                self.reconnectAudio()
+            }
+            do { try source.start(); audioTap = source; return true }
+            catch { screenAudioFailed = true }
+        }
         if SystemAudioPermission.status() == .denied {
             debugLog("audio tap: system audio recording was refused")
             isRunning = false
@@ -485,12 +516,34 @@ final class ListenEngine {
             audioTap = mic
             return true
         }
-        // A unit left over from echo cancellation would starve the plain mic (one unit or none).
-        if let voiceMic, !voiceMic.inUse { voiceMic.release() }
-        let mic = RoomMic(device: roomDevice?())
+        let mic = RoomMic(device: roomDevice?(), voiceMic: voiceMic)
         mic.muted = roomMuted
         if role == .room { mic.echoGate = echoGate }
         roomMicSilent = false
+        mic.retrySilence = roomSilentRetries == 0
+        mic.onRestart = { [weak self, weak mic] why in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
+                if why == "silent since it started" { self.roomSilentRetries += 1 }
+                debugLog("room mic: \(why), requesting reconnect")
+                self.reconnectAudio()
+            }
+        }
+        mic.onStarted = { [weak self, weak mic] in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
+                debugLog("room mic started: \(mic.deviceName)")
+                self.setStatus(L("正在听"))
+            }
+        }
+        mic.onFailed = { [weak self, weak mic] error in
+            MainActor.assumeIsolated {
+                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
+                debugLog("room mic start failed: \(error)")
+                self.stop()
+                self.setStatus(error.localizedDescription)
+            }
+        }
         mic.onSilent = { [weak self, weak mic] in
             MainActor.assumeIsolated {
                 guard let self, let mic, self.audioTap === mic else { return }
@@ -503,7 +556,6 @@ final class ListenEngine {
         do {
             try mic.start()
             audioTap = mic
-            debugLog("room mic started: \(mic.deviceName)")
             DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self, self.audioTap === mic else { return }
@@ -532,8 +584,6 @@ final class ListenEngine {
         guard isRunning, audioTap === mic else { return }
         mic.stop()
         audioTap = nil
-        // Nobody else may hold the unit while the plain mic is used: it would starve it.
-        if voiceMic?.inUse == false { voiceMic?.release() }
         echoCancelled = false
         if !startRoomMic() { debugLog("room mic: plain mic failed too") }
     }
@@ -586,6 +636,11 @@ final class ListenEngine {
         onStateChange?()
     }
 
+    func retryRecognition() {
+        guard isRunning else { return }
+        Task { await switchTranscriber(to: activeLang ?? settings.speakFromLang) }
+    }
+
     func redetect() {
         guard isRunning, settings.sourceMode == .auto else { return }
         languageConfirmed = false
@@ -625,7 +680,7 @@ final class ListenEngine {
     private func switchTranscriber(to lang: Lang, replaySeconds: Double = 0) async {
         // No models to switch between: the service hears every language, and a language picked in
         // settings only becomes its hint (`cloudHint`).
-        if Recognition.cloudOnly || serverHears {
+        if !gemmaCandidate && (Recognition.cloudOnly || serverHears) {
             guard isRunning else { return }
             if case .fixed = settings.sourceMode { activeLang = lang } else if activeLang == nil { activeLang = lang }
             if !cloudListening { startCloud() }
@@ -662,7 +717,7 @@ final class ListenEngine {
 
         do {
             do {
-                try await ensureModel(for: lang)
+                if !gemmaCandidate { try await ensureModel(for: lang) }
             } catch where settings.sourceMode == .auto && previous != nil && previous != lang {
                 // A model that can't be had (no network, or the Mac's five reserved languages taken):
                 // retrying would fail the same way every 30 s. Go back to the one that works, unsure again.
@@ -692,7 +747,15 @@ final class ListenEngine {
                 return
             }
             guard isRunning, gen == generation else { return }
-            let stream = try await Recognition.start(lang.locale, drafts: true, confidence: true)
+            let stream: RecognitionStream
+            if gemmaCandidate {
+                // Candidate speech is English even when the meeting's source language is automatic.
+                activeLang = sourceLanguages.first(where: { $0.code == "en" }) ?? lang
+                languageConfirmed = true; mismatch = false
+                stream = CandidateRecognition()
+            } else {
+                stream = try await Recognition.start(lang.locale, drafts: true, confidence: true)
+            }
             guard isRunning, gen == generation else {
                 await stream.cancel()
                 return
@@ -709,7 +772,7 @@ final class ListenEngine {
                     self?.recognitionFailed(error, generation: gen)
                 }
             }
-            debugLog("transcriber started recognizer=\(Recognition.name) locale=\(lang.locale) format=\(stream.format)")
+            debugLog("transcriber started recognizer=\(gemmaCandidate ? "gemma" : Recognition.name) locale=\(lang.locale) format=\(stream.format)")
             setStatus(L("正在听"))
         } catch {
             debugLog("transcriber start failed locale=\(lang.locale): \(error)")
@@ -719,6 +782,7 @@ final class ListenEngine {
 
     private func recognitionFailed(_ error: Error, generation gen: Int) {
         guard gen == generation, isRunning else { return }
+        onRecognitionFailure?(true)
         debugLog("recognition error: \(error)")
         failureStreak += 1
         var delay = min(30.0, 2.0 * pow(2.0, Double(failureStreak - 1)))
@@ -741,13 +805,14 @@ final class ListenEngine {
     private func handle(_ result: Recognition.Piece, generation gen: Int) {
         guard gen == generation, isRunning else { return }
         failureStreak = 0
+        onRecognitionFailure?(false)
         var text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         // Before any holding for the language: words at all is what tells speech from music.
         if !text.isEmpty { onWords?() }
         if result.isFinal {
             text = HeardText.clean(text)
             let fuller = HeardText.fuller(final: text, draft: volatileText)
-            if fuller != text {
+            if !gemmaCandidate, fuller != text {
                 debugLog("final dropped words the draft had: kept the draft")
                 contentLog("FINAL was: \(text)")
                 text = fuller
@@ -758,6 +823,7 @@ final class ListenEngine {
             // there was nothing to translate, and it would sit in the record as a line.
             guard text.contains(where: \.isLetter) else { renderSubtitles(); return }
             if cloudListening, let code = result.language { cloudHeard(code) }
+            if gemmaCandidate { onCandidateTranscript?(text, true) }
             let conf = result.confidence ?? 1
             // Heard by the service: its translation came with the line. Not when it was asked for the
             // language the line turned out to be in (the target follows it): that one is translated again.
@@ -815,6 +881,7 @@ final class ListenEngine {
             if volatileText.isEmpty { volatileStartedAt = Date(); volatileStartClock = router.fedSeconds() }
             if text != volatileText { volatileChangedAt = Date() }
             volatileText = text
+            if gemmaCandidate { onCandidateTranscript?(text, false) }
             checkForeignLetters(text)
         }
         renderSubtitles()
@@ -843,7 +910,7 @@ final class ListenEngine {
     /// ends in a run of Latin letters counts: English words mixed into Chinese ("还在做 onboarding
     /// 的 UI") would ask for checks that each risk a wrong switch.
     private func checkForeignLetters(_ text: String) {
-        guard settings.sourceMode == .auto, !needsDetection, !cloudListening, let code = activeLang?.code,
+        guard !gemmaCandidate, settings.sourceMode == .auto, !needsDetection, !cloudListening, let code = activeLang?.code,
               ["zh", "ja", "ko"].contains(where: { code.hasPrefix($0) }),
               Date().timeIntervalSince(lastForeignCheck) >= 8, HeardText.endsInLatin(text) else { return }
         lastForeignCheck = Date()
@@ -853,7 +920,7 @@ final class ListenEngine {
 
     private func maybeDetectLanguage() {
         // One model can still tell whether the audio is its language, until the language is known.
-        guard isRunning, settings.sourceMode == .auto, !detecting, !legacySingleLanguage, !cloudListening,
+        guard !gemmaCandidate, isRunning, settings.sourceMode == .auto, !detecting, !legacySingleLanguage, !cloudListening,
               candidates.count >= 2 || (!languageConfirmed && candidates.first == activeLang && activeLang != nil) else { return }
         var stats = router.stats(window: 6)
         if stats.silenceRun >= AudioRouter.gapSeconds { needsDetection = true }
@@ -878,6 +945,7 @@ final class ListenEngine {
     }
 
     private func runDetection(_ clip: [AVAudioPCMBuffer]) {
+        guard !gemmaCandidate else { return }
         needsDetection = false
         lastDetectionAt = Date()
         detecting = true
@@ -888,7 +956,7 @@ final class ListenEngine {
             let ranked = await LanguageDetector.rank(clip, candidates: candidates)
             guard let self else { return }
             self.detecting = false
-            guard self.isRunning, self.settings.sourceMode == .auto else { return }
+            guard !self.gemmaCandidate, self.isRunning, self.settings.sourceMode == .auto else { return }
             let summary = ranked.map { String(format: "%@ s=%.2f c=%.2f n=%d", $0.lang.locale, $0.score, $0.confidence, $0.chars) }
             debugLog("detect (\(String(format: "%.2f", Date().timeIntervalSince(started)))s): \(summary.joined(separator: " | "))")
             self.applyDetection(ranked)
@@ -1103,7 +1171,7 @@ final class ListenEngine {
 
     /// 先用○○听: the service hears the meeting until the model being downloaded is on the Mac.
     func startCloud() {
-        guard isRunning, !cloudListening, cloudService != nil, let translator else { return }
+        guard !gemmaCandidate, isRunning, !cloudListening, cloudService != nil, let translator else { return }
         let awaiting = downloading?.lang ?? modelProblem?.lang
         debugLog("cloud: on (\(cloudService ?? "?")), replacing \(recognizer == nil ? "nothing" : activeLang?.locale ?? "?"), awaiting \(awaiting?.locale ?? "none")")
         // Held lines were a model's guesses at a language it may not know: the held audio goes to the service instead.
@@ -1355,6 +1423,9 @@ final class ListenEngine {
     /// The app joined segment `id` onto `into` (one sentence cut by a pause): the bar shows them as
     /// one, and the whole sentence is translated again. The old translation stays until then.
     func join(_ id: Int, into: Int, text: String) {
+        // A room merge must never render through the main engine's interviewer callback.
+        let room = role == .room
+        guard (id >= Self.roomIDs) == room, (into >= Self.roomIDs) == room else { return }
         let piece = segments.firstIndex(where: { $0.id == id }).map { segments.remove(at: $0) }
         joinedAway.insert(id)
         if joinedAway.count > 200, let oldest = joinedAway.min() { joinedAway.remove(oldest) }
@@ -1374,7 +1445,7 @@ final class ListenEngine {
     /// line in progress is ended at the next small pause: a dip in the sound, or no new words for
     /// a moment.
     private func maybeCutSentence() {
-        guard isRunning, !cutting, let recognizer, !volatileText.isEmpty, volatileText != lastCut else { return }
+        guard !gemmaCandidate, isRunning, !cutting, let recognizer, !volatileText.isEmpty, volatileText != lastCut else { return }
         let cjk = joiner(for: activeLang?.code ?? "") == ""
         let long = cjk ? volatileText.count >= 24 : volatileText.split(separator: " ").count >= 10
         guard long else { return }
