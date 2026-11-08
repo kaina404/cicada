@@ -1,0 +1,70 @@
+{
+  "segments": [
+    {
+      "id": "design",
+      "start": 0.0,
+      "file_end": 3.6075,
+      "question": "How would you design an offline first chat application on Android?"
+    },
+    {
+      "id": "interrupt",
+      "start": 5.6075,
+      "file_end": 7.7809375
+    },
+    {
+      "id": "kotlin-cancel",
+      "start": 19.7809375,
+      "file_end": 25.2923125,
+      "question": "An AI chat request continues after the user leaves the screen. How would you implement cancellation?"
+    },
+    {
+      "id": "kotlin-supervisor",
+      "start": 37.2923125,
+      "file_end": 44.4888125,
+      "question": "Should a failed recommendation request cancel an ongoing message send? Explain coroutineScope versus supervisorScope."
+    },
+    {
+      "id": "kotlin-dispatchers",
+      "start": 56.4888125,
+      "file_end": 61.22,
+      "question": "Does marking a Kotlin function suspend make image preprocessing safe on the main thread?"
+    },
+    {
+      "id": "flow-state",
+      "start": 73.22,
+      "file_end": 76.9900625,
+      "question": "How would you model a streaming chat screen with StateFlow and SharedFlow?"
+    },
+    {
+      "id": "flow-lifecycle",
+      "start": 88.9900625,
+      "file_end": 94.0541875,
+      "question": "Why use repeatOnLifecycle when collecting chat state, and who owns the network stream?"
+    },
+    {
+      "id": "flow-buffer",
+      "start": 106.0541875,
+      "file_end": 111.476,
+      "question": "Tokens arrive faster than Compose can render. Would you use buffer, conflate, or batching?"
+    },
+    {
+      "id": "android-process",
+      "start": 123.476,
+      "file_end": 127.7220625,
+      "question": "How do you restore an AI conversation after rotation and process death?"
+    },
+    {
+      "id": "compose-stream",
+      "start": 139.7220625,
+      "file_end": 143.4805,
+      "question": "How would you keep a Compose chat list smooth while a long answer streams?"
+    },
+    {
+      "id": "compose-effect",
+      "start": 155.4805,
+      "file_end": 160.0800625,
+      "question": "When would you use LaunchedEffect versus rememberCoroutineScope for sending a message?"
+    }
+  ],
+  "duration": 610.0
+}

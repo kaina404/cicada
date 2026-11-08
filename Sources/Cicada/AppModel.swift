@@ -164,6 +164,7 @@ final class AppModel: ObservableObject {
     let loginItem = LoginItem()
     lazy var notes = NotesEngine(ling: ling, store: store)
     lazy var notesWindow = NotesWindowController(model: self)
+    lazy var assistantWindow = AssistantWindowController(model: self)
     lazy var importer = FileImporter(store: store, settings: settings, translator: translator)
     let sample = SamplePlayer()
     let speakers = SpeakerTagger()
@@ -747,6 +748,7 @@ final class AppModel: ObservableObject {
         screen.server.stop()
         listen.router.setOnRealtimePCM(nil); candidateAudioAttached = false
         candidate.stop(); manualAssistant = false
+        assistantWindow.hide()
         askKey.unregister()
         stopRoomSide()
         listen.stop()
@@ -857,6 +859,7 @@ final class AppModel: ObservableObject {
     func setNotesCapturable(_ on: Bool) {
         settings.notesCapturable = on
         notesWindow.setCapturable(on)
+        assistantWindow.setCapturable(on)
         objectWillChange.send()
     }
 
@@ -1125,11 +1128,12 @@ final class AppModel: ObservableObject {
 
     private var coachEnabled: Bool { settings.continuousAssistant || manualAssistant }
     private var coachTime: Double { store.liveStart.map { max(0, Date().timeIntervalSince($0)) } ?? 0 }
+    // Candidate speech and hold-to-talk share the input chosen in Speaking settings.
     private var selectedRoomMic: OutputDevice? {
-        AudioDevices.roomMic(excluding: fakeGoneMics, headset: coachEnabled, preferred: coachEnabled ? settings.coachMic : "")
+        AudioDevices.roomMic(excluding: fakeGoneMics, headset: coachEnabled, preferred: coachEnabled ? (systemMic.recordingDevice?.uid ?? "") : "")
     }
     var coachMicName: String {
-        let uid = (settings.hearsBoth ? roomListen : listen).roomMicUID
+        let uid = micOn ? (settings.hearsBoth ? roomListen : listen).roomMicUID : nil
         return AudioDevices.inputs().first { $0.uid == uid }?.name ?? selectedRoomMic?.name ?? L("没有可用的麦克风")
     }
     private func updateCoachHeadphones() {
@@ -1915,6 +1919,15 @@ final class AppModel: ObservableObject {
         case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
         case "assistantReconnect": candidate.retry()
         case "assistantBackgroundReload": candidateBackgroundChanged()
+        case "assistantFloat":
+            if arg == "off" { assistantWindow.hide() } else { assistantWindow.show() }
+        case "assistantFloatStyle":
+            let values = arg.split(separator: ",").compactMap { Double($0) }
+            if values.count == 2 {
+                settings.assistantFontSize = AssistantAppearance.fontSize(values[0])
+                settings.assistantOpacity = AssistantAppearance.opacity(values[1])
+            }
+        case "assistantFloatState": assistantWindow.logState()
         case "assistantRender":
             // ImageRenderer cannot lay out the interactive scroll view and native controls reliably.
             let view = CoachSnapshot(engine: candidate, microphoneName: coachMicName)
@@ -2605,7 +2618,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
         popover.performClose(nil)
         if settingsWindow == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 600),
-                             styleMask: [.titled, .closable, .fullSizeContentView],
+                             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                              backing: .buffered, defer: false)
             w.title = L("设置")
             w.titlebarAppearsTransparent = true
@@ -2613,6 +2626,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
             w.isReleasedWhenClosed = false
             w.delegate = self
             w.contentView = NSHostingView(rootView: SettingsView(model: model, settings: model.settings, installer: model.installer))
+            w.contentMinSize = NSSize(width: 720, height: 480)
             w.center()
             w.setFrameAutosaveName("LiveSubsSettings")
             settingsWindow = w

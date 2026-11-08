@@ -1,0 +1,58 @@
+{
+  "fixture": "compact replay of the earlier customer-discussion fixture, 120 seconds",
+  "start_unix": 1793977138.0303621,
+  "screen_reading": false,
+  "gloss": true,
+  "note": "Localisation script ran during the last two turns; do not treat these as isolated latency measurements. Earlier four turns also exceed the 2-second target.",
+  "responses": [
+    {
+      "start": 15,
+      "end": 20.598375,
+      "kind": "question",
+      "text": "What is retrieval augmented generation, or RAG, and why would we use it for our support documents?",
+      "first_unix": 1793977161.084,
+      "end_to_end_seconds": 2.455
+    },
+    {
+      "start": 33,
+      "end": 36.43333333333333,
+      "kind": "question",
+      "text": "How does Jetpack Compose update the screen when state changes?",
+      "first_unix": 1793977177.097,
+      "end_to_end_seconds": 2.633
+    },
+    {
+      "start": 51,
+      "end": 58.28720833333333,
+      "kind": "concern",
+      "text": "I am concerned about memory leaks when our Android screen starts collecting a Flow. We cannot keep collecting after the screen closes.",
+      "first_unix": 1793977198.997,
+      "end_to_end_seconds": 2.679
+    },
+    {
+      "start": 69,
+      "end": 73.55325,
+      "kind": "question",
+      "text": "Why does a large synchronous Binder call cause application not responding errors?",
+      "first_unix": 1793977214.366,
+      "end_to_end_seconds": 2.782
+    },
+    {
+      "start": 87,
+      "end": 92.37775,
+      "kind": "concern",
+      "text": "We are worried about model hallucinations. We cannot promise every generated answer is correct.",
+      "first_unix": 1793977233.067,
+      "end_to_end_seconds": 2.659
+    },
+    {
+      "start": 105,
+      "end": 109.77141666666667,
+      "kind": "question",
+      "text": "Can we commit to a launch date before we have measured the latency and reviewed the test results?",
+      "first_unix": 1793977250.599,
+      "end_to_end_seconds": 2.797
+    }
+  ],
+  "manual_preemption_log": "2026-11-06 15:01:19 +0000 copilot: start kind=followup queued=0\n2026-11-06 15:01:19 +0000 debug command: ask\n2026-11-06 15:01:19 +0000 ask: asked lines=16 partial=97\n2026-11-06 15:01:19 +0000 copilot: start kind=manual queued=1\n2026-11-06 15:01:21 +0000 copilot: first kind=manual at=1793977281.318\n2026-11-06 15:01:23 +0000 ask: answered first=1.78s total=3.91s understood=Can we commit to a launch take before we have measured delatency and reviewed the test results? points=1 image=none ctx=3003\n2026-11-06 15:01:23 +0000 copilot: completed kind=manual facts=1 suggestions=0\n2026-11-06 15:01:23 +0000 copilot: saved ai line=a17\n"
+}

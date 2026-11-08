@@ -1,0 +1,24 @@
+{
+  "synthetic_only": true,
+  "expected": "I would keep Room as the single source of truth. Each message gets a stable client ID, so retries do not send it twice.",
+  "samples": [
+    {
+      "voice": "Samantha",
+      "duration": 7.2175625,
+      "elapsed": 1.1554286669706926,
+      "transcript": "I would keep room as the single source of truth. Each message gets a stable client ID, so retries do not send it twice."
+    },
+    {
+      "voice": "Tingting (Chinese TTS reading English; not a human accent benchmark)",
+      "duration": 9.0469375,
+      "elapsed": 1.0545515419216827,
+      "transcript": "I would keep room as the single source of truth. Each message gets a stable client ID so retries do not send it twice."
+    }
+  ],
+  "apple_comparison": {
+    "engine": "SpeechAnalyzer / SpeechTranscriber en-US, file input, no prompt",
+    "standard": "would keep room as the single source of truth. Each message gets a stable client ID, so which tries do not send it twice.",
+    "accented": "I would keep room as the single source of truth. Each message gets a stable client ID, so retrees do not send it twice.",
+    "limitation": "Two synthetic clips only; no claim about human accent accuracy or real-time latency."
+  }
+}

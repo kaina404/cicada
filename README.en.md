@@ -6,6 +6,10 @@ Cicada stays in the Dock while running, with an orange dot while recording. Righ
 
 <h1 align="center">Cicada · 知了</h1>
 
+On Mac, click the device name beside the interview coach’s microphone switch to open Settings › Interpreting. “Cicada listens through” selects one shared input for candidate speech and hold-to-talk.
+
+On Mac, resize Settings by dragging its edges; the window size is remembered. Choose 简体中文, English, or Follow System in Settings › General › App language, then reopen the app to apply.
+
 <p align="center">
   Every call. Every stream. No language barrier.<br>
   Live meeting notes, bilingual transcripts, subtitles and interpreting on Mac, Windows, Linux and Android.
@@ -34,6 +38,8 @@ Cicada works with whatever is playing on your computer, from Zoom, Teams, and Fe
 </p>
 
 The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
+
+On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting.
 
 ## Platforms
 

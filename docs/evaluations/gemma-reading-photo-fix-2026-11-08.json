@@ -1,0 +1,26 @@
+[
+  {
+    "cursorAfter" : 42,
+    "cursorBefore" : 11,
+    "replies" : [
+      "A key consideration here is the scalability of the data",
+      "{\"through\": 37, \"confidence\": 0.9}"
+    ],
+    "sample" : "photo",
+    "seconds" : 1.7514710426330566,
+    "sentenceAfter" : 1,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 42,
+    "cursorBefore" : 11,
+    "replies" : [
+      "A key consideration here is the scalability of the",
+      "{\"through\": 37, \"confidence\": 0.9}"
+    ],
+    "sample" : "photo-accented",
+    "seconds" : 1.3892059326171875,
+    "sentenceAfter" : 1,
+    "syntheticOnly" : true
+  }
+]

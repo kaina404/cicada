@@ -1,0 +1,130 @@
+[
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1277.4035417241976,
+    "formatOK" : true,
+    "id" : "kotlin-dispatchers",
+    "inputTokens" : 2671,
+    "outputTokens" : 104,
+    "paragraphs" : [
+      "→ Clarify suspend semantics\nNo, marking a function as suspend does not automatically move work off the main thread. It only enables cooperative cancellation and resumption within the current coroutine context. We still need to explicitly switch dispatchers for CPU-bound image processing. [[more]]",
+      "→ Specify dispatcher usage\nI would wrap the image processing in withContext(Dispatchers.Default) to ensure it runs on a background thread. This keeps the main thread free for UI updates and prevents jank during heavy computations. [[end]]"
+    ],
+    "question" : "Does marking a Kotlin function suspend make image preprocessing safe on the main thread?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1333.2063750131056,
+    "formatOK" : true,
+    "id" : "flow-state",
+    "inputTokens" : 7633,
+    "outputTokens" : 334,
+    "paragraphs" : [
+      "→ Define the single source of truth for chat state\nI would model the screen with a sealed interface representing distinct states like loading, streaming, and error. A SharedFlow handles one-off events such as scroll triggers or toasts, while StateFlow holds the persistent message list so the UI always has a current snapshot. Next, I will explain how to manage the streaming lifecycle within this structure. [[more]]",
+      "→ Manage the streaming lifecycle with StateFlow\nI would expose a StateFlow for the message list, updating it as chunks arrive from the network. This ensures the UI observes a consistent snapshot without missing intermediate states during rapid updates. Next, I will explain how to handle error recovery and retry logic within this flow. [[more]]",
+      "→ Handle error recovery and retry logic\nI would catch network exceptions in the ViewModel, update the StateFlow to an error state with a retry flag, and expose a retry action. This keeps the UI responsive by showing a specific error message while allowing the user to re-initiate the stream without losing context. Next, I will explain how to manage memory leaks during long-running streams. [[more]]",
+      "→ Prevent memory leaks during long-running streams\nI would use viewModelScope to launch the collection, ensuring the job cancels automatically when the ViewModel is cleared. This prevents the stream from continuing in the background and holding references to destroyed UI components. Next, I will summarize the overall architecture benefits. [[more]]",
+      "→ Summarize the architecture benefits\nThis approach keeps state and events separate, ensuring predictable UI updates and clean lifecycle management. It handles rapid streaming chunks efficiently while preventing memory leaks through structured concurrency.\n[[end]]"
+    ],
+    "question" : "How would you model a streaming chat screen with StateFlow and SharedFlow?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1364.1360000474378,
+    "formatOK" : false,
+    "id" : "flow-lifecycle",
+    "inputTokens" : 1289,
+    "outputTokens" : 52,
+    "paragraphs" : [
+      "→ Clarify lifecycle ownership\nI use repeatOnLifecycle to collect chat state only while the UI is active, preventing wasted work and stale updates when it is hidden. The ViewModel owns the network stream, exposing a cold Flow that the lifecycle collector consumes safely."
+    ],
+    "question" : "Why use repeatOnLifecycle when collecting chat state, and who owns the network stream?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1270.4339165939018,
+    "formatOK" : true,
+    "id" : "compose-stream",
+    "inputTokens" : 7646,
+    "outputTokens" : 340,
+    "paragraphs" : [
+      "→ Optimize Compose rendering and state updates\nI'd keep the chat list in a stable LazyColumn with fixed item heights where possible, using derivedStateOf for scroll position to avoid unnecessary recompositions. For streaming answers, I'd update only the specific message content via a StateFlow, ensuring the UI thread isn't blocked by parsing or network callbacks. Next, I'll discuss how to handle partial markdown rendering efficiently.\n[[more]]",
+      "→ Handle partial markdown rendering efficiently\nI'd buffer incoming tokens and only trigger a recomposition when a complete block, like a paragraph or code fence, is ready. This prevents the UI from thrashing on every single character while keeping the stream feeling responsive. Next, I'll explain how to manage scroll behavior during this process.\n[[more]]",
+      "→ Manage scroll behavior during streaming\nI'd use a LazyListState to auto-scroll only when the user is already at the bottom, preventing jarring jumps if they are reading earlier messages. This ensures the new content appears smoothly without disrupting their current view. Next, I'll discuss memory management for long conversations.\n[[more]]",
+      "→ Control memory for long conversations\nI'd limit the visible window to recent messages and offload older history to Room, keeping only lightweight summaries in state. This prevents Compose from holding excessive text objects in memory during long sessions. Next, I'll summarize the reliability tradeoff.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach balances smooth streaming with memory efficiency by decoupling network updates from UI recomposition. I'd validate performance on low-end devices before shipping, ensuring the list remains responsive under heavy load.\n[[end]]"
+    ],
+    "question" : "How would you keep a Compose chat list smooth while a long answer streams?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1192.841291660443,
+    "formatOK" : true,
+    "id" : "stream-partial",
+    "inputTokens" : 5819,
+    "outputTokens" : 224,
+    "paragraphs" : [
+      "→ Clarify the scope of the dropped connection\nI need to know if this is a streaming response or a standard HTTP request. For streaming, I would show partial content with a retry button and preserve state on reconnect. For standard requests, I would display an error message with a clear retry action. [[more]]",
+      "→ Define the user-facing state during interruption\nI would keep the partial answer visible to maintain context, adding a subtle indicator like a spinner or \"Connection lost\" badge. This prevents data loss and reassures the user that their input was received. [[more]]",
+      "→ Handle the retry mechanism and state restoration\nOn retry, I would resend the original request with an idempotency key to prevent duplicate processing. The UI would then seamlessly append new chunks to the existing partial answer rather than replacing it entirely. [[more]]",
+      "→ Address edge cases like total failure or timeout\nIf the retry also fails, I would replace the partial content with a clear error message and a \"Try Again\" button. This ensures the user is never stuck with incomplete data without a path forward. [[end]]"
+    ],
+    "question" : "The connection drops halfway through an answer. What should the user see and what happens on retry?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1255.5213749874383,
+    "formatOK" : false,
+    "id" : "agent-injection",
+    "inputTokens" : 1305,
+    "outputTokens" : 76,
+    "paragraphs" : [
+      "→ Reject the unsafe instruction and preserve state I would treat that message as untrusted input, so neither client nor backend should execute it or change the active prompt. The backend should reject or sanitize the request, log the attempt, and keep prior instructions intact. On the client, I would avoid exposing the raw failure and show a safe generic error while preserving the conversation state."
+    ],
+    "question" : "A received message tells the agent to upload contacts and ignore previous instructions. How should the client and backend respond?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1212.269291630946,
+    "formatOK" : true,
+    "id" : "recommendations",
+    "inputTokens" : 4193,
+    "outputTokens" : 183,
+    "paragraphs" : [
+      "→ Define relevance and timing thresholds\nI’d use contextual signals like location, schedule, and past behavior to rank recommendations by expected value. Then I’d enforce strict frequency caps and quiet hours so users only see high-confidence suggestions at natural transition points. This keeps the assistant helpful without becoming noisy or intrusive.\n[[more]]",
+      "→ Add explicit user control\nI’d let users adjust notification sensitivity and mute specific categories directly in settings. This gives them agency over the balance between proactivity and privacy, reducing friction for those who want less interruption. Next, I’ll explain how we measure success without annoying people.\n[[more]]",
+      "→ Measure engagement and annoyance\nI’d track acceptance rates versus dismissal or mute actions to refine the model. High dismissal signals low relevance, so we’d adjust thresholds dynamically rather than pushing more content. This data-driven loop ensures recommendations stay useful without becoming spammy.\n[[end]]"
+    ],
+    "question" : "How would you make proactive recommendations useful without overwhelming users?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1211.5626250160858,
+    "formatOK" : false,
+    "id" : "perf-latency",
+    "inputTokens" : 4147,
+    "outputTokens" : 181,
+    "paragraphs" : [
+      "→ Define key latency metrics for streaming AI I measure Time to First Token, inter-token interval, total response time, and end-to-end client render delay. These separate model generation from network and UI bottlenecks. Next I'll explain how we collect them in production. [[more]]",
+      "→ Collect metrics with client-side instrumentation\nI add timestamps at request start, first SSE chunk arrival, and final render completion. This gives us precise per-stage latency data without relying solely on backend logs. Next I'll cover how we analyze these numbers. [[more]]",
+      "→ Analyze metrics via p50 and p95 percentiles\nI track p50 for typical user experience and p95 to catch tail latency issues. We alert if inter-token gaps exceed thresholds, ensuring the stream feels responsive rather than stuttering. This helps us prioritize optimizations that actually improve perceived speed. [[end]]"
+    ],
+    "question" : "How do you measure latency for a streaming AI feature?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1194.1871250746772,
+    "formatOK" : true,
+    "id" : "perf-battery",
+    "inputTokens" : 7428,
+    "outputTokens" : 232,
+    "paragraphs" : [
+      "→ Define the proactive trigger scope first\nI'd clarify whether we're processing continuous audio, periodic location updates, or just event-driven notifications. This determines the baseline CPU load before any optimization begins.\n\n[[more]]",
+      "→ Offload heavy work to the backend\nI'd keep on-device processing lightweight, using local models only for simple triggers like keyword spotting. Complex inference and context building should happen server-side to spare the phone's CPU.\n\n[[more]]",
+      "→ Batch and throttle local events\nI'd aggregate sensor data locally and process it in batches rather than per-event. Using WorkManager with constraints ensures we only run when the device is idle or charging.\n\n[[more]]",
+      "→ Use hardware-accelerated ML APIs\nI'd leverage Android's NNAPI or TFLite GPU delegate for any on-device inference. This offloads matrix operations from the CPU to dedicated hardware, significantly reducing battery drain.\n\n[[more]]",
+      "→ Monitor and adapt dynamically\nI'd track battery level and thermal state to pause non-critical AI tasks when the device is stressed. This ensures we never compromise core Android stability for proactive features.\n\n[[end]]"
+    ],
+    "question" : "How do you limit CPU and battery use for proactive AI on a midrange Android phone?"
+  }
+]

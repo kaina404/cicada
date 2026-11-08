@@ -1,0 +1,820 @@
+{
+  "audio_deltas_discarded" : 0,
+  "date" : "2026-11-07T05:02:31Z",
+  "elapsed_seconds" : 45.048871208331548,
+  "events" : [
+    {
+      "seconds" : 0.13473879161756486,
+      "type" : "session.created"
+    },
+    {
+      "seconds" : 0.27728433336596936,
+      "type" : "session.updated"
+    },
+    {
+      "seconds" : 18.30142516666092,
+      "type" : "input_audio_buffer.speech_started"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 18.571756124962121,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 18.754075958277099,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 18.754628250026144,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 18.754906583344564,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 18.755250999936834,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "seconds" : 19.51405637501739,
+      "type" : "input_audio_buffer.speech_stopped"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.688330791657791,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.690996583318338,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.697775374981575,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.704140291665681,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.709460833342746,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.802770874928683,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.803161083254963,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "seconds" : 19.804203333333135,
+      "type" : "response.created"
+    },
+    {
+      "characters" : 1,
+      "seconds" : 19.805856749997474,
+      "since_speech_stopped_ms" : 291.79649997968227,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 0,
+      "seconds" : 19.806057374924421,
+      "type" : "conversation.item.input_audio_transcription.delta"
+    },
+    {
+      "characters" : 32,
+      "seconds" : 19.806199749931693,
+      "type" : "conversation.item.input_audio_transcription.completed"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 19.806395291700028,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 19.806526999920607,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 19.806651499937288,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 19.811865916592069,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 19.836247958359309,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 19.857698624953628,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 1,
+      "seconds" : 19.881118916673586,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 19.902052166638896,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 19.92628658330068,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 19.947079708334059,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 19.969813874922693,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 19.992672999971546,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 20.014856458292343,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 20,
+      "seconds" : 20.037287625018507,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 20.060375625034794,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 20.081870041671209,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 20.107287083286792,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 20.126610249979421,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 20.149175624945201,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 20.171766249928623,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 17,
+      "seconds" : 20.193926083273254,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 20.216887291637249,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 20.32686733326409,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 20.327194041688927,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 20.327446791692637,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 20.327739666681737,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 20.327924791607074,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 20.351662791683339,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 20.37280875002034,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 20.396851958357729,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 20.419659208273515,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 20.441902208258398,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 20.464415499940515,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 14,
+      "seconds" : 20.487093666684814,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 20.509335666662082,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 20.531372041674331,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 1,
+      "seconds" : 20.555345374974422,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 14,
+      "seconds" : 20.578002208261751,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 20.598438041633926,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 20.621039583347738,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 20.642563291592523,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 20.666884916601703,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 20.688945708330721,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 20.710326625034213,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 20.733922749990597,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 14,
+      "seconds" : 20.755942999967374,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 20.851953458273783,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 20.852285458357073,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 20.852460583322681,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 20.852628791588359,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 20.868172291666269,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 21,
+      "seconds" : 20.890966583276168,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 21,
+      "seconds" : 20.913031666656025,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 20.934798041591421,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 16,
+      "seconds" : 20.959287208272144,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 20.980801375000738,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 22,
+      "seconds" : 21.009721958311275,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 21.030576166696846,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 21.049366749939509,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.073263708269224,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 2,
+      "seconds" : 21.094029208295979,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 3,
+      "seconds" : 21.116241833311506,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 21.140182833303697,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 21.160900583257899,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 21.185211833333597,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 21.205284208292142,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 21.229412083281204,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 21.25189950002823,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.274546666652896,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 21.375797874992713,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 21.37617604166735,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 32,
+      "seconds" : 21.376380166620947,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 21.376520208315924,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 21.390600875020027,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 17,
+      "seconds" : 21.407975708367303,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 21.430910333292559,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 21.453027083305642,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 21.575186125002801,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 14,
+      "seconds" : 21.575612291693687,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 14,
+      "seconds" : 21.57584649999626,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 21.576041708351113,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.576171708293259,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 21.58739549992606,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.609418374951929,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 21.631741249933839,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 21.654341000015847,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 21.679890500032343,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 2,
+      "seconds" : 21.697343125008047,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 21.719929666607641,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 21.742983291624114,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 21.765098791685887,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.78780699998606,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 21.899534833268262,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 21.899693916668184,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 16,
+      "seconds" : 21.899840208352543,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 21.899945708340965,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.900041541666724,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 22,
+      "seconds" : 21.920987999998033,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 21.946442625019699,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 13,
+      "seconds" : 21.967497541685589,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 21.98852954164613,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 22.016050166683272,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 22.036287041613832,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 17,
+      "seconds" : 22.056478083366528,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 4,
+      "seconds" : 22.077425875002518,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 22.100672916625626,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 16,
+      "seconds" : 22.122873374959454,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 22.145390083314851,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 22.167888208292425,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 16,
+      "seconds" : 22.19013620831538,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 12,
+      "seconds" : 22.215985500020906,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 22.233977708267048,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 3,
+      "seconds" : 22.257133374921978,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 22.280777249950916,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 22.302118458319455,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 22.323951500002295,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 22.424368291627616,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 8,
+      "seconds" : 22.4249450416537,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 11,
+      "seconds" : 22.4251752916025,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 22.425358249922283,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 22.436510208295658,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 7,
+      "seconds" : 22.460002041654661,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 15,
+      "seconds" : 22.482529958360828,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 5,
+      "seconds" : 22.504304499947466,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 22.527943458291702,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 3,
+      "seconds" : 22.550449916627258,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 9,
+      "seconds" : 22.576868708361872,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 10,
+      "seconds" : 22.596147374948487,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 18,
+      "seconds" : 22.618636250030249,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 6,
+      "seconds" : 22.64785604167264,
+      "type" : "response.text.delta"
+    },
+    {
+      "characters" : 1314,
+      "seconds" : 22.648611208307557,
+      "status" : "completed",
+      "type" : "response.done",
+      "usage" : {
+        "input_tokens" : 110,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 82
+        },
+        "output_tokens" : 249,
+        "output_tokens_details" : {
+          "text_tokens" : 249
+        },
+        "total_tokens" : 359
+      }
+    },
+    {
+      "packets" : 234,
+      "pcm_bytes" : 747716,
+      "seconds" : 23.774606333347037,
+      "type" : "input.finished"
+    }
+  ],
+  "failure" : null,
+  "input_audio_seconds" : 23.366125,
+  "latency_basis" : "server speech_stopped receipt to first delta; excludes VAD detection delay; not acoustic end-to-end latency",
+  "latency_samples_ms" : [
+    291.79649997968227
+  ],
+  "p50_ms" : 291.79649997968227,
+  "p90_ms" : 291.79649997968227,
+  "packets" : 234,
+  "pending" : [
+    "text_only: verify successful text response and no audio deltas",
+    "automatic_cancel: unknown because client always sends cancel",
+    "connection_and_context_limits: only lower bounds observed",
+    "first_word: need 10 acoustic-end annotated questions",
+    "long_answer: review response lengths and content live",
+    "hourly_cost: usage recorded, regional prices and representative full-hour input required",
+    "semantic_vad_pauses: need annotated um\/pause fixture"
+  ],
+  "region" : "cn-beijing",
+  "requested_modalities" : [
+    "text"
+  ],
+  "responses" : [
+    {
+      "characters" : 1314,
+      "status" : "completed",
+      "usage" : {
+        "input_tokens" : 110,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 82
+        },
+        "output_tokens" : 249,
+        "output_tokens_details" : {
+          "text_tokens" : 249
+        },
+        "total_tokens" : 359
+      }
+    }
+  ],
+  "session_updated" : true,
+  "status" : "observed_not_accepted",
+  "text_deltas" : 131
+}

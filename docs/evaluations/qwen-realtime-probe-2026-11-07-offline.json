@@ -1,0 +1,41 @@
+{
+  "audio_deltas_discarded" : 0,
+  "date" : "2026-11-07T04:41:38Z",
+  "elapsed_seconds" : 0.091526624979451299,
+  "events" : [
+    {
+      "packets" : 10,
+      "pcm_bytes" : 32000,
+      "seconds" : 0.090428999974392354,
+      "type" : "input.finished"
+    }
+  ],
+  "failure" : null,
+  "input_audio_seconds" : 1,
+  "latency_basis" : "server speech_stopped receipt to first delta; excludes VAD detection delay; not acoustic end-to-end latency",
+  "latency_samples_ms" : [
+
+  ],
+  "p50_ms" : null,
+  "p90_ms" : null,
+  "packets" : 10,
+  "pending" : [
+    "text_only: verify successful text response and no audio deltas",
+    "automatic_cancel: unknown because client always sends cancel",
+    "connection_and_context_limits: only lower bounds observed",
+    "first_word: need 10 acoustic-end annotated questions",
+    "long_answer: review response lengths and content live",
+    "hourly_cost: usage recorded, regional prices and representative full-hour input required",
+    "semantic_vad_pauses: need annotated um\/pause fixture"
+  ],
+  "region" : "cn-beijing",
+  "requested_modalities" : [
+    "text"
+  ],
+  "responses" : [
+
+  ],
+  "session_updated" : false,
+  "status" : "offline_decode_only",
+  "text_deltas" : 0
+}

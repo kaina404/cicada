@@ -272,7 +272,9 @@ struct NotesWindowView: View {
                         if live && geo.size.width < 760 {
                             CandidateFeed(engine: model.candidate, settings: settings,
                                         compactHeight: min(250, max(120, geo.size.height * 0.3)),
-                                        microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(true) })
+                                        microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
+                                        onMicrophoneSettings: { model.openSettings(.speak) },
+                                        onFloat: { model.assistantWindow.show() })
                         }
                         if live { LanguageNotice(model: model).padding(.horizontal, 24).padding(.bottom, 8) }
                         // Where the scrolling starts: a hairline, and each column fades in under it (`topFade`).
@@ -285,7 +287,9 @@ struct NotesWindowView: View {
                                 if live {
                                     Divider()
                                     CandidateFeed(engine: model.candidate, settings: settings, expanded: true,
-                                                  microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(true) })
+                                                  microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
+                                        onMicrophoneSettings: { model.openSettings(.speak) },
+                                        onFloat: { model.assistantWindow.show() })
                                         .padding(.top, 12).frame(maxWidth: .infinity)
                                 }
                             }

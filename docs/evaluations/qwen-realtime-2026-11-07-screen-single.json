@@ -1,0 +1,29 @@
+[
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1176.3040417572483,
+    "formatOK" : true,
+    "id" : "screen-diagram",
+    "inputTokens" : 2072,
+    "outputTokens" : 62,
+    "paragraphs" : [
+      "→ Describe the visible components and flow\nI see Compose UI, Chat ViewModel, Room Database, Sync Worker, and Chat API. The UI observes Room through the ViewModel, while the Sync Worker persists network results before display. This keeps offline state consistent and makes Room the source of truth. [[end]]"
+    ],
+    "question" : "What do you think of this diagram?",
+    "usages" : [
+      {
+        "input_tokens" : 2072,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 1415,
+          "video_tokens" : 608
+        },
+        "output_tokens" : 62,
+        "output_tokens_details" : {
+          "text_tokens" : 62
+        },
+        "total_tokens" : 2134
+      }
+    ]
+  }
+]

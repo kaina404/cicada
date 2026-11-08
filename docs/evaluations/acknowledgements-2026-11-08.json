@@ -1,0 +1,90 @@
+{
+  "date": "2026-11-08",
+  "validation": "Mac development app, English UI, local Gemma, synthetic text injection; no live interview audio",
+  "initial": {
+    "state": "ready",
+    "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+    "pending_words": "166",
+    "generations": "1",
+    "paragraphs": "1",
+    "cursor": "0"
+  },
+  "acknowledgements": [
+    {
+      "utterance": "OK",
+      "state": {
+        "state": "ready",
+        "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+        "pending_words": "166",
+        "generations": "1",
+        "paragraphs": "1",
+        "cursor": "0"
+      },
+      "passed": true
+    },
+    {
+      "utterance": "OK, all right, continue.",
+      "state": {
+        "state": "ready",
+        "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+        "pending_words": "166",
+        "generations": "1",
+        "paragraphs": "1",
+        "cursor": "0"
+      },
+      "passed": true
+    },
+    {
+      "utterance": "Great, let’s continue.",
+      "state": {
+        "state": "ready",
+        "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+        "pending_words": "166",
+        "generations": "1",
+        "paragraphs": "1",
+        "cursor": "0"
+      },
+      "passed": true
+    },
+    {
+      "utterance": "很好，我们继续聊。",
+      "state": {
+        "state": "ready",
+        "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+        "pending_words": "166",
+        "generations": "1",
+        "paragraphs": "1",
+        "cursor": "0"
+      },
+      "passed": true
+    },
+    {
+      "utterance": "Hmm, uh-huh, I see.",
+      "state": {
+        "state": "ready",
+        "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+        "pending_words": "166",
+        "generations": "1",
+        "paragraphs": "1",
+        "cursor": "0"
+      },
+      "passed": true
+    }
+  ],
+  "completed": {
+    "state": "ready",
+    "response_id": "6CC59A8D-B298-4206-80C3-2F41256893EC",
+    "pending_words": "166",
+    "generations": "1",
+    "paragraphs": "1",
+    "cursor": "0"
+  },
+  "substantive_follow_up": {
+    "state": "generating",
+    "response_id": "E7A5DA7E-3D86-417A-8912-607DB35918A2",
+    "pending_words": "44",
+    "generations": "2",
+    "paragraphs": "1",
+    "cursor": "0"
+  }
+}

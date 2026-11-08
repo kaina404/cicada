@@ -10,6 +10,7 @@ enum SourceMode: Equatable {
 @MainActor
 final class AppSettings: ObservableObject {
     private let defaults = UserDefaults.standard
+    let interfaceLanguage = InterfaceLanguagePreference()
 
     @Published var sourceMode: SourceMode {
         didSet { save() }
@@ -63,9 +64,9 @@ final class AppSettings: ObservableObject {
         didSet { save() }
     }
     @Published var askGloss: Bool { didSet { save() } }
+    @Published var assistantFontSize: Double { didSet { save() } }
+    @Published var assistantOpacity: Double { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
-    /// Interview microphone, including AirPods; empty follows the real system default.
-    @Published var coachMic: String { didSet { save() } }
     @Published var realtimeRegion: String { didSet { save() } }
     @Published var realtimeWorkspace: String { didSet { save() } }
     @Published var realtimeModel: String { didSet { save() } }
@@ -262,8 +263,9 @@ final class AppSettings: ObservableObject {
         recordAudio = defaults.object(forKey: "recordAudio") as? Bool ?? true
         // Off until asked for: it needs the Screen Recording permission on top of system audio.
         askGloss = defaults.object(forKey: "askGloss") as? Bool ?? true
+        assistantFontSize = AssistantAppearance.fontSize(defaults.object(forKey: "assistantFontSize") as? Double ?? 32)
+        assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
-        coachMic = defaults.string(forKey: "coachMic") ?? ""
         // Import only non-secret configuration. The key stays in AIKey's 0600 file.
         let configFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(DevBuild.supportFolder).appendingPathComponent("dashscope-config.json")
@@ -329,8 +331,9 @@ final class AppSettings: ObservableObject {
         defaults.set(savedSystemInput, forKey: "savedSystemInput")
         defaults.set(recordAudio, forKey: "recordAudio")
         defaults.set(askGloss, forKey: "askGloss")
+        defaults.set(assistantFontSize, forKey: "assistantFontSize")
+        defaults.set(assistantOpacity, forKey: "assistantOpacity")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
-        defaults.set(coachMic, forKey: "coachMic")
         defaults.set(realtimeRegion, forKey: "realtimeRegion")
         defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")
         defaults.set(realtimeModel, forKey: "realtimeModel")

@@ -1,0 +1,119 @@
+[
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "OK, all right, continue.",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The interviewer only said to continue, and the unread remainder already fully answers the offline sending question with Room, client IDs, WorkManager retries, deduplication and backoff.\"}",
+    "seconds" : 0.95839595794677734
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "Lovely, by all means carry on with your reasoning.",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The interviewer's remark is an encouragement to continue, and the existing answer already covers the full offline sending design: Room as source of truth, client ID, pending status, Flow UI, WorkManager retries, server deduplication, backoff and failed-message handling.\"}",
+    "seconds" : 1.0936689376831055
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "That's precisely the direction I was hoping for. The floor is yours.",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The interviewer's follow-up only invites the user to continue, and the existing answer already covers the full offline sending design: Room as source of truth, client ID, pending status, Flow UI, WorkManager retries, server deduplication, backoff and failed-message handling.\"}",
+    "seconds" : 1.2568010091781616
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "很好，我们继续聊。",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The interviewer's follow-up is only a general encouragement to continue, and the existing answer already fully covers reliable offline message sending with Room, client IDs, WorkManager retries, deduplication and backoff.\"}",
+    "seconds" : 1.2256278991699219
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "So how do you resume sending after the Android process restarts?",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The follow-up asks how sending resumes after a process restart, and the unread remainder already covers this with Room as the local source of truth, pending status saved before the network request, WorkManager retrying pending messages after a process restart, and server deduplication by client ID.\"}",
+    "seconds" : 1.031014084815979
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "Can you also explain how you prevent duplicates on retry?",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The answer already covers offline sending with Room, WorkManager and Flow, and explicitly addresses duplicate prevention through stable client IDs and server-side deduplication on retry.\"}",
+    "seconds" : 0.93336796760559082
+  },
+  {
+    "actual" : "keep",
+    "answer" : "",
+    "expected" : "keep",
+    "input" : "By offline sending I mean save locally and retry when connected again.",
+    "passed" : true,
+    "raw" : "{\"action\":\"keep\",\"reason\":\"The existing answer already covers saving locally with Room, retrying via WorkManager on reconnect and after restart, plus deduplication and backoff, which fully addresses the offline sending request.\"}",
+    "seconds" : 1.1371140480041504
+  },
+  {
+    "actual" : "replace",
+    "answer" : "I would keep everything in memory and drive sending from a single app-level queue, because the new constraint rules out Room and WorkManager. I would hold outgoing messages in a thread-safe in-memory queue, for example a channel or a mutex-protected list inside a repository scoped to the application. Each message gets a stable client ID and a pending status before any network call, and the UI observes the queue through a StateFlow so it updates immediately. A coroutine tied to the application scope processes the queue one message at a time, so ordering is preserved. On a network failure I retry with exponential backoff and a bounded retry count, then mark the message as failed and let the user retry it manually. The server still deduplicates by client ID, so a retried request does not create duplicates. The tradeoff is that nothing survives a process death, so I would be honest about that: messages still pending are lost on restart, and I would tell the user this is a deliberate limitation of the in-memory design. If durability became a requirement again, I would move the queue to persistent storage.",
+    "expected" : "replace",
+    "input" : "Actually, assume persistent storage and WorkManager are prohibited.",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"The interviewer now prohibits persistent storage and WorkManager, so the Room and WorkManager approach is no longer allowed.\"}\nI would keep everything in memory and drive sending from a single app-level queue, because the new constraint rules out Room and WorkManager. I would hold outgoing messages in a thread-safe in-memory queue, for example a channel or a mutex-protected list inside a repository scoped to the application. Each message gets a stable client ID and a pending status before any network call, and the UI observes the queue through a StateFlow so it updates immediately. A coroutine tied to the application scope processes the queue one message at a time, so ordering is preserved. On a network failure I retry with exponential backoff and a bounded retry count, then mark the message as failed and let the user retry it manually. The server still deduplicates by client ID, so a retried request does not create duplicates. The tradeoff is that nothing survives a process death, so I would be honest about that: messages still pending are lost on restart, and I would tell the user this is a deliberate limitation of the in-memory design. If durability became a requirement again, I would move the queue to persistent storage.",
+    "seconds" : 2.8261549472808838
+  },
+  {
+    "actual" : "replace",
+    "answer" : "A SupervisorJob lets one child coroutine fail without cancelling its siblings. With a regular Job, a failure propagates upward and cancels the parent and all other children. With a SupervisorJob, the failure only affects the failing child, so the other coroutines keep running. I would create a scope with a SupervisorJob and a dispatcher, for example a CoroutineScope holding a SupervisorJob plus Dispatchers.IO. Then I launch independent tasks in that scope, such as separate sync jobs, and one failing does not stop the others. I still handle each failure locally, for example with a try and catch inside each launch, or a CoroutineExceptionHandler, because a supervisor does not swallow the exception; it only stops it from cancelling siblings. One tradeoff is that I lose automatic structured cancellation across children, so I must manage cleanup myself. Also, if the supervisor job itself is cancelled, all children are still cancelled, which is what I want when the screen closes.",
+    "expected" : "replace",
+    "input" : "Now switch topics. Explain Kotlin coroutine failure isolation with SupervisorJob.",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"Interviewer switched topics to Kotlin coroutine failure isolation with SupervisorJob; the offline messaging answer is now irrelevant.\"}\nA SupervisorJob lets one child coroutine fail without cancelling its siblings. With a regular Job, a failure propagates upward and cancels the parent and all other children. With a SupervisorJob, the failure only affects the failing child, so the other coroutines keep running. I would create a scope with a SupervisorJob and a dispatcher, for example a CoroutineScope holding a SupervisorJob plus Dispatchers.IO. Then I launch independent tasks in that scope, such as separate sync jobs, and one failing does not stop the others. I still handle each failure locally, for example with a try and catch inside each launch, or a CoroutineExceptionHandler, because a supervisor does not swallow the exception; it only stops it from cancelling siblings. One tradeoff is that I lose automatic structured cancellation across children, so I must manage cleanup myself. Also, if the supervisor job itself is cancelled, all children are still cancelled, which is what I want when the screen closes.",
+    "seconds" : 2.2960590124130249
+  },
+  {
+    "actual" : "replace",
+    "answer" : "I would design end-to-end encryption so the server only ever stores ciphertext. Each device generates its own key pair, and the private key stays in the Android Keystore, which is hardware-backed where possible. The public key is uploaded so other users can fetch it. For a one-to-one chat, the sender derives a shared secret with the recipient's public key, then encrypts each message with a symmetric key from that secret. I would use a well-tested library rather than writing the crypto myself.\n\nFor key rotation, I would give each key pair a version number and an expiry. When a device rotates, it generates a new key pair, uploads the new public key, and keeps the old private key for a while so it can still decrypt older messages. Messages carry the key version they were encrypted with, so the receiver knows which key to use. I would also rotate the symmetric message keys regularly, for example per session, so a single leaked key exposes less data.\n\nThe main tradeoffs are complexity and recovery. Losing a device means losing its private key, so I would add a recovery path, such as a backup encrypted with a user passphrase. I would also keep the rotation process simple and test it carefully, because a mistake here can make old messages unreadable.",
+    "expected" : "replace",
+    "input" : "Instead of offline sending, please design end-to-end encryption and key rotation.",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"Interviewer changed the topic from offline sending to end-to-end encryption and key rotation, which the existing answer does not cover.\"}\nI would design end-to-end encryption so the server only ever stores ciphertext. Each device generates its own key pair, and the private key stays in the Android Keystore, which is hardware-backed where possible. The public key is uploaded so other users can fetch it. For a one-to-one chat, the sender derives a shared secret with the recipient's public key, then encrypts each message with a symmetric key from that secret. I would use a well-tested library rather than writing the crypto myself.\n\nFor key rotation, I would give each key pair a version number and an expiry. When a device rotates, it generates a new key pair, uploads the new public key, and keeps the old private key for a while so it can still decrypt older messages. Messages carry the key version they were encrypted with, so the receiver knows which key to use. I would also rotate the symmetric message keys regularly, for example per session, so a single leaked key exposes less data.\n\nThe main tradeoffs are complexity and recovery. Losing a device means losing its private key, so I would add a recovery path, such as a backup encrypted with a user passphrase. I would also keep the rotation process simple and test it carefully, because a mistake here can make old messages unreadable.",
+    "seconds" : 2.8638629913330078
+  },
+  {
+    "actual" : "replace",
+    "answer" : "I would resolve concurrent edits with a server-authoritative version field on each record. Every edit carries the version the client last saw. When the server receives an edit, it checks that version. If it matches, the edit is accepted and the version increments. If it does not match, the server rejects it as a conflict and returns the current record, so the client can merge or ask the user to choose.\n\nFor the merge itself, I would use field-level last-writer-wins with server timestamps for simple fields, and keep an operation log for structured data so edits to different fields do not overwrite each other. For text, I would use a CRDT approach so concurrent inserts merge without losing content. On the device, Room stores the pending local edit and its base version, and WorkManager syncs it when connectivity returns. If the sync hits a conflict, the app keeps the local draft, shows both versions, and lets the user resolve it. The tradeoff is more complexity and metadata, but it prevents silent data loss and keeps every device consistent.",
+    "expected" : "replace",
+    "input" : "We need to resolve concurrent edits on multiple devices. Explain conflict resolution.",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"New question asks specifically for conflict resolution across multiple devices, which the offline-sending answer does not cover.\"}\nI would resolve concurrent edits with a server-authoritative version field on each record. Every edit carries the version the client last saw. When the server receives an edit, it checks that version. If it matches, the edit is accepted and the version increments. If it does not match, the server rejects it as a conflict and returns the current record, so the client can merge or ask the user to choose.\n\nFor the merge itself, I would use field-level last-writer-wins with server timestamps for simple fields, and keep an operation log for structured data so edits to different fields do not overwrite each other. For text, I would use a CRDT approach so concurrent inserts merge without losing content. On the device, Room stores the pending local edit and its base version, and WorkManager syncs it when connectivity returns. If the sync hits a conflict, the app keeps the local draft, shows both versions, and lets the user resolve it. The tradeoff is more complexity and metadata, but it prevents silent data loss and keeps every device consistent.",
+    "seconds" : 2.9711250066757202
+  },
+  {
+    "actual" : "replace",
+    "answer" : "I would make sending survive a process restart by persisting each message before I try to send it. When the user taps send, I first write the message to a local database, for example Room, with a status of pending. Only after that write succeeds do I hand it to the sender. That way, if the process dies, the message is still on disk.\n\nOn app start, I query for all messages that are still pending or in progress and put them back into the send queue. I use a unique client ID for each message so the server can detect duplicates, and I mark a message as sent only after I get a confirmed response. This makes retries safe.\n\nFor the actual sending, I would use WorkManager with a unique work name per message and a network constraint, so the system retries with backoff even if the app is killed. The tradeoff is extra database writes and some complexity around ordering and duplicate handling, but it gives reliable delivery. In short, persist first, then send, and recover the queue on startup.",
+    "expected" : "replace",
+    "input" : "So how do you resume sending after the Android process restarts?",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"The interviewer asks how sending resumes after the Android process restarts, but the existing answer only keeps messages in memory and sends once, which does not survive a restart.\"}\nI would make sending survive a process restart by persisting each message before I try to send it. When the user taps send, I first write the message to a local database, for example Room, with a status of pending. Only after that write succeeds do I hand it to the sender. That way, if the process dies, the message is still on disk.\n\nOn app start, I query for all messages that are still pending or in progress and put them back into the send queue. I use a unique client ID for each message so the server can detect duplicates, and I mark a message as sent only after I get a confirmed response. This makes retries safe.\n\nFor the actual sending, I would use WorkManager with a unique work name per message and a network constraint, so the system retries with backoff even if the app is killed. The tradeoff is extra database writes and some complexity around ordering and duplicate handling, but it gives reliable delivery. In short, persist first, then send, and recover the queue on startup.",
+    "seconds" : 2.9736479520797729
+  },
+  {
+    "actual" : "replace",
+    "answer" : "I would build offline sending around a local queue and a unique message ID. Each message gets a client-generated ID before it is sent, and I store it in a local database such as Room with a status of pending, sending or sent. When the device is offline, the message stays pending, and a WorkManager job with a network constraint sends it once connectivity returns. On retry, the server checks the message ID, so if it has already received that message it ignores the duplicate and returns the same result. This makes retries safe even if the app crashes after sending but before saving the sent status. I would also use exponential backoff for retries and mark messages as failed after a limit, so the user can see what happened. The tradeoff is extra storage and a little more complexity, but it gives reliable delivery and prevents duplicates.",
+    "expected" : "replace",
+    "input" : "Can you also explain how you prevent duplicates on retry?",
+    "passed" : true,
+    "raw" : "{\"action\":\"replace\",\"reason\":\"The existing answer only covers in-memory storage and single-send, so it does not address reliable offline sending or duplicate prevention on retry.\"}\nI would build offline sending around a local queue and a unique message ID. Each message gets a client-generated ID before it is sent, and I store it in a local database such as Room with a status of pending, sending or sent. When the device is offline, the message stays pending, and a WorkManager job with a network constraint sends it once connectivity returns. On retry, the server checks the message ID, so if it has already received that message it ignores the duplicate and returns the same result. This makes retries safe even if the app crashes after sending but before saving the sent status. I would also use exponential backoff for retries and mark messages as failed after a limit, so the user can see what happened. The tradeoff is extra storage and a little more complexity, but it gives reliable delivery and prevents duplicates.",
+    "seconds" : 2.5253130197525024
+  }
+]

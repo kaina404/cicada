@@ -58,6 +58,7 @@ struct SettingsRow<Trailing: View>: View {
                         Text(detail).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                     }
                 }
+                .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 12)
                 trailing
             }
@@ -426,7 +427,7 @@ struct SettingsView: View {
             sidebar.frame(width: 190)
             ScrollView { page }
         }
-        .frame(width: 720, height: 600)
+        .frame(minWidth: 720, maxWidth: .infinity, minHeight: 480, maxHeight: .infinity)
         .background(Palette.canvas)
     }
 
@@ -730,6 +731,7 @@ struct SettingsView: View {
 
     private var records: some View {
         VStack(alignment: .leading, spacing: 14) {
+            InterfaceLanguageSettings(preference: settings.interfaceLanguage, relaunch: model.relaunch)
             SettingsCard {
                 SettingsRow(title: L("保存会议录音"), detail: L("只存在这台 Mac 上")) {
                     Toggle("保存会议录音", isOn: $settings.recordAudio)

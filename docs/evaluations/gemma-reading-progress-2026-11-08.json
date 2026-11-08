@@ -1,0 +1,112 @@
+[
+  {
+    "cursorAfter" : 24,
+    "cursorBefore" : 0,
+    "expectedMax" : 24,
+    "expectedMin" : 24,
+    "failed" : false,
+    "replies" : [
+      "I would keep room as the single source of truth. Each message gets a stable client ID, so retries do not send it twice.",
+      "{\"through\": 24, \"confidence\": 0.98}"
+    ],
+    "sample" : "standard",
+    "seconds" : 2.0642200708389282,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 24,
+    "cursorBefore" : 0,
+    "expectedMax" : 24,
+    "expectedMin" : 24,
+    "failed" : false,
+    "replies" : [
+      "I would keep room as the single source of truth. Each message gets a stable client ID so retries do not send it twice.",
+      "{\"through\": 24, \"confidence\": 0.98}"
+    ],
+    "sample" : "accented",
+    "seconds" : 1.8891700506210327,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 10,
+    "cursorBefore" : 0,
+    "expectedMax" : 10,
+    "expectedMin" : 9,
+    "failed" : false,
+    "replies" : [
+      "I would keep room and as the single source of truth",
+      "{\"through\": 10, \"confidence\": 0.9}"
+    ],
+    "sample" : "misread",
+    "seconds" : 1.2662550210952759,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 10,
+    "cursorBefore" : 10,
+    "expectedMax" : 10,
+    "expectedMin" : 10,
+    "failed" : false,
+    "replies" : [
+      "I won't I won't keep room and as the single source of truth",
+      "{\"through\": 10, \"confidence\": 0.9}"
+    ],
+    "sample" : "repeated",
+    "seconds" : 1.6727499961853027,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 24,
+    "cursorBefore" : 10,
+    "expectedMax" : 24,
+    "expectedMin" : 24,
+    "failed" : false,
+    "replies" : [
+      "Each message gets a stable client ID so retries do not send it twice",
+      "{\"through\": 24, \"confidence\": 0.98}"
+    ],
+    "sample" : "later",
+    "seconds" : 1.5108590126037598,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 0,
+    "cursorBefore" : 0,
+    "expectedMax" : 0,
+    "expectedMin" : 0,
+    "failed" : false,
+    "replies" : [
+      "Can I need a glass of water",
+      "{\"through\": 0, \"confidence\": 0.1}"
+    ],
+    "sample" : "unrelated",
+    "seconds" : 1.2967520952224731,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 0,
+    "cursorBefore" : 0,
+    "expectedMax" : 0,
+    "expectedMin" : 0,
+    "failed" : false,
+    "replies" : [
+
+    ],
+    "sample" : "silence",
+    "seconds" : 4.100799560546875e-05,
+    "syntheticOnly" : true
+  },
+  {
+    "cursorAfter" : 0,
+    "cursorBefore" : 0,
+    "expectedMax" : 0,
+    "expectedMin" : 0,
+    "failed" : false,
+    "replies" : [
+      ""
+    ],
+    "sample" : "tone",
+    "seconds" : 0.40849602222442627,
+    "syntheticOnly" : true
+  }
+]

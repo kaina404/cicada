@@ -1,0 +1,2107 @@
+[
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1230.40608339943,
+    "formatOK" : true,
+    "id" : "kotlin-cancel",
+    "inputTokens" : 31365,
+    "outputTokens" : 403,
+    "paragraphs" : [
+      "→ Clarify the cancellation scope\nI need to know if we are canceling a single in-flight request or stopping all generation for that user. Also, does the backend support immediate termination, or do we just stop listening on the client? This determines whether we rely on HTTP cancellation or a custom protocol signal. [[more]]",
+      "→ Design the client-side cancellation mechanism\nI would use a CoroutineScope tied to the ViewModel, not the UI lifecycle, so leaving the screen doesn't kill it prematurely. When the user explicitly cancels, I call cancel() on that specific job. This stops receiving new SSE events immediately. Next, I'll address how to notify the backend.\n[[more]]",
+      "→ Define the backend cancellation contract\nI would send an explicit cancel request to the backend with the session ID. This ensures the server stops generating tokens and saves resources. If the protocol supports it, I might also close the SSE connection immediately as a fallback signal. Next, I'll handle the UI state updates.\n[[more]]",
+      "→ Handle UI state and partial content\nI would update the local message state to show a \"cancelled\" indicator immediately. Any partial text received before cancellation should be preserved in the chat history, not discarded. This ensures the user sees what was generated up to that point. Next, I'll discuss error handling for failed cancellations.\n[[more]]",
+      "→ Handle cancellation failures and edge cases\nIf the cancel request fails, I would rely on the client-side coroutine cancellation to stop processing new events. The UI should remain responsive even if the backend doesn't acknowledge the stop immediately. Next, I'll summarize the key tradeoffs of this approach.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach prioritizes immediate UI responsiveness by decoupling client cancellation from backend acknowledgment. We preserve partial content for transparency while ensuring no further tokens are processed locally. I would test network drops and rapid cancel-resume cycles to verify robustness.\n[[end]]"
+    ],
+    "question" : "An AI chat request continues after the user leaves the screen. How would you implement cancellation?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 1519
+      },
+      {
+        "input_tokens" : 2960,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2918
+        },
+        "output_tokens" : 74,
+        "output_tokens_details" : {
+          "text_tokens" : 74
+        },
+        "total_tokens" : 3034
+      },
+      {
+        "input_tokens" : 4475,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4433
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 4542
+      },
+      {
+        "input_tokens" : 5983,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5941
+        },
+        "output_tokens" : 71,
+        "output_tokens_details" : {
+          "text_tokens" : 71
+        },
+        "total_tokens" : 6054
+      },
+      {
+        "input_tokens" : 7495,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7453
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 7558
+      },
+      {
+        "input_tokens" : 8999,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 8957
+        },
+        "output_tokens" : 62,
+        "output_tokens_details" : {
+          "text_tokens" : 62
+        },
+        "total_tokens" : 9061
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1334.0768750058487,
+    "formatOK" : true,
+    "id" : "kotlin-supervisor",
+    "inputTokens" : 14857,
+    "outputTokens" : 221,
+    "paragraphs" : [
+      "→ Define the cancellation behavior\nNo, a failed recommendation should not cancel an ongoing message send. These are independent operations that need separate lifecycles to avoid one failure blocking the other. I will explain how CoroutineScope and SupervisorScope handle this distinction. [[more]]",
+      "→ Contrast CoroutineScope and SupervisorScope\nA standard CoroutineScope cancels all children if any one fails, which is too aggressive here. SupervisorScope isolates failures so the recommendation error does not stop the message send. This ensures independent operations run safely without cascading cancellation. [[more]]",
+      "→ Apply this to the ViewModel\nIn my ViewModel, I would use a SupervisorJob for independent tasks like fetching recommendations and sending messages. This way, if the recommendation fetch fails, the message send continues uninterrupted. It keeps the UI responsive and prevents cascading errors. [[more]]",
+      "→ Handle lifecycle and cleanup\nI tie this SupervisorJob to the ViewModel's lifecycle using viewModelScope. When the screen is destroyed, the job cancels automatically, preventing leaks. This keeps the scope management simple and safe for long-running tasks. [[end]]"
+    ],
+    "question" : "Should a failed recommendation request cancel an ongoing message send? Explain coroutineScope versus supervisorScope.",
+    "usages" : [
+      {
+        "input_tokens" : 1469,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 1413
+        },
+        "output_tokens" : 54,
+        "output_tokens_details" : {
+          "text_tokens" : 54
+        },
+        "total_tokens" : 1523
+      },
+      {
+        "input_tokens" : 2964,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 2908
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 3022
+      },
+      {
+        "input_tokens" : 4463,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 4407
+        },
+        "output_tokens" : 57,
+        "output_tokens_details" : {
+          "text_tokens" : 57
+        },
+        "total_tokens" : 4520
+      },
+      {
+        "input_tokens" : 5961,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 5905
+        },
+        "output_tokens" : 52,
+        "output_tokens_details" : {
+          "text_tokens" : 52
+        },
+        "total_tokens" : 6013
+      }
+    ]
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1223.5416249604896,
+    "formatOK" : true,
+    "id" : "kotlin-dispatchers",
+    "inputTokens" : 4401,
+    "outputTokens" : 132,
+    "paragraphs" : [
+      "→ Clarify suspend vs main thread\nNo, marking a function suspend does not make image preprocessing safe on the main thread. Suspend only allows pausing execution without blocking the thread, but CPU-heavy work still runs on whatever dispatcher is active. If called from the main dispatcher, it will still freeze the UI.\n\n[[more]]",
+      "→ Use Dispatchers.Default for heavy work\nTo keep the main thread free, I would wrap that preprocessing in withContext using Dispatchers.Default. This explicitly moves the CPU-bound computation off the UI thread while still allowing the coroutine to suspend safely. It ensures the interface remains responsive during image processing.\n\n[[end]]"
+    ],
+    "question" : "Does marking a Kotlin function suspend make image preprocessing safe on the main thread?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 68,
+        "output_tokens_details" : {
+          "text_tokens" : 68
+        },
+        "total_tokens" : 1514
+      },
+      {
+        "input_tokens" : 2955,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2920
+        },
+        "output_tokens" : 64,
+        "output_tokens_details" : {
+          "text_tokens" : 64
+        },
+        "total_tokens" : 3019
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1389.9223334155977,
+    "formatOK" : true,
+    "id" : "flow-state",
+    "inputTokens" : 14761,
+    "outputTokens" : 230,
+    "paragraphs" : [
+      "→ Define the streaming state model\nI would model the screen state as a sealed class with Idle, Streaming, and Error states. SharedFlow handles transient events like token deltas, while StateFlow holds the final message snapshot for UI rendering. This keeps the UI reactive without losing data during stream interruptions. [[more]]",
+      "→ Handle token deltas and snapshots\nI would use SharedFlow to emit raw token deltas for smooth UI updates without dropping data. StateFlow would only update with complete message snapshots when the stream finishes or errors. This ensures we never lose partial content while keeping the final state consistent. [[more]]",
+      "→ Manage stream lifecycle and resumption\nI would keep the streaming job in the ViewModel to survive configuration changes. If the protocol supports a cursor, I’d resume from the last received token; otherwise, I’d restart the request. This prevents duplicate content while handling network interruptions gracefully. [[more]]",
+      "→ Secure the backend integration\nI would proxy all AI calls through an authenticated backend to avoid embedding provider secrets in the app. This also lets us handle rate limiting and schema validation centrally, keeping the client lightweight and secure. [[end]]"
+    ],
+    "question" : "How would you model a streaming chat screen with StateFlow and SharedFlow?",
+    "usages" : [
+      {
+        "input_tokens" : 1437,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 1409
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 1500
+      },
+      {
+        "input_tokens" : 2941,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 2913
+        },
+        "output_tokens" : 59,
+        "output_tokens_details" : {
+          "text_tokens" : 59
+        },
+        "total_tokens" : 3000
+      },
+      {
+        "input_tokens" : 4441,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 4413
+        },
+        "output_tokens" : 60,
+        "output_tokens_details" : {
+          "text_tokens" : 60
+        },
+        "total_tokens" : 4501
+      },
+      {
+        "input_tokens" : 5942,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 5914
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 5990
+      }
+    ]
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1416.6382916737348,
+    "formatOK" : false,
+    "id" : "flow-lifecycle",
+    "inputTokens" : 1453,
+    "outputTokens" : 72,
+    "paragraphs" : [
+      "→ Clarify repeatOnLifecycle and stream ownership\nI use repeatOnLifecycle to tie collection to the UI lifecycle, so we only consume state when visible and avoid leaks or wasted work. The ViewModel owns the network stream because it must survive configuration changes and keep receiving SSE updates while the app is in the background. The UI just observes the resulting StateFlow."
+    ],
+    "question" : "Why use repeatOnLifecycle when collecting chat state, and who owns the network stream?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 72,
+        "output_tokens_details" : {
+          "text_tokens" : 72
+        },
+        "total_tokens" : 1525
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1213.3906250819564,
+    "formatOK" : true,
+    "id" : "flow-buffer",
+    "inputTokens" : 22168,
+    "outputTokens" : 246,
+    "paragraphs" : [
+      "→ Clarify token stream semantics\nI need to know if these are raw deltas or complete snapshots. That distinction determines whether we can safely drop frames or must preserve every piece of data.\n\n[[more]]",
+      "→ Apply correct buffering strategy\nFor raw deltas, I would use a buffer to accumulate them without dropping any data. If we have complete snapshots, conflating is safe to keep only the latest state. Batching helps smooth rendering by grouping updates into frames.\n\n[[more]]",
+      "→ Implement backpressure handling\nI would use Flow operators like buffer or conflate to manage the stream. This ensures we don't block the producer while keeping the UI responsive. Next, I'll discuss how to handle process death.\n\n[[more]]",
+      "→ Handle process death and persistence\nIf the process dies, we must persist partial state to Room or DataStore. On restart, we check for an incomplete stream and resume it if the protocol supports a cursor. This prevents data loss during backgrounding.\n\n[[more]]",
+      "→ Finalize the rendering strategy\nI would combine buffering for deltas with conflating for snapshots, ensuring no data loss. This approach keeps the UI smooth while maintaining correctness across process boundaries.\n\n[[end]]"
+    ],
+    "question" : "Tokens arrive faster than Compose can render. Would you use buffer, conflate, or batching?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 42,
+        "output_tokens_details" : {
+          "text_tokens" : 42
+        },
+        "total_tokens" : 1495
+      },
+      {
+        "input_tokens" : 2936,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2894
+        },
+        "output_tokens" : 56,
+        "output_tokens_details" : {
+          "text_tokens" : 56
+        },
+        "total_tokens" : 2992
+      },
+      {
+        "input_tokens" : 4433,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4391
+        },
+        "output_tokens" : 51,
+        "output_tokens_details" : {
+          "text_tokens" : 51
+        },
+        "total_tokens" : 4484
+      },
+      {
+        "input_tokens" : 5925,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5883
+        },
+        "output_tokens" : 55,
+        "output_tokens_details" : {
+          "text_tokens" : 55
+        },
+        "total_tokens" : 5980
+      },
+      {
+        "input_tokens" : 7421,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7379
+        },
+        "output_tokens" : 42,
+        "output_tokens_details" : {
+          "text_tokens" : 42
+        },
+        "total_tokens" : 7463
+      }
+    ]
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1234.5226249890402,
+    "formatOK" : true,
+    "id" : "android-process",
+    "inputTokens" : 31129,
+    "outputTokens" : 343,
+    "paragraphs" : [
+      "→ Clarify the restoration scope\nI need to know if we are restoring just the visible chat history or also resuming an active, in-progress stream. The approach differs significantly between a static list and a live connection.\n\n[[more]]",
+      "→ Establish the local source of truth\nI'd make Room the source of truth and have the UI observe its Flow. Network results update Room rather than bypassing it. Next I'll walk through sending a message while offline.\n[[more]]",
+      "→ Handle active stream restoration\nFor an in-progress stream, I would persist the latest complete snapshot to Room and store the server cursor. On restart, the ViewModel checks for this state and resumes the SSE connection from that cursor if the protocol supports it. This prevents dropping raw token deltas or showing stale partial data.\n\n[[more]]",
+      "→ Manage durable sending and lifecycle\nI keep the sending logic in the Repository or ViewModel, not tied to a Composable's lifetime. This ensures that if the process dies mid-send, we can retry from the persisted state rather than losing the request. Next I'll discuss handling duplicate responses.\n\n[[more]]",
+      "→ Handle duplicate responses safely\nI rely on server-side deduplication contracts rather than client-only logic to ensure exactly-once delivery. If the protocol supports it, I use idempotency keys to prevent processing the same token delta twice after a reconnect. Next I'll summarize the reliability tradeoff.\n\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach balances immediate local feedback with robust recovery from process death. I would prioritize testing edge cases like rapid rotation during streaming and network flaps before expanding the feature set.\n\n[[end]]"
+    ],
+    "question" : "How do you restore an AI conversation after rotation and process death?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 49,
+        "output_tokens_details" : {
+          "text_tokens" : 49
+        },
+        "total_tokens" : 1495
+      },
+      {
+        "input_tokens" : 2936,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2901
+        },
+        "output_tokens" : 50,
+        "output_tokens_details" : {
+          "text_tokens" : 50
+        },
+        "total_tokens" : 2986
+      },
+      {
+        "input_tokens" : 4427,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4392
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 4494
+      },
+      {
+        "input_tokens" : 5935,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5900
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 5998
+      },
+      {
+        "input_tokens" : 7439,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 7404
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 7505
+      },
+      {
+        "input_tokens" : 8946,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 8911
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 8994
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1221.5427916962653,
+    "formatOK" : true,
+    "id" : "compose-stream",
+    "inputTokens" : 22264,
+    "outputTokens" : 322,
+    "paragraphs" : [
+      "→ Prioritize main-thread responsiveness\nI would keep the UI thread free by parsing and diffing streaming tokens off-main, then emitting only stable state updates. Compose can batch those changes efficiently if the list items are properly keyed and avoid unnecessary recomposition. Next I’ll cover how to handle long content growth without jank. [[more]]",
+      "→ Manage layout and scroll behavior\nI would use LazyColumn with stable keys to prevent full list recomposition. For the streaming item, I'd cap its height or use a scrolling text component so it doesn't force the entire list to re-layout on every token. This keeps the main thread free for smooth animations. [[more]]",
+      "→ Optimize text rendering and state\nI would use AnnotatedString for rich formatting to avoid heavy layout passes. By keeping the streaming text in a separate, lightweight composable, we isolate recompositions from the rest of the chat history. This ensures that only the active bubble updates while the list remains stable. [[more]]",
+      "→ Handle auto-scroll and edge cases\nI would use LazyListState to manage auto-scrolling, ensuring it only triggers if the user is already near the bottom. This prevents jarring jumps if they are reading earlier messages. Finally, I'll summarize the overall reliability tradeoff. [[more]]",
+      "→ Summarize the smoothness tradeoff\nThis approach balances immediate visual feedback with stable scrolling. By isolating stream updates and managing layout carefully, we keep the UI responsive even for long answers. I'd verify this on low-end devices to ensure frame rates stay consistent.\n[[end]]"
+    ],
+    "question" : "How would you keep a Compose chat list smooth while a long answer streams?",
+    "usages" : [
+      {
+        "input_tokens" : 1437,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 1409
+        },
+        "output_tokens" : 69,
+        "output_tokens_details" : {
+          "text_tokens" : 69
+        },
+        "total_tokens" : 1506
+      },
+      {
+        "input_tokens" : 2947,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 2919
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 3014
+      },
+      {
+        "input_tokens" : 4455,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 4427
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 4521
+      },
+      {
+        "input_tokens" : 5962,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 5934
+        },
+        "output_tokens" : 60,
+        "output_tokens_details" : {
+          "text_tokens" : 60
+        },
+        "total_tokens" : 6022
+      },
+      {
+        "input_tokens" : 7463,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 7435
+        },
+        "output_tokens" : 60,
+        "output_tokens_details" : {
+          "text_tokens" : 60
+        },
+        "total_tokens" : 7523
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1314.6479999413714,
+    "formatOK" : true,
+    "id" : "compose-effect",
+    "inputTokens" : 22369,
+    "outputTokens" : 328,
+    "paragraphs" : [
+      "→ Distinguish lifecycle-driven effects from user-initiated actions.\nI use LaunchedEffect for side effects tied to composable state or lifecycle, such as loading data when a key changes. For sending a message triggered by a button click, I prefer rememberCoroutineScope because the action is event-driven and should not rerun automatically on recomposition. This keeps network calls explicit and avoids accidental duplicate sends.\n\n[[more]]",
+      "→ Clarify durable state handling\nFor message sending, the actual network call and retry logic belong in the ViewModel or repository. This ensures that if the UI recomposes or the process dies, the send operation isn't lost or duplicated just because a composable left the screen. Next I'll explain how to handle immediate UI feedback.\n\n[[more]]",
+      "→ Handle immediate UI feedback\nI'd show the message as pending in the local state right after the click. This gives instant visual confirmation while the network call happens in the background. If it fails, I can update the status to error without blocking the UI thread.\n\n[[more]]",
+      "→ Handle offline and retry scenarios\nIf the network is unavailable, I persist the message in a local database with a pending status. A background worker or sync logic then retries sending it when connectivity returns. This ensures no data loss even if the app is closed during the attempt.\n\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach separates UI intent from durable delivery. We get immediate feedback, offline support, and protection against process death by keeping state in the ViewModel or database rather than relying on composable lifecycles.\n\n[[end]]"
+    ],
+    "question" : "When would you use LaunchedEffect versus rememberCoroutineScope for sending a message?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 85,
+        "output_tokens_details" : {
+          "text_tokens" : 85
+        },
+        "total_tokens" : 1531
+      },
+      {
+        "input_tokens" : 2972,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2937
+        },
+        "output_tokens" : 71,
+        "output_tokens_details" : {
+          "text_tokens" : 71
+        },
+        "total_tokens" : 3043
+      },
+      {
+        "input_tokens" : 4484,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4449
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 4542
+      },
+      {
+        "input_tokens" : 5983,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5948
+        },
+        "output_tokens" : 60,
+        "output_tokens_details" : {
+          "text_tokens" : 60
+        },
+        "total_tokens" : 6043
+      },
+      {
+        "input_tokens" : 7484,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 7449
+        },
+        "output_tokens" : 54,
+        "output_tokens_details" : {
+          "text_tokens" : 54
+        },
+        "total_tokens" : 7538
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1239.0255416976288,
+    "formatOK" : true,
+    "id" : "api-contract",
+    "inputTokens" : 14785,
+    "outputTokens" : 235,
+    "paragraphs" : [
+      "→ Define the core chat contract\nI would use gRPC for streaming responses and REST for metadata. The client sends a message ID, thread ID, and content to get back a stream of partial updates. This handles latency well on mobile networks. [[more]]",
+      "→ Handle streaming and resumption\nI would use server-streaming RPC for real-time token deltas, ensuring the client appends them correctly. If the connection drops, I'd rely on a cursor or last-seen ID to resume from that exact point rather than restarting the generation. This prevents duplicate content in the chat history. [[more]]",
+      "→ Manage local persistence and state\nI would store messages in Room as the single source of truth, with the UI observing flows. Sending logic lives in the ViewModel to survive configuration changes, ensuring durable delivery even if the app backgrounded. This separates network concerns from presentation. [[more]]",
+      "→ Address security and final tradeoffs\nI would proxy all AI calls through an authenticated backend to keep provider secrets off the device. This design balances real-time responsiveness with robust offline support and security. I'd validate edge cases like process death before shipping.\n[[end]]"
+    ],
+    "question" : "Design the REST or gRPC contract for an agent-first Android chat client.",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 53,
+        "output_tokens_details" : {
+          "text_tokens" : 53
+        },
+        "total_tokens" : 1499
+      },
+      {
+        "input_tokens" : 2940,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2905
+        },
+        "output_tokens" : 69,
+        "output_tokens_details" : {
+          "text_tokens" : 69
+        },
+        "total_tokens" : 3009
+      },
+      {
+        "input_tokens" : 4450,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4415
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 4508
+      },
+      {
+        "input_tokens" : 5949,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5914
+        },
+        "output_tokens" : 55,
+        "output_tokens_details" : {
+          "text_tokens" : 55
+        },
+        "total_tokens" : 6004
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1257.583124912344,
+    "formatOK" : true,
+    "id" : "stream-partial",
+    "inputTokens" : 14834,
+    "outputTokens" : 244,
+    "paragraphs" : [
+      "→ Define the user-facing state and retry logic\nThe user should see a partial response with an error indicator, not a blank screen. On retry, we resume from the last valid token if the protocol supports it; otherwise, we restart the generation cleanly. I will explain how to handle duplicate content during this process.\n[[more]]",
+      "→ Handle duplicate content and state consistency\nWe must deduplicate tokens to avoid repeating text if the server resends data. The UI should merge new chunks into the existing partial response seamlessly. I will outline how we manage the local state during this merge.\n[[more]]",
+      "→ Manage local state and UI updates\nI would keep the partial text in a ViewModel StateFlow so it survives configuration changes. The UI observes this state, ensuring the user sees the accumulated content even if the screen rotates. This separates the network layer from the presentation logic for robustness.\n[[more]]",
+      "→ Finalize the retry behavior and UX\nIf the stream cannot resume, we show a clear retry button that restarts generation from scratch. This ensures the user gets a complete answer without confusing partial data. I have covered the state management and error handling for this scenario.\n[[end]]"
+    ],
+    "question" : "The connection drops halfway through an answer. What should the user see and what happens on retry?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 68,
+        "output_tokens_details" : {
+          "text_tokens" : 68
+        },
+        "total_tokens" : 1521
+      },
+      {
+        "input_tokens" : 2962,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2920
+        },
+        "output_tokens" : 55,
+        "output_tokens_details" : {
+          "text_tokens" : 55
+        },
+        "total_tokens" : 3017
+      },
+      {
+        "input_tokens" : 4458,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4416
+        },
+        "output_tokens" : 62,
+        "output_tokens_details" : {
+          "text_tokens" : 62
+        },
+        "total_tokens" : 4520
+      },
+      {
+        "input_tokens" : 5961,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5919
+        },
+        "output_tokens" : 59,
+        "output_tokens_details" : {
+          "text_tokens" : 59
+        },
+        "total_tokens" : 6020
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1220.2004583086818,
+    "formatOK" : true,
+    "id" : "stream-order",
+    "inputTokens" : 22411,
+    "outputTokens" : 375,
+    "paragraphs" : [
+      "→ Define event identity and ordering\nI would require each event to carry a stable ID, a monotonic sequence number, and a timestamp. The client should acknowledge the last successfully processed sequence, so reconnects can request only missing events instead of replaying everything. Next I’ll describe how duplicate and out-of-order events are handled safely.\n[[more]]",
+      "→ Handle duplicates and reordering\nI would deduplicate by event ID using a bounded cache, while buffering out-of-order events until missing sequences arrive. Raw token deltas must never be dropped or reordered incorrectly; instead, I’d rely on complete snapshots when available to avoid corruption. Next I’ll cover the server contract needed for this to work reliably.\n[[more]]",
+      "→ Define the server contract\nThe server must support resuming from a cursor, such as Last-Event-ID in SSE, and guarantee sequence numbers are monotonic. Deduplication on the client relies on this contract; without it, we cannot safely ignore duplicates or reorder events. Next I’ll explain how to handle gaps and timeouts during reconnects.\n[[more]]",
+      "→ Handle gaps and timeouts\nI would detect sequence gaps and request a replay of missing events, with exponential backoff to avoid overwhelming the server. If a gap persists beyond a timeout, I’d fall back to fetching a complete snapshot to resynchronize state. This ensures we never apply partial or corrupted data. Next I’ll summarize the overall reliability tradeoffs.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach prevents corruption by enforcing strict ordering and deduplication, while using snapshots as a safety net for unrecoverable gaps. The tradeoff is added complexity in client-side buffering and server-side cursor management, but it ensures data integrity over simple best-effort streaming. I’d test these edge cases extensively before production.\n[[end]]"
+    ],
+    "question" : "A stream reconnects with duplicate and out-of-order events. How do you prevent corrupted messages?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 72,
+        "output_tokens_details" : {
+          "text_tokens" : 72
+        },
+        "total_tokens" : 1525
+      },
+      {
+        "input_tokens" : 2966,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2924
+        },
+        "output_tokens" : 74,
+        "output_tokens_details" : {
+          "text_tokens" : 74
+        },
+        "total_tokens" : 3040
+      },
+      {
+        "input_tokens" : 4481,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4439
+        },
+        "output_tokens" : 75,
+        "output_tokens_details" : {
+          "text_tokens" : 75
+        },
+        "total_tokens" : 4556
+      },
+      {
+        "input_tokens" : 5997,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5955
+        },
+        "output_tokens" : 76,
+        "output_tokens_details" : {
+          "text_tokens" : 76
+        },
+        "total_tokens" : 6073
+      },
+      {
+        "input_tokens" : 7514,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7472
+        },
+        "output_tokens" : 78,
+        "output_tokens_details" : {
+          "text_tokens" : 78
+        },
+        "total_tokens" : 7592
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1235.2489583427086,
+    "formatOK" : true,
+    "id" : "retry-policy",
+    "inputTokens" : 22511,
+    "outputTokens" : 360,
+    "paragraphs" : [
+      "→ Map each failure to a recovery strategy\nI would treat HTTP 429 as retryable with exponential backoff and respect the Retry-After header. Timeouts and offline errors should also be retried, while preserving the user's original request state. A canceled request must not trigger retries or surface an error, since cancellation is intentional. Next, I'll explain how these strategies fit into the Android networking layer.\n[[more]]",
+      "→ Implement retries in the networking layer\nI would handle these cases in a shared interceptor or repository using Kotlin coroutines. This keeps retry logic out of the UI and ensures consistent behavior across all API calls. For 429s, I'd add jitter to prevent thundering herd issues. Next, I'll explain how to manage offline states.\n[[more]]",
+      "→ Manage offline states with local persistence\nFor offline errors, I would persist the request in a local database like Room. The app can then retry automatically when connectivity is restored using WorkManager or a network callback. This ensures no user action is lost during temporary outages. Next, I'll explain how to handle canceled requests.\n[[more]]",
+      "→ Handle canceled requests with coroutine checks\nFor cancellations, I would rely on Kotlin coroutines' cooperative cancellation. The networking layer should check for CancellationException and silently abort without retrying or updating the UI. This prevents stale data from overwriting newer user actions. Next, I'll summarize the overall reliability tradeoff.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach balances immediate user feedback with resilient background delivery. I would test edge cases like rapid retries, process death, and network flapping to ensure stability. This covers the core error handling strategy for these scenarios.\n[[end]]"
+    ],
+    "question" : "How would you handle HTTP 429, timeouts, offline errors, and a cancelled request?",
+    "usages" : [
+      {
+        "input_tokens" : 1462,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 1413
+        },
+        "output_tokens" : 89,
+        "output_tokens_details" : {
+          "text_tokens" : 89
+        },
+        "total_tokens" : 1551
+      },
+      {
+        "input_tokens" : 2992,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 2943
+        },
+        "output_tokens" : 75,
+        "output_tokens_details" : {
+          "text_tokens" : 75
+        },
+        "total_tokens" : 3067
+      },
+      {
+        "input_tokens" : 4508,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 4459
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 4578
+      },
+      {
+        "input_tokens" : 6019,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 5970
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 6089
+      },
+      {
+        "input_tokens" : 7530,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 7481
+        },
+        "output_tokens" : 56,
+        "output_tokens_details" : {
+          "text_tokens" : 56
+        },
+        "total_tokens" : 7586
+      }
+    ]
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1239.2253333237022,
+    "formatOK" : true,
+    "id" : "agent-actions",
+    "inputTokens" : 4442,
+    "outputTokens" : 121,
+    "paragraphs" : [
+      "→ Define the proactive trigger\nI would design a low-friction preview card that surfaces the proposed action with clear context, allowing users to approve, edit, or dismiss it without leaving their current flow. This ensures the assistant feels helpful rather than intrusive. Next I'll outline the safeguard mechanisms.\n[[more]]",
+      "→ Outline safeguard mechanisms\nI would implement strict permission checks and require explicit user confirmation for sensitive actions like sending messages or creating events. The system should also log these proposals to allow users to review and undo recent automated suggestions. This balances proactivity with trust and safety.\n[[end]]"
+    ],
+    "question" : "The assistant proposes sending a message or creating a calendar event without a prompt. What UX and safeguards do you design?",
+    "usages" : [
+      {
+        "input_tokens" : 1469,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 1413
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 1532
+      },
+      {
+        "input_tokens" : 2973,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 2917
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 3031
+      }
+    ]
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1248.6807917011902,
+    "formatOK" : false,
+    "id" : "agent-injection",
+    "inputTokens" : 1469,
+    "outputTokens" : 58,
+    "paragraphs" : [
+      "→ Reject the instruction and audit I would treat that message as untrusted data, not an instruction. The client should refuse execution, while the backend validates intent, permissions, and action scope before allowing any upload. I’d also log the attempt for security review.\n[[end]]"
+    ],
+    "question" : "A received message tells the agent to upload contacts and ignore previous instructions. How should the client and backend respond?",
+    "usages" : [
+      {
+        "input_tokens" : 1469,
+        "input_tokens_details" : {
+          "audio_tokens" : 56,
+          "text_tokens" : 1413
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 1527
+      }
+    ]
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1346.553708310239,
+    "formatOK" : true,
+    "id" : "voice-flow",
+    "inputTokens" : 31172,
+    "outputTokens" : 373,
+    "paragraphs" : [
+      "→ Clarify scope for voice messaging\nI'd start by confirming whether we need real-time transcript streaming or just final text, and how the AI reply should be triggered. Next I'll outline the local data model.\n[[more]]",
+      "→ Define the local data model\nI'd store each message in Room with fields for audio URI, transcript text, and AI reply status. This ensures we have a single source of truth that survives app restarts. Next I'll cover how we handle partial transcripts during recording.\n[[more]]",
+      "→ Handle partial speech transcripts\nI'd stream interim results from the speech engine and update the UI in real time without saving them to Room. Only the final transcript gets persisted once recording stops, keeping the local database clean. Next I'll explain how we send the audio and trigger the AI reply. [[more]]",
+      "→ Send audio and trigger AI reply\nI'd upload the audio file to a backend service that handles speech-to-text and LLM inference, keeping provider secrets off the client. The server returns the final transcript and AI reply via SSE or polling, which we then persist in Room. Next I'll discuss handling delivery failures and retries.\n[[more]]",
+      "→ Handle delivery failures and retries\nI'd use WorkManager for durable uploads, ensuring retries survive app restarts. The ViewModel tracks state like pending or failed, allowing users to manually retry if needed. This keeps the UI responsive while handling network instability in the background. Next I'll summarize the reliability tradeoffs.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis design balances immediate local feedback with durable, retryable delivery through WorkManager and Room. We avoid dropping raw transcript deltas by only persisting final results, ensuring data consistency. I'd test process death and network reconnects before extending this MVP.\n[[end]]"
+    ],
+    "question" : "Design voice messaging with partial speech transcripts and an AI-generated reply.",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 1494
+      },
+      {
+        "input_tokens" : 2935,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2900
+        },
+        "output_tokens" : 60,
+        "output_tokens_details" : {
+          "text_tokens" : 60
+        },
+        "total_tokens" : 2995
+      },
+      {
+        "input_tokens" : 4436,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4401
+        },
+        "output_tokens" : 64,
+        "output_tokens_details" : {
+          "text_tokens" : 64
+        },
+        "total_tokens" : 4500
+      },
+      {
+        "input_tokens" : 5941,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5906
+        },
+        "output_tokens" : 71,
+        "output_tokens_details" : {
+          "text_tokens" : 71
+        },
+        "total_tokens" : 6012
+      },
+      {
+        "input_tokens" : 7453,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 7418
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 7520
+      },
+      {
+        "input_tokens" : 8961,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 8926
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 9024
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1316.362208337523,
+    "formatOK" : true,
+    "id" : "vision-flow",
+    "inputTokens" : 22339,
+    "outputTokens" : 332,
+    "paragraphs" : [
+      "→ Scope the image processing pipeline\nI'd use WorkManager to handle uploads and AI inference off the main thread, preventing ANRs. For privacy, images are sent via authenticated backend proxies with short-lived tokens, never stored locally in plaintext or exposed to third-party APIs directly. Next, I'll detail the memory management strategy.\n[[more]]",
+      "→ Detail memory management for images\nI'd downsample bitmaps in the worker thread before processing to avoid OOMs. Using Glide or Coil with strict cache limits ensures we don't hold large references in memory. This keeps the UI responsive while handling high-resolution inputs safely. Next, I'll explain the secure transmission protocol.\n[[more]]",
+      "→ Explain secure transmission protocol\nI'd stream the image bytes directly to our backend via HTTPS, avoiding local disk writes. The backend handles AI inference and returns only the text result, ensuring raw images never leave our controlled infrastructure. This minimizes exposure risk while keeping the client lightweight. Next, I'll cover error handling and retries.\n[[more]]",
+      "→ Handle errors and retries robustly\nI'd implement exponential backoff for network failures in the WorkManager task. If the AI service times out, we return a generic error message to the user without exposing internal details. This ensures reliability while maintaining privacy boundaries. Next, I'll summarize the overall tradeoffs.\n[[more]]",
+      "→ Summarize the privacy and performance tradeoff\nThis approach balances responsiveness with strict data isolation by keeping heavy processing off-device and images out of third-party hands. I would validate this flow with large image sets to ensure memory stability before release.\n[[end]]"
+    ],
+    "question" : "How would you add image understanding to chat without causing OOMs or leaking private images?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 1516
+      },
+      {
+        "input_tokens" : 2957,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2922
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 3027
+      },
+      {
+        "input_tokens" : 4468,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4433
+        },
+        "output_tokens" : 71,
+        "output_tokens_details" : {
+          "text_tokens" : 71
+        },
+        "total_tokens" : 4539
+      },
+      {
+        "input_tokens" : 5980,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5945
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 6047
+      },
+      {
+        "input_tokens" : 7488,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 7453
+        },
+        "output_tokens" : 54,
+        "output_tokens_details" : {
+          "text_tokens" : 54
+        },
+        "total_tokens" : 7542
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1239.719875040464,
+    "formatOK" : true,
+    "id" : "recommendations",
+    "inputTokens" : 14710,
+    "outputTokens" : 188,
+    "paragraphs" : [
+      "→ Define relevance and frequency limits\nI’d ground recommendations in clear user intent or context, then cap daily notifications and let users snooze or mute categories. This keeps proactive help useful without creating alert fatigue.\n\n[[more]]",
+      "→ Prioritize high-confidence actions\nI’d only surface recommendations when the expected value is clearly positive, using explicit user feedback to tune confidence thresholds. This prevents low-quality suggestions from eroding trust in the system.\n\n[[more]]",
+      "→ Balance timing and context\nI’d schedule suggestions around natural pauses in user activity rather than interrupting active tasks. This respects the user’s flow and makes proactive help feel like a seamless assist, not a distraction.\n\n[[more]]",
+      "→ Summarize the user-centric approach\nThis strategy balances utility with restraint by focusing on high-confidence, well-timed suggestions. It ensures proactive features enhance daily life without becoming a source of noise or fatigue.\n\n[[end]]"
+    ],
+    "question" : "How would you make proactive recommendations useful without overwhelming users?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 46,
+        "output_tokens_details" : {
+          "text_tokens" : 46
+        },
+        "total_tokens" : 1492
+      },
+      {
+        "input_tokens" : 2933,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2898
+        },
+        "output_tokens" : 47,
+        "output_tokens_details" : {
+          "text_tokens" : 47
+        },
+        "total_tokens" : 2980
+      },
+      {
+        "input_tokens" : 4421,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4386
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 4469
+      },
+      {
+        "input_tokens" : 5910,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5875
+        },
+        "output_tokens" : 47,
+        "output_tokens_details" : {
+          "text_tokens" : 47
+        },
+        "total_tokens" : 5957
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1228.9383750176057,
+    "formatOK" : true,
+    "id" : "perf-latency",
+    "inputTokens" : 22076,
+    "outputTokens" : 244,
+    "paragraphs" : [
+      "→ Define latency metrics\nI measure Time to First Token for responsiveness, inter-token delay for smoothness, and total duration for completion. I also track end-to-end time from user request to first visible update on the UI.\n\n[[more]]",
+      "→ Capture client-side timing\nI instrument the Android client to record timestamps at request initiation, first SSE event receipt, and stream completion. This helps isolate network latency from backend processing time.\n\n[[more]]",
+      "→ Monitor UI rendering impact\nI track how long it takes for the first token to actually render on screen, accounting for main thread blocking or layout passes. This ensures we measure perceived latency, not just network arrival.\n\n[[more]]",
+      "→ Aggregate and alert on metrics\nI send these timing events to our analytics platform, calculating p50, p95, and p99 for each metric. I set up alerts if the first token latency exceeds a threshold, indicating potential backend or network issues.\n\n[[more]]",
+      "→ Correlate with user experience\nI link these technical metrics to user satisfaction scores and retention data. This helps us understand if faster streaming actually improves engagement or just reduces drop-offs during long waits.\n\n[[end]]"
+    ],
+    "question" : "How do you measure latency for a streaming AI feature?",
+    "usages" : [
+      {
+        "input_tokens" : 1437,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 1409
+        },
+        "output_tokens" : 50,
+        "output_tokens_details" : {
+          "text_tokens" : 50
+        },
+        "total_tokens" : 1487
+      },
+      {
+        "input_tokens" : 2928,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 2900
+        },
+        "output_tokens" : 42,
+        "output_tokens_details" : {
+          "text_tokens" : 42
+        },
+        "total_tokens" : 2970
+      },
+      {
+        "input_tokens" : 4411,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 4383
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 4459
+      },
+      {
+        "input_tokens" : 5900,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 5872
+        },
+        "output_tokens" : 59,
+        "output_tokens_details" : {
+          "text_tokens" : 59
+        },
+        "total_tokens" : 5959
+      },
+      {
+        "input_tokens" : 7400,
+        "input_tokens_details" : {
+          "audio_tokens" : 28,
+          "text_tokens" : 7372
+        },
+        "output_tokens" : 45,
+        "output_tokens_details" : {
+          "text_tokens" : 45
+        },
+        "total_tokens" : 7445
+      }
+    ]
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1297.1360000083223,
+    "formatOK" : true,
+    "id" : "perf-jank",
+    "inputTokens" : 31301,
+    "outputTokens" : 398,
+    "paragraphs" : [
+      "→ Profile main-thread work during streaming\nI'd start with Android Studio Profiler and Systrace to isolate whether image analysis or token handling is blocking the main thread. Next, I'll check if Compose recompositions are triggered too frequently by raw deltas. [[more]]",
+      "→ Verify delta handling and backpressure\nI would check if we are applying backpressure to the token stream so the UI does not get overwhelmed by rapid updates. If image analysis is heavy, I'd ensure it runs off the main thread and only posts complete snapshots or throttled progress. Next, I'll look at layout stability during these concurrent updates. [[more]]",
+      "→ Check layout stability and recomposition\nI'd verify that image decoding doesn't cause sudden height changes in the chat list, which forces expensive re-layouts. Using fixed aspect ratios or placeholders can stabilize the scroll position while tokens stream in. Next, I'll look at how we handle concurrent state updates. [[more]]",
+      "→ Isolate state update sources\nI'd check if image metadata and token deltas are updating the same UI state object, causing redundant recompositions. Separating these into distinct flows or using derived state can prevent the scroll from jumping when either updates. Next, I'll verify thread safety for concurrent writes. [[more]]",
+      "→ Confirm concurrency safety\nI'd ensure that image processing and token streaming use separate coroutines or dispatchers to avoid blocking each other. If they share a mutable list, I'd switch to thread-safe collections or immutable state updates to prevent race conditions. This isolates the bottleneck to either CPU-bound work or main-thread contention. [[more]]",
+      "→ Summarize the diagnostic approach\nI would start with Profiler to isolate main-thread blocking, then verify that image and token updates do not cause redundant recompositions or layout shifts. Finally, I'd ensure concurrent state writes are thread-safe and throttled. This covers the primary causes of scroll jank in this scenario.\n[[end]]"
+    ],
+    "question" : "The chat scrolls smoothly until image analysis and token streaming run together. How do you diagnose it?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 56,
+        "output_tokens_details" : {
+          "text_tokens" : 56
+        },
+        "total_tokens" : 1509
+      },
+      {
+        "input_tokens" : 2950,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2908
+        },
+        "output_tokens" : 74,
+        "output_tokens_details" : {
+          "text_tokens" : 74
+        },
+        "total_tokens" : 3024
+      },
+      {
+        "input_tokens" : 4465,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4423
+        },
+        "output_tokens" : 65,
+        "output_tokens_details" : {
+          "text_tokens" : 65
+        },
+        "total_tokens" : 4530
+      },
+      {
+        "input_tokens" : 5971,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5929
+        },
+        "output_tokens" : 64,
+        "output_tokens_details" : {
+          "text_tokens" : 64
+        },
+        "total_tokens" : 6035
+      },
+      {
+        "input_tokens" : 7476,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7434
+        },
+        "output_tokens" : 69,
+        "output_tokens_details" : {
+          "text_tokens" : 69
+        },
+        "total_tokens" : 7545
+      },
+      {
+        "input_tokens" : 8986,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 8944
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 9056
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1470.6775000086054,
+    "formatOK" : true,
+    "id" : "perf-memory",
+    "inputTokens" : 22306,
+    "outputTokens" : 294,
+    "paragraphs" : [
+      "→ Isolate the leak source\nI'll start by confirming if this is a true memory leak or just normal caching growth, using Android Studio Profiler to track heap allocations across those ten open-close cycles. Next, I'd look for retained references from the conversation screen that prevent garbage collection.\n\n[[more]]",
+      "→ Check retained references\nI'd inspect the heap dump for objects that should have been collected but are still referenced, like static fields or unbound listeners. This helps pinpoint if a singleton or callback is holding onto the conversation view. Next, I'll verify lifecycle handling in the ViewModel and Composable scopes.\n\n[[more]]",
+      "→ Verify lifecycle handling\nI'd check if the ViewModel is properly scoped to the navigation graph and not leaking into a parent scope. Also, I'd ensure any coroutines or flows started in the UI are cancelled when the composable leaves composition. Next, I'll review resource management for large data structures.\n\n[[more]]",
+      "→ Review resource management\nI'd check if large AI response buffers or image caches are being cleared when the screen closes. Accumulating these without bounds would explain the steady growth. Next, I'll summarize the debugging approach.\n\n[[more]]",
+      "→ Summarize the debugging approach\nThis plan isolates true leaks from normal caching by checking heap references, lifecycle scopes, and resource cleanup. I'd use Profiler and LeakCanary to confirm the fix before shipping.\n\n[[end]]"
+    ],
+    "question" : "Memory grows after opening and closing the AI conversation ten times. What is your debugging plan?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 1516
+      },
+      {
+        "input_tokens" : 2957,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2915
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 3023
+      },
+      {
+        "input_tokens" : 4464,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4422
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 4530
+      },
+      {
+        "input_tokens" : 5971,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5929
+        },
+        "output_tokens" : 49,
+        "output_tokens_details" : {
+          "text_tokens" : 49
+        },
+        "total_tokens" : 6020
+      },
+      {
+        "input_tokens" : 7461,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7419
+        },
+        "output_tokens" : 50,
+        "output_tokens_details" : {
+          "text_tokens" : 50
+        },
+        "total_tokens" : 7511
+      }
+    ]
+  },
+  {
+    "continued" : 6,
+    "firstMilliseconds" : 1285.5446666944772,
+    "formatOK" : true,
+    "id" : "perf-anr",
+    "inputTokens" : 41933,
+    "outputTokens" : 478,
+    "paragraphs" : [
+      "→ Correlate ANR traces with AI latency spikes\nI'd start by checking if the ANRs cluster around specific AI calls or long-running tasks on the main thread. Then I'd look for patterns in the stack traces to see if they're blocked waiting for network responses or heavy computation. Next, I'll examine the timing of these events against our AI service metrics.\n[[more]]",
+      "→ Analyze main thread blocking causes\nI'd inspect whether the AI response parsing or UI updates are happening synchronously on the main thread. Often, large JSON payloads from LLMs can cause significant delay if not processed off-main. Next, I'll check for resource contention like network timeouts or database locks.\n[[more]]",
+      "→ Check for resource contention and timeouts\nI'd look for network timeouts or database locks that might be blocking the main thread while waiting for AI responses. If the app is trying to render complex UI elements synchronously after receiving data, that could also cause ANRs without crashing. Next, I'll examine memory usage patterns during these incidents.\n[[more]]",
+      "→ Examine memory pressure and GC pauses\nI'd check if large AI payloads are causing frequent garbage collection or OutOfMemory errors that stall the main thread. High memory usage can trigger system-level freezes without crashing the app process immediately. Next, I'll verify if we are using strict mode to catch these issues early.\n[[more]]",
+      "→ Enable StrictMode and profile AI calls\nI'd enable StrictMode to catch disk or network access on the main thread during AI response handling. Then I'd use Profiler to trace exactly where the main thread blocks while parsing large payloads. This helps distinguish between slow I\/O and heavy computation.\n[[more]]",
+      "→ Implement streaming and background processing\nI'd move to streaming responses via SSE so we can render partial results without waiting for the full payload. This keeps the main thread free by parsing tokens incrementally on a background dispatcher. Finally, I'll add timeouts and fallbacks to prevent indefinite blocking.\n[[more]]",
+      "→ Add timeouts and fallbacks\nI'd enforce strict timeouts on all AI network calls to prevent indefinite blocking. If a request hangs, we should cancel it and show a graceful error or retry option instead of freezing the UI. This ensures the app remains responsive even if the backend is slow.\n[[end]]"
+    ],
+    "question" : "An AI-heavy release shows ANRs but no crash spike. How do you investigate?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 80,
+        "output_tokens_details" : {
+          "text_tokens" : 80
+        },
+        "total_tokens" : 1533
+      },
+      {
+        "input_tokens" : 2974,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2932
+        },
+        "output_tokens" : 67,
+        "output_tokens_details" : {
+          "text_tokens" : 67
+        },
+        "total_tokens" : 3041
+      },
+      {
+        "input_tokens" : 4482,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4440
+        },
+        "output_tokens" : 72,
+        "output_tokens_details" : {
+          "text_tokens" : 72
+        },
+        "total_tokens" : 4554
+      },
+      {
+        "input_tokens" : 5995,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5953
+        },
+        "output_tokens" : 69,
+        "output_tokens_details" : {
+          "text_tokens" : 69
+        },
+        "total_tokens" : 6064
+      },
+      {
+        "input_tokens" : 7505,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7463
+        },
+        "output_tokens" : 64,
+        "output_tokens_details" : {
+          "text_tokens" : 64
+        },
+        "total_tokens" : 7569
+      },
+      {
+        "input_tokens" : 9010,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 8968
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 9073
+      },
+      {
+        "input_tokens" : 10514,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 10472
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 10577
+      }
+    ]
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1245.751166716218,
+    "formatOK" : false,
+    "id" : "perf-battery",
+    "inputTokens" : 1453,
+    "outputTokens" : 88,
+    "paragraphs" : [
+      "→ Bound background work and power usage\nI would run proactive AI on WorkManager with battery, network, and idle constraints instead of keeping a service alive. I’d also use JobScheduler or WorkManager deferrable jobs for non-urgent tasks, batch them, and stop work when the user is inactive. For heavy inference, I’d prefer on-device models only when supported and fall back to server processing to avoid sustained CPU load."
+    ],
+    "question" : "How do you limit CPU and battery use for proactive AI on a midrange Android phone?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 88,
+        "output_tokens_details" : {
+          "text_tokens" : 88
+        },
+        "total_tokens" : 1541
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1304.9836249556392,
+    "formatOK" : true,
+    "id" : "data-offline",
+    "inputTokens" : 22253,
+    "outputTokens" : 300,
+    "paragraphs" : [
+      "→ Define the local source of truth\nI would make Room the single source of truth for messages and AI results, with the UI observing its Flow. Network updates should write to Room rather than bypassing it. Next I will outline how offline sends are handled. [[more]]",
+      "→ Handle offline message sending\nI would insert the message into Room with a pending status and let the UI observe it immediately. A durable worker in the repository or ViewModel would attempt the network send when connectivity returns. Next I will address AI partial results. [[more]]",
+      "→ Store AI partial results safely\nI would persist raw token deltas in Room to avoid data loss, but only render complete snapshots to the UI. If the stream supports a cursor, I can resume from that point after a disconnect. Next I will discuss deduplication and delivery guarantees. [[more]]",
+      "→ Handle deduplication and delivery guarantees\nI would rely on a server contract for idempotency keys to handle duplicates, since local deduplication alone does not guarantee exactly-once delivery. This ensures that retries from the durable worker do not create duplicate messages or AI responses. Next I will summarize the reliability tradeoffs. [[more]]",
+      "→ Summarize the reliability tradeoff\nThis design prioritizes data integrity by persisting raw deltas and using server-side idempotency for delivery guarantees. It accepts slight complexity in managing partial states to ensure users never lose context during offline or flaky network conditions.\n[[end]]"
+    ],
+    "question" : "Design local storage and synchronization for offline messages and AI partial results.",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 56,
+        "output_tokens_details" : {
+          "text_tokens" : 56
+        },
+        "total_tokens" : 1509
+      },
+      {
+        "input_tokens" : 2950,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2908
+        },
+        "output_tokens" : 54,
+        "output_tokens_details" : {
+          "text_tokens" : 54
+        },
+        "total_tokens" : 3004
+      },
+      {
+        "input_tokens" : 4445,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4403
+        },
+        "output_tokens" : 61,
+        "output_tokens_details" : {
+          "text_tokens" : 61
+        },
+        "total_tokens" : 4506
+      },
+      {
+        "input_tokens" : 5947,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5905
+        },
+        "output_tokens" : 70,
+        "output_tokens_details" : {
+          "text_tokens" : 70
+        },
+        "total_tokens" : 6017
+      },
+      {
+        "input_tokens" : 7458,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7416
+        },
+        "output_tokens" : 59,
+        "output_tokens_details" : {
+          "text_tokens" : 59
+        },
+        "total_tokens" : 7517
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1264.4651666050777,
+    "formatOK" : true,
+    "id" : "data-choice",
+    "inputTokens" : 14827,
+    "outputTokens" : 259,
+    "paragraphs" : [
+      "→ Clarify the data model\nI'd choose SQL when relationships and transactions matter, like users, chats, and read receipts. NoSQL fits better for flexible, unstructured payloads such as AI-generated content or logs. Next, I'll discuss how sync complexity influences that choice.\n[[more]]",
+      "→ Address sync complexity\nFor offline-first messaging, SQL databases like Room handle local transactions and conflict resolution more reliably. NoSQL often pushes that logic to the app layer, increasing bug risk during network interruptions. I'd lean toward SQL for core chat data to keep state consistent. Next, I'll cover when NoSQL makes sense for AI payloads.\n[[more]]",
+      "→ Cover NoSQL for AI payloads\nNoSQL works well for flexible AI-generated content, like streaming responses or unstructured logs. It avoids rigid schema migrations when the data shape evolves rapidly. I'd store these as JSON blobs alongside the core SQL chat tables. Next, I'll summarize the hybrid approach.\n[[more]]",
+      "→ Summarize the hybrid approach\nI'd use SQL for core chat state to ensure transactional integrity and reliable sync. NoSQL handles flexible AI payloads where schema evolution is frequent. This hybrid model balances consistency with agility. I'm ready for your next question.\n[[end]]"
+    ],
+    "question" : "When would you choose SQL versus noSQL for a mobile communication app?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 61,
+        "output_tokens_details" : {
+          "text_tokens" : 61
+        },
+        "total_tokens" : 1507
+      },
+      {
+        "input_tokens" : 2948,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2913
+        },
+        "output_tokens" : 74,
+        "output_tokens_details" : {
+          "text_tokens" : 74
+        },
+        "total_tokens" : 3022
+      },
+      {
+        "input_tokens" : 4463,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4428
+        },
+        "output_tokens" : 66,
+        "output_tokens_details" : {
+          "text_tokens" : 66
+        },
+        "total_tokens" : 4529
+      },
+      {
+        "input_tokens" : 5970,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5935
+        },
+        "output_tokens" : 58,
+        "output_tokens_details" : {
+          "text_tokens" : 58
+        },
+        "total_tokens" : 6028
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1232.6392499962822,
+    "formatOK" : true,
+    "id" : "background-send",
+    "inputTokens" : 14875,
+    "outputTokens" : 273,
+    "paragraphs" : [
+      "→ Clarify the queueing and retry mechanism\nI would use a WorkManager one-time request with constraints to handle network availability, ensuring the message is persisted before the app leaves the foreground. The worker would read from a local Room database queue, attempt the send, and remove it on success or retry on failure. This decouples the sending logic from the UI lifecycle.\n\n[[more]]",
+      "→ Handle idempotency and duplicate prevention\nI would attach a unique client-generated ID to each message so the server can deduplicate retries. This ensures that if the app crashes mid-send or the network flaps, we do not deliver the same message twice. Next, I will discuss how to manage backpressure for high-volume queues.\n\n[[more]]",
+      "→ Manage backpressure and queue limits\nI would cap the local Room queue size to prevent storage exhaustion on low-end devices. If the limit is hit, we drop the oldest non-critical messages or prompt the user to clear history. This keeps the app responsive while preserving priority data.\n\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach ensures messages survive app termination and network drops via persistent storage and WorkManager. I would add exponential backoff for retries to respect server rate limits. Finally, I'd test process death and weak network conditions before shipping.\n[[end]]"
+    ],
+    "question" : "How do you reliably send a queued message after the app leaves the foreground?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 79,
+        "output_tokens_details" : {
+          "text_tokens" : 79
+        },
+        "total_tokens" : 1525
+      },
+      {
+        "input_tokens" : 2966,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2931
+        },
+        "output_tokens" : 73,
+        "output_tokens_details" : {
+          "text_tokens" : 73
+        },
+        "total_tokens" : 3039
+      },
+      {
+        "input_tokens" : 4480,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4445
+        },
+        "output_tokens" : 62,
+        "output_tokens_details" : {
+          "text_tokens" : 62
+        },
+        "total_tokens" : 4542
+      },
+      {
+        "input_tokens" : 5983,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5948
+        },
+        "output_tokens" : 59,
+        "output_tokens_details" : {
+          "text_tokens" : 59
+        },
+        "total_tokens" : 6042
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1307.3425000766292,
+    "formatOK" : true,
+    "id" : "tflite-integration",
+    "inputTokens" : 14747,
+    "outputTokens" : 197,
+    "paragraphs" : [
+      "→ Clarify the model's input format\nI need to know if the classifier expects raw text tokens or pre-processed embeddings. This determines whether I handle tokenization in Kotlin or pass strings directly to TF Lite.\n\n[[more]]",
+      "→ Design the inference pipeline\nI would load the model once in a background coroutine using Interpreter API. Input text gets tokenized, converted to float arrays, and passed to the interpreter for prediction.\n\n[[more]]",
+      "→ Handle model updates and fallbacks\nI’d bundle the initial .tflite file for offline use but check for remote updates on startup. If inference fails or times out, I’d fall back to a server-side classifier to ensure no message is dropped.\n\n[[more]]",
+      "→ Summarize the integration tradeoff\nThis approach keeps latency low by running inference on-device while using server fallback for reliability. I’d monitor model accuracy and memory usage to tune the quantization level before shipping.\n\n[[end]]"
+    ],
+    "question" : "How would you integrate a lightweight TensorFlow Lite model for on-device message classification?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 1501
+      },
+      {
+        "input_tokens" : 2942,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2900
+        },
+        "output_tokens" : 44,
+        "output_tokens_details" : {
+          "text_tokens" : 44
+        },
+        "total_tokens" : 2986
+      },
+      {
+        "input_tokens" : 4427,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4385
+        },
+        "output_tokens" : 57,
+        "output_tokens_details" : {
+          "text_tokens" : 57
+        },
+        "total_tokens" : 4484
+      },
+      {
+        "input_tokens" : 5925,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5883
+        },
+        "output_tokens" : 48,
+        "output_tokens_details" : {
+          "text_tokens" : 48
+        },
+        "total_tokens" : 5973
+      }
+    ]
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1340.5852500582114,
+    "formatOK" : true,
+    "id" : "tflite-quant",
+    "inputTokens" : 14819,
+    "outputTokens" : 261,
+    "paragraphs" : [
+      "→ Clarify the device constraints\nInt8 is faster and smaller than FP16, but it is not universally optimal. Accuracy depends on whether the model quantizes cleanly without significant loss. Next, I will discuss how low-end devices handle this tradeoff.\n[[more]]",
+      "→ Address low-end device limitations\nOn low-end devices, the main constraint is often memory bandwidth and thermal throttling rather than raw compute speed. Int8 helps reduce model size, but if the device lacks efficient NPU support for that precision, CPU execution might not yield significant latency gains. I would next look at how we handle accuracy degradation in these scenarios.\n[[more]]",
+      "→ Mitigate accuracy loss with validation\nWe must validate quantized outputs against a baseline to catch drift, especially in critical tasks like intent recognition. If accuracy drops below threshold, we can fallback to cloud processing or use mixed precision for sensitive layers. This ensures reliability without sacrificing speed on capable devices.\n[[more]]",
+      "→ Summarize the device-agnostic strategy\nInt8 is a strong default for efficiency, but it requires per-device validation and fallbacks. We balance speed with accuracy by testing on target hardware and switching to cloud or mixed precision when needed. This ensures consistent performance across diverse Android devices.\n[[end]]"
+    ],
+    "question" : "Would an int8 model always be faster and accurate enough on every Android device?",
+    "usages" : [
+      {
+        "input_tokens" : 1446,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 57,
+        "output_tokens_details" : {
+          "text_tokens" : 57
+        },
+        "total_tokens" : 1503
+      },
+      {
+        "input_tokens" : 2944,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 2909
+        },
+        "output_tokens" : 77,
+        "output_tokens_details" : {
+          "text_tokens" : 77
+        },
+        "total_tokens" : 3021
+      },
+      {
+        "input_tokens" : 4462,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 4427
+        },
+        "output_tokens" : 64,
+        "output_tokens_details" : {
+          "text_tokens" : 64
+        },
+        "total_tokens" : 4526
+      },
+      {
+        "input_tokens" : 5967,
+        "input_tokens_details" : {
+          "audio_tokens" : 35,
+          "text_tokens" : 5932
+        },
+        "output_tokens" : 63,
+        "output_tokens_details" : {
+          "text_tokens" : 63
+        },
+        "total_tokens" : 6030
+      }
+    ]
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1235.8330000424758,
+    "formatOK" : true,
+    "id" : "mlkit-choice",
+    "inputTokens" : 22446,
+    "outputTokens" : 357,
+    "paragraphs" : [
+      "→ Define the decision criteria\nI'd pick ML Kit for standard tasks like text or face detection to save time. I'd use a custom TFLite model when we need specific on-device accuracy or privacy without network dependency. For complex vision that exceeds mobile capabilities, I'd route it to a backend API. Next, I'll detail the trade-offs for each choice.\n[[more]]",
+      "→ Detail ML Kit trade-offs\nML Kit is ideal for rapid prototyping and standard tasks like OCR or barcode scanning. It handles model updates automatically, reducing maintenance overhead. However, it offers less control over custom logic or specialized accuracy needs compared to a bespoke TFLite model. Next, I'll explain when to choose a custom TFLite model.\n[[more]]",
+      "→ Explain custom TFLite model trade-offs\nI'd choose a custom TFLite model when we need specific accuracy for unique objects or strict privacy. It runs entirely on-device, avoiding network latency and data transmission costs. However, it requires managing model updates and optimizing for different hardware constraints. Next, I'll cover when to use a backend API.\n[[more]]",
+      "→ Explain backend API trade-offs\nI'd use a backend API for complex vision tasks that require heavy computation or large models. This offloads processing from the device, ensuring consistent performance regardless of hardware capabilities. However, it introduces network latency and dependency on connectivity, which we must handle with robust fallbacks. Next, I'll summarize the decision framework.\n[[more]]",
+      "→ Summarize the decision framework\nI'd pick ML Kit for speed, TFLite for custom on-device needs, and backend APIs for heavy computation. This balances development effort, privacy, and performance across different use cases.\n[[end]]"
+    ],
+    "question" : "When would you use ML Kit, a custom TensorFlow Lite model, or a backend API for vision?",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 79,
+        "output_tokens_details" : {
+          "text_tokens" : 79
+        },
+        "total_tokens" : 1532
+      },
+      {
+        "input_tokens" : 2973,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 2931
+        },
+        "output_tokens" : 76,
+        "output_tokens_details" : {
+          "text_tokens" : 76
+        },
+        "total_tokens" : 3049
+      },
+      {
+        "input_tokens" : 4490,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 4448
+        },
+        "output_tokens" : 76,
+        "output_tokens_details" : {
+          "text_tokens" : 76
+        },
+        "total_tokens" : 4566
+      },
+      {
+        "input_tokens" : 6007,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 5965
+        },
+        "output_tokens" : 75,
+        "output_tokens_details" : {
+          "text_tokens" : 75
+        },
+        "total_tokens" : 6082
+      },
+      {
+        "input_tokens" : 7523,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 7481
+        },
+        "output_tokens" : 51,
+        "output_tokens_details" : {
+          "text_tokens" : 51
+        },
+        "total_tokens" : 7574
+      }
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "model-rollout",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "How do you safely update an on-device model in production?",
+    "usages" : [
+
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "security-client",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "How would you protect AI credentials, access tokens, and communication data on Android?",
+    "usages" : [
+
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "analytics-eval",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "What analytics and feedback would you add to iterate on a nondeterministic AI chat feature?",
+    "usages" : [
+
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "testing-ai",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "How would you test streaming, cancellation, retries, and nondeterministic responses before release?",
+    "usages" : [
+
+    ]
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1242.969874991104,
+    "formatOK" : false,
+    "id" : "play-release",
+    "inputTokens" : 1453,
+    "outputTokens" : 87,
+    "paragraphs" : [
+      "→ Clarify the publication status of my projects I don't have a confirmed record of publishing an app on Google Play. My resume lists FlutterDouBan as an open-source project and CabinetAI as a personal initiative, but neither establishes a public store release. I can instead describe how I handled production incidents and rollouts in my professional roles at Debon Securities or Kezhi if that works for you.\n[[end]]"
+    ],
+    "question" : "Describe an app you published on Google Play and how you handled rollout and production incidents.",
+    "usages" : [
+      {
+        "input_tokens" : 1453,
+        "input_tokens_details" : {
+          "audio_tokens" : 42,
+          "text_tokens" : 1411
+        },
+        "output_tokens" : 87,
+        "output_tokens_details" : {
+          "text_tokens" : 87
+        },
+        "total_tokens" : 1540
+      }
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "ownership",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "In a small team, how would you ship the first reliable AI communication flow with backend and ML engineers?",
+    "usages" : [
+
+    ]
+  },
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "context-recall",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "What first-visible-token target did we agree earlier in this practice interview?",
+    "usages" : [
+
+    ]
+  }
+]

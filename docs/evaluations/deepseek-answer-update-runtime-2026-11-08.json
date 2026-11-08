@@ -1,0 +1,133 @@
+[
+  {
+    "input": "initial",
+    "state": {
+      "state": "ready",
+      "response_id": "0A3AD9A5-EAF6-4428-AA7C-5360E53461E1",
+      "first_ms": "511",
+      "sentence_ms": "944",
+      "committed": "0",
+      "pending_words": "236",
+      "acoustic": "true",
+      "generations": "1",
+      "reviews": "0",
+      "frames": "0",
+      "paragraphs": "1",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    }
+  },
+  {
+    "input": "That's precisely the direction I was hoping for. The floor is yours.",
+    "state": {
+      "state": "ready",
+      "response_id": "0A3AD9A5-EAF6-4428-AA7C-5360E53461E1",
+      "first_ms": "511",
+      "sentence_ms": "944",
+      "committed": "0",
+      "pending_words": "236",
+      "acoustic": "true",
+      "generations": "1",
+      "reviews": "1",
+      "frames": "0",
+      "paragraphs": "1",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    },
+    "kept": true
+  },
+  {
+    "input": "OK, all right, continue.",
+    "state": {
+      "state": "ready",
+      "response_id": "0A3AD9A5-EAF6-4428-AA7C-5360E53461E1",
+      "first_ms": "511",
+      "sentence_ms": "944",
+      "committed": "0",
+      "pending_words": "236",
+      "acoustic": "true",
+      "generations": "1",
+      "reviews": "2",
+      "frames": "0",
+      "paragraphs": "1",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    },
+    "kept": true
+  },
+  {
+    "input": "很好，我们继续聊。",
+    "state": {
+      "state": "ready",
+      "response_id": "0A3AD9A5-EAF6-4428-AA7C-5360E53461E1",
+      "first_ms": "511",
+      "sentence_ms": "944",
+      "committed": "0",
+      "pending_words": "236",
+      "acoustic": "true",
+      "generations": "1",
+      "reviews": "3",
+      "frames": "0",
+      "paragraphs": "1",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    },
+    "kept": true
+  },
+  {
+    "input": "How do you prevent duplicate messages when retrying?",
+    "state": {
+      "state": "ready",
+      "response_id": "0A3AD9A5-EAF6-4428-AA7C-5360E53461E1",
+      "first_ms": "511",
+      "sentence_ms": "944",
+      "committed": "0",
+      "pending_words": "236",
+      "acoustic": "true",
+      "generations": "1",
+      "reviews": "4",
+      "frames": "0",
+      "paragraphs": "1",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    },
+    "kept": true
+  },
+  {
+    "input": "storage and WorkManager prohibited",
+    "state": {
+      "state": "ready",
+      "response_id": "912AD275-5A82-420E-88E7-83BA3C504F1B",
+      "first_ms": "524",
+      "sentence_ms": "1120",
+      "committed": "0",
+      "pending_words": "246",
+      "acoustic": "true",
+      "generations": "2",
+      "reviews": "5",
+      "frames": "0",
+      "paragraphs": "2",
+      "mic": "MacBook",
+      "reading": "gemma",
+      "cursor": "0",
+      "sentence": "0",
+      "reading_failed": "false"
+    },
+    "changed": true
+  }
+]

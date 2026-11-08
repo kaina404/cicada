@@ -10,7 +10,6 @@ struct InterviewCoachSettingsView: View {
     @State private var testing = false
     @State private var checking: Task<Void, Never>?
     @State private var saving: Task<Void, Never>?
-    @State private var inputs: [OutputDevice] = []
     @State private var deepSeekKey = ""
     @State private var hasDeepSeekKey = false
 
@@ -31,10 +30,7 @@ struct InterviewCoachSettingsView: View {
                         }.disabled(deepSeekKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     Toggle("面试教练", isOn: $settings.continuousAssistant)
-                    Picker("候选人麦克风", selection: $settings.coachMic) {
-                        Text("跟随系统输入（含 AirPods）").tag("")
-                        ForEach(inputs) { input in Text(input.name).tag(input.uid) }
-                    }
+                    Button("候选人麦克风") { model.openSettings(.speak) }
                     Text("电脑声音是面试官，麦克风是候选人；教练只显示文字")
                         .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                     HStack {
@@ -57,12 +53,6 @@ struct InterviewCoachSettingsView: View {
         .onAppear {
             background = CandidateBackground.read()
             hasDeepSeekKey = AIKey.read("deepseek") != nil
-        }
-        .task {
-            while !Task.isCancelled {
-                inputs = AudioDevices.inputs().filter(AudioDevices.isRealInput)
-                do { try await Task.sleep(for: .seconds(2)) } catch { return }
-            }
         }
         .onDisappear { checking?.cancel(); saving?.cancel(); persistBackground() }
     }

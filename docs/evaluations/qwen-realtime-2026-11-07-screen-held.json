@@ -1,0 +1,29 @@
+[
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1165.057708392851,
+    "formatOK" : true,
+    "id" : "screen-diagram",
+    "inputTokens" : 2072,
+    "outputTokens" : 78,
+    "paragraphs" : [
+      "→ Identify components and describe data flow\nI see Compose UI, Chat ViewModel, Room Database, Sync Worker, and Chat API. The UI observes Room while the ViewModel persists user actions there first. The Sync Worker then pushes pending changes to the Chat API and updates Room with results. This keeps local state durable and lets the UI refresh automatically when network responses arrive.\n\n[[end]]"
+    ],
+    "question" : "What do you think of this diagram?",
+    "usages" : [
+      {
+        "input_tokens" : 2072,
+        "input_tokens_details" : {
+          "audio_tokens" : 49,
+          "text_tokens" : 1415,
+          "video_tokens" : 608
+        },
+        "output_tokens" : 78,
+        "output_tokens_details" : {
+          "text_tokens" : 78
+        },
+        "total_tokens" : 2150
+      }
+    ]
+  }
+]

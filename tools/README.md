@@ -61,7 +61,7 @@
 - `assistant:<on|off>` 开关教练；`ask` 手动分析；`askGloss:<on|off>` 开关建议的本机中文对照。教练只输出文字。
 - `assistantSay:<问题>` 注入面试官原文并分析；`themSaid:<原文>` / `meSaid:<原文>` 写入双方原文。后两者不模拟声音。`assistantState` 写出状态、帧数、原声音频秒数、实际候选人麦克风、声学就绪、生成次数、首句耗时与 committed/pending 数量；`assistantReconnect` 重试失败请求；`assistantBackgroundReload` 重读背景。
 - `screenfile:<图片路径>` 注入关键帧；`assistantRender:<png>` 生成当前建议的被动截图；`screenNotes:on` 在当前会议打开画面选择器，`screenNotes:off` 清除选择并停止捕获。关闭、换窗口或结束会议后不沿用旧窗口图片。
-- 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；设置里可跟随系统输入或指定 AirPods。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
+- 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；点击教练的设备名打开同声传译设置，候选人与按住说话共用“知了听你说话用”输入；AI 服务页也跳转到此处。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
 - 行为与多模态入参测试：`scripts/test.sh --filter InterviewCoachTests`。
 - 本机模型探针：先用 `say -v Samantha -o /tmp/cicada-coach-question.aiff 'For this Android interview, look at the slide. How would you keep messages reliable when the app goes offline, and what is the first visible token target?'` 生成合成题，再运行 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`。测试传原声音频、指标图片和候选人原文，报告在 `/tmp/cicada-interview-coach-benchmark.json`。
 - 模型探针与文字注入不替代真人麦克风、AirPods 热切换、实际共享窗口和长时间面试验收。设计及验证记录见 `docs/interview-coach-local.md`。
@@ -108,3 +108,5 @@ swift tools/qwen-realtime-probe.swift AndroidEngineerMockInterview.mp4 --workspa
 - 追问澄清回归：`CICADA_TEST_COACH_REVIEW=1 scripts/test.sh --filter CoachReviewModelTests` 使用实际 DeepSeek，涵盖截图识别句、简化、再举例、指标追问及普通附和；新增结果写入 `/tmp/cicada-clarification-review.json`。`ask` 跳过覆盖审查，结合对话重新生成当前问题及追问，允许必要的复述；不是只补完旧稿。
 
 - Dock：`dock:<on|off>` 设置是否常驻 Dock；`dockRender:<png>` 导出当前图标；`notesFrame` 可查看当前激活策略。
+
+- 助手浮层：`assistantFloat[:off]` 显示或收起实时回答浮层；`assistantFloatStyle:<字号>,<背景不透明度>`（16–96，0–1）调节并保存外观；`assistantFloatState` 输出可见性、外观、位置、焦点及屏幕共享状态。使用独立 `CICADA_DEBUG_CHANNEL` 实例进行界面自查，避免打断正在录制的开发版。

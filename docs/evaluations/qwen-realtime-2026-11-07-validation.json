@@ -1,0 +1,87 @@
+{
+  "date": "2026-11-07",
+  "status": "incomplete",
+  "long_replay": {
+    "status": "failed",
+    "started_utc": "2026-11-07 05:12:37",
+    "last_app_progress_utc": "2026-11-07 05:26:34",
+    "cause_observed": "SwiftUI main-thread layout loop in process sample; not proven solely caused by CandidateFeed",
+    "intervention": "terminated dev app; stopped afplay; changed bounded feed LazyVStack to VStack",
+    "reconnect_seconds_observed": [
+      2,
+      1
+    ],
+    "note": "Not a completed 53-minute replay; no long-session pass"
+  },
+  "offline_layout": {
+    "status": "passed",
+    "responses": 150,
+    "stream_updates": 3150,
+    "retained_paragraphs": 30,
+    "network": false,
+    "meeting_record_mutation": false,
+    "runtime_seconds_approx": 68,
+    "rss_last_observed_kib": 222048,
+    "evidence": "qwen-realtime-2026-11-07-layout-stress.png",
+    "limitation": "Isolated native CandidateFeed; does not replace long audio replay or prove hang fully fixed"
+  },
+  "record_export": {
+    "session": "20261107-131237",
+    "ai_lines": 23,
+    "interrupted_ai_lines": 11,
+    "markdown_all_ai_text_present": true,
+    "srt_contains_suggested_ai_text": false,
+    "docx_has_ai_and_interrupted_labels": true,
+    "native_record_window_checked": true
+  },
+  "privacy": {
+    "key_mode": "0600",
+    "background_mode": "0600",
+    "exact_key_matches_in_checked_logs_exports_evaluations": 0,
+    "exact_key_in_dev_userdefaults": false,
+    "note": "Exact byte scan; does not prove every possible leak is absent"
+  },
+  "service": {
+    "last_observed_error": "AccessDenied.Unpurchased",
+    "top_level_gateway_error_fixture_tested": true,
+    "automatic_retries_for_this_error": false,
+    "model": "qwen3.8-omni-flash-realtime",
+    "region": "cn-beijing",
+    "evidence": "qwen-realtime-2026-11-07-access-check.json"
+  },
+  "quality": {
+    "latest_questions": 36,
+    "latest_answers": 30,
+    "latest_failures": 6,
+    "latest_answered_but_missing_markers": 4,
+    "report": "qwen-realtime-2026-11-07.md",
+    "note": "Report labels older fallback answers; no final quality pass"
+  },
+  "checks": {
+    "swift_tests": 301,
+    "swift_suites": 50,
+    "probe_python_tests": 3,
+    "localization_keys": 1204,
+    "localization_missing_unused_todo_bad_specifiers": 0,
+    "release_build": true,
+    "dev_build": true,
+    "final_dev_bundle_id": "com.wquguru.cicada.dev",
+    "final_release_build": true
+  },
+  "still_required": [
+    "complete replay after service restored",
+    "10 questions through Mac system audio latency",
+    "native screen capture with actual model image answer",
+    "real room-mic human reading isolation",
+    "final prompt quality rerun with matched context",
+    "final native focus/sharing review",
+    "legacy removal after acceptance only",
+    "resolve CoreAudio startup blocking and repeat native no-key acceptance"
+  ],
+  "native_no_key": {
+    "status": "blocked",
+    "cause_observed": "Main thread blocked in SystemAudioTap.start / AudioUnitSetProperty / CoreAudio IPC; also reproduced with Key restored",
+    "key_restored": true,
+    "sample_local": "/tmp/cicada-no-key-startup.sample"
+  }
+}

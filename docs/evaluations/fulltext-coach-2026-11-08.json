@@ -1,0 +1,78 @@
+{
+  "scope": "Mac M4 Pro / 48 GB; synthetic technical validation, not real interview acceptance",
+  "model": "mlx-community/gemma-4-E4B-it-qat-4bit",
+  "directModelRequests": [
+    {
+      "audioWithoutASR": false,
+      "candidateAnswered": false,
+      "first": 1.7371970415115356,
+      "firstSentence": 2.036715030670166,
+      "output": "The first visible token target on the slide is 850 milliseconds. To keep messages reliable offline, I would implement an offline queue that stores messages locally using Room. This local storage ensures that even when the user is offline, messages are captured and persisted. When connectivity is restored, the application can then sync these queued messages to the server. A stable client ID is also crucial for the server to correctly associate incoming messages with the right user account. This combination of local persistence and proper identification allows for a robust offline messaging experience.",
+      "total": 4.023236036300659
+    },
+    {
+      "audioWithoutASR": false,
+      "candidateAnswered": true,
+      "first": 1.1044700145721436,
+      "firstSentence": 1.4796969890594482,
+      "output": "I would keep messages reliable offline by persisting pending messages in Room using a stable client ID. The first visible token target on the slide is 850 ms. To implement this, I would use Room as a local database to store messages that cannot be sent immediately due to a lack of network connectivity. I would assign a unique and stable client ID to the device so that the server can correctly associate the messages when the connection is restored. The main tradeoff here is the increased complexity of managing local state and synchronization between the local database and the remote server. Overall, this approach ensures that no message is lost even when the user is offline.",
+      "total": 3.890630006790161
+    },
+    {
+      "audioWithoutASR": true,
+      "candidateAnswered": false,
+      "first": 1.0382399559020996,
+      "firstSentence": 1.686203956604004,
+      "output": "I would ensure message reliability offline by using a combination of a local queue and Room database, and the first visible token target is 850 milliseconds. To keep messages reliable offline, I would implement an offline queue that stores incoming messages locally using Room. This ensures that even if the user is offline, the messages are saved and will be sent once connectivity is restored. The implementation would involve a background service that monitors network connectivity and processes the queue when online. A key tradeoff here is the complexity of managing the synchronization between the local database and the server, but this is necessary for a robust offline experience. I believe this approach provides a good balance between user experience and data integrity.",
+      "total": 3.9879209995269775
+    }
+  ],
+  "acousticProbe": {
+    "load_s": 0.6743875419488177,
+    "max_packet_s": 0.03478550002910197,
+    "voice_packets": 26,
+    "endpoints": [
+      {
+        "kind": "endpoint",
+        "role": "interviewer",
+        "now": 3.75,
+        "complete": true,
+        "probability": 0.9719371795654297
+      },
+      {
+        "kind": "endpoint",
+        "role": "candidate",
+        "now": 3.75,
+        "complete": true,
+        "probability": 0.9719371795654297
+      }
+    ],
+    "channels": [
+      "interviewer",
+      "candidate"
+    ]
+  },
+  "appRegression": {
+    "acknowledgement": "generationCount remained 1 after Okay",
+    "followUp": "generationCount increased to 2; committed count stayed 1",
+    "finalFollowUpFirstTokenMs": 768,
+    "finalFollowUpVisibleSentenceMs": 1424,
+    "audioCapture": "ScreenCaptureKit started, synthetic playback reached Apple ASR and Gemma audio buffer",
+    "ui": "English main window and passive full-script snapshot inspected; interactive scroll not visually verified"
+  },
+  "checks": {
+    "swiftTests": 317,
+    "pythonTests": 3,
+    "build": "Mac dev build passed",
+    "localizations": "en/ja/ko: 0 missing, 0 TODO, 0 bad specifiers",
+    "pythonLint": "ruff passed",
+    "pythonTypes": "mypy strict passed; documented untyped Transformers constructor exception"
+  },
+  "limitations": [
+    "One-second end-to-end sentence target not established",
+    "26B A4B not benchmarked or selected",
+    "Lexical retrieval only",
+    "Semantic repetition and missing-screen hallucination remain possible",
+    "No real microphone, AirPods hot-swap, shared-screen or long interview acceptance"
+  ]
+}

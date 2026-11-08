@@ -288,9 +288,16 @@
 "正在载入本机模型" = "Loading the local model";
 "正在回答" = "Answering";
 
+/* AssistantWindow */
+"悬浮回答" = "Floating answer";
+"共享中可见" = "Visible in screen sharing";
+"字号" = "Text size";
+"背景不透明度" = "Background opacity";
+
 /* CandidateFeed */
 "文本和截图发送云端" = "Text and screenshots are sent to the cloud";
 "面试教练" = "Interview coach";
+"放大悬浮回答" = "Float enlarged answer";
 "跟随朗读" = "Follow reading";
 "重试" = "Retry";
 "已暂停" = "Paused";
@@ -301,8 +308,9 @@
 "正在准备本机 Gemma…" = "Preparing local Gemma…";
 "本机跟读识别暂不可用，稿件已保留" = "Local reading recognition is unavailable. Your script is preserved.";
 "本机模型未能回答，请重试" = "Local model failed. Retry.";
-"候选人麦克风" = "Candidate microphone";
 "尚未听取候选人回答" = "Candidate microphone is off";
+"选择候选人麦克风" = "Choose candidate microphone";
+"关闭麦克风" = "Turn off mic";
 "打开麦克风" = "Turn on mic";
 "已经说出" = "Already spoken";
 
@@ -744,15 +752,14 @@
 "你在说…  " = "You're speaking…  ";
 "翻译中…  " = "Translating…  ";
 "你：" = "You: ";
-"关闭麦克风" = "Turn off mic";
 
 /* RealtimeSettings */
 "DeepSeek 处理原文和截图，Gemma 在本机跟读" = "DeepSeek processes transcripts and screenshots; Gemma tracks reading on this Mac";
 "电脑声音是面试官，麦克风是候选人；教练只显示文字" = "System audio: interviewer. Microphone: candidate. Text coaching only.";
+"候选人麦克风" = "Candidate microphone";
 "已保存 DeepSeek key" = "DeepSeek key saved";
 "保存" = "Save";
 "Key 保存失败" = "Could not save key";
-"跟随系统输入（含 AirPods）" = "Follow system input (including AirPods)";
 "检查本机模型" = "Check local model";
 "安装语音检测" = "Set up speech detection";
 "本机未安装 mlx-vlm" = "mlx-vlm is not installed";
@@ -1072,6 +1079,8 @@
 "安装后自动重新打开" = "Reopens after installing";
 "安装并重新打开" = "Install and Reopen";
 "登录时打开" = "Open at Login";
+"在 Dock 中显示" = "Show in Dock";
+"关掉后只在菜单栏，打开窗口时才出现" = "Off: menu bar only, in the Dock just while a window is open";
 "版本 %@" = "Version %@";
 "首次引导" = "Getting started";
 "请在“系统设置 › 通用 › 登录项”中允许" = "Allow it in System Settings › General › Login Items";
@@ -1305,6 +1314,10 @@
 /* Only the ports: Android */
 "导入录音或视频" = "Import a Recording or Video";
 
-/* Dock */
-"在 Dock 中显示" = "Show in Dock";
-"关掉后只在菜单栏，打开窗口时才出现" = "Off: menu bar only, in the Dock just while a window is open";
+"界面语言" = "App language";
+
+"重新打开后生效" = "Takes effect after reopening";
+
+"语言已保存" = "Language saved";
+
+"重新打开会结束当前会议，请先完成记录" = "Reopening ends the current meeting. Finish recording first.";

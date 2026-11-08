@@ -1,0 +1,17 @@
+[
+  {
+    "continued" : 0,
+    "failure" : "transport or server failure (details redacted)",
+    "formatOK" : false,
+    "id" : "context-recall",
+    "inputTokens" : 0,
+    "outputTokens" : 0,
+    "paragraphs" : [
+
+    ],
+    "question" : "What first-visible-token target did we agree earlier in this practice interview?",
+    "usages" : [
+
+    ]
+  }
+]

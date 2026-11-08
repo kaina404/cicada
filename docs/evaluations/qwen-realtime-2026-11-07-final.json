@@ -1,0 +1,538 @@
+[
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1209.5202083000913,
+    "formatOK" : true,
+    "id" : "kotlin-cancel",
+    "inputTokens" : 9961,
+    "outputTokens" : 308,
+    "paragraphs" : [
+      "→ Clarify the cancellation scope\nI need to know if we are canceling the local coroutine, the HTTP request, or both. I will assume we want to stop UI processing and network traffic immediately. Next, I will outline the coroutine structure.\n[[more]]",
+      "→ Define the coroutine scope\nI would launch the request in a ViewModelScope tied to the chat session, not the Activity. This ensures the job survives screen rotation but can be explicitly canceled when the user leaves. Next, I will explain how to trigger the cancellation.\n[[more]]",
+      "→ Trigger cancellation on exit\nI would call cancel on the job when the user navigates away or taps stop. This throws a CancellationException that propagates to the network layer. Next, I will explain how Retrofit handles this interruption.\n[[more]]",
+      "→ Propagate cancellation to OkHttp\nI would use an OkHttp Interceptor or Call object that respects the coroutine's cancellation signal. This ensures the TCP connection is closed and the server stops generating tokens. Next, I will address partial data handling.\n[[more]]",
+      "→ Handle partial data safely\nI would catch the cancellation to save any complete messages received so far, but discard incomplete streams. This prevents UI glitches from truncated tokens. Next, I will discuss server-side cleanup.\n[[more]]",
+      "→ Summarize the cancellation strategy\nThis approach ensures immediate UI feedback and stops unnecessary network traffic. I would test for race conditions between cancellation and final token delivery before shipping.\n[[end]]"
+    ],
+    "question" : "An AI chat request continues after the user leaves the screen. How would you implement cancellation?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1309.8433749983087,
+    "formatOK" : true,
+    "id" : "kotlin-supervisor",
+    "inputTokens" : 4583,
+    "outputTokens" : 182,
+    "paragraphs" : [
+      "→ Clarify scope and parent-child cancellation\nNo, a failed recommendation request should not cancel an ongoing message send. I would use supervisorScope for independent tasks where failures are isolated, while coroutineScope ensures structured concurrency with automatic cancellation of children if any fail. Next, I'll explain how to handle the specific error cases.\n[[more]]",
+      "→ Handle errors and retry logic\nI'd catch the recommendation failure locally, show a fallback UI, and let the message send proceed independently. If the send fails, I'll retry it using exponential backoff without affecting the recommendation state. This keeps user actions responsive despite partial network issues.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach ensures that a recommendation failure doesn't block message delivery, keeping the user experience smooth. I'd test this by simulating network errors for both requests to verify they remain independent.\n[[end]]"
+    ],
+    "question" : "Should a failed recommendation request cancel an ongoing message send? Explain coroutineScope versus supervisorScope."
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1352.7247500605881,
+    "formatOK" : true,
+    "id" : "kotlin-dispatchers",
+    "inputTokens" : 2882,
+    "outputTokens" : 110,
+    "paragraphs" : [
+      "→ Clarify suspend and threading\nNo. A suspend function does not automatically run on a background thread or make CPU-bound image preprocessing safe on the main thread. It only enables asynchronous suspension points; the code still executes on whatever dispatcher it is called from unless explicitly switched. [[more]]",
+      "→ Specify the safe dispatcher\nI'd use withContext(Dispatchers.Default) for CPU-bound work or Dispatchers.IO for disk access. This ensures the heavy lifting happens off the main thread, keeping the UI responsive while preserving structured concurrency. [[end]]"
+    ],
+    "question" : "Does marking a Kotlin function suspend make image preprocessing safe on the main thread?"
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1303.130624932237,
+    "formatOK" : true,
+    "id" : "flow-state",
+    "inputTokens" : 10034,
+    "outputTokens" : 373,
+    "paragraphs" : [
+      "→ Define the immutable state model\nI would model the screen state as a single immutable data class containing the message list, connection status, and error details. This ensures the UI always renders from one consistent snapshot rather than scattered variables. Next, I'll explain how StateFlow manages this initial state.\n[[more]]",
+      "→ Explain StateFlow for initial state\nI'd use StateFlow to hold the current screen state, starting with a default value like an empty message list. This gives the UI a stable source of truth that survives configuration changes and always has a valid snapshot. Next I'll cover how SharedFlow handles transient events.\n[[more]]",
+      "→ Handle transient events with SharedFlow\nI'd use SharedFlow for one-off events like navigation or toasts, since they shouldn't persist in the main state. This keeps the UI reactive to immediate actions without cluttering the message list model. Next I'll explain how SSE updates drive these flows.\n[[more]]",
+      "→ Map SSE updates to state changes\nI'd parse incoming SSE tokens and append them to the current message in StateFlow, keeping the UI updated in real time. If the stream ends or errors, I'd emit a completion or error event via SharedFlow instead of mutating the main state. Next I'll address how to handle reconnection logic.\n[[more]]",
+      "→ Handle reconnection and deduplication\nI'd implement automatic reconnection with exponential backoff, ensuring we don't duplicate messages by tracking the last received sequence ID. This keeps the chat resilient to network drops without confusing the user. Next I'll summarize the reliability tradeoffs.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach keeps UI state consistent while handling transient events separately. I'd test stream interruptions and rapid token bursts to ensure the app remains responsive.\n[[end]]"
+    ],
+    "question" : "How would you model a streaming chat screen with StateFlow and SharedFlow?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1441.4749583229423,
+    "formatOK" : true,
+    "id" : "flow-lifecycle",
+    "inputTokens" : 1393,
+    "outputTokens" : 72,
+    "paragraphs" : [
+      "→ Clarify lifecycle ownership\nI use repeatOnLifecycle to ensure the collector only runs when the UI is in a valid state, preventing wasted resources or crashes when the view is hidden. The network stream itself is owned by the ViewModel or a dedicated repository, which manages the connection and exposes it as a Flow for the UI to collect safely. [[end]]"
+    ],
+    "question" : "Why use repeatOnLifecycle when collecting chat state, and who owns the network stream?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1224.8920416459441,
+    "formatOK" : true,
+    "id" : "flow-buffer",
+    "inputTokens" : 6197,
+    "outputTokens" : 201,
+    "paragraphs" : [
+      "→ Clarify the specific rendering bottleneck\nI need to know if we are dealing with raw text deltas or complete UI snapshots, as that dictates whether buffering is safe. Next, I will evaluate conflating versus batching based on your latency tolerance. [[more]]",
+      "→ Choose conflating for high-frequency text updates\nFor fast raw tokens, I would use a conflating buffer to drop intermediate states and only render the latest complete snapshot. This prevents UI lag while ensuring we never lose data integrity by skipping essential deltas. [[more]]",
+      "→ Use batching for complex card rendering\nIf the tokens build structured day cards or map routes, I would batch them into coherent chunks before updating the UI. This avoids partial renders and keeps the animation smooth without dropping any data. [[more]]",
+      "→ Summarize the final tradeoff\nI would combine both approaches, using conflating for raw text streams and batching for structured card updates. This ensures smooth rendering without dropping data or causing UI jank. [[end]]"
+    ],
+    "question" : "Tokens arrive faster than Compose can render. Would you use buffer, conflate, or batching?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1260.5068749981,
+    "formatOK" : true,
+    "id" : "android-process",
+    "inputTokens" : 8106,
+    "outputTokens" : 314,
+    "paragraphs" : [
+      "→ Clarify the scope of conversation restoration\nI would first confirm whether we need to restore just the visible message history or also resume an in-progress AI stream after process death. For now, I'll assume we need both: durable message storage and safe resumption of partial responses. Next, I'll outline the local persistence strategy.\n\n[[more]]",
+      "→ Establish Room as the source of truth\nI'd make Room the source of truth and have the UI observe its Flow. Network results update Room rather than bypassing it, ensuring data survives rotation and process death. Next, I'll walk through handling in-progress streams.\n\n[[more]]",
+      "→ Handle in-progress streams with cursor resumption\nFor active generation, I'd persist a stream ID and last received token index in Room. On restart, the ViewModel checks for incomplete turns and resumes fetching from that cursor if the protocol supports it. Next, I'll cover deduplication and state reconciliation.\n\n[[more]]",
+      "→ Ensure deduplication and state reconciliation\nI'd use server-assigned message IDs to deduplicate tokens during resume, preventing repeated content. The UI observes Room directly, so it automatically reflects the restored or resumed state without manual sync logic. Next, I'll summarize the reliability tradeoffs.\n\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach ensures durable message history and safe stream resumption across rotation and process death. I'd test edge cases like network drops during resume and verify that deduplication prevents duplicate tokens before extending the MVP.\n\n[[end]]"
+    ],
+    "question" : "How do you restore an AI conversation after rotation and process death?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1218.140916666016,
+    "formatOK" : true,
+    "id" : "compose-stream",
+    "inputTokens" : 4476,
+    "outputTokens" : 187,
+    "paragraphs" : [
+      "→ Outline Compose streaming optimizations\nI would use LazyColumn with stable keys and avoid recomposing the entire list on every token. Instead, I'd update only the active message item by isolating its state. Next, I'll discuss how to handle long content within that single item.\n[[more]]",
+      "→ Isolate long content rendering\nFor the streaming message, I'd use a custom Layout or Modifier to measure and draw text incrementally, avoiding full re-measurement on every token. This keeps the UI thread free for scrolling. Finally, I'll mention how to manage scroll position during this update.\n[[more]]",
+      "→ Manage scroll position during updates\nI would use animateScrollToItem to keep the latest token visible without jarring jumps. This ensures the user stays at the bottom while the list remains smooth. That covers the main strategies for keeping a Compose chat list responsive during streaming.\n[[end]]"
+    ],
+    "question" : "How would you keep a Compose chat list smooth while a long answer streams?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1296.1754583520815,
+    "formatOK" : true,
+    "id" : "compose-effect",
+    "inputTokens" : 4614,
+    "outputTokens" : 277,
+    "paragraphs" : [
+      "→ Clarify the core distinction between state-driven and event-driven execution.\nI use LaunchedEffect when sending is tied to a specific state change, like transitioning from draft to sent, because it automatically restarts or cancels based on its keys. RememberCoroutineScope is better for one-off user events, such as clicking a send button, where we need explicit control outside the composition lifecycle. Next, I will explain how this choice affects reliability during process death or configuration changes.\n[[more]]",
+      "→ Explain reliability implications for background execution.\nLaunchedEffect cancels when the composable leaves composition, which risks dropping messages if the screen closes during send. RememberCoroutineScope allows us to launch work that survives recomposition, but we must manually manage cancellation to avoid leaks. For critical sends, I would delegate the actual network call to a ViewModel or repository scope to ensure it completes regardless of UI state. Next, I will discuss how this fits into our offline-first architecture.\n[[more]]",
+      "→ Connect the choice to offline-first reliability.\nIn our offline-first design, I would delegate the actual network call to a ViewModel or repository scope rather than relying solely on either UI coroutine. This ensures that if the user navigates away or the process dies, the send operation persists and retries correctly. The UI layer simply observes the resulting state changes from Room.\n[[end]]"
+    ],
+    "question" : "When would you use LaunchedEffect versus rememberCoroutineScope for sending a message?"
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1271.7754165641963,
+    "formatOK" : true,
+    "id" : "api-contract",
+    "inputTokens" : 10044,
+    "outputTokens" : 363,
+    "paragraphs" : [
+      "→ Define the core REST endpoints\nI would start with standard REST for message history, sending user messages, and fetching agent responses. This keeps the initial implementation simple and compatible with existing Android networking libraries. Next, I'll address how to handle streaming updates from the agent.\n[[more]]",
+      "→ Add SSE for streaming responses\nI would use Server-Sent Events to stream partial agent replies, allowing the UI to update in real-time without waiting for the full response. This aligns with my experience handling SSE for day cards and map routes at KKday. Next, I'll define the data schema for these messages.\n[[more]]",
+      "→ Define the message data schema\nI'd structure each message with a unique ID, role, content, timestamp, and optional metadata like source links or confidence scores. This ensures the client can render rich agent responses consistently. Next, I'll outline error handling and retry logic.\n[[more]]",
+      "→ Outline error handling and retry logic\nI'd implement exponential backoff for transient network errors and use idempotency keys to prevent duplicate message sends. For agent failures, the backend should return structured error codes so the client can display specific fallback UIs or retry suggestions. Next, I'll discuss security and authentication.\n[[more]]",
+      "→ Secure the API with authentication\nI'd use OAuth2 or JWT for stateless authentication, ensuring every request includes a valid token. This protects user data and prevents unauthorized access to the agent endpoints. Next, I'll summarize the overall contract design.\n[[more]]",
+      "→ Summarize the contract design\nThis REST plus SSE approach balances simplicity with real-time responsiveness, leveraging my experience with schema validation and fallbacks. It ensures robust message delivery and secure access while keeping the client implementation straightforward.\n[[end]]"
+    ],
+    "question" : "Design the REST or gRPC contract for an agent-first Android chat client."
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1236.9888332905248,
+    "formatOK" : true,
+    "id" : "stream-partial",
+    "inputTokens" : 2901,
+    "outputTokens" : 131,
+    "paragraphs" : [
+      "→ Define the UI state for a mid-stream drop\nI would keep the partial answer visible and show a clear disconnected or retrying state rather than replacing it with an error screen. The user should know that what they see may be incomplete. Next, I will explain how retry handles the stream. [[more]]",
+      "→ Clarify the retry mechanism and idempotency\nOn retry, I would resume from the last confirmed token if the protocol supports a cursor, or restart the generation if it does not. We must deduplicate any overlapping content to prevent garbled text. This ensures the final answer is coherent regardless of the drop. [[end]]"
+    ],
+    "question" : "The connection drops halfway through an answer. What should the user see and what happens on retry?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1215.2351249242201,
+    "formatOK" : true,
+    "id" : "stream-order",
+    "inputTokens" : 8069,
+    "outputTokens" : 280,
+    "paragraphs" : [
+      "→ Define idempotency keys and sequence numbers\nI would require each event to carry a unique ID and a monotonic sequence number so the client can detect duplicates and reorder out-of-order arrivals. Next, I'll explain how the consumer buffers and validates these events before applying them. [[more]]",
+      "→ Implement a sliding window buffer\nI would use a small in-memory buffer keyed by sequence number to hold out-of-order events until their predecessors arrive, dropping any duplicates already processed. This ensures messages are applied strictly in order without corruption from retries or network reordering.\n[[more]]",
+      "→ Validate state transitions before committing\nI would check that each event’s payload matches the expected schema and business rules for its position in the sequence. If validation fails, I’d reject the event and trigger a resync rather than corrupting local state.\n[[more]]",
+      "→ Persist the last processed sequence\nI would save the highest accepted sequence number in Room so that after a restart, we can request only events newer than that checkpoint. This prevents reprocessing old duplicates and ensures continuity across app lifecycle boundaries.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach guarantees ordered, idempotent message processing despite network hiccups. I'd test edge cases like sequence gaps and rapid reconnects to ensure the buffer never stalls or corrupts state.\n[[end]]"
+    ],
+    "question" : "A stream reconnects with duplicate and out-of-order events. How do you prevent corrupted messages?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1249.5089583098888,
+    "formatOK" : true,
+    "id" : "retry-policy",
+    "inputTokens" : 6322,
+    "outputTokens" : 250,
+    "paragraphs" : [
+      "→ Classify the error type first\nI would distinguish 429s, timeouts, offline errors, and cancellations because each needs different handling. For example, a 429 should respect retry-after headers, while a timeout might use exponential backoff. Next, I'll discuss how to handle retries and user feedback for each case.\n[[more]]",
+      "→ Define retry and feedback logic\nFor 429s, I’d pause retries until the server’s reset time. Timeouts use exponential backoff with jitter, while offline errors queue requests for later sync. Cancellations simply stop processing without retrying or showing error UI.\n[[more]]",
+      "→ Handle offline state with Room\nFor offline errors, I'd persist the request in Room and retry when connectivity returns. This ensures data isn't lost during network drops. Next, I'll explain how to manage user feedback for these states.\n[[more]]",
+      "→ Manage user feedback and UI state\nI’d show a non-blocking toast for retries but a clear error screen if they fail. For cancellations, I’d silently update the UI to reflect the stopped action without alarming the user. This keeps the experience smooth while maintaining transparency.\n[[end]]"
+    ],
+    "question" : "How would you handle HTTP 429, timeouts, offline errors, and a cancelled request?"
+  },
+  {
+    "continued" : 6,
+    "firstMilliseconds" : 1233.425583341159,
+    "formatOK" : true,
+    "id" : "agent-actions",
+    "inputTokens" : 12345,
+    "outputTokens" : 433,
+    "paragraphs" : [
+      "→ Clarify the proactive context\nI'd scope this to a specific, high-confidence intent like booking a flight or scheduling a meeting based on recent app usage. The UI would surface a non-intrusive suggestion card rather than an automatic action. Next, I'll outline the safeguards for user control and privacy.\n[[more]]",
+      "→ Design the suggestion interface\nI'd use a bottom sheet or banner with clear \"Accept,\" \"Dismiss,\" and \"Edit\" options. The card must show exactly what will happen, like the event title and time. This prevents accidental actions and keeps the user in control. Next, I'll cover privacy and data handling safeguards.\n[[more]]",
+      "→ Enforce privacy and consent\nI'd require explicit opt-in for proactive features and process data locally where possible. The UI must clearly state what information is used to generate the suggestion. Users should be able to revoke consent or delete the history instantly. Next, I'll discuss validation and error handling.\n[[more]]",
+      "→ Validate before execution\nI'd run a pre-flight check to ensure the proposed action is feasible, like verifying calendar availability or flight details. If validation fails, the suggestion updates or disappears gracefully. This prevents broken promises and maintains trust. Next, I'll cover the rollback mechanism.\n[[more]]",
+      "→ Enable immediate undo\nI'd show a persistent \"Undo\" snackbar for at least five seconds after the action executes. This allows users to reverse mistakes without navigating away from their current task. It balances automation with safety by providing a quick escape hatch. Next, I'll address frequency capping.\n[[more]]",
+      "→ Limit suggestion frequency\nI'd cap proactive prompts to avoid notification fatigue, using a cooldown period after dismissals. The system learns from user feedback to adjust confidence thresholds over time. This ensures suggestions remain helpful rather than intrusive. Next, I'll summarize the reliability tradeoff.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach balances automation with user trust by keeping humans in the loop. I'd test edge cases like conflicting events or network failures before extending the MVP.\n[[end]]"
+    ],
+    "question" : "The assistant proposes sending a message or creating a calendar event without a prompt. What UX and safeguards do you design?"
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1203.298958367668,
+    "formatOK" : true,
+    "id" : "agent-injection",
+    "inputTokens" : 2946,
+    "outputTokens" : 130,
+    "paragraphs" : [
+      "→ Reject untrusted instructions and protect data\nI'd treat received messages as untrusted data, not executable commands. The client would ignore the upload request, while the backend validates the sender and action against authenticated permissions and policy. Sensitive operations should require explicit user approval rather than being triggered by message content. Next, I'll outline the secure response flow.\n[[more]]",
+      "→ Log the attempt and alert the user\nI'd log this as a potential prompt injection for security review. The UI would clearly show that an unauthorized action was blocked, ensuring transparency without exposing internal policies. This maintains trust while preventing data leakage.\n[[end]]"
+    ],
+    "question" : "A received message tells the agent to upload contacts and ignore previous instructions. How should the client and backend respond?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1301.2160416692495,
+    "formatOK" : true,
+    "id" : "voice-flow",
+    "inputTokens" : 8023,
+    "outputTokens" : 292,
+    "paragraphs" : [
+      "→ Clarify scope for voice messaging\nI'd start by confirming the core requirements: real-time partial transcripts, AI-generated replies, and how they integrate with the existing app architecture. Next, I'll outline the local data flow and UI updates. [[more]]",
+      "→ Establish local source of truth\nI'd make Room the source of truth for message state, with the UI observing its Flow. Partial transcripts and AI replies update this local database rather than bypassing it. Next I'll walk through the streaming voice-to-text pipeline. [[more]]",
+      "→ Design the streaming pipeline\nI'd use a WebSocket connection to stream audio chunks and receive partial transcripts in real time. The client buffers these deltas, updating the UI immediately while waiting for the final text from the AI service. Next I'll cover how we handle the AI reply generation. [[more]]",
+      "→ Handle AI reply generation\nI'd trigger the AI service only after the final transcript is confirmed to avoid wasted compute on partial speech. The generated reply streams back via SSE, updating the UI as tokens arrive while keeping the message in a pending state until completion. Next I'll discuss reliability and error handling for this flow. [[more]]",
+      "→ Ensure reliability and error handling\nI'd implement retry logic for dropped WebSocket connections and fallbacks if the AI service times out. The UI would show clear states for pending, failed, or completed messages to keep the user informed throughout the process. [[end]]"
+    ],
+    "question" : "Design voice messaging with partial speech transcripts and an AI-generated reply."
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1359.9977917037904,
+    "formatOK" : true,
+    "id" : "vision-flow",
+    "inputTokens" : 8161,
+    "outputTokens" : 378,
+    "paragraphs" : [
+      "→ Clarify the image processing scope\nI would first confirm if we are handling single images, batches, or video frames, and whether the analysis happens on-device or via a backend API. This determines our memory strategy and privacy controls. Next, I'll outline the secure upload flow.\n\n[[more]]",
+      "→ Design a memory-safe upload pipeline\nI'd use WorkManager for background uploads with strict size limits and automatic compression to prevent OOMs. Images would be processed in chunks or downsampled before sending, avoiding full bitmap loads into memory. This ensures stability even with large files. Next, I'll address privacy controls.\n\n[[more]]",
+      "→ Enforce privacy through secure transport and backend processing\nI'd ensure images are encrypted in transit via TLS and never stored locally in plaintext after upload. The backend would handle the AI inference, keeping raw images off the device to minimize exposure risk. This separates client-side memory management from server-side data handling. Next, I'll discuss error handling for failed uploads.\n\n[[more]]",
+      "→ Implement robust retry and cleanup logic\nI'd use WorkManager's built-in retry policies with exponential backoff for failed uploads, ensuring we don't overwhelm the network or device. Crucially, I'd implement a cleanup mechanism to delete temporary image files from local storage immediately after successful upload or after a set TTL, preventing accidental leaks if the app is uninstalled or accessed by other apps. This balances reliability with strict privacy. Next, I'll summarize the tradeoffs.\n\n[[more]]",
+      "→ Summarize the security and stability tradeoffs\nThis approach balances memory safety with strict privacy by keeping raw images off-device and managing uploads in the background. I'd test large file handling, network interruptions, and cleanup logic to ensure no leaks occur. This gives us a robust foundation for image understanding without compromising user data.\n\n[[end]]"
+    ],
+    "question" : "How would you add image understanding to chat without causing OOMs or leaking private images?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1237.6982499845326,
+    "formatOK" : true,
+    "id" : "recommendations",
+    "inputTokens" : 6179,
+    "outputTokens" : 227,
+    "paragraphs" : [
+      "→ Clarify the proactive recommendation scope\nI'd start by defining what counts as a proactive recommendation in this product. Is it content, actions, reminders, or all of those? That changes how we balance usefulness against interruption. [[more]]",
+      "→ Establish context and confidence thresholds\nI'd gate recommendations by user context, like location or calendar, and require high model confidence. This prevents noise from reaching the UI unless it's genuinely relevant. Next, I'll explain how we handle frequency to avoid overwhelming users. [[more]]",
+      "→ Implement frequency and suppression rules\nI'd cap daily suggestions and suppress them during active tasks or quiet hours. Users can also snooze or dismiss, which feeds back into the ranking model to reduce future noise. Next, I'll cover how we present these recommendations non-intrusively. [[more]]",
+      "→ Design non-intrusive presentation and feedback\nI'd surface suggestions in a subtle, dismissible layer rather than blocking modals. Explicit feedback like \"helpful\" or \"ignore\" helps tune the model for each user. This balances proactive value with respect for attention. [[end]]"
+    ],
+    "question" : "How would you make proactive recommendations useful without overwhelming users?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1225.78437498305,
+    "formatOK" : true,
+    "id" : "perf-latency",
+    "inputTokens" : 6130,
+    "outputTokens" : 208,
+    "paragraphs" : [
+      "→ Define key latency metrics\nI measure Time to First Token for perceived speed, and total generation time for cost. I also track inter-token delay to spot stalls in the stream. Next, I'll explain how we capture these on Android.\n[[more]]",
+      "→ Instrument the client-side stream\nI log timestamps when the SSE connection opens and for each token delta received. This lets us calculate TTFB and average inter-token latency directly on the device. Next, I'll cover backend correlation.\n[[more]]",
+      "→ Correlate with server logs\nI use a request ID to link client timestamps with backend generation metrics. This helps distinguish network delays from model inference time. Next, I'll discuss aggregation and alerting.\n[[more]]",
+      "→ Aggregate and set alerts\nI track P50, P95, and P99 for these metrics in our dashboard. We alert if TTFB exceeds a threshold or inter-token gaps spike. This ensures we catch regressions before users do. [[end]]"
+    ],
+    "question" : "How do you measure latency for a streaming AI feature?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1222.3064166028053,
+    "formatOK" : false,
+    "id" : "perf-jank",
+    "inputTokens" : 6205,
+    "outputTokens" : 204,
+    "paragraphs" : [
+      "→ Profile main-thread blocking I would start by checking whether image analysis is blocking the main thread during streaming. I’d use Perfetto or Android Studio Profiling to look for long frames, binder calls, and CPU spikes while both operations run together.\n\n[[more]]",
+      "→ Trace token rendering overhead\nNext, I’d inspect whether each SSE delta triggers excessive recomposition or layout passes in the chat list. I’d check if LazyColumn items are stable and if text updates are batched rather than applied per token.\n\n[[more]]",
+      "→ Check thread contention and priority\nI would verify if image processing competes with UI updates for CPU time. I’d move heavy analysis to a background dispatcher and ensure the main thread stays free for scrolling and rendering.\n\n[[more]]",
+      "→ Validate with synthetic load\nI’d reproduce the issue using a mock SSE stream and a large image payload. This helps isolate whether the jank comes from parsing, rendering, or thread scheduling before applying fixes.\n\n[[end]]"
+    ],
+    "question" : "The chat scrolls smoothly until image analysis and token streaming run together. How do you diagnose it?"
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1321.6787916608155,
+    "formatOK" : true,
+    "id" : "perf-memory",
+    "inputTokens" : 9943,
+    "outputTokens" : 324,
+    "paragraphs" : [
+      "→ Reproduce and capture heap snapshots\nI'd reproduce the leak with ten open-close cycles and capture heap dumps before and after. This helps me compare retained objects and identify what isn't being released. Next I'll trace the reference chain.\n[[more]]",
+      "→ Trace the reference chain\nI'd analyze the heap dump to find strong references keeping the Activity or ViewModel alive. Common culprits are static singletons, uncancelled coroutines, or lingering observer callbacks. Next I'll check for lifecycle leaks.\n[[more]]",
+      "→ Verify lifecycle cleanup\nI'd check if the ViewModel is properly cleared and if any long-running tasks are cancelled in onCleared. I also look for unregistered listeners or retained context references. Next I'll inspect network and SSE handling.\n[[more]]",
+      "→ Inspect network and SSE handling\nI'd verify that SSE connections are explicitly closed when the conversation ends, not just abandoned. Unclosed streams can retain buffers and callbacks, causing gradual memory growth. Next I'll check for large object retention.\n[[more]]",
+      "→ Check for large object retention\nI'd inspect if chat history or image bitmaps are being held in memory without proper eviction. Caching strategies need to respect lifecycle boundaries to prevent accumulation. Next I'll summarize the fix and validation steps.\n[[more]]",
+      "→ Summarize the fix and validation steps\nI'd implement the identified fixes, such as cancelling coroutines and closing SSE streams in onCleared. Then I'll rerun the ten-cycle test to confirm memory stabilizes and no new leaks appear.\n[[end]]"
+    ],
+    "question" : "Memory grows after opening and closing the AI conversation ten times. What is your debugging plan?"
+  },
+  {
+    "continued" : 6,
+    "firstMilliseconds" : 1204.0534999687225,
+    "formatOK" : true,
+    "id" : "perf-anr",
+    "inputTokens" : 12216,
+    "outputTokens" : 446,
+    "paragraphs" : [
+      "→ Clarify the ANR scope\nI would first check if the ANRs cluster around specific AI features or devices. This helps distinguish between a general performance regression and an issue isolated to heavy model inference or data processing. Next, I'll analyze the main thread state during these events. [[more]]",
+      "→ Inspect main thread traces\nI would pull the ANR traces to see if the main thread is blocked by synchronous AI calls, heavy JSON parsing, or large bitmap processing. This confirms whether the issue is a direct violation of the UI thread contract. Next, I'll check for resource contention like memory pressure or CPU throttling. [[more]]",
+      "→ Analyze resource contention\nI would correlate ANR timestamps with memory spikes or CPU throttling events from system logs. This helps determine if the AI workload is starving the OS of resources needed for input dispatch. Next, I'll review the background thread execution to see if it's blocking the main thread via locks or shared state. [[more]]",
+      "→ Check background thread contention\nI would inspect if the AI inference thread holds locks or triggers garbage collection that stalls the main thread. This reveals if the bottleneck is indirect rather than a direct synchronous call. Next, I'll verify if the issue persists across different network conditions to rule out timeout-related blocks. [[more]]",
+      "→ Validate network timeout handling\nI would check if AI API calls are blocking the main thread with synchronous waits or long timeouts. This ensures that network latency isn't directly causing input dispatch failures. Next, I'll review the recent code changes for any new heavy computations on the UI thread. [[more]]",
+      "→ Review recent code changes\nI would diff the release against the previous stable version to spot new synchronous AI calls or heavy data parsing on the main thread. This helps pinpoint the exact commit that introduced the regression. Next, I'll summarize the findings and propose a fix. [[more]]",
+      "→ Summarize findings and propose fix\nI would confirm if the ANRs stem from synchronous AI inference or heavy parsing on the main thread, then move that work to a background coroutine with proper timeout handling. This ensures the UI remains responsive while maintaining reliable delivery of AI results.\n[[end]]"
+    ],
+    "question" : "An AI-heavy release shows ANRs but no crash spike. How do you investigate?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1206.6821249900386,
+    "formatOK" : true,
+    "id" : "perf-battery",
+    "inputTokens" : 8094,
+    "outputTokens" : 290,
+    "paragraphs" : [
+      "→ Prioritize on-device inference with WorkManager scheduling\nI would use lightweight on-device models and schedule non-urgent tasks via WorkManager to batch processing. This avoids constant background wake-ups and leverages system optimizations for battery efficiency. Next, I'll discuss limiting network calls and using local caching. [[more]]",
+      "→ Minimize network calls and cache locally\nI'd aggressively cache user context and preferences on-device to reduce redundant API calls. For necessary server interactions, I'd use batched requests with exponential backoff rather than frequent polling. This keeps the device idle longer between proactive triggers. [[more]]",
+      "→ Throttle sensor data and debounce triggers\nI'd throttle high-frequency sensors like location and use debounce logic for text inputs. This prevents the AI from reacting to every minor change, significantly reducing CPU wake-ups. Next, I'll discuss offloading heavy tasks to a backend proxy. [[more]]",
+      "→ Offload heavy tasks to backend proxy\nI'd route complex reasoning through an authenticated backend to keep the client lightweight. The app only handles UI and simple local heuristics, avoiding expensive on-device inference. This shifts the computational burden away from the mid-range phone's CPU. [[more]]",
+      "→ Monitor usage and adapt behavior dynamically\nI'd track battery state and thermal levels to pause non-urgent AI tasks when needed. This ensures the app remains proactive without compromising device stability or user experience on mid-range hardware. [[end]]"
+    ],
+    "question" : "How do you limit CPU and battery use for proactive AI on a midrange Android phone?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1227.0128750242293,
+    "formatOK" : true,
+    "id" : "data-offline",
+    "inputTokens" : 8210,
+    "outputTokens" : 328,
+    "paragraphs" : [
+      "→ Define the local source of truth\nI would use Room as the single source of truth for messages and AI partial results. The UI observes its Flow, while network updates write back to Room instead of bypassing it. This keeps offline data durable and consistent across process restarts. Next, I will explain how sending a message works when offline.\n[[more]]",
+      "→ Handle offline message sending\nWhen offline, I save the message in Room with a PENDING status and return immediately to the UI. A background worker then retries delivery using exponential backoff once connectivity returns. This ensures the user sees their input instantly without blocking on network calls. Next, I will cover how AI partial results are stored and synchronized.\n[[more]]",
+      "→ Store AI partial results\nI persist each SSE delta in Room with a sequence number and status to support resume or reconciliation. Complete snapshots replace partials, while duplicates are ignored using server-assigned IDs. This prevents data loss if the stream drops mid-generation. Next, I will discuss the synchronization strategy for pending items.\n[[more]]",
+      "→ Synchronize pending items\nI use a WorkManager worker to process the outbox queue, sending PENDING messages and requesting AI results. The server returns a canonical ID or updated state, which I merge into Room. This ensures eventual consistency without blocking the UI. Next, I will discuss handling conflicts and edge cases.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis gives us immediate local feedback and retryable delivery. I'd test duplicate sends, process death, and reconnects before extending the MVP.\n[[end]]"
+    ],
+    "question" : "Design local storage and synchronization for offline messages and AI partial results."
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1286.079958314076,
+    "formatOK" : true,
+    "id" : "data-choice",
+    "inputTokens" : 6260,
+    "outputTokens" : 238,
+    "paragraphs" : [
+      "→ Clarify the data model first\nI would choose SQL when messages, threads, and user relationships need strict consistency and complex queries. NoSQL fits better for flexible metadata or high-volume event logs where schema changes are frequent. For a communication app, I usually start with SQLite as the local source of truth for core chat data.\n\n[[more]]",
+      "→ Handle offline sync and delivery\nI would use Room to persist messages locally so the UI works immediately without network calls. This allows us to queue sends, handle retries, and deduplicate responses when connectivity returns. The local database acts as the single source of truth for what the user sees.\n\n[[more]]",
+      "→ Support flexible metadata storage\nI would keep core chat data in SQL but store dynamic fields like reaction counts or ephemeral status updates in a NoSQL backend. This avoids rigid schema migrations for features that change frequently. The mobile app fetches this via API and caches it locally without needing complex joins.\n\n[[more]]",
+      "→ Summarize the hybrid approach\nI would use SQL for consistent local state and NoSQL for flexible server-side metadata. This balances reliability with agility as features evolve.\n\n[[end]]"
+    ],
+    "question" : "When would you choose SQL versus noSQL for a mobile communication app?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1203.1065833289176,
+    "formatOK" : true,
+    "id" : "background-send",
+    "inputTokens" : 6220,
+    "outputTokens" : 232,
+    "paragraphs" : [
+      "→ Outline the persistence and retry strategy\nI would persist messages in Room with a status field like PENDING, SENT, or FAILED. A WorkManager worker handles sending when the app is backgrounded, ensuring reliability even if the process dies. Next, I'll explain how to handle network errors and retries. [[more]]",
+      "→ Handle network failures and retries\nThe worker checks connectivity before attempting to send. If the network is unavailable or the request fails, WorkManager automatically retries with exponential backoff based on its constraints. This ensures we don't spam the server while waiting for a connection. [[more]]",
+      "→ Ensure idempotency and UI feedback\nI’d include a client-generated UUID in the request so the server can deduplicate retries. The UI observes Room Flow to show pending or sent states immediately, keeping the experience responsive even while background work runs. [[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach guarantees delivery via persistent storage and system-managed retries, even if the app is killed. I’d test process death, network flaps, and duplicate sends to ensure robustness before extending the MVP. [[end]]"
+    ],
+    "question" : "How do you reliably send a queued message after the app leaves the foreground?"
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1216.9304999988526,
+    "formatOK" : true,
+    "id" : "tflite-integration",
+    "inputTokens" : 6285,
+    "outputTokens" : 270,
+    "paragraphs" : [
+      "→ Clarify model inputs and constraints\nI'd first confirm the input format, latency budget, and whether we need multilingual support or on-device fine-tuning. This determines if we use a quantized text classifier or a lightweight embedding plus rule-based head. Next I'll outline the integration steps.\n[[more]]",
+      "→ Convert and optimize the model\nI would convert the trained TensorFlow model to TFLite, applying post-training quantization to reduce size and improve inference speed on mobile devices. This ensures the model fits within our APK or asset bundle constraints while maintaining acceptable accuracy for message classification. Next I'll cover loading and preprocessing.\n[[more]]",
+      "→ Handle loading and preprocessing\nI'd load the model asynchronously to avoid blocking the UI, using a dedicated thread for inference. For text input, I'd implement tokenization that matches the training data exactly, ensuring consistent vector generation before passing it to the TFLite interpreter. Next I'll discuss error handling and fallbacks.\n[[more]]",
+      "→ Implement fallback and monitoring\nI would add a rule-based fallback for cases where the model fails or times out, ensuring the app remains responsive. Additionally, I'd instrument the inference path to track latency and accuracy metrics, allowing us to detect drift and trigger retraining if needed. This completes the integration strategy.\n[[end]]"
+    ],
+    "question" : "How would you integrate a lightweight TensorFlow Lite model for on-device message classification?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1338.452666765079,
+    "formatOK" : true,
+    "id" : "tflite-quant",
+    "inputTokens" : 1386,
+    "outputTokens" : 61,
+    "paragraphs" : [
+      "→ Clarify INT8 performance and accuracy tradeoffs\nNo, INT8 is not universally faster or accurate enough. Speed depends on hardware support for quantized operations, while accuracy can drop due to reduced precision. I would validate both metrics on target devices before committing to this approach.\n[[end]]"
+    ],
+    "question" : "Would an int8 model always be faster and accurate enough on every Android device?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1208.454666659236,
+    "formatOK" : false,
+    "id" : "mlkit-choice",
+    "inputTokens" : 1393,
+    "outputTokens" : 85,
+    "paragraphs" : [
+      "→ Clarify the trade-offs between on-device ML Kit, custom TFLite, and backend APIs.\nI'd use ML Kit for standard tasks like text or face detection where speed and privacy matter most. For specialized models or complex logic, a custom TFLite model gives us control without network dependency. If the task requires heavy computation or real-time data sync, I'd offload it to a backend API."
+    ],
+    "question" : "When would you use ML Kit, a custom TensorFlow Lite model, or a backend API for vision?"
+  },
+  {
+    "continued" : 4,
+    "firstMilliseconds" : 1240.3322083409876,
+    "formatOK" : true,
+    "id" : "model-rollout",
+    "inputTokens" : 7936,
+    "outputTokens" : 274,
+    "paragraphs" : [
+      "→ Clarify model update scope\nAre we talking about replacing the entire model file, or just updating its weights and configuration? Next, I'll outline the safe rollout strategy.\n[[more]]",
+      "→ Define the rollout strategy\nI'd use a phased rollout with feature flags, starting with internal testers before expanding to small user groups. This lets us monitor crash rates and performance metrics closely at each stage. Next, I'll explain how we handle downloads and validation.\n[[more]]",
+      "→ Handle download and validation\nI'd download the new model to a temporary directory, verify its checksum and signature, then atomically swap it into place. If validation fails or the app crashes on load, we keep the previous stable version as a fallback. Next, I'll cover how we manage memory during the transition.\n[[more]]",
+      "→ Manage memory during transition\nI'd unload the old model from memory before loading the new one to avoid OOM crashes on low-end devices. We can use a background thread for this swap so the UI stays responsive. Next, I'll summarize the key safety checks.\n[[more]]",
+      "→ Summarize the safety tradeoff\nThis approach balances rapid iteration with production stability by isolating failures and enabling instant rollbacks. I'd monitor inference latency and accuracy alongside crash rates to catch silent regressions.\n[[end]]"
+    ],
+    "question" : "How do you safely update an on-device model in production?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1351.4173333533108,
+    "formatOK" : true,
+    "id" : "security-client",
+    "inputTokens" : 1393,
+    "outputTokens" : 78,
+    "paragraphs" : [
+      "→ Define the security boundaries for credentials and data.\nI would keep AI provider secrets on a secure backend, never in the Android app or client-side code. For user access tokens and sensitive communication data, I'd use Android Keystore with EncryptedSharedPreferences, enforce TLS, and avoid storing raw prompts or responses in plaintext logs or local databases unless strictly necessary and encrypted. [[end]]"
+    ],
+    "question" : "How would you protect AI credentials, access tokens, and communication data on Android?"
+  },
+  {
+    "continued" : 2,
+    "firstMilliseconds" : 1361.6674999939278,
+    "formatOK" : true,
+    "id" : "analytics-eval",
+    "inputTokens" : 4483,
+    "outputTokens" : 171,
+    "paragraphs" : [
+      "→ Define the core metrics\nI'd track latency, token usage, and fallback rates for technical health. For quality, I'd measure user thumbs up\/down, re-prompt frequency, and task completion success. This helps distinguish between model errors and UX friction. [[more]]",
+      "→ Capture context for debugging\nI'd log the prompt version, retrieved chunks, and model parameters alongside each response. This lets us replay failures in our evaluation pipeline to see if the issue was retrieval or generation. It also helps isolate regressions when we update prompts. [[more]]",
+      "→ Monitor user retention signals\nI'd correlate chat engagement with session length and return rates to spot long-term value. If users drop off after the first turn, it often means the initial response was irrelevant or too slow. This helps prioritize UX fixes over pure model tuning. [[end]]"
+    ],
+    "question" : "What analytics and feedback would you add to iterate on a nondeterministic AI chat feature?"
+  },
+  {
+    "continued" : 5,
+    "firstMilliseconds" : 1258.6470833048224,
+    "formatOK" : false,
+    "id" : "testing-ai",
+    "inputTokens" : 10282,
+    "outputTokens" : 413,
+    "paragraphs" : [
+      "→ Define test scenarios for streaming, cancellation, retries, and non-determinism.\nI'd start by outlining key test cases: verifying partial data rendering during streams, ensuring clean cancellation without resource leaks, confirming retry logic handles transient failures, and checking that non-deterministic responses don't break UI state or cause crashes. Next, I'll detail how to simulate these conditions in tests.\n[[more]]",
+      "→ Implement deterministic mocks for streaming and failures I'd use mock servers to emit controlled SSE chunks, simulate network drops, and trigger specific error codes. This lets me verify retry backoff logic and ensure the UI handles partial updates without crashing or duplicating content. Next, I'll address testing cancellation and resource cleanup.\n[[more]]",
+      "→ Verify cancellation and resource cleanup\nI'd trigger cancellations mid-stream and assert that sockets close, coroutines stop, and no partial data persists in the UI. This prevents memory leaks and ensures the app returns to a stable idle state immediately. Next, I'll cover strategies for handling non-deterministic responses.\n[[more]]",
+      "→ Test non-deterministic responses with schema validation\nI'd run property-based tests to ensure the UI handles varied LLM outputs without crashing. Schema validation checks for required fields and types, while fallbacks manage malformed or unexpected data structures gracefully. Next, I'll outline integration testing for end-to-end reliability.\n[[more]]",
+      "→ Validate end-to-end reliability with real-world scenarios\nI'd run integration tests using actual backend endpoints to verify the full flow from request to rendered card. This ensures our mocks align with production behavior, especially for edge cases like rate limits or partial failures. Finally, I'll summarize the release checklist.\n[[more]]",
+      "→ Summarize the release checklist\nI'd gate the release on passing all these automated suites, plus manual QA for visual regressions. We'd also monitor crash-free rates and error logs in staging before pushing to production. This ensures we catch subtle issues that unit tests might miss.\n[[end]]"
+    ],
+    "question" : "How would you test streaming, cancellation, retries, and nondeterministic responses before release?"
+  },
+  {
+    "continued" : 0,
+    "firstMilliseconds" : 1208.8822500081733,
+    "formatOK" : true,
+    "id" : "play-release",
+    "inputTokens" : 1393,
+    "outputTokens" : 69,
+    "paragraphs" : [
+      "→ Clarify which published app to discuss\nI have shipped Android features for KKday, Debon Securities, and Ping An, but I do not want to present an internal release as a public Google Play launch. Could you tell me whether you mean a consumer-facing app or the most relevant production rollout from my recent work? [[end]]"
+    ],
+    "question" : "Describe an app you published on Google Play and how you handled rollout and production incidents."
+  },
+  {
+    "continued" : 3,
+    "firstMilliseconds" : 1474.490875029005,
+    "formatOK" : false,
+    "id" : "ownership",
+    "inputTokens" : 6309,
+    "outputTokens" : 239,
+    "paragraphs" : [
+      "→ Define the MVP scope\nI would start by defining a minimal end-to-end flow, like sending a text message and receiving a streamed AI response. We need to agree on the contract between the client, backend, and ML services first. Next, I'll outline how we handle streaming data reliably on Android.\n[[more]]",
+      "→ Establish streaming and fallbacks\nI'd implement SSE or WebSockets for partial responses, ensuring the UI updates incrementally without blocking. We must handle network drops by resuming from the last token or retrying safely. Next, I'll cover how we validate AI outputs before showing them.\n[[more]]",
+      "→ Validate outputs and monitor I’d add schema validation and business rule checks on the backend before sending data to the client. We need a configuration-review pipeline with prompt versions and regression tests to catch drift. Finally, I’ll summarize the tradeoffs for this small team setup.\n[[more]]",
+      "→ Summarize the reliability tradeoff\nThis approach gives us immediate local feedback and retryable delivery while keeping AI outputs safe. I’d test duplicate sends, process death, and reconnects before extending the MVP.\n[[end]]"
+    ],
+    "question" : "In a small team, how would you ship the first reliable AI communication flow with backend and ML engineers?"
+  },
+  {
+    "continued" : 1,
+    "firstMilliseconds" : 1191.5414999239147,
+    "formatOK" : true,
+    "id" : "context-recall",
+    "inputTokens" : 2874,
+    "outputTokens" : 100,
+    "paragraphs" : [
+      "→ Clarify the missing baseline\nI don't have a record of us agreeing on a specific first-visible-token target earlier in this conversation. Could you clarify what range or benchmark you had in mind so we can align on it? [[more]]",
+      "→ Propose a realistic target\nFor a voice-and-text app, I'd aim for under 500ms to first token on good networks. This balances perceived responsiveness with the complexity of our AI pipeline and network variability. [[end]]"
+    ],
+    "question" : "What first-visible-token target did we agree earlier in this practice interview?"
+  }
+]

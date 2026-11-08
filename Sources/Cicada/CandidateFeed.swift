@@ -9,14 +9,18 @@ struct CandidateFeed: View {
     var microphoneName = ""
     var micOn = false
     var onMic: (() -> Void)?
+    var onMicrophoneSettings: (() -> Void)?
+    var onFloat: (() -> Void)?
+    var fontSize: CGFloat = 20
     @State private var followsReading = true
 
     init(engine: InterviewCoach, settings: AppSettings, expanded: Bool = false,
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
-         onMic: (() -> Void)? = nil) {
+         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20) {
         self.engine = engine; self.settings = settings; self.gloss = engine.gloss
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
+        self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
     }
 
     var body: some View {
@@ -24,6 +28,11 @@ struct CandidateFeed: View {
             HStack {
                 Text("面试教练").font(.system(size: 11, weight: .semibold))
                 Spacer()
+                if let onFloat {
+                    Button(action: onFloat) {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    }.buttonStyle(.plain).help("放大悬浮回答").accessibilityLabel(Text("放大悬浮回答"))
+                }
                 Button("跟随朗读") { followsReading.toggle() }
                     .buttonStyle(.plain).foregroundStyle(followsReading ? Palette.accent : Palette.secondary)
                 if engine.state == .failed || engine.readingFailed {
@@ -37,22 +46,39 @@ struct CandidateFeed: View {
                     .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
             }
             if !microphoneName.isEmpty {
-                HStack {
-                    Text(micOn ? L("候选人麦克风") + " · " + microphoneName : L("尚未听取候选人回答"))
-                        .font(.system(size: 11)).lineLimit(2)
-                    if !micOn, let onMic { Button("打开麦克风", action: onMic).font(.system(size: 11)) }
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        if let onMicrophoneSettings {
+                            Button(action: onMicrophoneSettings) {
+                                Label {
+                                    Text(verbatim: microphoneName).lineLimit(1).truncationMode(.middle)
+                                } icon: { Image(systemName: "mic") }
+                            }
+                            .help("选择候选人麦克风")
+                            .accessibilityLabel(Text("选择候选人麦克风"))
+                        } else {
+                            Text(verbatim: microphoneName).lineLimit(2)
+                        }
+                        if let onMic {
+                            Button(micOn ? L("关闭麦克风") : L("打开麦克风"), action: onMic)
+                                .fixedSize()
+                        }
+                    }
+                    if !micOn { Text("尚未听取候选人回答") }
                 }
+                .font(.system(size: 11))
+
             }
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
                             VStack(alignment: .leading, spacing: 5) {
-                                Text(sentence).font(.system(size: 20))
+                                Text(sentence).font(.system(size: fontSize))
                                     .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                 if settings.askGloss, let text = gloss.translations[sentence] {
-                                    Text(text).font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                                    Text(text).font(.system(size: max(13, fontSize * 0.7))).foregroundStyle(Palette.secondary)
                                 }
                             }
                             .padding(8)
@@ -62,10 +88,13 @@ struct CandidateFeed: View {
                         }
                         if !engine.script.committed.isEmpty {
                             Text("已经说出").font(.system(size: 11)).foregroundStyle(Palette.secondary)
-                            Text(engine.script.spokenText).font(.system(size: 16)).foregroundStyle(Palette.secondary)
+                            Text(engine.script.spokenText).font(.system(size: max(16, fontSize * 0.8))).foregroundStyle(Palette.secondary)
                                 .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .onAppear {
+                    if followsReading { proxy.scrollTo(engine.script.currentSentence, anchor: .center) }
                 }
                 .onChange(of: engine.script.currentSentence) { _, index in
                     if followsReading { proxy.scrollTo(index, anchor: .center) }
