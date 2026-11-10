@@ -918,6 +918,7 @@ final class LingClient: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
         let started = Date()
+        debugLog("coach: deepseek sent")
         // Timed from sending, so waiting at the start gate (a 429 pause) never counts as silence.
         let watchdog = Task { @MainActor in
             try await Task.sleep(for: .seconds(coachFirstTokenTimeout))

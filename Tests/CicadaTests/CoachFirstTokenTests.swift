@@ -54,3 +54,30 @@ extension LingTests {
         #expect(Date().timeIntervalSince(started) < 5)
     }
 }
+
+extension LingTests {
+    @Test func aNewCoachRequestAnswersAfterEarlierOnesAreCancelled() async throws {
+        let ling = deepSeekClientForRestarts()
+        for _ in 0..<2 {
+            let early = Task { @MainActor in for try await _ in ling.streamCoachTest([["role": "system", "content": "x"]]) {} }
+            try await Task.sleep(for: .milliseconds(100))
+            early.cancel()
+        }
+        let started = Date()
+        var text = ""
+        for try await piece in ling.streamCoachTest([["role": "system", "content": "x"]]) { text += piece }
+        #expect(text == "Hello")
+        #expect(Date().timeIntervalSince(started) < 3)
+    }
+
+    private func deepSeekClientForRestarts() -> LingClient {
+        AIKey.save("sk-test-0000000000", "deepseek")
+        SilentThenStreamStub.hangs = 0; SilentThenStreamStub.requests = 0
+        let ling = LingClient()
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [SilentThenStreamStub.self]
+        ling.session = URLSession(configuration: config)
+        ling.coachFirstTokenTimeout = 6
+        return ling
+    }
+}
