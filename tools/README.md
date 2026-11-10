@@ -60,6 +60,7 @@
 - 设置 › AI 服务 › 面试教练使用已安装的本机 Gemma 4 E4B。电脑原声、双方原文与压缩屏幕关键帧发往本机 MLX；不使用旧百炼实时模型。
 - `assistant:<on|off>` 开关教练；`ask` 手动分析；`askGloss:<on|off>` 开关建议的本机中文对照。教练默认输出文字，可选耳机陪读。
 - `assistantSay:<问题>` 注入面试官原文并分析；`themSaid:<原文>` / `meSaid:<原文>` 写入双方原文。后两者不模拟声音。`assistantState` 写出状态、帧数、原声音频秒数、实际候选人麦克风、声学就绪、生成次数、首句耗时与 committed/pending 数量；`assistantReconnect` 重试失败请求；`assistantBackgroundReload` 重读面试资料文件夹。`coachSimulateHang:<n>` 让接下来 n 次 DeepSeek 请求发出后不返回，用来验证首 token 超时（6 秒）自动重发，日志看 `resending`。
+- `plain-english-check.py results.json`：按提示词的简单英文规则给回答打分（句长、超过 12 词的句子、难词），对比改提示词前后。
 - `screenfile:<图片路径>` 注入关键帧；`assistantRender:<png>` 生成当前建议的被动截图；`screenNotes:on` 在当前会议打开画面选择器，`screenNotes:off` 清除选择并停止捕获。关闭、换窗口或结束会议后不沿用旧窗口图片。
 - 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；点击教练的设备名打开同声传译设置，候选人与按住说话共用“知了听你说话用”输入；AI 服务页也跳转到此处。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
 - 行为与多模态入参测试：`scripts/test.sh --filter InterviewCoachTests`。

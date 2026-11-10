@@ -222,7 +222,7 @@ struct CoachScriptTests {
         let messages = CoachPrompt.request(turns: [], background: "", frames: [frame], audio: nil, committed: "I use Room.")
         let text = String(data: try JSONSerialization.data(withJSONObject: messages), encoding: .utf8) ?? ""
         #expect(text.contains("COMPLETE"))
-        #expect(text.contains("B1–B2"))
+        #expect(text.contains("high-school English, about 3,000 common words"))
         #expect(text.contains("850 ms"))
         #expect(text.contains("I use Room."))
         #expect(CoachOutput("I would use Room. Then I add a worker.").next == "I would use Room. Then I add a worker.")
