@@ -1,0 +1,4 @@
+App/LocalPairing.json
+Config/Version.xcconfig
+build/
+**/xcuserdata/

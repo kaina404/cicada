@@ -3,6 +3,26 @@ import Testing
 @testable import Cicada
 
 struct InterviewCoachTests {
+    @Test func handoverBoilerplateNeverAppearsEvenDuringStreaming() {
+        let fact = "I handed everything over cleanly."
+        for invalid in [
+            "I don't have the exact handover details here, so I can't confirm who received each item or whether anyone signed off.",
+            "I don't have the specific recipient, document or sign-off details available.",
+            "I cannot confirm who received the handover."
+        ] {
+            let answer = fact + " " + invalid
+            for index in answer.indices {
+                let partial = String(answer[...index])
+                let visible = CoachHRAnswer.clean(partial, finished: false)
+                if partial.count > fact.count { #expect(visible == fact) }
+            }
+            #expect(CoachHRAnswer.clean(answer, finished: true) == fact)
+        }
+        let legitimate = "I don't have direct reports. I used a lock-free queue. My salary was RMB 26,000."
+        #expect(CoachHRAnswer.clean(legitimate, finished: true) == legitimate)
+        #expect(CoachHRAnswer.clean("I don't have", finished: false).isEmpty)
+        #expect(CoachHRAnswer.clean("I built the Android app", finished: false) == "I built the Android app")
+    }
     private func line(_ id: String, _ role: String, _ text: String, t: Double = 0, via: String? = nil) -> TranscriptLine {
         TranscriptLine(id: id, t: t, speaker: role, src: text, dst: "TRANSLATION_MUST_NOT_ENTER", srcLang: "en", dstLang: "zh", via: via)
     }

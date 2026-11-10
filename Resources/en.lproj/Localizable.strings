@@ -295,11 +295,13 @@
 "背景不透明度" = "Background opacity";
 
 /* CandidateFeed */
+"面试阶段" = "Interview stage";
 "文本和截图发送云端" = "Text and screenshots are sent to the cloud";
 "面试教练" = "Interview coach";
 "放大悬浮回答" = "Float enlarged answer";
 "跟随朗读" = "Follow reading";
 "重试" = "Retry";
+"陪读" = "Read along";
 "已暂停" = "Paused";
 "请检查 AI 服务设置" = "Check AI service settings";
 "正在生成完整英文回答…" = "Writing the full English answer…";
@@ -420,6 +422,20 @@
 "松开，开始转写" = "Drop to transcribe";
 "录音或视频，一次可放多个" = "Recordings or videos, several at once";
 
+/* InterfaceLanguage */
+"跟随系统" = "Follow system";
+"界面语言" = "App language";
+"重新打开后生效" = "Takes effect after reopening";
+"语言已保存" = "Language saved";
+"重新打开会结束当前会议，请先完成记录" = "Reopening ends the current meeting. Finish recording first.";
+"重新打开" = "Reopen";
+
+/* InterviewCoachLogic */
+"通用" = "General";
+"HR 面" = "HR";
+"CTO 面" = "CTO";
+"CEO 面" = "CEO";
+
 /* LanguageSettings */
 "听对方" = "Listening";
 "同声传译" = "Interpreting";
@@ -434,7 +450,6 @@
 "对方说的正是系统语言时，翻成系统里的另一种" = "When they speak your system language, translates into your other system language";
 "对方说的就是这种语言时不翻译" = "Not translated when they already speak this language";
 "跟随系统（%@）" = "Follow system (%@)";
-"跟随系统" = "Follow system";
 "纪要语言" = "Notes language";
 "实时纪要和完整版同一种语言" = "Live and full notes use the same language";
 "我的语言 · %@" = "Mine · %@";
@@ -664,7 +679,6 @@
 "识别语音" = "Recognize speech";
 "打开“听写”，允许“语音识别”" = "Turn on Dictation and allow Speech Recognition";
 "已打开" = "On";
-"重新打开" = "Reopen";
 "放一段会议试试" = "Try a meeting";
 "一段 9 秒的英文会议，字幕会跟着声音实时出来。" = "A 9-second meeting in English. Subtitles appear as they talk.";
 "听到" = "Hearing";
@@ -755,7 +769,7 @@
 
 /* RealtimeSettings */
 "DeepSeek 处理原文和截图，Gemma 在本机跟读" = "DeepSeek processes transcripts and screenshots; Gemma tracks reading on this Mac";
-"电脑声音是面试官，麦克风是候选人；教练只显示文字" = "System audio: interviewer. Microphone: candidate. Text coaching only.";
+"Kokoro 本机合成，按住手表播放，松开暂停" = "Local Kokoro speech. Hold Watch to play; release to pause.";
 "候选人麦克风" = "Candidate microphone";
 "已保存 DeepSeek key" = "DeepSeek key saved";
 "保存" = "Save";
@@ -839,7 +853,6 @@
 /* SettingsWindow */
 "语言" = "Language";
 "屏幕识别" = "Screen Reading";
-"通用" = "General";
 "诊断" = "Diagnostics";
 "有人说话时" = "While someone talks";
 "始终显示" = "Always";
@@ -939,6 +952,15 @@
 "提醒后结束" = "Ask, then end";
 "直接结束" = "End";
 "一直记录" = "Keep going";
+
+/* ShadowReader */
+"陪读已关闭" = "Read along is off";
+"请将系统声音输出切到耳机" = "Switch system audio output to headphones";
+"正在准备 Kokoro 语音" = "Preparing Kokoro audio";
+"正在陪读" = "Reading along";
+"按住手表播放，松开暂停" = "Hold Watch to play; release to pause";
+"语音暂不可用，请松手后重新按住" = "Audio unavailable. Release, then hold again to retry.";
+"回答已播放完" = "Answer playback finished";
 
 /* Shortcuts */
 "右 ⌥" = "Right ⌥";
@@ -1314,10 +1336,4 @@
 /* Only the ports: Android */
 "导入录音或视频" = "Import a Recording or Video";
 
-"界面语言" = "App language";
-
-"重新打开后生效" = "Takes effect after reopening";
-
-"语言已保存" = "Language saved";
-
-"重新打开会结束当前会议，请先完成记录" = "Reopening ends the current meeting. Finish recording first.";
+"陪读音量" = "Read-along volume";

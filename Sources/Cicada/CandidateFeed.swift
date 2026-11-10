@@ -1,9 +1,11 @@
 import SwiftUI
+import Combine
 
 struct CandidateFeed: View {
     @ObservedObject var engine: InterviewCoach
     @ObservedObject var settings: AppSettings
     @ObservedObject private var gloss: AskGloss
+    var shadowReader: ShadowReader?
     var expanded = false
     var compactHeight: CGFloat = 250
     var microphoneName = ""
@@ -12,15 +14,19 @@ struct CandidateFeed: View {
     var onMicrophoneSettings: (() -> Void)?
     var onFloat: (() -> Void)?
     var fontSize: CGFloat = 20
+    var glossFontSize: CGFloat?
     @State private var followsReading = true
+    @State private var playback = ShadowPlayback()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    init(engine: InterviewCoach, settings: AppSettings, expanded: Bool = false,
+    init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil, expanded: Bool = false,
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
-         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20) {
-        self.engine = engine; self.settings = settings; self.gloss = engine.gloss
+         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil) {
+        self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.shadowReader = shadowReader
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
         self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
+        self.glossFontSize = glossFontSize
     }
 
     var body: some View {
@@ -39,6 +45,17 @@ struct CandidateFeed: View {
                     Button("重试") { engine.retry() }.buttonStyle(.plain)
                 }
             }
+            Picker("面试阶段", selection: $settings.interviewStage) {
+                ForEach(InterviewStage.allCases) { stage in
+                    Text(verbatim: stage.title).tag(stage)
+                }
+            }
+            .pickerStyle(.segmented).font(.system(size: 12))
+            .onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
+            HStack(spacing: 8) {
+                Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
+                if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
+            }.font(.system(size: 11))
             Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
             if CoachDeepSeekTest.enabled {
                 Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
@@ -70,19 +87,27 @@ struct CandidateFeed: View {
 
             }
             ScrollViewReader { proxy in
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
                             VStack(alignment: .leading, spacing: 5) {
-                                Text(sentence).font(.system(size: fontSize))
-                                    .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                if settings.shadowReading, let shadowReader {
+                                    ShadowLyricsText(text: sentence, fontSize: fontSize,
+                                        active: index == followedSentence, firstWord: firstWord(in: index),
+                                        playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
+                                        seek: { shadowReader.seek(to: $0) })
+                                } else {
+                                    Text(sentence).font(.system(size: fontSize))
+                                        .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                                 if settings.askGloss, let text = gloss.translations[sentence] {
-                                    Text(text).font(.system(size: max(13, fontSize * 0.7))).foregroundStyle(Palette.secondary)
+                                    // Keep the gloss compact even when the floating English script is enlarged.
+                                    Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
                                 }
                             }
                             .padding(8)
-                            .background(index == engine.script.currentSentence ? Palette.accent.opacity(0.09) : .clear,
+                            .background(index == followedSentence ? Palette.accent.opacity(0.09) : .clear,
                                         in: RoundedRectangle(cornerRadius: 7))
                             .id(index)
                         }
@@ -93,23 +118,53 @@ struct CandidateFeed: View {
                         }
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .onAppear {
-                    if followsReading { proxy.scrollTo(engine.script.currentSentence, anchor: .center) }
+                .background {
+                    GeometryReader { geometry in
+                        Color.clear.onChange(of: geometry.size) { _, _ in
+                            if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
+                        }
+                    }
                 }
-                .onChange(of: engine.script.currentSentence) { _, index in
-                    if followsReading { proxy.scrollTo(index, anchor: .center) }
+                .onChange(of: fontSize) { _, _ in
+                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
+                }
+                .onAppear {
+                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
+                }
+                .onChange(of: followedSentence) { _, index in
+                    if followsReading {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
+                            proxy.scrollTo(index, anchor: .center)
+                        }
+                    }
                 }
                 .onChange(of: engine.script.answerID) { _, _ in
-                    if followsReading { proxy.scrollTo(engine.script.currentSentence, anchor: .center) }
+                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
                 }
                 .onChange(of: followsReading) { _, follows in
-                    if follows { proxy.scrollTo(engine.script.currentSentence, anchor: .center) }
+                    if follows { proxy.scrollTo(followedSentence, anchor: .center) }
                 }
             }.frame(maxHeight: expanded ? .infinity : compactHeight)
                 .task(id: settings.askGloss) {
                     if settings.askGloss { gloss.enqueue(engine.script.sentences) }
                 }
+        }.onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
+            playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
+    }
+    private func firstWord(in sentence: Int) -> Int {
+        engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
+    }
+    private var followedSentence: Int {
+        guard settings.shadowReading else { return engine.script.currentSentence }
+        guard playback.answerID == engine.script.answerID else { return 0 }
+        let word = playback.currentWord ?? playback.words.first?.range.lowerBound ?? 0
+        var end = 0
+        for (index, sentence) in engine.script.sentences.enumerated() {
+            end += CoachScript.words(sentence).count
+            if word < end { return index }
+        }
+        return max(0, engine.script.sentences.count - 1)
     }
     private var status: String {
         if CoachDeepSeekTest.enabled {
@@ -148,5 +203,39 @@ struct CoachSnapshot: View {
             }
             Spacer(minLength: 0)
         }.padding().frame(maxWidth: .infinity, alignment: .leading).foregroundStyle(Palette.ink)
+    }
+}
+
+private struct ShadowStatus: View {
+    @ObservedObject var reader: ShadowReader
+    @ObservedObject var settings: AppSettings
+    @State private var volumeShown = false
+    var body: some View {
+        HStack {
+            Text(reader.label).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
+            Picker("播放速度", selection: Binding(get: { reader.rate }, set: { reader.setRate($0) })) {
+                Text(verbatim: "0.75×").tag(Float(0.75))
+                Text(verbatim: "1×").tag(Float(1))
+                Text(verbatim: "1.25×").tag(Float(1.25))
+            }.labelsHidden().frame(width: 78).accessibilityLabel(Text("播放速度"))
+            Button { volumeShown.toggle() } label: {
+                Image(systemName: settings.shadowVolume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                    .frame(width: 24, height: 24).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).help("陪读音量").accessibilityLabel(Text("陪读音量"))
+            .accessibilityValue(Text(verbatim: "\(Int((settings.shadowVolume * 100).rounded()))%"))
+            .popover(isPresented: $volumeShown) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("陪读音量")
+                        Spacer()
+                        Text(verbatim: "\(Int((settings.shadowVolume * 100).rounded()))%")
+                            .monospacedDigit()
+                    }
+                    Slider(value: $settings.shadowVolume, in: 0...1, step: 0.01)
+                        .accessibilityLabel(Text("陪读音量"))
+                }.font(.system(size: 12)).padding(16).frame(width: 220)
+            }
+        }
     }
 }

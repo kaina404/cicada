@@ -150,13 +150,29 @@ enum CoachEndpoint {
 
 /// Local lexical retrieval over user-imported material; never retrieves generated answers as biography.
 enum CoachKnowledge {
+    /// Imported backgrounds may be English while HR questions use Chinese names and topics.
+    private static func terms(_ text: String) -> Set<String> {
+        var words = Set(CoachScript.words(text).filter { $0.count > 2 })
+        let lower = text.lowercased()
+        for (term, aliases) in [
+            ("kezhi", ["kezhi", "keshi", "kesi", "可之", "科智"]),
+            ("debon", ["debon", "德邦"]),
+            ("departure", ["离职", "离开", "跳槽", "departure", "leave", "left", "leaving", "disbanded", "layoff"]),
+            ("compensation", ["薪资", "薪酬", "工资", "降薪", "年薪", "年终奖", "salary", "compensation", "bonus"]),
+            ("handover", ["交接", "handover", "hand over", "handed over"])
+        ] {
+            if aliases.contains(where: { lower.contains($0) }) { words.insert(term) }
+        }
+        return words
+    }
+
     static func retrieve(_ background: String, query: String, limit: Int = 6000) -> String {
-        let queryWords = Set(CoachScript.words(query).filter { $0.count > 2 })
+        let queryWords = terms(query)
         let chunks = background.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
         struct Chunk { var index: Int; var text: String; var score: Int }
         var ranked: [Chunk] = []
         for (index, text) in chunks.enumerated() {
-            let score = Set(CoachScript.words(text)).intersection(queryWords).count
+            let score = terms(text).intersection(queryWords).count
             ranked.append(Chunk(index: index, text: text, score: score))
         }
         ranked.sort { $0.score == $1.score ? $0.index < $1.index : $0.score > $1.score }
@@ -283,10 +299,49 @@ enum CoachPronunciation {
         _ = await Task.detached(priority: .userInitiated) { lexiconCount }.value
     }
 
+    // Keep decimal digits literal: 0.01 is “zero point zero one”, never “zero point one”.
+    private static let digitsIPA = ["ˈzɪərəʊ", "wʌn", "tuː", "θriː", "fɔː", "faɪv", "sɪks", "ˈsevən", "eɪt", "naɪn",
+                                    "ten", "ɪˈlevən", "twelv", "ˌθɜːˈtiːn", "ˌfɔːˈtiːn", "ˌfɪfˈtiːn",
+                                    "ˌsɪksˈtiːn", "ˌsevənˈtiːn", "ˌeɪˈtiːn", "ˌnaɪnˈtiːn"]
+    private static func cardinalIPA(_ number: Int) -> String {
+        if number < 20 { return digitsIPA[number] }
+        if number < 100 {
+            let tens = ["", "", "ˈtwenti", "ˈθɜːti", "ˈfɔːti", "ˈfɪfti", "ˈsɪksti", "ˈsevənti", "ˈeɪti", "ˈnaɪnti"]
+            return tens[number / 10] + (number % 10 == 0 ? "" : " " + digitsIPA[number % 10])
+        }
+        // British cardinal phrasing: two thousand and ten; one hundred and one.
+        for (scale, ipa) in [(1_000_000_000_000, "ˈtrɪljən"), (1_000_000_000, "ˈbɪljən"),
+                             (1_000_000, "ˈmɪljən"), (1_000, "ˈθaʊzənd"), (100, "ˈhʌndrəd")] {
+            if number >= scale {
+                let remainder = number % scale
+                return cardinalIPA(number / scale) + " " + ipa
+                    + (remainder == 0 ? "" : (remainder < 100 ? " ænd " : " ") + cardinalIPA(remainder))
+            }
+        }
+        return ""
+    }
+
+    private static func numberIPA(_ token: String) -> String? {
+        let percent = token.hasSuffix("%") || token.hasSuffix("％")
+        var number = percent ? String(token.dropLast()).trimmingCharacters(in: .whitespaces) : token
+        var sign = ""
+        if number.hasPrefix("-") || number.hasPrefix("−") { sign = "ˈmaɪnəs "; number.removeFirst() }
+        else if number.hasPrefix("+") { sign = "plʌs "; number.removeFirst() }
+        let parts = number.replacingOccurrences(of: ",", with: "").split(separator: ".", omittingEmptySubsequences: false)
+        guard let whole = Int(parts[0]), whole >= 0 else { return nil }
+        // Account numbers with leading zeroes are read digit by digit.
+        let integer = parts[0].count > 1 && parts[0].first == "0"
+            ? parts[0].compactMap { $0.wholeNumberValue.map { digitsIPA[$0] } }.joined(separator: " ")
+            : cardinalIPA(whole)
+        let fraction = parts.count == 2
+            ? " pɔɪnt " + parts[1].compactMap { $0.wholeNumberValue.map { digitsIPA[$0] } }.joined(separator: " ") : ""
+        return sign + integer + fraction + (percent ? " pəˈsent" : "")
+    }
+
     static func annotate(_ text: String, finished: Bool = false) -> String {
         let text = spokenText(text)
         // Consume code, links and identifiers whole so their constituent words cannot be annotated.
-        let pattern = #"```[\s\S]*?(?:```|$)|`[^`\n]*(?:`|$)|https?://\S+|/[A-Za-z0-9_./-]+|[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*"#
+        let pattern = #"```[\s\S]*?(?:```|$)|`[^`\n]*(?:`|$)|https?://\S+|/[A-Za-z0-9_./-]+|[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*|(?<![\w.])[+−-]?(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?(?:[ \t]*[%％])?(?![\w]|\.[0-9])"#
         guard let expression = try? NSRegularExpression(pattern: pattern) else { return text }
         var result = ""; var end = text.startIndex
         var annotated = Set<String>()
@@ -294,6 +349,10 @@ enum CoachPronunciation {
             guard let range = Range(match.range, in: text) else { continue }
             result += text[end..<range.upperBound]
             let word = String(text[range]); let key = word.lowercased()
+            if (finished || range.upperBound < text.endIndex), let first = word.first,
+               first.isNumber || "+−-".contains(first), let ipa = numberIPA(word) {
+                result += " /" + ipa + "/"
+            }
             let difficult = (overrides[key] != nil || key.count >= 9) && !familiar.contains(key)
             if (finished || range.upperBound < text.endIndex), difficult, !basic.contains(key),
                !annotated.contains(key),
@@ -310,11 +369,11 @@ enum CoachPronunciation {
         var text = text
         // Some valid IPA uses only ASCII (e.g. /psst/); strip it only when it matches
         // the preceding word's dictionary entry, so paths such as /api/v1 survive.
-        if let expression = try? NSRegularExpression(pattern: #"([A-Za-z]+)(\s+)/([^/\r\n]+)/"#) {
+        if let expression = try? NSRegularExpression(pattern: #"([A-Za-z]+|[+−-]?[0-9][0-9,.]*(?:[ \t]*[%％])?)(\s+)/([^/\r\n]+)/"#) {
             for match in expression.matches(in: text, range: NSRange(text.startIndex..., in: text)).reversed() {
                 guard let word = Range(match.range(at: 1), in: text),
                       let phonetic = Range(match.range(at: 3), in: text),
-                      british[String(text[word]).lowercased()] == String(text[phonetic]),
+                      (british[String(text[word]).lowercased()] ?? numberIPA(String(text[word]))) == String(text[phonetic]),
                       let annotation = Range(NSRange(location: match.range(at: 3).location - 1,
                                                      length: match.range(at: 3).length + 2), in: text) else { continue }
                 text.removeSubrange(annotation)

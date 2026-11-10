@@ -21,3 +21,12 @@ The worker's JSON-lines transport accepts PCM16 mono at 16 kHz and returns VAD
 and endpoint events. It never logs transcripts or stores audio. Stdout is reserved
 for protocol events; startup errors go to stderr. Model downloads are separate
 from inference. The acoustic worker has no HTTP listener.
+
+## Private Kokoro worker
+
+`kokoro_worker.py` is separate from acoustic recognition. It provisions an isolated
+`~/.cicada-kokoro` runtime from the existing Python, loads pinned Kokoro-82M weights
+and af_heart, warms with an unplayed phrase, then accepts JSON-lines text requests
+and returns mono 24 kHz float32 PCM over private pipes. The process keeps the model
+loaded. No cloud synthesis, audio files, or system TTS fallback. See
+[assistant read along](../../docs/assistant-read-along.md) for versions, routing and validation.

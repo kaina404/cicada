@@ -1,3 +1,4 @@
+import CicadaWatchControl
 import ScreenCaptureKit
 import AppKit
 import AVFoundation
@@ -20,6 +21,10 @@ final class AppModel: ObservableObject {
     /// 会中问答's key: registered only while listening, so it takes nothing from other apps otherwise.
     let askKey = HotKey(id: 3, shortcut: .defaultAsk)
     let candidate = InterviewCoach()
+    let shadowReader = ShadowReader()
+    private var watchControl: CicadaWatchReceiver?
+    private var shadowVolumeSetting: AnyCancellable?
+    private var shadowSetting: AnyCancellable?
     private var candidateTimer: Timer?
     private var manualAssistant = false
     private weak var candidateMicEngine: ListenEngine?
@@ -189,8 +194,22 @@ final class AppModel: ObservableObject {
     /// that comes first.
     private var heldJoin: (seg: Segment, t: Double, translation: String?)?
 
+    func startWatchControl() { watchControl?.start() }
+    func stopWatchControl() { watchControl?.stop() }
+
     init() {
+        watchControl = CicadaWatchReceiver(
+            pairingURL: Bundle.main.url(forResource: "LocalPairing", withExtension: "json"),
+            window: { [weak self] in self?.assistantWindow.remoteWindow },
+            setHeld: { [weak self] in self?.shadowReader.setHeld($0) },
+            selectSentence: { [weak self] in self?.shadowReader.selectSentence(offset: $0) },
+            playSentence: { [weak self] in self?.shadowReader.playSentence(offset: $0) },
+            log: { debugLog($0) })
+        shadowVolumeSetting = settings.$shadowVolume.sink { [weak self] in self?.shadowReader.setVolume($0) }
         candidate.reading.usesTranscripts = true
+        shadowSetting = settings.$shadowReading.dropFirst().sink { [weak self] enabled in
+            if !enabled { self?.shadowReader.stop() }
+        }
         let candidateTranscript: (String, Bool) -> Void = { [weak self] text, final in
             self?.candidate.reading.acceptTranscript(text, final: final)
         }
@@ -747,7 +766,7 @@ final class AppModel: ObservableObject {
         // The local model's memory comes back when the meeting ends (问 and 屏幕识别 share it).
         screen.server.stop()
         listen.router.setOnRealtimePCM(nil); candidateAudioAttached = false
-        candidate.stop(); manualAssistant = false
+        candidate.stop(); shadowReader.stop(); manualAssistant = false
         assistantWindow.hide()
         askKey.unregister()
         stopRoomSide()
@@ -1165,6 +1184,7 @@ final class AppModel: ObservableObject {
 
     private func tickCandidate() {
         updateCandidateRecognition()
+        candidate.stage = settings.interviewStage
         candidate.gloss.enabled = settings.askGloss
         let enabled = listen.isRunning && coachEnabled
         if listen.isRunning, screen.chosen != nil, screenUsesRealtime != enabled { startScreen() }
@@ -1178,6 +1198,8 @@ final class AppModel: ObservableObject {
             if let id = store.liveID { candidate.observe(lines: store.session(id)?.lines ?? [], now: coachTime) }
             candidate.tick(now: coachTime)
         } else if candidate.state != .idle { candidate.stop() }
+        shadowReader.update(enabled: enabled && settings.shadowReading,
+                            script: candidate.script, finished: candidate.current == nil)
         let micEngine = settings.listensToRoom ? listen : roomListen
         if enabled, candidateMicEngine !== micEngine {
             candidateMicEngine?.router.setOnRealtimePCM(nil)
@@ -1916,6 +1938,11 @@ final class AppModel: ObservableObject {
             settings.continuousAssistant = arg == "on"
             if arg != "on" { manualAssistant = false }
             tickCandidate()
+        case "shadowReading": settings.shadowReading = arg == "on"; tickCandidate()
+        case "shadowVolume": if let value = Double(arg) { settings.shadowVolume = ShadowVolume.clamped(value) }
+        case "shadowSentence": if let offset = Int(arg) { shadowReader.selectSentence(offset: offset) }
+        case "shadowHold": shadowReader.setHeld(arg == "on")
+        case "shadowState": debugLog("shadow: status=\(shadowReader.status.rawValue) volume=\(settings.shadowVolume) cursor=\(shadowReader.plan.cursor) words=\(shadowReader.plan.words.count)")
         case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
         case "assistantReconnect": candidate.retry()
         case "assistantBackgroundReload": candidateBackgroundChanged()
@@ -1928,6 +1955,7 @@ final class AppModel: ObservableObject {
                 settings.assistantOpacity = AssistantAppearance.opacity(values[1])
             }
         case "assistantFloatState": assistantWindow.logState()
+        case "watchState": debugLog("watch: \(watchControl?.status ?? "unavailable")")
         case "assistantRender":
             // ImageRenderer cannot lay out the interactive scroll view and native controls reliably.
             let view = CoachSnapshot(engine: candidate, microphoneName: coachMicName)
@@ -1944,6 +1972,10 @@ final class AppModel: ObservableObject {
             lineCounter += 1
             store.append(TranscriptLine(id: "t\(lineCounter)", t: coachTime, speaker: "them", src: arg, srcLang: "en", dstLang: ""))
             tickCandidate(); candidate.ask()
+        case "interviewStage":
+            if let stage = InterviewStage(rawValue: arg) {
+                settings.interviewStage = stage; candidate.stage = stage
+            }
         case "assistantState":
             debugLog("coach: state=\(candidate.state.rawValue) response_id=\(candidate.responseID ?? "none") first_ms=\(Int((candidate.firstLatency ?? -1) * 1000)) sentence_ms=\(Int((candidate.firstSentenceLatency ?? -1) * 1000)) committed=\(candidate.script.committed.count) pending_words=\(CoachScript.words(candidate.script.pending).count) acoustic=\(candidate.acousticReady) generations=\(candidate.generationCount) reviews=\(candidate.reviewCount) frames=\(candidate.frameCount) paragraphs=\(candidate.paragraphs.count) mic=\(coachMicName) candidate_asr=\((settings.listensToRoom ? listen : roomListen).gemmaCandidate ? "gemma" : Recognition.name) candidate_asr_failed=\(candidateASRFailed) reading=gemma cursor=\(candidate.script.cursor) sentence=\(candidate.script.currentSentence) reading_failed=\(candidate.readingFailed)")
         case "assistantRead":
@@ -2430,6 +2462,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     private lazy var mainToolbar = MainToolbar(model: model)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        model.startWatchControl()
         NSApp.setActivationPolicy(model.settings.showInDock ? .regular : .accessory)
         menu.showMainWindow = { [weak self] in self?.showMainWindow() }
         menu.showOnboarding = { [weak self] in self?.showOnboarding() }
@@ -2511,6 +2544,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, UNUs
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        model.stopWatchControl()
         model.stop()
         // Other apps would be left on the virtual mic, hearing nothing.
         model.systemMic.release()

@@ -20,6 +20,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp "$BIN/Cicada" "$APP/Contents/MacOS/Cicada"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
+# Personal watch pairing is optional and ignored by git; never bundle it in public releases.
+if [[ "${RELEASE:-}" != 1 && -f watch/App/LocalPairing.json ]]; then
+  cp watch/App/LocalPairing.json "$APP/Contents/Resources/LocalPairing.json"
+fi
 cp Resources/sample/sample.m4a "$APP/Contents/Resources/"
 cp -R Resources/coach "$APP/Contents/Resources/"
 cp -R Resources/pronunciation "$APP/Contents/Resources/"

@@ -157,7 +157,10 @@ enum Recognition {
 
     /// Fetches the model for `locale` when it isn't on the Mac; `progress` is called once a
     /// download starts. Throws when this Mac can't recognize the language.
-    static func install(_ locale: String, progress: (Progress) -> Void = { _ in }) async throws {
+    // Progress updates engine/UI state. Without actor isolation this async function resumes on
+    // the generic executor after AssetInventory awaits, deadlocking Combine against SwiftUI.
+    @MainActor
+    static func install(_ locale: String, progress: @MainActor (Progress) -> Void = { _ in }) async throws {
         if host != nil || cloudOnly { return }
         if !legacy, #available(macOS 26, *) {
             let t = Analyzer.module(locale)

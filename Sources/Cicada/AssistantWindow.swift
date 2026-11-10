@@ -14,6 +14,8 @@ final class AssistantWindowController {
 
     init(model: AppModel) { self.model = model }
 
+    var remoteWindow: NSWindow? { panel }
+
     func show() {
         guard let model else { return }
         if panel == nil {
@@ -24,6 +26,7 @@ final class AssistantWindowController {
                                    styleMask: [.borderless, .resizable, .nonactivatingPanel],
                                    backing: .buffered, defer: false)
             p.title = L("悬浮回答")
+            p.identifier = NSUserInterfaceItemIdentifier("cicada.assistant")
             p.isOpaque = false
             p.backgroundColor = .clear
             p.hasShadow = true
@@ -36,7 +39,7 @@ final class AssistantWindowController {
             p.sharingType = model.settings.notesCapturable ? .readOnly : .none
             p.minSize = NSSize(width: 520, height: 260)
             let host = FirstClickHostingView(rootView: AssistantFloatingView(
-                engine: model.candidate, settings: model.settings,
+                engine: model.candidate, settings: model.settings, shadowReader: model.shadowReader,
                 close: { [weak self] in self?.hide() }))
             host.sizingOptions = []
             p.contentView = host
@@ -52,7 +55,7 @@ final class AssistantWindowController {
         panel?.orderFrontRegardless()
     }
 
-    func hide() { panel?.orderOut(nil) }
+    func hide() { model?.shadowReader.setHeld(false); panel?.orderOut(nil) }
     func setCapturable(_ on: Bool) { panel?.sharingType = on ? .readOnly : .none }
 
     func logState() {
@@ -69,6 +72,7 @@ private final class AssistantPanel: NSPanel {
 private struct AssistantFloatingView: View {
     @ObservedObject var engine: InterviewCoach
     @ObservedObject var settings: AppSettings
+    let shadowReader: ShadowReader
     let close: () -> Void
 
     var body: some View {
@@ -97,8 +101,9 @@ private struct AssistantFloatingView: View {
                 Text("\(Int((settings.assistantOpacity * 100).rounded()))%").monospacedDigit().frame(width: 36)
             }
             .font(.system(size: 12)).foregroundStyle(Palette.ink).padding(.horizontal, 20)
-            CandidateFeed(engine: engine, settings: settings, expanded: true,
-                          fontSize: settings.assistantFontSize)
+            CandidateFeed(engine: engine, settings: settings, shadowReader: shadowReader, expanded: true,
+                          fontSize: settings.assistantFontSize,
+                          glossFontSize: max(10, min(14, settings.assistantFontSize * 0.375)))
                 .frame(maxHeight: .infinity)
         }
         .padding(.bottom, 12)

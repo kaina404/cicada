@@ -114,6 +114,26 @@ struct CoachScriptTests {
         #expect(complete.hasPrefix(streamed))
         #expect(complete.filter { $0 == "/" }.count == 4)
     }
+    @Test func numericReadingAidsIncludePercentagesAndDecimals() {
+        for (number, ipa) in [("2000", "tuː ˈθaʊzənd"), ("10%", "ten pəˈsent"),
+                              ("0.1%", "ˈzɪərəʊ pɔɪnt wʌn pəˈsent"),
+                              ("2,000", "tuː ˈθaʊzənd"), ("0.01%", "ˈzɪərəʊ pɔɪnt ˈzɪərəʊ wʌn pəˈsent"),
+                              ("10", "ten"), ("12", "twelv"), ("-10%", "ˈmaɪnəs ten pəˈsent"),
+                              ("100", "wʌn ˈhʌndrəd"), ("2010", "tuː ˈθaʊzənd ænd ten")] {
+            let answer = "Result: \(number)."
+            let annotated = CoachPronunciation.annotate(answer, finished: true)
+            #expect(annotated == "Result: \(number) /\(ipa)/.")
+            #expect(CoachScript.words(annotated) == CoachScript.words(answer))
+            #expect(!CoachPronunciation.spokenText(annotated).contains("/"))
+        }
+        #expect(CoachPronunciation.annotate("10% and 10%.", finished: true) == "10% /ten pəˈsent/ and 10% /ten pəˈsent/.")
+        for partial in ["2000", "10", "0.1", "0.1%"] {
+            #expect(CoachPronunciation.annotate(partial) == partial)
+        }
+        let code = "`2000` ```10%``` https://example.com/2000 /api/2000 v2000 value_10 10ms 1.2.3"
+        #expect(CoachPronunciation.annotate(code, finished: true) == code)
+    }
+
     @Test func pronunciationFilteringHandlesStreamingWithoutRemovingCodeOrURLs() {
         #expect(CoachScript.words("Consider scalability /ˌskeɪlə") == ["consider", "scalability"])
         #expect(CoachPronunciation.spokenText("a cache /kæʃ/ and a queue /kjuː/.") == "a cache  and a queue .")
@@ -166,6 +186,56 @@ struct CoachScriptTests {
         let found = CoachKnowledge.retrieve(background, query: "Android offline Room", limit: 200)
         #expect(found.contains("stable message IDs"))
         #expect(found.count <= 200)
+    }
+    @Test func chineseHRQuestionsRetrieveEnglishEmployerAndTopicFacts() {
+        let background = String(repeating: "Unrelated reference material.\n", count: 500)
+            + "Kezhi departure: joined the next company through an internal referral, closer to home.\n"
+            + "Kezhi salary: monthly fixed pay; the next company's annual bonus was variable.\n"
+            + "Debon handover: the watchlist shipped and was handed over cleanly."
+        let move = CoachKnowledge.retrieve(background, query: "为什么离开可之？", limit: 120)
+        #expect(move.contains("internal referral"))
+        let pay = CoachKnowledge.retrieve(background, query: "可之的薪资是多少？", limit: 120)
+        #expect(pay.contains("monthly fixed pay"))
+        let handover = CoachKnowledge.retrieve(background, query: "德邦交接怎么做的？", limit: 120)
+        #expect(handover.contains("watchlist shipped"))
+    }
+    @Test func teamCorrectionSurvivesNoisyASRInInitialAndFollowupRequests() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let data = try Data(contentsOf: root.appendingPathComponent("tools/copilot-interview-background.json"))
+        let fixture = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let resume = try #require(fixture["candidate_resume"] as? [String])
+        let background = String(repeating: "Unrelated reference material.\n", count: 1000)
+            + resume.joined(separator: "\n")
+        let turns = [CoachTurn(id: "q", seconds: 1, role: "interviewer",
+            text: "At Kesi, behind the DKO Tong exam app, how was the team organised and who did you report to?")]
+        var script = CoachScript()
+        script.replacePending("I reported to a technical director and had no direct reports.", since: [])
+        for messages in [CoachPrompt.request(turns: turns, background: background, frames: [], audio: nil, stage: .hr),
+                         CoachPrompt.reviewRequest(turns: turns, background: background, frames: [], script: script, stage: .hr)] {
+            let content = try #require(messages[1]["content"] as? [[String: Any]])
+            let reference = try #require(content.first?["text"] as? String)
+            #expect(reference.contains("one Android engineer, one iOS engineer and three web engineers"))
+            #expect(reference.contains("initially owned Android and later moved to responsibility for RAG"))
+            #expect(reference.contains("He reported to the CTO"))
+            #expect(reference.contains("Kezhi direct-report count is unknown"))
+        }
+        for company in ["KKday", "Debon Securities", "Ping An Securities"] {
+            let found = CoachKnowledge.retrieve(background,
+                query: "At \(company), how was the team organised and who did you report to?")
+            #expect(found.contains("Recorded organisation boundary for \(company):"))
+            #expect(found.contains("reporting manager"))
+            #expect(found.contains("unknown in this record"))
+        }
+        let pingAn = CoachKnowledge.retrieve(background, query: "At Ping An Securities, how many Android, iOS, web, backend and QA staff were there, and who did you report to?")
+        #expect(pingAn.contains("five Android engineers, five iOS engineers, ten web engineers, ten testers and around ten backend engineers"))
+        #expect(pingAn.contains("reported to the project manager"))
+        let debon = CoachKnowledge.retrieve(background, query: "At Debon Securities, how many Android, iOS, web, backend and QA staff were there?")
+        #expect(debon.contains("three iOS engineers, three Android engineers, five web engineers, eight backend engineers and five testers"))
+        let aihuishou = CoachKnowledge.retrieve(background, query: "Why do Aihuishou and Ping An Haoxue dates overlap? Was Aihuishou full-time employment?")
+        #expect(aihuishou.contains("part-time consulting side project on the Aihuishou Android app"))
+        #expect(aihuishou.contains("outside working hours while I was full-time at Ping An Haoxue"))
+        #expect(aihuishou.contains("Selected Projects rather than Professional Experience"))
     }
     @Test func promptRequestsFullSpeakableAnswerAndIncludesOCRAndImmutableSpeech() throws {
         let frame = CoachFrame(jpeg: Data([1]), seconds: 2, ocr: "First token: 850 ms")

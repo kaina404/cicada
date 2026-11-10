@@ -64,8 +64,11 @@ final class AppSettings: ObservableObject {
         didSet { save() }
     }
     @Published var askGloss: Bool { didSet { save() } }
+    @Published var shadowVolume: Double { didSet { save() } }
+    @Published var shadowReading: Bool { didSet { save() } }
     @Published var assistantFontSize: Double { didSet { save() } }
     @Published var assistantOpacity: Double { didSet { save() } }
+    @Published var interviewStage: InterviewStage { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
     @Published var realtimeRegion: String { didSet { save() } }
     @Published var realtimeWorkspace: String { didSet { save() } }
@@ -263,8 +266,11 @@ final class AppSettings: ObservableObject {
         recordAudio = defaults.object(forKey: "recordAudio") as? Bool ?? true
         // Off until asked for: it needs the Screen Recording permission on top of system audio.
         askGloss = defaults.object(forKey: "askGloss") as? Bool ?? true
+        shadowVolume = ShadowVolume.clamped(defaults.object(forKey: "shadowVolume") as? Double ?? ShadowVolume.initial)
+        shadowReading = defaults.bool(forKey: "shadowReading")
         assistantFontSize = AssistantAppearance.fontSize(defaults.object(forKey: "assistantFontSize") as? Double ?? 32)
         assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
+        interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
         // Import only non-secret configuration. The key stays in AIKey's 0600 file.
         let configFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -331,8 +337,11 @@ final class AppSettings: ObservableObject {
         defaults.set(savedSystemInput, forKey: "savedSystemInput")
         defaults.set(recordAudio, forKey: "recordAudio")
         defaults.set(askGloss, forKey: "askGloss")
+        defaults.set(ShadowVolume.clamped(shadowVolume), forKey: "shadowVolume")
+        defaults.set(shadowReading, forKey: "shadowReading")
         defaults.set(assistantFontSize, forKey: "assistantFontSize")
         defaults.set(assistantOpacity, forKey: "assistantOpacity")
+        defaults.set(interviewStage.rawValue, forKey: "interviewStage")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
         defaults.set(realtimeRegion, forKey: "realtimeRegion")
         defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")

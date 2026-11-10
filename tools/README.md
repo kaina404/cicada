@@ -58,7 +58,7 @@
 - 实际 Swift 链路测首 token：`CICADA_COACH_PROVIDER=deepseek CICADA_TEST_DEEPSEEK=1 scripts/test.sh --filter CoachDeepSeekModelTests`。六次合成 ActAI Android 请求（短上下文、30 轮历史，各带三张 1600×900 图片），报告 `/tmp/cicada-deepseek-coach-results.json`。日志 `request_first_token_ms` 从 HTTP 发出计时；`pipeline_first_token_ms` 从生成流程开始计时，含准备和排队；均忽略元数据与思考 token。此探针不包含真实语音断句耗时。
 
 - 设置 › AI 服务 › 面试教练使用已安装的本机 Gemma 4 E4B。电脑原声、双方原文与压缩屏幕关键帧发往本机 MLX；不使用旧百炼实时模型。
-- `assistant:<on|off>` 开关教练；`ask` 手动分析；`askGloss:<on|off>` 开关建议的本机中文对照。教练只输出文字。
+- `assistant:<on|off>` 开关教练；`ask` 手动分析；`askGloss:<on|off>` 开关建议的本机中文对照。教练默认输出文字，可选耳机陪读。
 - `assistantSay:<问题>` 注入面试官原文并分析；`themSaid:<原文>` / `meSaid:<原文>` 写入双方原文。后两者不模拟声音。`assistantState` 写出状态、帧数、原声音频秒数、实际候选人麦克风、声学就绪、生成次数、首句耗时与 committed/pending 数量；`assistantReconnect` 重试失败请求；`assistantBackgroundReload` 重读背景。
 - `screenfile:<图片路径>` 注入关键帧；`assistantRender:<png>` 生成当前建议的被动截图；`screenNotes:on` 在当前会议打开画面选择器，`screenNotes:off` 清除选择并停止捕获。关闭、换窗口或结束会议后不沿用旧窗口图片。
 - 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；点击教练的设备名打开同声传译设置，候选人与按住说话共用“知了听你说话用”输入；AI 服务页也跳转到此处。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
@@ -110,3 +110,11 @@ swift tools/qwen-realtime-probe.swift AndroidEngineerMockInterview.mp4 --workspa
 - Dock：`dock:<on|off>` 设置是否常驻 Dock；`dockRender:<png>` 导出当前图标；`notesFrame` 可查看当前激活策略。
 
 - 助手浮层：`assistantFloat[:off]` 显示或收起实时回答浮层；`assistantFloatStyle:<字号>,<背景不透明度>`（16–96，0–1）调节并保存外观；`assistantFloatState` 输出可见性、外观、位置、焦点及屏幕共享状态。使用独立 `CICADA_DEBUG_CHANNEL` 实例进行界面自查，避免打断正在录制的开发版。
+
+## 耳机陪读（Mac）
+
+`shadowReading:on|off` 控制独立陪读开关并预热本机 Kokoro；`shadowState` 输出状态、音量和播放位置；`shadowVolume:0...1` 调节并保存陪读音量。不需要候选人麦克风，系统输出需切到耳机。WatchControl 仅在锁定 Assistant 悬浮回答窗口时控制陪读：单击选中并播放下一句、双击选中并播放上一句（一句结束后暂停）、滚轮上下切句并保持暂停，长按播放、松开暂停并保留位置。播放失败后松手重新长按可重试。`shadowSentence:1|-1` 模拟前后切句。`shadowHold:on|off` 可模拟按住/松开，按住需在 500 ms 内续租。陪读不进入虚拟麦克风。设计与验证边界见 `docs/assistant-read-along.md`。
+
+## Apple Watch 模块
+
+独立手表工程与 Mac 接收器位于 `watch/`。`watchState` 查看接收器是否等待悬浮回答，不输出配对令牌；`assistantFloat:on|off` 与 `assistantFloatState` 可配合 `watch/scripts/smoke.py` 验证隔离开发实例的真实 HTTP 控制。配对与构建见 `watch/README.md`。

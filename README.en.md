@@ -1,10 +1,32 @@
 <p align="center">
 
+Assistant also adds full British IPA to numbers such as `2000`, `10%` and `0.1%`. Decimal digits are read individually; IPA is excluded from read-along speech, translation and reading progress.
+
 Cicada stays in the Dock while running, with an orange dot while recording. Right-click to start or stop recording, open Live Notes, Meetings, or Settings. Turn off “Show in Dock” in Settings for menu-bar-only use when other windows are closed.
   <img src="docs/icon.png" width="128" height="128" alt="Cicada icon">
 </p>
 
 <h1 align="center">Cicada · 知了</h1>
+
+On Mac, Interview Coach improves Chinese and English career-move, pay and handover follow-ups, retrieving relevant background and answering with supplied facts instead of missing-record boilerplate.
+
+Mac Assistant includes ActAI follow-up references: SKU improvements use confirmed facts; unverified rehearsal ideas are not presented as personal experience.
+
+On Mac, Interview Coach grounds team size, changing responsibilities and reporting lines in the supplied background. Missing historical organisation details are not estimates; team follow-ups focus on the current question.
+
+Use the speaker button beside the Assistant read-along speed control to adjust volume from 0–100%. Changes apply during playback and are remembered; the original default is 55%.
+
+On Mac, Interview Coach uses the approved five-paragraph English introduction when the interviewer asks for an opening introduction. Explicit requests for a shorter version take priority; follow-ups receive answers to the current question.
+
+On Mac, Live Notes defaults to three quarters of the current display’s usable height. Resize its edges to keep your preferred size.
+
+On Mac, speech model download progress updates on the main actor to prevent the interface from freezing when recording starts.
+
+In the Mac Assistant, choose General, HR, CTO, or CEO interview emphasis. Answers use conversational English, relevant engineering detail and reasonable estimates, with length guided by the question.
+
+On Mac, enable “Read along” in Interview Coach for local Kokoro-82M speech, warmed before playback. Open Cicada’s Assistant floating answer and its standalone Apple Watch app, hold the Watch touchpad to resume, and release to pause at the same audio position. No candidate microphone is required. Off by default; output is restricted to the current system headphones, including AirPods, and never targets the meeting virtual microphone. Headphone disconnection stops playback. First use downloads an isolated runtime and model; answer synthesis stays local. Actual Watch/AirPods stopping latency still needs hands-on validation. Tap once to select and play the next sentence, or twice for the previous sentence; playback pauses after that sentence. Turn the Digital Crown to select a sentence without playing it. Hold to play and release to pause; release and press again to retry after a playback failure. Slide to move the floating window. The receiver is integrated into Cicada; no WatchControl helper or Accessibility permission is needed. See the [Apple Watch module](watch/README.md) for personal development pairing and builds.
+
+Read along fills each word from the actual audio position, with fixed text and vertical following. Click a word to seek; choose 0.75×, 1× or 1.25×. Releasing pauses both audio and color.
 
 On Mac, click the device name beside the interview coach’s microphone switch to open Settings › Interpreting. “Cicada listens through” selects one shared input for candidate speech and hold-to-talk.
 
@@ -40,6 +62,8 @@ Cicada works with whatever is playing on your computer, from Zoom, Teams, and Fe
 The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
 
 On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting.
+
+Chinese translations use smaller text in Assistant (50% of the English size, 11–18 pt) and even smaller text in Floating Answer (10–14 pt, 12 pt by default) to save space.
 
 ## Platforms
 

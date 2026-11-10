@@ -665,9 +665,9 @@
     "question": "You say Debon crashes dropped by about 90 percent. How was that measured and what did you own?",
     "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
     "expected_points": [
-      "保留 helped reduce / roughly one-tenth 的表述",
-      "要求确认基线分母时间窗口版本设备及其他贡献",
-      "不把相对下降 90% 说成绝对崩溃率 0.1% 或独自完成"
+      "纠正旧提问前提：用户已删除德邦崩溃率降低 90% 的说法",
+      "改用已确认的 SDK 加载、异步图片缓存和异常及时上报事实",
+      "不引用 90% 或降至十分之一，也不补造统计口径"
     ]
   },
   {
@@ -732,8 +732,8 @@
     "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
     "expected_points": [
       "Aihuishou 位于 selected projects，不能自动算雇主",
-      "承认重叠并请本人说明项目归属形式",
-      "不编跳槽外包或并行全职经历"
+      "用户已确认：平安好学全职期间，在工作时间之外参与爱回收 Android 兼职咨询；因此日期重叠",
+      "列于 Selected Projects，不属于 Professional Experience 或另一份全职雇佣；不要将兼职解释套用到可之科技"
     ]
   },
   {

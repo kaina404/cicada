@@ -3,6 +3,24 @@ import Testing
 @testable import Cicada
 
 @Suite struct NotesWindowTests {
+    @Test func initialHeightTracksTheDisplayAndPreservesCustomSizes() {
+        for visible in [NSRect(x: 0, y: 57, width: 1512, height: 887),
+                        NSRect(x: -1920, y: 100, width: 1920, height: 1056)] {
+            let frame = NotesWindowController.initialFrame(in: visible)
+            #expect(frame.height == visible.height * 0.75)
+            #expect(frame.midY == visible.midY)
+            #expect(visible.contains(frame))
+            let old = NSRect(x: visible.minX + 20, y: visible.minY + 16,
+                             width: 800, height: visible.height - 32)
+            let migrated = NotesWindowController.initialFrame(in: visible, restoring: old)
+            #expect(migrated.height == visible.height * 0.75)
+            #expect(migrated.maxY == old.maxY)
+            #expect(migrated.width == old.width)
+            let custom = NSRect(x: visible.minX + 80, y: visible.minY + 40, width: 600, height: 300)
+            #expect(NotesWindowController.initialFrame(in: visible, restoring: custom) == custom)
+        }
+    }
+
     @Test func notesWindowStandsBesideOnboardingOnlyWhereItFits() {
         let onboarding = { (screen: NSRect) in
             NSRect(x: screen.midX - 430, y: screen.minY + 12, width: 860, height: 668)
@@ -14,6 +32,7 @@ import Testing
         let big = NSRect(x: 0, y: 0, width: 1920, height: 1055)
         let r = NotesWindowController.beside(onboarding(big), in: big, width: 460, minWidth: 300)
         #expect(r?.width == 460)
+        #expect(r?.height == big.height * 0.75)
         #expect(r.map { !$0.intersects(onboarding(big)) && big.contains($0) } == true)
         // Room only on the left (the window pushed right): narrower, still clear.
         let pushed = NSRect(x: 1600 - 860, y: 12, width: 860, height: 668)

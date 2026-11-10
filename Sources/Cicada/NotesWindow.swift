@@ -51,6 +51,7 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
         if panel == nil {
             let p = NotesPanel(contentRect: defaultFrame(), styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView, .nonactivatingPanel],
                             backing: .buffered, defer: false)
+            p.identifier = NSUserInterfaceItemIdentifier("cicada.notes")
             p.titleVisibility = .hidden
             p.titlebarAppearsTransparent = true
             p.isMovableByWindowBackground = true
@@ -75,6 +76,13 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
                 setWidth: { [weak self] w, h in self?.resize(width: w, height: h) }))
             p.setFrameAutosaveName(Self.autosave)
             if !p.setFrameUsingName(Self.autosave) { p.setFrame(defaultFrame(), display: false) }
+            // Apply the smaller default to existing tall windows once, then keep remembering
+            // deliberate user resizing, including a taller window.
+            if !UserDefaults.standard.bool(forKey: "notesThreeQuarterHeightApplied"),
+               let screen = p.screen ?? NSScreen.main {
+                p.setFrame(Self.initialFrame(in: screen.visibleFrame, restoring: p.frame), display: false)
+                UserDefaults.standard.set(true, forKey: "notesThreeQuarterHeightApplied")
+            }
             panel = p
         }
         if !keepClear() && !asked { return }
@@ -143,11 +151,11 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
     }
 
     /// The panel beside `window` within `visible`: right of it, else left, a gap away and as tall
-    /// as the screen allows, no wider than `width`; nil when neither side has `minWidth`.
+    /// as the default panel, no wider than `width`; nil when neither side has `minWidth`.
     nonisolated static func beside(_ window: NSRect, in visible: NSRect, width: CGFloat, minWidth: CGFloat) -> NSRect? {
         let gap: CGFloat = 12
         let right = visible.maxX - window.maxX - 2 * gap, left = window.minX - visible.minX - 2 * gap
-        let y = visible.minY + gap, h = visible.height - 2 * gap
+        let h = visible.height * 0.75, y = visible.midY - h / 2
         if right >= minWidth {
             let w = min(width, right)
             return NSRect(x: visible.maxX - gap - w, y: y, width: w, height: h)
@@ -197,10 +205,25 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
     /// 录屏时可见, and the debug command that flips it for one screenshot without saving it.
     func setCapturable(_ on: Bool) { panel?.sharingType = on ? .readOnly : .none }
 
-    /// The sidebar: docked to the right edge, nearly full height.
+    /// Leave room around the meeting instead of filling the screen vertically.
     private func defaultFrame() -> NSRect {
         let v = (NSScreen.main ?? NSScreen.screens[0]).visibleFrame
-        return NSRect(x: v.maxX - 460 - 16, y: v.minY + 16, width: 460, height: v.height - 32)
+        return Self.initialFrame(in: v)
+    }
+
+    nonisolated static func initialFrame(in visible: NSRect, restoring saved: NSRect? = nil) -> NSRect {
+        let height = visible.height * 0.75
+        if var saved {
+            // Keep the user's width and top edge when reducing an old tall window.
+            if saved.height > height {
+                saved.origin.y = saved.maxY - height
+                saved.size.height = height
+            }
+            return saved
+        }
+        let width = min(460, max(0, visible.width - 32))
+        return NSRect(x: visible.maxX - width - 16, y: visible.midY - height / 2,
+                      width: width, height: height)
     }
 }
 
@@ -270,7 +293,7 @@ struct NotesWindowView: View {
                         if live { liveAsks.padding(.horizontal, 24).padding(.bottom, 4) }
                         if live { ScreenStrip(screen: model.screen).padding(.horizontal, 24).padding(.bottom, 8) }
                         if live && geo.size.width < 760 {
-                            CandidateFeed(engine: model.candidate, settings: settings,
+                            CandidateFeed(engine: model.candidate, settings: settings, shadowReader: model.shadowReader,
                                         compactHeight: min(250, max(120, geo.size.height * 0.3)),
                                         microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
                                         onMicrophoneSettings: { model.openSettings(.speak) },
@@ -286,7 +309,7 @@ struct NotesWindowView: View {
                                 transcript.padding(.horizontal, 20).padding(.top, 12).frame(maxWidth: .infinity)
                                 if live {
                                     Divider()
-                                    CandidateFeed(engine: model.candidate, settings: settings, expanded: true,
+                                    CandidateFeed(engine: model.candidate, settings: settings, shadowReader: model.shadowReader, expanded: true,
                                                   microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
                                         onMicrophoneSettings: { model.openSettings(.speak) },
                                         onFloat: { model.assistantWindow.show() })

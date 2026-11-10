@@ -29,6 +29,7 @@ final class InterviewCoach: ObservableObject {
     private var task: Task<Void, Never>?
     private var prepare: (() async -> Bool)?
     private let stream: Stream
+    var stage: InterviewStage = .general
     private var background = ""
     private var turns: [CoachTurn] = []
     private var seen: [String: String] = [:]
@@ -243,7 +244,7 @@ final class InterviewCoach: ObservableObject {
         }).sorted { $0.seconds < $1.seconds }
     }
     private func review() {
-        let messages = CoachPrompt.reviewRequest(turns: evidence, background: background, frames: frames, script: script)
+        let messages = CoachPrompt.reviewRequest(turns: evidence, background: background, frames: frames, script: script, stage: stage)
         let token = revision, input = interviewerRevision
         let committed = script.committed, cursor = script.cursor
         let started = Date()
@@ -283,7 +284,7 @@ final class InterviewCoach: ObservableObject {
                     }
                     self.raw = update.answer
                     self.current?.output = CoachOutput(update.answer)
-                    self.current?.output.next = CoachPronunciation.annotate(CoachOutput(update.answer).next)
+                    self.current?.output.next = self.spokenAnswer(update.answer, finished: false)
                     self.publish()
                 }
                 guard !Task.isCancelled, self.revision == token else { return }
@@ -299,7 +300,7 @@ final class InterviewCoach: ObservableObject {
                         self.dirty = true; self.due = self.clock; self.emit("reviewSuperseded"); return
                     }
                     self.current?.output = CoachOutput(update.answer)
-                    self.current?.output.next = CoachPronunciation.annotate(CoachOutput(update.answer).next, finished: true)
+                    self.current?.output.next = self.spokenAnswer(update.answer, finished: true)
                     self.publish(); self.finish(interrupted: false)
                     self.onEvent?(CoachEvent(kind: "latency", seconds: self.clock, answerID: self.script.answerID,
                         firstToken: self.firstLatency, firstSentence: self.firstSentenceLatency,
@@ -322,7 +323,7 @@ final class InterviewCoach: ObservableObject {
         dirty = false; publishedCurrentAnswer = false
         onWillGenerate?()
         let token = revision
-        let messages = CoachPrompt.request(turns: evidence, background: background, frames: frames, audio: nil, committed: script.spokenText, refresh: refresh)
+        let messages = CoachPrompt.request(turns: evidence, background: background, frames: frames, audio: nil, committed: script.spokenText, refresh: refresh, stage: stage)
         snapshotIDs = Set(script.committed.map(\.id))
         speculative = speculate; finishedSpeculation = false
         firstLatency = nil; firstSentenceLatency = nil
@@ -352,15 +353,15 @@ final class InterviewCoach: ObservableObject {
                     self.raw += piece
                     self.current?.output = CoachOutput(self.raw)
                     if let answer = self.current?.output.next {
-                        self.current?.output.next = CoachPronunciation.annotate(answer)
+                        self.current?.output.next = self.spokenAnswer(answer, finished: false)
                     }
                     if !self.speculative { self.publish() }
                 }
                 guard !Task.isCancelled, self.revision == token else { return }
-                guard !CoachOutput(self.raw).next.isEmpty else { throw URLError(.cannotParseResponse) }
+                guard !self.spokenAnswer(self.raw, finished: true).isEmpty else { throw URLError(.cannotParseResponse) }
                 if self.current != nil {
                     self.current?.output = CoachOutput(self.raw)
-                    self.current?.output.next = CoachPronunciation.annotate(CoachOutput(self.raw).next, finished: true)
+                    self.current?.output.next = self.spokenAnswer(self.raw, finished: true)
                     if !self.speculative { self.publish() }
                 }
                 if self.speculative { self.finishedSpeculation = true }
@@ -376,6 +377,11 @@ final class InterviewCoach: ObservableObject {
                 debugLog("coach: answer inference failed (\((error as NSError).code))")
             }
         }
+    }
+    private func spokenAnswer(_ raw: String, finished: Bool) -> String {
+        let answer = CoachOutput(raw).next
+        let text = stage == .hr ? CoachHRAnswer.clean(answer, finished: finished) : answer
+        return CoachPronunciation.annotate(text, finished: finished)
     }
     private func publish() {
         guard let current else { return }

@@ -30,8 +30,9 @@ struct InterviewCoachSettingsView: View {
                         }.disabled(deepSeekKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     Toggle("面试教练", isOn: $settings.continuousAssistant)
+                    Toggle("陪读", isOn: $settings.shadowReading)
                     Button("候选人麦克风") { model.openSettings(.speak) }
-                    Text("电脑声音是面试官，麦克风是候选人；教练只显示文字")
+                    Text("Kokoro 本机合成，按住手表播放，松开暂停")
                         .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                     HStack {
                         Button("检查本机模型") { test() }.disabled(testing)

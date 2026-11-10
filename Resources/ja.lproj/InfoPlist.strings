@@ -3,4 +3,5 @@ CFBundleDisplayName = "Cicada";
 NSAudioCaptureUsageDescription = "ライブ字幕を作るため、Cicada は Mac で再生中の音声を読み取ります。";
 NSMicrophoneUsageDescription = "話すキーを押している間、Cicada はマイクを使ってあなたの言葉を相手の言語に翻訳します。会議室を聞くときは、マイクでその場の人の声を聞きます。";
 NSSpeechRecognitionUsageDescription = "Cicada は音声をテキストにするために音声認識を使います。";
-NSLocalNetworkUsageDescription = "AI サービスに設定したローカルネットワーク上のサーバーに接続するためだけに使います。Cicada がほかのデバイスを探したり接続したりすることはありません。";
+NSLocalNetworkUsageDescription = "Cicada はローカル AI サーバーに接続し、ペアリングした Apple Watch からフローティング回答の操作を受信します。";
+NSBluetoothAlwaysUsageDescription = "ローカルネットワークが使えないとき、Cicada はペアリングした Apple Watch から Bluetooth で操作を受信します。";

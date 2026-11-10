@@ -11,6 +11,7 @@ Cicada (知了): live translated subtitles, bilingual meeting records and transl
 
 ## Hard rules
 
+- Git 推送仅限 `kaina404` 名下的开发仓库；本项目仅允许 `kaina404/cicada`。禁止推送上游 `wquguru/cicada`（任何分支或标签）。每次推送前核对全部实际 push URL，不凭 remote 名称判断；目标不符则停止。
 - AI keys live only in 0600 files (`AIKey`): never UserDefaults, logs or exports.
 - DeepSeek Flash answers/reviews; Gemma tracks reading. Cloud AI uses `LingClient` (rate gate, priorities, `thinking: disabled`, content in the system message). Partial text is translated by Google, never Ling.
 - Never speak untranslated text into the room. Never bundle the GPL BlackHole driver; download it and check its pinned SHA-256.
@@ -38,11 +39,11 @@ Cicada (知了): live translated subtitles, bilingual meeting records and transl
 ## Commands
 
 ```bash
-scripts/test.sh                        # AGENTS.md check + unit tests
-scripts/build.sh && open build/Cicada.app   # dev build: own bundle id, settings, log
+scripts/test.sh                        # checks + tests
+scripts/build.sh && open build/Cicada.app   # isolated dev build
 RELEASE=1 scripts/build.sh             # release build
 scripts/package.sh                     # DMG + zip + checksums
-scripts/release.sh <x.y.z>             # whole flow (verify, draft, retest, publish): .claude/skills/release
+scripts/release.sh <x.y.z>             # .claude/skills/release
 scripts/deploy-site.sh                 # build and deploy the site (cicada.indaloop.app)
 ```
 
@@ -52,13 +53,13 @@ scripts/deploy-site.sh                 # build and deploy the site (cicada.indal
 
 - Run the app and check the behaviour, not just the build; check the English UI too.
 - Drive the dev build with `tools/lsctl` (commands and testing tips in `tools/README.md`; the source of truth is `AppModel.debugCommand`). Use `afplay Resources/sample/sample.m4a` or `say -o` clips as input and read `/tmp/livesubs-dev-debug.log`.
-- Real sound (room mic, 同声传译): `.claude/skills/audio-test`. A real voice, the BlackHole install, Input Monitoring and a Mac without permissions need a person.
+- Real sound: `.claude/skills/audio-test`. Real voice, BlackHole install, Input Monitoring and missing Mac permissions need a person.
 
 ## Conventions
 
-- Match naming and comment density; comments explain why.
-- Commits are English Conventional Commits (`feat:` `fix:` `docs:` `build:` `refactor:` `test:` `chore:`). `feat:` and `fix:` subjects are the release notes (`scripts/changelog.py`), one line each linked to the commit: say what the user gets in one plain sentence, one change per commit. The scope picks the platform: `(windows)` `(android)` `(linux)` `(site)`, anything else is Mac.
+- Match naming/comments; explain why.
+- English Conventional Commits: `feat:` `fix:` `docs:` `build:` `refactor:` `test:` `chore:`. `feat:`/`fix:` subjects become linked release notes (`scripts/changelog.py`): one plain user benefit per commit. Scopes: `(windows)` `(android)` `(linux)` `(site)`; others mean Mac.
 - Release notes have no Chinese but the brand: name UI in English (Listen to › Room).
 - Every user-visible change also gets a Chinese item in `site/changelog.json`, the website's changelog; keep `README.md` (Chinese, default) and `README.{en,ja,ko}.md` in step.
 - One semver version for every platform, in `VERSION`; every build reads it. Patch for fixes only, minor for features, major only when users of any platform must grant permissions again. Current releases cover Mac only.
-- Keep these sections under 6 KB (`scripts/check-agents.py`: tests, CI, pre-commit). Details in code comments.
+- Under 6 KB (`scripts/check-agents.py`: tests, CI, pre-commit). Details in code comments.
