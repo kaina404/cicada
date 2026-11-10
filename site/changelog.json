@@ -7,6 +7,12 @@
     "image": null,
     "items": [
       {
+        "kind": "improved",
+        "platforms": ["mac"],
+        "title": "面试资料统一放在一个文件夹。",
+        "text": "简历、求职需求、历史公司、项目、预制回答和目标公司各写一份 Markdown，在面试教练设置里打开文件夹维护；每次整份交给 AI，回答优先依据资料，可用常识自然展开。"
+      },
+      {
         "kind": "fix",
         "platforms": ["mac"],
         "title": "面试追问更直接地使用已知背景。",

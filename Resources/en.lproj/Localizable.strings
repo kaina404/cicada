@@ -315,6 +315,8 @@
 "关闭麦克风" = "Turn off mic";
 "打开麦克风" = "Turn on mic";
 "已经说出" = "Already spoken";
+"播放速度" = "Playback speed";
+"陪读音量" = "Read-along volume";
 
 /* CloudHearing */
 "key 已失效，到设置 › AI 服务里重填" = "The key stopped working. Enter a new one in Settings › AI Service";
@@ -418,7 +420,6 @@
 "找不到原文件，没法播放" = "Can't find the original file to play";
 "暂停" = "Pause";
 "播放" = "Play";
-"播放速度" = "Playback speed";
 "松开，开始转写" = "Drop to transcribe";
 "录音或视频，一次可放多个" = "Recordings or videos, several at once";
 
@@ -770,6 +771,7 @@
 /* RealtimeSettings */
 "DeepSeek 处理原文和截图，Gemma 在本机跟读" = "DeepSeek processes transcripts and screenshots; Gemma tracks reading on this Mac";
 "Kokoro 本机合成，按住手表播放，松开暂停" = "Local Kokoro speech. Hold Watch to play; release to pause.";
+"简历、项目、预制回答和目标公司，开始听时重新读取" = "Résumé, projects, prepared answers and target company; reread when listening starts";
 "候选人麦克风" = "Candidate microphone";
 "已保存 DeepSeek key" = "DeepSeek key saved";
 "保存" = "Save";
@@ -778,9 +780,9 @@
 "安装语音检测" = "Set up speech detection";
 "本机未安装 mlx-vlm" = "mlx-vlm is not installed";
 "正在准备语音检测…" = "Preparing speech detection…";
-"应聘者背景" = "Candidate background";
-"从文件导入" = "Import from file";
-"背景保存失败" = "Could not save background";
+"面试资料" = "Interview material";
+"打开资料文件夹" = "Open Folder";
+"资料文件夹创建失败" = "Couldn't create the folder";
 "语音检测已就绪" = "Speech detection is ready";
 "语音检测安装失败，请重试" = "Speech detection setup failed. Please retry.";
 "本机模型已就绪" = "Local model ready";
@@ -1335,5 +1337,3 @@
 
 /* Only the ports: Android */
 "导入录音或视频" = "Import a Recording or Video";
-
-"陪读音量" = "Read-along volume";
