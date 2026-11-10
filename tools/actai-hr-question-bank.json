@@ -1,0 +1,860 @@
+[
+ {
+  "id": "B01",
+  "group": "基准10题",
+  "source": "10题①",
+  "question": "Why are you exploring new opportunities?",
+  "must_any": [
+   "KKday"
+  ]
+ },
+ {
+  "id": "B02",
+  "group": "基准10题",
+  "source": "10题①",
+  "question": "Why do you want to join ActAI specifically?",
+  "must_any": [
+   "Cabinet",
+   "communication"
+  ]
+ },
+ {
+  "id": "B03",
+  "group": "基准10题",
+  "source": "10题②",
+  "question": "Why did you leave your last three companies?",
+  "must_any": [
+   "own decision",
+   "my choice"
+  ],
+  "ref": "followup:1"
+ },
+ {
+  "id": "B04",
+  "group": "基准10题",
+  "source": "10题③",
+  "question": "What people or working styles do you dislike working with, especially in your most recent role?",
+  "must_any": [
+   "sample data",
+   "tell"
+  ]
+ },
+ {
+  "id": "B05",
+  "group": "基准10题",
+  "source": "10题③",
+  "question": "What kind of manager do you work best with?"
+ },
+ {
+  "id": "B06",
+  "group": "基准10题",
+  "source": "10题④",
+  "question": "What are your strengths and weaknesses?",
+  "must_any": [
+   "model"
+  ]
+ },
+ {
+  "id": "B07",
+  "group": "基准10题",
+  "source": "10题⑤ Head",
+  "question": "What do you understand about the product we're building, and what would you still need to learn?",
+  "must_any": [
+   "communication",
+   "coordinat"
+  ]
+ },
+ {
+  "id": "B08",
+  "group": "基准10题",
+  "source": "10题⑥ Hustle",
+  "question": "How do you feel about work-life balance? What if priorities change halfway through a sprint?",
+  "must_any": [
+   "launch",
+   "sprint"
+  ]
+ },
+ {
+  "id": "B09",
+  "group": "基准10题",
+  "source": "10题⑦ 7H",
+  "question": "We look for 7H: head, hands, hustle, humility, heart, hunger and habits. Which one describes you best? Give an example."
+ },
+ {
+  "id": "B10",
+  "group": "基准10题",
+  "source": "10题⑧",
+  "question": "If you work remotely, how do you keep yourself accountable daily and weekly? What is on your personal scoreboard?",
+  "must_any": [
+   "week"
+  ]
+ },
+ {
+  "id": "B11",
+  "group": "基准10题",
+  "source": "10题⑨",
+  "question": "Would you deliver bad news to your team early or later?",
+  "must_any": [
+   "early",
+   "Early"
+  ]
+ },
+ {
+  "id": "B12",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What are your salary expectations?",
+  "must_any": [
+   "range",
+   "base"
+  ]
+ },
+ {
+  "id": "B13",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What is your current or previous compensation?",
+  "must_any": [
+   "26,000"
+  ]
+ },
+ {
+  "id": "B14",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What's your minimum?"
+ },
+ {
+  "id": "B15",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "When can you start?"
+ },
+ {
+  "id": "B16",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "Can you work with an international team in English?"
+ },
+ {
+  "id": "F01",
+  "group": "资料补充题",
+  "source": "手册Q1/框架A1",
+  "question": "Tell me about yourself.",
+  "must_any": [
+   "Jianhui"
+  ]
+ },
+ {
+  "id": "F02",
+  "group": "资料补充题",
+  "source": "框架A2",
+  "question": "Could you walk me through your career timeline and current employment status?",
+  "must_any": [
+   "2026"
+  ]
+ },
+ {
+  "id": "F03",
+  "group": "资料补充题",
+  "source": "框架A3",
+  "question": "What is the most important career decision you have made, and why?"
+ },
+ {
+  "id": "F04",
+  "group": "资料补充题",
+  "source": "框架A4",
+  "question": "How would you describe your contribution to someone without an engineering background?"
+ },
+ {
+  "id": "F05",
+  "group": "资料补充题",
+  "source": "反馈第六份/杂乱4.14",
+  "question": "What motivates you?",
+  "tags": [
+   "sku"
+  ]
+ },
+ {
+  "id": "F06",
+  "group": "资料补充题",
+  "source": "手册Q4/杂乱4.16",
+  "question": "Why an AI assistant rather than a traditional Android role?"
+ },
+ {
+  "id": "F07",
+  "group": "资料补充题",
+  "source": "框架B3",
+  "question": "Why an Android engineering role when you also have agent and RAG experience?",
+  "must_any": [
+   "same time",
+   "both"
+  ]
+ },
+ {
+  "id": "F08",
+  "group": "资料补充题",
+  "source": "手册Q5/杂乱4.8",
+  "question": "What attracts you to an early-stage product?"
+ },
+ {
+  "id": "F09",
+  "group": "资料补充题",
+  "source": "手册Q6/杂乱4.13",
+  "question": "Why should we hire you instead of someone with more recent AI experience?"
+ },
+ {
+  "id": "F10",
+  "group": "资料补充题",
+  "source": "手册Q7/框架K4",
+  "question": "Where do you see yourself in three to five years?"
+ },
+ {
+  "id": "F11",
+  "group": "资料补充题",
+  "source": "框架B2",
+  "question": "What are you looking for in your next role, and what would be a deal-breaker?"
+ },
+ {
+  "id": "F12",
+  "group": "资料补充题",
+  "source": "框架B4",
+  "question": "What would make you stay with your next team for several years?"
+ },
+ {
+  "id": "F13",
+  "group": "资料补充题",
+  "source": "手册Q20/杂乱4.19",
+  "question": "Would you leave quickly if another company offered you more money?"
+ },
+ {
+  "id": "F14",
+  "group": "资料补充题",
+  "source": "手册Q19/杂乱4.18",
+  "question": "What would make you reject an offer?"
+ },
+ {
+  "id": "F15",
+  "group": "资料补充题",
+  "source": "框架C2",
+  "question": "Who do you think would use this product, and what problem would it solve for them?"
+ },
+ {
+  "id": "F16",
+  "group": "资料补充题",
+  "source": "框架C3",
+  "question": "How would you explain the idea of 'Cursor for everyone' in practical user terms?"
+ },
+ {
+  "id": "F17",
+  "group": "资料补充题",
+  "source": "框架C4",
+  "question": "What would you want to learn about our product before deciding to join?"
+ },
+ {
+  "id": "F18",
+  "group": "资料补充题",
+  "source": "手册§4",
+  "question": "Your recent roles were shorter. How long have you stayed with one organization?",
+  "must_any": [
+   "six years"
+  ]
+ },
+ {
+  "id": "F19",
+  "group": "资料补充题",
+  "source": "手册§4",
+  "question": "How large was your KKday team, and how was your performance rated?",
+  "must_any": [
+   "30%"
+  ]
+ },
+ {
+  "id": "F20",
+  "group": "资料补充题",
+  "source": "手册§4",
+  "question": "Why did you move from securities to education, from Debon to Kezhi?"
+ },
+ {
+  "id": "F21",
+  "group": "资料补充题",
+  "source": "框架E2",
+  "question": "How did you handle the transition after your role was affected by the layoff?"
+ },
+ {
+  "id": "F22",
+  "group": "资料补充题",
+  "source": "框架E3",
+  "question": "What did those transitions teach you about choosing your next team?"
+ },
+ {
+  "id": "F23",
+  "group": "资料补充题",
+  "source": "框架E4",
+  "question": "Is there anything in your timeline or references that you'd like to clarify?"
+ },
+ {
+  "id": "F24",
+  "group": "资料补充题",
+  "source": "框架D2",
+  "question": "How has your agent or RAG work changed the way you build mobile experiences?"
+ },
+ {
+  "id": "F25",
+  "group": "资料补充题",
+  "source": "框架D3",
+  "question": "What would you need to learn to become effective in this role?"
+ },
+ {
+  "id": "F26",
+  "group": "资料补充题",
+  "source": "框架F1",
+  "question": "Tell me about a project you owned from an unclear problem through delivery."
+ },
+ {
+  "id": "F27",
+  "group": "资料补充题",
+  "source": "框架F2",
+  "question": "Which achievement are you most proud of, and how did you measure its impact?",
+  "tags": [
+   "sku"
+  ]
+ },
+ {
+  "id": "F28",
+  "group": "资料补充题",
+  "source": "框架F3",
+  "question": "Tell me about a time you solved a problem outside your formal responsibilities."
+ },
+ {
+  "id": "F29",
+  "group": "资料补充题",
+  "source": "框架F4",
+  "question": "Tell me about a project that did not achieve the result you expected."
+ },
+ {
+  "id": "F30",
+  "group": "资料补充题",
+  "source": "手册§5",
+  "question": "Tell me about a time you had to move fast.",
+  "must_any": [
+   "four weeks"
+  ]
+ },
+ {
+  "id": "F31",
+  "group": "资料补充题",
+  "source": "手册§5",
+  "question": "What would you do if you couldn't stop feature work to fix reliability?",
+  "tags": [
+   "crash"
+  ]
+ },
+ {
+  "id": "F32",
+  "group": "资料补充题",
+  "source": "框架G2",
+  "question": "How do you handle a short period of intense work before a critical launch?"
+ },
+ {
+  "id": "F33",
+  "group": "资料补充题",
+  "source": "框架G3",
+  "question": "How would you respond if a founder changed direction after two weeks of your work?"
+ },
+ {
+  "id": "F34",
+  "group": "资料补充题",
+  "source": "框架G4",
+  "question": "Tell me about a time you chose a simpler solution to ship sooner."
+ },
+ {
+  "id": "F35",
+  "group": "资料补充题",
+  "source": "框架H2",
+  "question": "Tell me about a mistake you made that affected other people."
+ },
+ {
+  "id": "F36",
+  "group": "资料补充题",
+  "source": "框架H3",
+  "question": "What would you do if a stakeholder asked you to present an uncertain result as a confirmed improvement?"
+ },
+ {
+  "id": "F37",
+  "group": "资料补充题",
+  "source": "框架H4",
+  "question": "Tell me about a time you changed your mind after receiving new evidence."
+ },
+ {
+  "id": "F38",
+  "group": "资料补充题",
+  "source": "框架I1",
+  "question": "Tell me about a disagreement with a manager, product partner or engineer."
+ },
+ {
+  "id": "F39",
+  "group": "资料补充题",
+  "source": "手册§5",
+  "question": "How did you handle coordination between the backend and the app at KKday?"
+ },
+ {
+  "id": "F40",
+  "group": "资料补充题",
+  "source": "框架I4",
+  "question": "Tell me about a time you helped a teammate who was struggling."
+ },
+ {
+  "id": "F41",
+  "group": "资料补充题",
+  "source": "反馈第七份",
+  "question": "What kind of environment would make it hard for you to perform?"
+ },
+ {
+  "id": "F42",
+  "group": "资料补充题",
+  "source": "框架J2",
+  "question": "Tell me about a time asynchronous communication prevented or caused a problem."
+ },
+ {
+  "id": "F43",
+  "group": "资料补充题",
+  "source": "框架J3",
+  "question": "How would you work with a team spread across several time zones?"
+ },
+ {
+  "id": "F44",
+  "group": "资料补充题",
+  "source": "框架J4",
+  "question": "How do you handle a discussion in English when you don't fully understand a requirement or you disagree with it?"
+ },
+ {
+  "id": "F45",
+  "group": "资料补充题",
+  "source": "反馈第五份",
+  "question": "Do you do a weekly review? Give me an example of how it changed your approach."
+ },
+ {
+  "id": "F46",
+  "group": "资料补充题",
+  "source": "框架K1",
+  "question": "What is the most useful critical feedback you have received?"
+ },
+ {
+  "id": "F47",
+  "group": "资料补充题",
+  "source": "框架K2/反馈第八份",
+  "question": "Tell me about something difficult you learned recently and applied in practice."
+ },
+ {
+  "id": "F48",
+  "group": "资料补充题",
+  "source": "框架L1",
+  "question": "Tell me about a time user feedback changed your engineering priorities."
+ },
+ {
+  "id": "F49",
+  "group": "资料补充题",
+  "source": "框架L2",
+  "question": "How do you decide when AI is useful and when a simpler approach is better?"
+ },
+ {
+  "id": "F50",
+  "group": "资料补充题",
+  "source": "框架L3",
+  "question": "How do you use AI coding tools while staying accountable for what you ship?",
+  "must_any": [
+   "review",
+   "test"
+  ]
+ },
+ {
+  "id": "F51",
+  "group": "资料补充题",
+  "source": "框架L4",
+  "question": "Imagine an AI communication feature gives a misleading answer or captures audio unexpectedly. What would you do?"
+ },
+ {
+  "id": "F52",
+  "group": "资料补充题",
+  "source": "框架M4",
+  "question": "Are you in other interview processes, and what is your decision timeline?",
+  "must_any": [
+   "four"
+  ]
+ },
+ {
+  "id": "F53",
+  "group": "资料补充题",
+  "source": "框架M条件",
+  "question": "How would you evaluate a counteroffer?"
+ },
+ {
+  "id": "F54",
+  "group": "资料补充题",
+  "source": "框架M条件",
+  "question": "Do you have any conflicts of interest or outside commitments relevant to this role?",
+  "must_any": [
+   "Cabinet"
+  ]
+ },
+ {
+  "id": "F55",
+  "group": "资料补充题",
+  "source": "框架M3",
+  "question": "Is there any work authorization or sponsorship requirement we should plan for?"
+ },
+ {
+  "id": "F56",
+  "group": "资料补充题",
+  "source": "手册Q18/框架N2",
+  "question": "Do you have any concerns about the role?"
+ },
+ {
+  "id": "F57",
+  "group": "资料补充题",
+  "source": "手册Q21",
+  "question": "Is there anything else you'd like to add?"
+ },
+ {
+  "id": "F58",
+  "group": "资料补充题",
+  "source": "框架N3",
+  "question": "What would you want us to remember about you after this conversation?"
+ },
+ {
+  "id": "F59",
+  "group": "资料补充题",
+  "source": "框架N4",
+  "question": "Is there anything we haven't covered that would help us evaluate your fit fairly?"
+ },
+ {
+  "id": "F60",
+  "group": "资料补充题",
+  "source": "框架N1",
+  "question": "What questions do you have for me?"
+ },
+ {
+  "id": "N01",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Two of your roles ended in layoffs. Why do you think you were the one affected?",
+  "must_any": [
+   "longer"
+  ],
+  "ref": "followup:1"
+ },
+ {
+  "id": "N02",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Why didn't you stay and help Kezhi recover?",
+  "must_any": [
+   "core team"
+  ],
+  "ref": "followup:1b"
+ },
+ {
+  "id": "N03",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Did you get severance from KKday? How much?",
+  "must_any": [
+   "four months"
+  ],
+  "ref": "followup:1c"
+ },
+ {
+  "id": "N04",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "After those layoffs, why would you join an early-stage startup that may pivot or fail?",
+  "must_any": [
+   "funded",
+   "core"
+  ],
+  "ref": "followup:2"
+ },
+ {
+  "id": "N05",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "What have you been doing since August?",
+  "must_any": [
+   "September",
+   "four companies"
+  ],
+  "ref": "followup:3"
+ },
+ {
+  "id": "N06",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "What's your decision timeline? Is there a deadline we should know about?",
+  "must_any": [
+   "few weeks"
+  ],
+  "ref": "followup:3b"
+ },
+ {
+  "id": "N07",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Your title went from Senior Architect to Full-Stack Engineer. Is that a step down?",
+  "must_any": [
+   "Titles"
+  ],
+  "ref": "followup:4"
+ },
+ {
+  "id": "N08",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Are you more of an architect or a hands-on engineer? How much did you actually code?",
+  "must_any": [
+   "30%"
+  ],
+  "ref": "followup:4b"
+ },
+ {
+  "id": "N09",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "At Kezhi, did you switch from Android to RAG? Why come back to Android now?",
+  "must_any": [
+   "same time"
+  ],
+  "ref": "followup:5"
+ },
+ {
+  "id": "N10",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "You were top 30%. What would it have taken to be top 10%?",
+  "must_any": [
+   "track record"
+  ],
+  "ref": "followup:6"
+ },
+ {
+  "id": "N11",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Is CabinetAI a business? Will you keep working on it if you join?",
+  "must_any": [
+   "stop"
+  ],
+  "ref": "followup:7"
+ },
+ {
+  "id": "N12",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Why is CabinetAI on iOS? Is there an Android version?",
+  "must_any": [
+   "Android version"
+  ],
+  "ref": "followup:7b"
+ },
+ {
+  "id": "N13",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "When did you last ship production Kotlin? Have you used Jetpack Compose?",
+  "must_any": [
+   "Compose"
+  ],
+  "ref": "followup:8"
+ },
+ {
+  "id": "N14",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Which recent Android project best shows what you could contribute here?",
+  "must_any": [
+   "300"
+  ],
+  "ref": "followup:9",
+  "tags": [
+   "sku"
+  ]
+ },
+ {
+  "id": "N15",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Do you have any experience with voice on Android?",
+  "must_any": [
+   "ElevenLabs"
+  ],
+  "ref": "followup:10"
+ },
+ {
+  "id": "N16",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Have you shipped apps for global users or on Google Play?",
+  "must_any": [
+   "Google Play"
+  ],
+  "ref": "followup:11"
+ },
+ {
+  "id": "N17",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Which AI products do you use every day, and what frustrates you about them?",
+  "must_any": [
+   "context"
+  ],
+  "ref": "followup:12"
+ },
+ {
+  "id": "N18",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "So should an assistant just do everything on its own?",
+  "must_any": [
+   "approve"
+  ]
+ },
+ {
+  "id": "N19",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "What do you think of Meta AI in WhatsApp or Gemini in Messages? Why would people switch to ActAI?",
+  "must_any": [
+   "WhatsApp"
+  ],
+  "ref": "followup:13"
+ },
+ {
+  "id": "N20",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "How would you know if that kind of assistant is actually working?",
+  "must_any": [
+   "correct"
+  ]
+ },
+ {
+  "id": "N21",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "An assistant that reads people's chats. How do you think about privacy and trust?",
+  "must_any": [
+   "consent",
+   "control"
+  ],
+  "ref": "followup:14"
+ },
+ {
+  "id": "N22",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Why not a big company like ByteDance or Alibaba?",
+  "must_any": [
+   "startup"
+  ],
+  "ref": "followup:15"
+ },
+ {
+  "id": "N23",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "There may be no QA or release engineer here. Are you OK owning testing and releases?",
+  "must_any": [
+   "only Android engineer"
+  ],
+  "ref": "followup:16"
+ },
+ {
+  "id": "N24",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Have you interviewed or hired engineers before?",
+  "must_any": [
+   "Kezhi"
+  ],
+  "ref": "followup:17"
+ },
+ {
+  "id": "N25",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "What would your last manager say is your biggest weakness?",
+  "must_any": [
+   "scope"
+  ],
+  "ref": "followup:18"
+ },
+ {
+  "id": "N26",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "So in a fast startup, would you skip architecture work?",
+  "must_any": [
+   "separate"
+  ]
+ },
+ {
+  "id": "N27",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Can we speak to your references?",
+  "must_any": [
+   "team lead"
+  ],
+  "ref": "followup:19"
+ },
+ {
+  "id": "N28",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Where are you based? Would you relocate to Beijing?",
+  "must_any": [
+   "remote",
+   "Beijing"
+  ],
+  "ref": "followup:20"
+ },
+ {
+  "id": "N29",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Would you be open to occasional travel?",
+  "must_any": [
+   "month or two"
+  ],
+  "ref": "followup:21"
+ },
+ {
+  "id": "N30",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Do you have a non-compete agreement?",
+  "must_any": [
+   "non-compete"
+  ],
+  "ref": "followup:22"
+ },
+ {
+  "id": "N31",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "Can you explain something technical you built, in simple English?",
+  "ref": "followup:23"
+ },
+ {
+  "id": "N32",
+  "group": "预测新增题",
+  "source": "今日定稿",
+  "question": "How do you keep an app stable in production? Have you worked on crashes?",
+  "must_any": [
+   "Debon"
+  ],
+  "tags": [
+   "crash"
+  ]
+ }
+]
