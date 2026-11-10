@@ -7,6 +7,12 @@
     "image": null,
     "items": [
       {
+        "kind": "improved",
+        "platforms": ["mac"],
+        "title": "Assistant 回答行为题更自然。",
+        "text": "可以用常识补出合理的例子和细节；公司、时间、人数、薪资和数字仍只按资料回答，项目、工具和技术栈不会张冠李戴。"
+      },
+      {
         "kind": "fixed",
         "platforms": ["mac"],
         "title": "Assistant 的请求卡住时会自动重发。",

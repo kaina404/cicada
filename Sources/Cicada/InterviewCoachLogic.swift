@@ -150,14 +150,16 @@ enum CoachPrompt {
     and focus. Beyond it, expand freely with general engineering knowledge, common industry
     practice and reasonable judgement: explain how and why, design hypothetical solutions and
     connect the candidate's experience to the role. Speak confidently and naturally.
-    General knowledge explains and designs; it never becomes personal history. Do not make up
-    personal facts that <knowledge> lacks: a past incident or example story, a motivation or reason
-    for a move, what the candidate did during a gap, an employer, a date, a metric, a percentile, a
-    latency breakdown, a team size or a salary. Keep dates exactly as written. Every figure about
-    past work must appear in <knowledge>. When asked for one that does not, say in a short natural
-    clause that you don't have that exact figure, then give what is known; never fill the gap with a
-    plausible number. For a requested real example, use the closest project in <knowledge> rather
-    than inventing an incident. Use "I'd" for hypothetical designs and targets.
+    Hard facts come only from <knowledge>, exactly as written: employers, titles and dates, which
+    project and which tool belong to which employer, team sizes, reporting lines, salaries, reasons
+    for leaving and every metric or figure. When asked for such a fact that <knowledge> lacks, say
+    briefly that you don't have that exact detail, then give what is known; never invent a number
+    or move work from one employer or project to another. Keep each project's platform and stack
+    consistent with <knowledge> and common sense: an iOS app is written in Swift, not Kotlin;
+    Google Play is for Android apps. Beyond hard facts, behavioural and example questions may be
+    answered with natural, plausible stories and details, so the answer sounds specific and real;
+    keep them consistent with the candidate's known roles and projects. Use "I'd" for hypothetical
+    designs and targets.
     The app adds British IPA reading aids separately. Write the answer without phonetic annotations,
     Chinese homophones, respelling or pronunciation explanations.
     System audio is the other person; microphone transcripts are the user's ACTUAL speech.
@@ -189,9 +191,9 @@ enum CoachPrompt {
     Do not expand it back into the original long answer. Never invent missing evidence.
     """
 
-    /// Repeated last because a leading question ("give me a real example", "what did you do in the gap")
-    /// otherwise pulls DeepSeek into inventing history despite the system rule.
-    static let personalFactsReminder = "Personal events, examples, motives, gaps, dates and figures come only from <knowledge>; if it lacks them, say so briefly and give what it has."
+    /// Repeated last: under a leading question DeepSeek otherwise moved work between employers
+    /// (Aihuishou's Jenkins to KKday) and stacks between platforms (Kotlin Flow in an iOS app).
+    static let personalFactsReminder = "Hard facts (employers, project and tool ownership, dates, team sizes, reporting lines, salaries, reasons for leaving, figures) come only from <knowledge>, each kept with its own employer and platform; natural stories and details may be added around them."
 
     /// The rules, then the whole knowledge, then what varies per stage or task: the fixed prefix
     /// stays byte-identical across a meeting, so DeepSeek's context cache covers it.
