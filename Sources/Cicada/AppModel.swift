@@ -1945,6 +1945,7 @@ final class AppModel: ObservableObject {
         case "shadowState": debugLog("shadow: status=\(shadowReader.status.rawValue) volume=\(settings.shadowVolume) cursor=\(shadowReader.plan.cursor) words=\(shadowReader.plan.words.count)")
         case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
         case "assistantReconnect": candidate.retry()
+        case "coachSimulateHang": LingClient.simulateCoachHangs = Int(arg) ?? 1
         case "assistantBackgroundReload": candidateBackgroundChanged()
         case "assistantFloat":
             if arg == "off" { assistantWindow.hide() } else { assistantWindow.show() }

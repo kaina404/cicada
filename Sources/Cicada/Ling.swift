@@ -191,6 +191,10 @@ final class LingClient: ObservableObject {
 
     /// Tests swap in a session with a stub protocol.
     var session: URLSession = .shared
+    /// Seconds without the first coach token before the request is resent; answers usually start within ~1 s.
+    var coachFirstTokenTimeout: Double = 6
+    var coachAttempts = 3
+    static var simulateCoachHangs = 0
 
     var hasKey: Bool { key != nil }
     /// The key for the service in use. A custom service on this Mac or the local network may need none: "".
@@ -876,49 +880,75 @@ final class LingClient: ObservableObject {
 
     #if os(macOS)
     /// Coach text and validity updates use the shared priority/start gate and protected key storage.
+    /// A request that sends no text within `coachFirstTokenTimeout` is cancelled and sent again: once,
+    /// the first DeepSeek request of a meeting hung 46 s with no error, leaving the opening unanswered.
     func streamCoachTest(_ messages: [[String: Any]]) -> AsyncThrowingStream<String, Error> {
         AsyncThrowingStream { continuation in
             let work = Task { @MainActor in
                 do {
                     guard CoachDeepSeekTest.enabled, let key = AIKey.read("deepseek") else { throw Failure.noKey }
-                    await acquire(.speak)
-                    try Task.checkCancellation()
-                    guard let endpoint = URL(string: "https://api.deepseek.com/chat/completions") else { throw Failure.network }
-                    var request = URLRequest(url: endpoint, timeoutInterval: 60)
-                    request.httpMethod = "POST"
-                    request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
-                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-                    request.httpBody = try JSONSerialization.data(withJSONObject: CoachDeepSeekTest.body(messages))
-                    let started = Date()
-                    let (bytes, response) = try await session.bytes(for: request)
-                    guard let http = response as? HTTPURLResponse else { throw Failure.network }
-                    if http.statusCode == 429 { pausedUntil = Date().addingTimeInterval(5) }
-                    guard http.statusCode == 200 else { throw Failure.http(http.statusCode) }
-                    var first = true
-                    var done = false
-                    for try await line in bytes.lines {
-                        try Task.checkCancellation()
-                        guard line.hasPrefix("data:") else { continue }
-                        let value = String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces)
-                        if value == "[DONE]" { done = true; break }
-                        if let data = value.data(using: .utf8),
-                           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], object["error"] != nil {
-                            throw Failure.parse
+                    let body = try JSONSerialization.data(withJSONObject: CoachDeepSeekTest.body(messages))
+                    for attempt in 1... {
+                        let answered = CoachFirstToken()
+                        let request = Task { @MainActor in
+                            try await self.coachAttempt(key: key, body: body, answered: answered) { continuation.yield($0) }
                         }
-                        if let delta = AskPrompt.delta(value), !delta.isEmpty {
-                            if first {
-                                debugLog("coach: deepseek request_first_token_ms=\(Int(Date().timeIntervalSince(started) * 1000))")
-                                first = false
-                            }
-                            continuation.yield(delta)
+                        answered.cancel = { request.cancel() }
+                        do {
+                            try await withTaskCancellationHandler { try await request.value } onCancel: { request.cancel() }
+                            continuation.finish(); return
+                        } catch {
+                            guard answered.timedOut, attempt < self.coachAttempts, !Task.isCancelled else { throw error }
+                            debugLog("coach: deepseek no first token after \(self.coachFirstTokenTimeout)s, resending (attempt \(attempt + 1))")
                         }
                     }
-                    guard done, !first else { throw Failure.parse }
-                    continuation.finish()
                 } catch { continuation.finish(throwing: error) }
             }
             continuation.onTermination = { _ in work.cancel() }
         }
+    }
+
+    private func coachAttempt(key: String, body: Data, answered: CoachFirstToken, yield: (String) -> Void) async throws {
+        await acquire(.speak)
+        try Task.checkCancellation()
+        guard let endpoint = URL(string: "https://api.deepseek.com/chat/completions") else { throw Failure.network }
+        var request = URLRequest(url: endpoint, timeoutInterval: 60)
+        request.httpMethod = "POST"
+        request.setValue("Bearer " + key, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        let started = Date()
+        // Timed from sending, so waiting at the start gate (a 429 pause) never counts as silence.
+        let watchdog = Task { @MainActor in
+            try await Task.sleep(for: .seconds(coachFirstTokenTimeout))
+            if !answered.seen { answered.timedOut = true; answered.cancel() }
+        }
+        defer { watchdog.cancel() }
+        // `coachSimulateHang:<n>`: the next n sent requests go silent, as the hung one did.
+        if Self.simulateCoachHangs > 0 { Self.simulateCoachHangs -= 1; try await Task.sleep(for: .seconds(120)) }
+        let (bytes, response) = try await session.bytes(for: request)
+        guard let http = response as? HTTPURLResponse else { throw Failure.network }
+        if http.statusCode == 429 { pausedUntil = Date().addingTimeInterval(5) }
+        guard http.statusCode == 200 else { throw Failure.http(http.statusCode) }
+        var done = false
+        for try await line in bytes.lines {
+            try Task.checkCancellation()
+            guard line.hasPrefix("data:") else { continue }
+            let value = String(line.dropFirst(5)).trimmingCharacters(in: .whitespaces)
+            if value == "[DONE]" { done = true; break }
+            if let data = value.data(using: .utf8),
+               let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any], object["error"] != nil {
+                throw Failure.parse
+            }
+            if let delta = AskPrompt.delta(value), !delta.isEmpty {
+                if !answered.seen {
+                    debugLog("coach: deepseek request_first_token_ms=\(Int(Date().timeIntervalSince(started) * 1000))")
+                    answered.seen = true
+                }
+                yield(delta)
+            }
+        }
+        guard done, answered.seen else { throw Failure.parse }
     }
     #endif
 
@@ -972,4 +1002,11 @@ final class LingClient: ObservableObject {
             }
         }
     }
+}
+
+/// Whether an attempt has produced text yet: resending after text would show the user a second copy.
+@MainActor final class CoachFirstToken {
+    var seen = false
+    var timedOut = false
+    var cancel: () -> Void = {}
 }
