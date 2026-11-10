@@ -11,7 +11,7 @@ struct AppTeamKnowledgeModelTests {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let output = root.appendingPathComponent("outputs/app-team-knowledge-2026-11-10")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-        let background = CandidateBackground.read()
+        let background = Knowledge.read()
         try #require(!background.isEmpty)
         try Data(background.utf8).write(to: output.appendingPathComponent("background-used.md"))
         let companies = ["KKday", "平安证券 (Ping An Securities)", "德邦证券 (Debon Securities)", "可之科技"]
@@ -40,11 +40,10 @@ struct AppTeamKnowledgeModelTests {
             } catch { failure = String(describing: error) }
             reports.append(["id": index + 1, "company": fixture.0, "topic": fixture.1,
                 "question": fixture.2, "answer": answer, "error": failure,
-                "first_seconds": first ?? -1, "total_seconds": Date().timeIntervalSince(started),
-                "retrieved_background": CoachKnowledge.retrieve(background, query: fixture.2), "request": messages])
+                "first_seconds": first ?? -1, "total_seconds": Date().timeIntervalSince(started), "request": messages])
             let report: [String: Any] = ["model": CoachDeepSeekTest.model, "stage": "hr",
-                "background_source": CandidateBackground.file.path,
-                "method": "Independent synthetic questions using production CoachPrompt.request, CoachKnowledge and LingClient. Current background unchanged; no web facts injected; no audio, UI, or automatic keep/replace review. Assertions check transport only; knowledge quality requires manual review.",
+                "background_source": Knowledge.folder.path,
+                "method": "Independent synthetic questions using production CoachPrompt.request with the whole knowledge and LingClient. Current background unchanged; no web facts injected; no audio, UI, or automatic keep/replace review. Assertions check transport only; knowledge quality requires manual review.",
                 "results": reports]
             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])
                 .write(to: output.appendingPathComponent("results.json"), options: .atomic)

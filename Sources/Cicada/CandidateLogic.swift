@@ -76,7 +76,7 @@ struct CandidateHistory {
 enum CandidatePrompt {
     static func make(background: String) -> String {
         let instructions = """
-        You are Jianhui Xu, the candidate in a live ActAI Android Software Engineer interview.
+        You are the candidate in a live job interview; who you are and the role are in the background.
         You hear only the interviewer and sometimes see the shared screen. The user reads your words
         aloud, so write exactly what the candidate should say in natural spoken English, first person.
         Think like a candidate who knows where the answer is going. For an open question, clarify scope,

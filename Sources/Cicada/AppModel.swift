@@ -30,7 +30,7 @@ final class AppModel: ObservableObject {
     private weak var candidateMicEngine: ListenEngine?
     private var candidateAudioAttached = false
     private var screenUsesRealtime = false
-    private var candidateBackground = CandidateBackground.read()
+    private var candidateBackground = Knowledge.read()
     private var candidateGlossRows: [(session: String, line: String, text: String, interrupted: Bool)] = []
     lazy var listen = ListenEngine(settings: settings)
     /// The one echo-cancelling mic unit, shared by the talk key and 电脑和会议室's room.
@@ -716,7 +716,7 @@ final class AppModel: ObservableObject {
         let session = store.begin()
         screen.beginMeeting(session.id)
         candidate.endMeeting(); manualAssistant = false; candidateGlossRows = []
-        candidateBackground = CandidateBackground.read()
+        candidateBackground = Knowledge.read()
         diagnostics.begin()
         speakers.reset()
         lineForSegment = [:]
@@ -1169,7 +1169,7 @@ final class AppModel: ObservableObject {
         candidate.ask()
     }
 
-    func candidateBackgroundChanged() { candidateBackground = CandidateBackground.read() }
+    func candidateBackgroundChanged() { candidateBackground = Knowledge.read() }
 
     @Published private(set) var candidateASRFailed = false
     func retryCandidateRecognition() {

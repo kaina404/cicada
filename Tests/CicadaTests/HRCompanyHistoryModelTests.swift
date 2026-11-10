@@ -9,9 +9,9 @@ struct HRCompanyHistoryModelTests {
         try #require(CoachDeepSeekTest.enabled)
         try #require(AIKey.read("deepseek") != nil)
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let output = root.appendingPathComponent("outputs/hr-company-history-2026-11-09")
+        let output = root.appendingPathComponent("outputs/hr-company-history-knowledge")
         try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
-        let background = CandidateBackground.read()
+        let background = Knowledge.read()
         try #require(!background.isEmpty)
         try Data(background.utf8).write(to: output.appendingPathComponent("background-used.md"))
         let questions: [(String, String, String)] = [
@@ -57,7 +57,7 @@ struct HRCompanyHistoryModelTests {
                 "first_seconds": first ?? -1, "total_seconds": Date().timeIntervalSince(started),
                 "request": messages])
             let report: [String: Any] = ["model": CoachDeepSeekTest.model, "stage": "hr",
-                "background_source": CandidateBackground.file.path,
+                "background_source": Knowledge.folder.path,
                 "method": "Sequential synthetic HR questions; successful AI answers are assumed spoken for subsequent turns. Production CoachPrompt.request, retrieval and LingClient; no audio, UI or automatic keep/replace review.",
                 "results": reports]
             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys])

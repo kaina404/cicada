@@ -1,15 +1,12 @@
 import AppKit
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct InterviewCoachSettingsView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var settings: AppSettings
-    @State private var background = ""
     @State private var status = ""
     @State private var testing = false
     @State private var checking: Task<Void, Never>?
-    @State private var saving: Task<Void, Never>?
     @State private var deepSeekKey = ""
     @State private var hasDeepSeekKey = false
 
@@ -41,41 +38,24 @@ struct InterviewCoachSettingsView: View {
                     }
                     Divider()
                     HStack {
-                        Text("应聘者背景").font(.system(size: 13))
+                        Text("面试资料").font(.system(size: 13))
                         Spacer()
-                        Button("从文件导入") { importFile() }
+                        Button("打开资料文件夹") { openKnowledge() }
                     }
-                    TextEditor(text: $background).font(.system(size: 12)).frame(height: 140)
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(Palette.line))
-                        .onChange(of: background) { _, _ in saveBackground() }
+                    Text("简历、项目、预制回答和目标公司，开始听时重新读取")
+                        .font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                 }.textFieldStyle(.roundedBorder).padding(14)
             }
         }
         .onAppear {
-            background = CandidateBackground.read()
             hasDeepSeekKey = AIKey.read("deepseek") != nil
         }
-        .onDisappear { checking?.cancel(); saving?.cancel(); persistBackground() }
+        .onDisappear { checking?.cancel(); model.candidateBackgroundChanged() }
     }
-    private func saveBackground() {
-        saving?.cancel()
-        saving = Task {
-            do { try await Task.sleep(for: .milliseconds(500)) } catch { return }
-            persistBackground()
-        }
-    }
-    private func persistBackground() {
-        do { try CandidateBackground.save(background); model.candidateBackgroundChanged() }
-        catch { status = L("背景保存失败") }
-    }
-    private func importFile() {
-        let panel = NSOpenPanel()
-        panel.allowedContentTypes = [.plainText, .json, UTType(filenameExtension: "md") ?? .plainText]
-        panel.allowsMultipleSelection = false
-        guard panel.runModal() == .OK, let url = panel.url,
-              let raw = try? String(contentsOf: url, encoding: .utf8) else { return }
-        background = CandidateBackground.imported(raw)
-        persistBackground()
+    /// The files are edited in the user's own editor; the app only makes sure they exist.
+    private func openKnowledge() {
+        do { try Knowledge.prepareFolder(); NSWorkspace.shared.open(Knowledge.folder) }
+        catch { status = L("资料文件夹创建失败") }
     }
     private func installAudio() {
         testing = true; status = L("正在准备语音检测…")

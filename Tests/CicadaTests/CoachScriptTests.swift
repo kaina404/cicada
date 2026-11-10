@@ -181,61 +181,28 @@ struct CoachScriptTests {
         #expect(!text.contains("Write the COMPLETE remaining English answer now"))
     }
 
-    @Test func retrievalFindsRelevantMaterialBeyondTheOldPrefixLimit() {
-        let background = String(repeating: "Unrelated biography line.\n", count: 1000) + "Project: Android Room offline queue and stable message IDs."
-        let found = CoachKnowledge.retrieve(background, query: "Android offline Room", limit: 200)
-        #expect(found.contains("stable message IDs"))
-        #expect(found.count <= 200)
-    }
-    @Test func chineseHRQuestionsRetrieveEnglishEmployerAndTopicFacts() {
-        let background = String(repeating: "Unrelated reference material.\n", count: 500)
-            + "Kezhi departure: joined the next company through an internal referral, closer to home.\n"
-            + "Kezhi salary: monthly fixed pay; the next company's annual bonus was variable.\n"
-            + "Debon handover: the watchlist shipped and was handed over cleanly."
-        let move = CoachKnowledge.retrieve(background, query: "为什么离开可之？", limit: 120)
-        #expect(move.contains("internal referral"))
-        let pay = CoachKnowledge.retrieve(background, query: "可之的薪资是多少？", limit: 120)
-        #expect(pay.contains("monthly fixed pay"))
-        let handover = CoachKnowledge.retrieve(background, query: "德邦交接怎么做的？", limit: 120)
-        #expect(handover.contains("watchlist shipped"))
-    }
-    @Test func teamCorrectionSurvivesNoisyASRInInitialAndFollowupRequests() throws {
-        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-            .deletingLastPathComponent().deletingLastPathComponent()
-        let data = try Data(contentsOf: root.appendingPathComponent("tools/copilot-interview-background.json"))
-        let fixture = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let resume = try #require(fixture["candidate_resume"] as? [String])
-        let background = String(repeating: "Unrelated reference material.\n", count: 1000)
-            + resume.joined(separator: "\n")
-        let turns = [CoachTurn(id: "q", seconds: 1, role: "interviewer",
-            text: "At Kesi, behind the DKO Tong exam app, how was the team organised and who did you report to?")]
+    @Test func wholeKnowledgeReachesEveryPromptPathWithoutTrimmingSpeech() throws {
+        // Facts far apart in a long knowledge base must all arrive: nothing is retrieved or cut.
+        let background = "<projects>\nP01 KKday: SKU tap to render 1 s -> 300 ms.\n"
+            + String(repeating: "Unrelated reference material.\n", count: 3000)
+            + "P05 Kezhi: vector plus BM25 retrieval.\n</projects>"
+        let speech = String(repeating: "Interviewer detail. ", count: 250)
+        let turns = [CoachTurn(id: "q", seconds: 1, role: "interviewer", text: speech + "At Kesi, how was the team organised?")]
         var script = CoachScript()
-        script.replacePending("I reported to a technical director and had no direct reports.", since: [])
+        script.replacePending("I reported to the CTO.", since: [])
         for messages in [CoachPrompt.request(turns: turns, background: background, frames: [], audio: nil, stage: .hr),
+                         CoachPrompt.request(turns: turns, background: background, frames: [], audio: nil, refresh: true, stage: .hr),
                          CoachPrompt.reviewRequest(turns: turns, background: background, frames: [], script: script, stage: .hr)] {
+            let system = try #require(messages[0]["content"] as? String)
+            #expect(system.contains("<knowledge>\n" + background + "\n</knowledge>"))
+            #expect(system.hasPrefix(CoachPrompt.system + "\n\n<knowledge>"))
             let content = try #require(messages[1]["content"] as? [[String: Any]])
-            let reference = try #require(content.first?["text"] as? String)
-            #expect(reference.contains("one Android engineer, one iOS engineer and three web engineers"))
-            #expect(reference.contains("initially owned Android and later moved to responsibility for RAG"))
-            #expect(reference.contains("He reported to the CTO"))
-            #expect(reference.contains("Kezhi direct-report count is unknown"))
+            let log = try #require(content.first?["text"] as? String)
+            #expect(log.contains(speech + "At Kesi, how was the team organised?"))
+            #expect(!log.contains("Unrelated reference material."))
         }
-        for company in ["KKday", "Debon Securities", "Ping An Securities"] {
-            let found = CoachKnowledge.retrieve(background,
-                query: "At \(company), how was the team organised and who did you report to?")
-            #expect(found.contains("Recorded organisation boundary for \(company):"))
-            #expect(found.contains("reporting manager"))
-            #expect(found.contains("unknown in this record"))
-        }
-        let pingAn = CoachKnowledge.retrieve(background, query: "At Ping An Securities, how many Android, iOS, web, backend and QA staff were there, and who did you report to?")
-        #expect(pingAn.contains("five Android engineers, five iOS engineers, ten web engineers, ten testers and around ten backend engineers"))
-        #expect(pingAn.contains("reported to the project manager"))
-        let debon = CoachKnowledge.retrieve(background, query: "At Debon Securities, how many Android, iOS, web, backend and QA staff were there?")
-        #expect(debon.contains("three iOS engineers, three Android engineers, five web engineers, eight backend engineers and five testers"))
-        let aihuishou = CoachKnowledge.retrieve(background, query: "Why do Aihuishou and Ping An Haoxue dates overlap? Was Aihuishou full-time employment?")
-        #expect(aihuishou.contains("part-time consulting side project on the Aihuishou Android app"))
-        #expect(aihuishou.contains("outside working hours while I was full-time at Ping An Haoxue"))
-        #expect(aihuishou.contains("Selected Projects rather than Professional Experience"))
+        let empty = CoachPrompt.request(turns: turns, background: "", frames: [], audio: nil)
+        #expect((empty[0]["content"] as? String)?.contains("<knowledge>\n(none given)\n</knowledge>") == true)
     }
     @Test func promptRequestsFullSpeakableAnswerAndIncludesOCRAndImmutableSpeech() throws {
         let frame = CoachFrame(jpeg: Data([1]), seconds: 2, ocr: "First token: 850 ms")

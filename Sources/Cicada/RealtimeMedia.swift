@@ -40,30 +40,3 @@ enum RealtimeMedia {
         return nil
     }
 }
-
-@MainActor
-enum CandidateBackground {
-    static var file: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(DevBuild.supportFolder).appendingPathComponent("candidate-background.md")
-    }
-    static func read() -> String { (try? String(contentsOf: file, encoding: .utf8)) ?? "" }
-    static func save(_ text: String) throws {
-        let fm = FileManager.default
-        try fm.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-        if !fm.fileExists(atPath: file.path) {
-            guard fm.createFile(atPath: file.path, contents: nil, attributes: [.posixPermissions: 0o600]) else { throw CocoaError(.fileWriteUnknown) }
-        }
-        try fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: file.path)
-        try Data(text.utf8).write(to: file)
-        var url = file
-        var values = URLResourceValues(); values.isExcludedFromBackup = true
-        try url.setResourceValues(values)
-    }
-    static func imported(_ raw: String) -> String {
-        guard let object = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: Any],
-              let resume = object["candidate_resume"] as? [String] else { return raw }
-        return "Candidate resume\n" + resume.joined(separator: "\n") + "\nCompany brief (user supplied)\n"
-            + ((object["company_brief_user_supplied"] as? [String]) ?? []).joined(separator: "\n")
-    }
-}

@@ -148,42 +148,6 @@ enum CoachEndpoint {
     }
 }
 
-/// Local lexical retrieval over user-imported material; never retrieves generated answers as biography.
-enum CoachKnowledge {
-    /// Imported backgrounds may be English while HR questions use Chinese names and topics.
-    private static func terms(_ text: String) -> Set<String> {
-        var words = Set(CoachScript.words(text).filter { $0.count > 2 })
-        let lower = text.lowercased()
-        for (term, aliases) in [
-            ("kezhi", ["kezhi", "keshi", "kesi", "可之", "科智"]),
-            ("debon", ["debon", "德邦"]),
-            ("departure", ["离职", "离开", "跳槽", "departure", "leave", "left", "leaving", "disbanded", "layoff"]),
-            ("compensation", ["薪资", "薪酬", "工资", "降薪", "年薪", "年终奖", "salary", "compensation", "bonus"]),
-            ("handover", ["交接", "handover", "hand over", "handed over"])
-        ] {
-            if aliases.contains(where: { lower.contains($0) }) { words.insert(term) }
-        }
-        return words
-    }
-
-    static func retrieve(_ background: String, query: String, limit: Int = 6000) -> String {
-        let queryWords = terms(query)
-        let chunks = background.components(separatedBy: .newlines).filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-        struct Chunk { var index: Int; var text: String; var score: Int }
-        var ranked: [Chunk] = []
-        for (index, text) in chunks.enumerated() {
-            let score = terms(text).intersection(queryWords).count
-            ranked.append(Chunk(index: index, text: text, score: score))
-        }
-        ranked.sort { $0.score == $1.score ? $0.index < $1.index : $0.score > $1.score }
-        var remaining = limit; var selected: [(Int, String)] = []
-        for item in ranked where remaining > 0 {
-            let text = String(item.text.prefix(remaining)); selected.append((item.index, text)); remaining -= text.count + 1
-        }
-        return selected.sorted { $0.0 < $1.0 }.map(\.1).joined(separator: "\n")
-    }
-}
-
 struct CoachEvent: Codable, Equatable {
     var kind: String
     var seconds: Double
