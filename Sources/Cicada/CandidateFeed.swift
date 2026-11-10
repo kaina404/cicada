@@ -15,6 +15,7 @@ struct CandidateFeed: View {
     var onFloat: (() -> Void)?
     var fontSize: CGFloat = 20
     var glossFontSize: CGFloat?
+    @State private var controlsExpanded = false
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -32,7 +33,14 @@ struct CandidateFeed: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("面试教练").font(.system(size: 11, weight: .semibold))
+                Button { controlsExpanded.toggle() } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: controlsExpanded ? "chevron.down" : "chevron.right")
+                        Text("面试教练")
+                    }.font(.system(size: 11, weight: .semibold)).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(Text(controlsExpanded ? "收起" : "展开"))
                 Spacer()
                 if let onFloat {
                     Button(action: onFloat) {
@@ -45,46 +53,47 @@ struct CandidateFeed: View {
                     Button("重试") { engine.retry() }.buttonStyle(.plain)
                 }
             }
-            Picker("面试阶段", selection: $settings.interviewStage) {
-                ForEach(InterviewStage.allCases) { stage in
-                    Text(verbatim: stage.title).tag(stage)
-                }
-            }
-            .pickerStyle(.segmented).font(.system(size: 12))
-            .onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
-            HStack(spacing: 8) {
-                Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
-                if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
-            }.font(.system(size: 11))
-            Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
-            if CoachDeepSeekTest.enabled {
-                Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
-                     (engine.firstLatency.map { String(format: " · TTFT %.2fs", $0) } ?? ""))
-                    .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
-            }
-            if !microphoneName.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        if let onMicrophoneSettings {
-                            Button(action: onMicrophoneSettings) {
-                                Label {
-                                    Text(verbatim: microphoneName).lineLimit(1).truncationMode(.middle)
-                                } icon: { Image(systemName: "mic") }
-                            }
-                            .help("选择候选人麦克风")
-                            .accessibilityLabel(Text("选择候选人麦克风"))
-                        } else {
-                            Text(verbatim: microphoneName).lineLimit(2)
-                        }
-                        if let onMic {
-                            Button(micOn ? L("关闭麦克风") : L("打开麦克风"), action: onMic)
-                                .fixedSize()
-                        }
+            if controlsExpanded {
+                Picker("面试阶段", selection: $settings.interviewStage) {
+                    ForEach(InterviewStage.allCases) { stage in
+                        Text(verbatim: stage.title).tag(stage)
                     }
-                    if !micOn { Text("尚未听取候选人回答") }
                 }
-                .font(.system(size: 11))
+                .pickerStyle(.segmented).font(.system(size: 12))
+                HStack(spacing: 8) {
+                    Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
+                    if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
+                }.font(.system(size: 11))
+                Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+                if CoachDeepSeekTest.enabled {
+                    Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
+                         (engine.firstLatency.map { String(format: " · TTFT %.2fs", $0) } ?? ""))
+                        .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+                }
+                if !microphoneName.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            if let onMicrophoneSettings {
+                                Button(action: onMicrophoneSettings) {
+                                    Label {
+                                        Text(verbatim: microphoneName).lineLimit(1).truncationMode(.middle)
+                                    } icon: { Image(systemName: "mic") }
+                                }
+                                .help("选择候选人麦克风")
+                                .accessibilityLabel(Text("选择候选人麦克风"))
+                            } else {
+                                Text(verbatim: microphoneName).lineLimit(2)
+                            }
+                            if let onMic {
+                                Button(micOn ? L("关闭麦克风") : L("打开麦克风"), action: onMic)
+                                    .fixedSize()
+                            }
+                        }
+                        if !micOn { Text("尚未听取候选人回答") }
+                    }
+                    .font(.system(size: 11))
 
+                }
             }
             ScrollViewReader { proxy in
                 ScrollView(showsIndicators: false) {
@@ -148,7 +157,8 @@ struct CandidateFeed: View {
                 .task(id: settings.askGloss) {
                     if settings.askGloss { gloss.enqueue(engine.script.sentences) }
                 }
-        }.onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
+        }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
+        .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
     }

@@ -8,6 +8,8 @@ Cicada stays in the Dock while running, with an orange dot while recording. Righ
 
 <h1 align="center">Cicada · 知了</h1>
 
+On Mac, Interview Coach controls start collapsed. Click the Interview Coach heading to show the interview stage, read-along, status and microphone controls, leaving more room for answers.
+
 On Mac, Interview Coach keeps its material in one folder: Markdown files for your profile, job target, past companies, projects, prepared answers and target company, sent whole to the AI instead of retrieved in pieces. Answers draw on that material first and expand naturally with general knowledge.
 
 On Mac, Interview Coach improves Chinese and English career-move, pay and handover follow-ups, retrieving relevant background and answering with supplied facts instead of missing-record boilerplate.
