@@ -726,17 +726,6 @@
     ]
   },
   {
-    "id": "resume-project-overlap",
-    "category": "Resume / chronology",
-    "question": "Aihuishou overlaps Ping An Haoxue. Were these separate employers?",
-    "context": "Use the supplied resume/company/HR background with its source boundaries. This is a synthetic practice question; personal details not in the resume remain unknown.",
-    "expected_points": [
-      "Aihuishou 位于 selected projects，不能自动算雇主",
-      "用户已确认：平安好学全职期间，在工作时间之外参与爱回收 Android 兼职咨询；因此日期重叠",
-      "列于 Selected Projects，不属于 Professional Experience 或另一份全职雇佣；不要将兼职解释套用到可之科技"
-    ]
-  },
-  {
     "id": "resume-ml-gap",
     "category": "Resume / honesty",
     "question": "What hands-on TensorFlow Lite, ML Kit and Google Play release experience do you have?",

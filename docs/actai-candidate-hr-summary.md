@@ -23,7 +23,6 @@
 | Ping An Haoxue，2018.05–2021.08 | 手机/平板共用课堂 SDK、共享仓库、网络/图片/导航/bridge、Flutter、低端平板体验 | SDK 边界、兼容发布、调用方迁移、定位性能问题 |
 | Ping An Securities，2015.09–2018.05 | 行情图、自选股、SQLite、RecyclerView、分页、MVP、OkHttp 与崩溃分析 | 缓存一致性、列表性能、真实问题定位 |
 | FlutterDouBan | 独立开源；AppBar、滚动联动、公共网络/UI、live/mock 切换；简历记录 2026.10 的 9000+ stars、约 1900 forks | 动手深度和具体取舍；开源热度不等于活跃用户、收入或 Google Play 发布 |
-| Aihuishou 项目，2018.05–2019.11 | Retrofit/RxJava/Dagger 2、LeakCanary/Bugly、Flutter、Jenkins/Gradle 多渠道 | 用户确认：平安好学全职期间的业余兼职咨询，日期重叠正常；列于 Selected Projects，不属于全职工作经历 |
 | CabinetAI 个人项目 | Secretary 协调五类专用 Agent；RAG 引用、Mem0、设备修改审批、SSE/重试/幂等 | 用户补充：后端生产运行，iOS 准备 TestFlight、未公开；无真实用户数据，混合请求等完整闭环未验证。详见 [产品知识](actai-cabinet-product-knowledge.md) |
 
 简历写的是 10 年软件工程经验，不应将它扩大成 17 年，或未经核实说成全部为纯 Android 年限。简历还列有巢湖学院计算机本科与证券从业资格。

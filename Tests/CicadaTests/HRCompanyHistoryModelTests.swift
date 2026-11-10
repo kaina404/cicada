@@ -30,7 +30,6 @@ struct HRCompanyHistoryModelTests {
             ("平安证券", "职责", "Tell me about your first job at Ping An Securities. What features did you build yourself?"),
             ("平安证券", "成长", "What is one concrete engineering lesson you learned there? Please use a real example and don't just list technologies."),
             ("平安证券", "转岗", "Why did you move from Ping An Securities to Ping An Haoxue in May 2018? Was it an internal transfer?"),
-            ("履历核对", "爱回收重叠", "Your Aihuishou project dates overlap with Ping An Haoxue from 2018 to 2019. Were you employed by both companies? Can you clarify that relationship?"),
             ("履历核对", "稳定性", "Three recent jobs ended after relatively short periods. How should I think about your stability and commitment if you join us?"),
             ("履历核对", "当前状态", "What have you been doing since leaving KKday in August 2026? Have you been employed somewhere else, and when could you join us?"),
             ("个人项目", "FlutterDouBan", "Was FlutterDouBan part of a company job or your own project? What did you build, and how many real users did it have?"),
