@@ -336,11 +336,23 @@ extension CoachPrompt {
         var content = messages[1]["content"] as? [[String: Any]] ?? []
         // Replace the generation instruction; the reviewer must never obey it as a competing task.
         content.removeLast()
-        let reference = ["actual_committed_speech": script.spokenText,
+        // Name the latest question outright: in a long interview the reviewer otherwise sometimes
+        // judges the remainder against the previous question and keeps a stale answer.
+        // ASR often splits one question into lines ("Tell me about…" / "How did you…"): take the
+        // interviewer's trailing run of lines, each within 15 seconds of the next.
+        var run: [CoachTurn] = []
+        for turn in turns.reversed() {
+            guard turn.role == "interviewer" else { if run.isEmpty { continue } else { break } }
+            if let next = run.first, next.seconds - turn.seconds > 15 { break }
+            run.insert(turn, at: 0)
+        }
+        let latest = run.map(\.text).joined(separator: " ")
+        let reference = ["latest_interviewer_question": latest,
+                         "actual_committed_speech": script.spokenText,
                          "existing_answer": CoachPronunciation.spokenText(script.pending),
                          "unread_remainder": script.remainingText]
         let json = (try? JSONEncoder().encode(reference)).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
-        content.append(["type": "text", "text": "Current teleprompter reference (JSON):\n" + json + "\nDecide keep or replace based on coverage. First return the decision JSON line. For keep stop; for replace stream the updated remaining answer after a newline in this same response."])
+        content.append(["type": "text", "text": "Current teleprompter reference (JSON):\n" + json + "\nlatest_interviewer_question is the newest interviewer turn; keep if the unread remainder already answers it, replace if it answers only an earlier question. Decide keep or replace based on coverage. First return the decision JSON line. For keep stop; for replace stream the updated remaining answer after a newline in this same response."])
         messages[1]["content"] = content
         return messages
     }

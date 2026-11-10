@@ -181,6 +181,19 @@ struct CoachScriptTests {
         #expect(!text.contains("Write the COMPLETE remaining English answer now"))
     }
 
+    @Test func reviewNamesTheLatestQuestionJoiningItsSplitLines() throws {
+        let turns = [CoachTurn(id: "a", seconds: 0, role: "interviewer", text: "What have you been doing since August?"),
+                     CoachTurn(id: "b", seconds: 20, role: "candidate", text: "Building Cabinet."),
+                     CoachTurn(id: "c", seconds: 50, role: "interviewer", text: "Tell me about a time you disagreed with a colleague."),
+                     CoachTurn(id: "d", seconds: 53, role: "interviewer", text: "How did you handle it?"),
+                     CoachTurn(id: "e", seconds: 56, role: "candidate", text: "At Debon")]
+        var script = CoachScript()
+        script.replacePending("Since August I've been building Cabinet.", since: [])
+        let messages = CoachPrompt.reviewRequest(turns: turns, background: "", frames: [], script: script)
+        let content = try #require(messages[1]["content"] as? [[String: Any]])
+        let text = try #require(content.last?["text"] as? String)
+        #expect(text.contains("\"latest_interviewer_question\":\"Tell me about a time you disagreed with a colleague. How did you handle it?\""))
+    }
     @Test func wholeKnowledgeReachesEveryPromptPathWithoutTrimmingSpeech() throws {
         // Facts far apart in a long knowledge base must all arrive: nothing is retrieved or cut.
         let background = "<projects>\nP01 KKday: SKU tap to render 1 s -> 300 ms.\n"

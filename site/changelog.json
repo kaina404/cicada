@@ -7,6 +7,12 @@
     "image": null,
     "items": [
       {
+        "kind": "fixed",
+        "platforms": ["mac"],
+        "title": "面试中连续提问时，Assistant 不再沿用上一题的回答。",
+        "text": "复核时明确对照面试官最新的问题，被识别拆成几行的同一个问题合并判断；长面试后半段的新问题也会及时换上新回答。"
+      },
+      {
         "kind": "improved",
         "platforms": ["mac"],
         "title": "面试资料统一放在一个文件夹。",
