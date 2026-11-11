@@ -126,3 +126,46 @@ Assistant 事实约束：德邦没有提供绩效评级；不能把 KKday 的前
 - 无竞业协议。可以出差；希望至少每一两个月回家看孩子、陪家人（也适用于在北京工作时回上海的频率）。
 - 英文讲解练习稿：KKday 骨架屏+图片缓存+渐进显示；可之 RAG 按科目/年级/章节检索后再让 AI 作答（“开卷考试”比喻）。
 - 德邦崩溃率（2026-11-11 用户决定）：保留“约 1% 降到 0.1%（十分之一），Bugly 按每次启动统计”，但只在被问到崩溃、稳定性或可靠性时才说，不主动放进 Why ActAI 等回答。
+
+## 跨端协作：Slack 频道 + Confluence 统一文档（2026-11-12 用户补充）
+
+- 用户提供的事实：每个项目一个独立 Slack 频道，频道里有对应的 RD、UED、PM Owner；每个项目维护一份统一的 Confluence 文档，包含 PM 需求、UED 设计、各端 RD 设计（Android、iOS、backend、其他）和 QA 测试；任何需求或功能变更都在这份文档留存。
+- 公司：KKday（2026-11-12 用户确认）。这套做法是本人入职 KKday 后提出的：之前文档分散，要一个个找人问，容易遗漏；本人提出“大一统”——一个项目一个频道、一份统一文档。用户评价：做法简单，但收益很大。不补写频道数量、团队人数、事故次数或效率提升百分比。
+- 以下流程细节是围绕上述事实的补充讲法（行为题允许合理补全），用户念之前确认与实际一致：
+  - 频道：项目启动时拉齐各角色 Owner，置顶 Confluence 链接；口头或会议里定下的结论，会后用文字回到频道确认，避免“我以为你知道”。
+  - 文档是唯一事实来源：每个部分有明确 Owner；变更写清日期、改了什么、原因、影响哪些端，再在频道 @ 受影响的 Owner。
+  - 接口先行：技术评审时 Android、iOS、backend 一起对接口字段、错误码、空状态和分页；接口定下后客户端先用 mock 开发，不等后端完成。
+  - 双端一致：Android 与 iOS 的交互或实现差异也记进文档，QA 用例按文档写，测试时不用再猜“哪端是对的”。
+  - 中途变更：先改文档、再通知、各端评估影响，由 PM 决定本版带还是放下一版；与主管反馈一致——功能和架构优化分开说明，确认是否值得本版一起做。
+
+### HR 参考回答（中文，约 1 分钟）
+
+> 在 KKday，我们的做法可以概括成“一个频道沟通，一份文档定事实”。每个项目有独立的 Slack 频道，PM、UED 和各端 RD 的 Owner 都在里面，谁负责什么一目了然。所有内容沉淀在一份统一的 Confluence 文档里：PM 的需求、UED 的设计、Android、iOS、后端各自的技术方案，以及 QA 的测试用例。
+> 我觉得关键有两点。第一，文档是唯一的事实来源。需求或功能有任何变更，先改文档、写清原因和影响哪些端，再在频道里通知相关的人，这样不会出现 Android 和 iOS 按两个版本在做。第二，接口先行。技术评审时三端一起把接口字段、错误码和异常情况对齐，客户端先按 mock 开发，联调时问题就少很多。
+> 作为 Android 开发，我会主动在评审阶段提出客户端关心的问题，比如弱网、空状态和老版本兼容，而不是等到联调才发现。对远程或跨时区的团队来说，这种写下来、可追溯的方式更重要。
+
+### English version (~1 min)
+
+> At KKday, we kept it simple: one channel for communication, one document for the facts. Every project had its own Slack channel with the PM, design, and engineering owners for each platform, so it was always clear who owned what. Everything lived in a single Confluence page: the PM's requirements, the design, the Android, iOS and backend technical plans, and QA's test cases.
+> Two things made it work. First, the document was the single source of truth. Any change to a requirement was written there first, with the reason and which platforms it affected, and then we pinged the owners in the channel. That way Android and iOS never ended up building two different versions. Second, API first. In the tech review all three sides agreed on fields, error codes and edge cases, and the clients built against a mock, so integration went much more smoothly.
+> As the Android engineer, I tried to raise client-side concerns early, like poor networks, empty states and older app versions, instead of finding them during integration. For a remote, cross-time-zone team, this written, traceable way of working matters even more.
+
+### “你在公司做了什么贡献”（2026-11-12 用户补充）
+
+- 可用作回答的事实：在 KKday 提出并推动上面的统一协作方式。之前状态：文档分散在不同地方，要一个个去问，信息会遗漏。
+- 已确认：先在本人所在团队使用，之后推广到了其他团队（2026-11-12 用户确认）。推广方式：KKday 每两周有技术分享会，本人在分享会上介绍了这套做法；本人也经常在分享会上分享技术、产品、设计等方面的内容（2026-11-12 用户补充）。未确认：分享会是否由本人组织、本人分享的次数、推广到哪些或几个团队；不补写。
+- 未确认、不得补写：推行用了多久、联调问题或返工减少了多少、是否有人统计过。HR 追问效果时，用定性变化回答，说明没有专门统计。
+- 措辞：不说“收益巨大”“我改变了整个团队”，说“改动很简单，但效果很明显”；把功劳落在“提出并推动”，团队一起执行。
+- 可以和技术贡献（Compose 重构、SKU 页约 1s → 300ms）搭配：先讲一个技术贡献，再讲这个流程贡献，体现不只写代码。
+
+#### 中文参考回答（约 1 分钟）
+
+> 除了 Android 本身的开发，我想讲一个看起来简单、但我觉得收益很大的贡献。我刚加入 KKday 的时候，一个需求的资料是分散的：需求在一个地方，设计稿在另一个地方，后端接口又要单独去问。做一个功能经常要一个个找人确认，难免漏掉信息，到联调或测试时才发现两边理解不一样。
+> 所以我提出了一个“大一统”的做法：每个项目一个 Slack 频道，PM、设计和各端负责人都在里面；每个项目一份统一的 Confluence 文档，需求、设计、Android、iOS、后端方案和 QA 用例都在里面，任何变更都先改文档、再在频道通知。
+> 这个改动本身不复杂，但效果很明显：大家不用再到处问，新人接手也能直接看文档，Android 和 iOS 按同一份内容在做。后来我在公司每两周一次的技术分享会上介绍了这套做法，其他团队也用了起来。我也经常在分享会上讲技术、产品和设计方面的内容。它让我意识到，提效不一定靠复杂的技术，有时候把信息放到一个地方，就能省掉团队很多来回沟通。
+
+#### English version (~1 min)
+
+> Besides the Android work itself, I'd like to mention a contribution that sounds simple but made a real difference. When I joined KKday, the information for a feature was scattered: requirements in one place, designs in another, and for the backend API you had to go and ask someone. You often had to chase people one by one, things got missed, and we only found mismatches during integration or testing.
+> So I proposed bringing everything together: one Slack channel per project, with the PM, design and each platform's owner, and one Confluence page per project with the requirements, designs, Android, iOS and backend plans, and QA test cases. Any change was written in the doc first, then announced in the channel.
+> The change itself wasn't complicated, but the effect was clear: people stopped chasing information, new teammates could just read the doc, and Android and iOS were building from the same source. Later I presented it at our biweekly tech sharing session, and other teams adopted it too. I often shared there on technical, product and design topics as well. It taught me that improving efficiency doesn't always need clever technology; sometimes putting the information in one place saves the whole team a lot of back-and-forth.
