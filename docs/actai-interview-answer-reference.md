@@ -2,7 +2,7 @@
 
 更新：2026-11-10。来源：用户本次提供的定稿与事实说明。仅供 Mac Assistant 回答参考。
 
-接线：`Sources/Cicada/InterviewIntroduction.swift` 的 `text` 保留定稿，`followUpReference` 区分已确认事实和未核对方案；通过 `instruction` 进入普通回答、手动刷新与追问审校。新确认和删除的内容优先于旧简历；未核对的方案不能自动成为第一人称历史经历。其他已有独立确认的背景仍可使用。
+接线：自我介绍原文只在 Assistant 资料 `04_talk_tracks.md` 的「Self-introduction」一节；`Sources/Cicada/InterviewIntroduction.swift` 的 `instruction` 只决定何时照念，进入普通回答、手动刷新与追问审校。新确认和删除的内容优先于旧简历；未核对的方案不能自动成为第一人称历史经历。其他已有独立确认的背景仍可使用。
 
 ## 一、已确认的经历事实
 
@@ -12,17 +12,14 @@
 - KKday Android：本人编写核心代码，推动 Compose 落地；网络、本地、图片缓存及骨架屏改善加载体验。SKU 本地计算重构使「点击选项 → UI 渲染完毕」约 1 秒降至 300ms，耗时减少约 70%。
 - FlutterDouBan：自学 Flutter，边做边学并在 GitHub 分享，9,000+ stars（用户提供的口径）。
 
-## 二、自我介绍定稿（约两分钟）
+## 二、自我介绍定稿（HR 面试版，2026-11-11）
 
-Hi, I'm Jianhui Xu. I have ten years of software engineering experience, mainly in Android. In the past three years, I've also built AI agents and RAG systems.
+面向 HR 面试，不是技术面或总经理面：用平实的话讲用户结果，不讲技术名词。结尾引用 ActAI 官网使命（为不会写复杂提示词的人做主动式应用）。原文只保存在 Assistant 资料 `04_talk_tracks.md` 的「Self-introduction」一节，此处不再复制，避免两份不一致：
 
-At Ping An, I worked on mobile features, architecture, and app reliability. At Debon Securities, I focused on startup speed. I made our SDKs load faster, loaded images and resources in the background with caching, and set up quick error reporting. At Kezhi, I owned the Android architecture of a new app. I also built a RAG question-answering system there. That's where my AI work started.
+- 标准版（默认，约 90 秒，四段）：十年 Android + 三年 AI → KKday AI 行程（逐天展示、先检查再展示、每天约 30 万份、选项 1 秒 → 300ms）→ 可之唯一 Android、四周上线、AI 起点；德邦、平安六年 → 为什么是 ActAI，并提 CabinetAI。
+- 短版（约 45 秒）：面试官要简短版或限时一分钟以内时使用。
 
-Most recently, I was at KKday. I led a five-person AI team, and I brought my RAG experience from Kezhi into this work. I designed the agent and built the core backend. I also built an AI data foundation for personalization. It used each user's search history, current location, past purchases, and product discounts. Both our trip planner and our search recommendations were built on it.
-
-On the Android side, I wrote core features myself. I brought Jetpack Compose into the project. I made pages load faster with several cache layers: network cache, local cache, image cache, and skeleton screens. I also refactored how the app calculated complex product options, or SKUs, on the device. That cut the response time when switching options from about one second to 300 milliseconds.
-
-I also like learning by building. I taught myself Flutter by building FlutterDouBan and shared it on GitHub. It now has over nine thousand stars. That's why ActAI's direction excites me: bringing voice, text, and AI into everyday communication. I'd like to combine my mobile and AI experience to help build it.
+已从开场删去：AI 数据基座四类数据（偏后端、未核对）、德邦 SDK 加载与缓存细节、FlutterDouBan（Flutter 不是 Kotlin，留到问个人项目时讲）、RAG / Compose / 缓存层等技术词。
 
 ## 三、追问准备
 

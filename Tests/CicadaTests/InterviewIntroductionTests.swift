@@ -50,7 +50,7 @@ struct InterviewIntroductionModelTests {
             results.append(["question": question, "answer": answer])
             try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
                 .write(to: URL(fileURLWithPath: "/tmp/cicada-introduction-evaluation.json"))
-            if exact { #expect(answer.components(separatedBy: "\n\n").count >= 5) }
+            if exact { #expect(answer.components(separatedBy: "\n\n").count >= 4) }
             else {
                 #expect(!answer.isEmpty)
                 #expect(CoachScript.words(answer).count < 80)

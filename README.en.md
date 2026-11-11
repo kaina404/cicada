@@ -20,7 +20,7 @@ On Mac, Interview Coach grounds team size, changing responsibilities and reporti
 
 Use the speaker button beside the Assistant read-along speed control to adjust volume from 0–100%. Changes apply during playback and are remembered; the original default is 55%.
 
-On Mac, Interview Coach uses the approved five-paragraph English introduction when the interviewer asks for an opening introduction. Explicit requests for a shorter version take priority; follow-ups receive answers to the current question.
+On Mac, Interview Coach uses the approved HR-round English introduction (a four-paragraph standard version and a 45-second short version) when the interviewer asks for an opening introduction. A request for a short version uses the short one; follow-ups receive answers to the current question.
 
 On Mac, Live Notes defaults to three quarters of the current display’s usable height. Resize its edges to keep your preferred size.
 
