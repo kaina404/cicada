@@ -1,0 +1,196 @@
+[
+ {
+  "id": "B12",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What are your salary expectations?",
+  "must_any": [
+   "range",
+   "base"
+  ],
+  "answer": "Could you share the budget range for this role, and how cash and equity are split? I see this as a senior Android role that also owns how AI works for users. If you still want my number: I'm looking at about 650K to 750K a year in cash, before tax. Equity I'd discuss separately.",
+  "first_sentence_s": 1.5470880270004272,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "B13",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What is your current or previous compensation?",
+  "must_any": [
+   "26,000",
+   "26K",
+   "420K"
+  ],
+  "answer": "At KKday, my total was about 420K to 440K a year, before tax. That's 26K a month for 13 months, plus a three to four month bonus. Before that, at Kezhi, it was 30K a month for 13 months. But this is a different role in a different market, so the role's range is a better guide.",
+  "first_sentence_s": 0.8033790588378906,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "B14",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What's your minimum?",
+  "answer": "My minimum depends on how much of the package is guaranteed. What fixed yearly cash is the team considering? With a real package in front of me, I can give you a clear answer.",
+  "first_sentence_s": 1.004588007926941,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "F13",
+  "group": "资料补充题",
+  "source": "手册Q20/杂乱4.19",
+  "question": "Would you leave quickly if another company offered you more money?",
+  "answer": "No, not quickly. Pay matters, and I'd want us to agree on a fair package up front. After that, I'd judge the role by the work: do I own a meaningful problem, am I learning, and can I see the product getting better for users? A higher number alone wouldn't answer those questions.",
+  "first_sentence_s": 0.5188329219818115,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "F14",
+  "group": "资料补充题",
+  "source": "手册Q19/杂乱4.18",
+  "question": "What would make you reject an offer?",
+  "answer": "If the job turned out to be mostly maintenance, with no say in what users experience. I'm looking for a role where I help shape the feature and stay responsible for how it works after launch. A second reason would be a package where most of the value is in equity and the guaranteed cash is too low for my family. I'd rather talk about that early than at the end.",
+  "first_sentence_s": 0.6229569911956787,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "F53",
+  "group": "资料补充题",
+  "source": "框架M条件",
+  "question": "How would you evaluate a counteroffer?",
+  "answer": "I'd look at a counteroffer the same way as any other offer: the problem I'd own, the learning, the product and the team, and then pay. If I've already decided ActAI is the right place, more money somewhere else wouldn't change those reasons.",
+  "first_sentence_s": 1.0302609205245972,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S01",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "We need a number from you. What exactly are you looking for?",
+  "must_any": [
+   "650"
+  ],
+  "answer": "Sure. I'm looking for about 650K to 750K a year in cash, before tax. That's my target for a senior Android role that also owns how AI works for users. Equity I'd discuss separately, once I understand the details.",
+  "first_sentence_s": 0.6049869060516357,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S02",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "That's a big jump from your last job. Why should we pay that much?",
+  "answer": "The jump is fair because this role is bigger than my last one. At KKday, I was the technical lead on an AI trip planner, and it handled about 300,000 trip plans a day. I also cut the Android product page from about one second to 300 milliseconds. So I bring both Android depth and real AI delivery. My last package was also in a different market, and this role asks for more: Android plus AI, in an early team. That's why I'm looking for a clear step up in cash.",
+  "first_sentence_s": 0.8150759935379028,
+  "problems": [],
+  "warnings": [
+   "SKU 例子串到了这题"
+  ],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S03",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "Your monthly salary at KKday was lower than at Kezhi. Why did you accept that?",
+  "answer": "My monthly pay was lower, but with the bonus my total package actually went up. I chose KKday because I was referred, I believed in the company, and it was close to home, so I could spend more time with my son.",
+  "first_sentence_s": 0.846837043762207,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S04",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "Our offer is 540K a year, 13 months. What do you think?",
+  "answer": "Thanks for being direct with me. 540K is below what I'm looking for, so it's hard for me to say yes to that as it stands. My target is about 650K to 750K in cash, because this role is Android plus AI, and I'd own how the AI works for users. Could we look at the fixed cash again, or at the title and a written pay review? I'd also like to see the full package in writing, including the equity details, before I decide.",
+  "first_sentence_s": 0.8018519878387451,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S05",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "Honestly, our budget tops out at 480K a year.",
+  "answer": "Thanks for telling me straight. 480K is well below my target, so I can't say yes to that as it stands. My target is about 650K to 750K in cash, because this role is Android plus AI, and I'd own how the AI works for users. If the fixed cash can't move, I'd like to look at the title, more equity, or a written pay review date. Could you also send the full package in writing, including the equity details? Then I can give you a clear answer.",
+  "first_sentence_s": 0.52839195728302,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S06",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "We can offer 600K a year plus equity. Can you accept today?",
+  "answer": "Thanks for the offer. 600K plus equity is much closer to my target, so I'm interested. But I won't accept today. I'd like the full package in writing first: the fixed cash, the bonus, and the equity details, like which company it's in, the percentage, and the vesting schedule. Then I'll reply within a few days.",
+  "first_sentence_s": 1.1037520170211792,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S07",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "Would you take less cash for more equity?",
+  "answer": "No, I wouldn't trade cash for equity. Cash comes first for me, because I have a family to support. Equity is a real plus in an early team, and I'd like to understand it: which company it's in, the percentage, the vesting schedule and the exercise terms. With those details, I can weigh it properly. But I wouldn't take less guaranteed cash to get more equity.",
+  "first_sentence_s": 0.4837789535522461,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S08",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "Do you have other offers right now?",
+  "answer": "Yes, I have other offers. I've been talking to four companies, in finance, securities and e-commerce, and a few are at the offer stage. I'm not naming them or the amounts. But ActAI is the one I want most, because it's an AI-first product, not a traditional app with AI added on. So if we agree on a fair package, I'd decide quickly.",
+  "first_sentence_s": 0.7674000263214111,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "S09",
+  "group": "谈薪模拟",
+  "source": "2026-11-12",
+  "question": "If our offer were lower than your last total cash, would you still consider it?",
+  "answer": "Yes, I'd still consider it, but it would be hard. This role asks for more than my last one: Android plus AI, in an early team. So I'm looking for a clear step up in cash. If the cash were lower than my last total, I'd want to understand why, and I'd look at the whole package, not just the number.",
+  "first_sentence_s": 0.576259970664978,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ }
+]

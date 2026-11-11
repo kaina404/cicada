@@ -115,8 +115,7 @@
   "source": "10题⑩",
   "question": "What is your current or previous compensation?",
   "must_any": [
-   "26,000",
-   "26K",
+   "budget",
    "420K"
   ]
  },
