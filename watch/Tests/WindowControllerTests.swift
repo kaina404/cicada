@@ -141,3 +141,39 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String) { #expect(c
   expect(selections == [-1, 1, -1, 1], "Other windows do not navigate audio")
   controller.stop()
 }
+
+@Test @MainActor func holdPlaybackNeverMovesFloatingAnswer() async throws {
+  let controller = WindowController()
+  defer { controller.stop() }
+  let window = FakeWindow()
+  window.isAssistant = true
+  controller.allowed = true
+  #expect(controller.select(window))
+  let origin = window.rect?.origin
+  var holds: [Bool] = []
+  controller.onHold = { holds.append($0) }
+  let screens = [CGRect(x: 0, y: 0, width: 1920, height: 1080)]
+  var sequence: UInt32 = 0
+  @MainActor func send(_ kind: ControlPacket.Kind, _ gesture: UInt16, _ time: Double, x: Float = 0) {
+    sequence += 1
+    controller.receive(ControlPacket(kind: kind, session: 8, sequence: sequence,
+                                      gesture: gesture, x: x), screens: screens, at: time)
+  }
+  send(.begin, 1, 0)
+  send(.hold, 1, 0.4, x: 0.02)
+  #expect(holds.last == true)
+  send(.hold, 1, 0.5, x: 0.2)
+  send(.move, 1, 0.6, x: -0.1)
+  // Let the real display link run: no smoothing frames may move the window either.
+  try await Task.sleep(for: .milliseconds(80))
+  #expect(window.moves.isEmpty)
+  send(.end, 1, 0.7, x: 0.3)
+  #expect(holds.last == false)
+  #expect(window.moves.isEmpty)
+  #expect(window.rect?.origin == origin)
+  send(.begin, 2, 1)
+  send(.move, 2, 1.1, x: 0.05)
+  send(.end, 2, 1.2, x: 0.1)
+  #expect(abs((window.rect?.minX ?? 0) - 390) < 0.001,
+          "A fresh direct slide still moves from the unchanged position")
+}

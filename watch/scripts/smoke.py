@@ -14,7 +14,8 @@ CHANNEL = os.environ.get("CICADA_DEBUG_CHANNEL", "")
 if not CHANNEL:
     raise SystemExit("Set CICADA_DEBUG_CHANNEL to an isolated running dev instance.")
 LOG = Path(f"/tmp/livesubs-dev-debug-{CHANNEL}.log")
-PAIR = json.loads((ROOT / "build/Cicada.app/Contents/Resources/LocalPairing.json").read_text())
+APP = Path(os.environ.get("CICADA_WATCH_APP", str(ROOT / "build/Cicada.app")))
+PAIR = json.loads((APP / "Contents/Resources/LocalPairing.json").read_text())
 
 
 def command(value):
@@ -64,6 +65,18 @@ send(0x20, 1)
 send(0x23, 1, x=0.05)
 moved, _, safe = state()
 assert abs(moved[0] - before[0] - 45) < 1 and safe, "LAN packets must move the actual owned float"
+# Deliberately include drift on first hold, heartbeat, move and lift packets.
+send(0x20, 4)
+send(0x22, 4, x=0.02)
+time.sleep(0.1)
+send(0x22, 4, x=0.2)
+send(0x21, 4, x=-0.1)
+time.sleep(0.1)
+held, _, safe = state()
+assert held == moved and safe, "Holding must freeze the actual floating answer"
+send(0x23, 4, x=0.3)
+released, _, safe = state()
+assert released == moved and safe, "Releasing a hold must not apply final displacement"
 command("assistantFloat:off")
 send(0x20, 2)
 send(0x23, 2, x=0.2)
@@ -80,4 +93,4 @@ assert abs(restored[0] - before[0]) < 1 and safe, "Fresh touch resumes movement"
 command("watchState")
 command("assistantFloat:off")
 assert "watch: floating answer ready" in LOG.read_text()
-print("PASS: live Cicada LAN authentication, direct floating answer movement, hidden-target rejection, fresh-touch reconnect, nonactivating/capture-excluded window; original position restored.")
+print("PASS: live Cicada LAN authentication, direct floating answer movement, hold/lift movement isolation, hidden-target rejection, fresh-touch reconnect, nonactivating/capture-excluded window; original position restored.")

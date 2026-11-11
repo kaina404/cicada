@@ -18,6 +18,7 @@ struct CandidateFeed: View {
     @State private var controlsExpanded = false
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
+    @State private var scrollAnswerID: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil, expanded: Bool = false,
@@ -95,65 +96,62 @@ struct CandidateFeed: View {
 
                 }
             }
-            ScrollViewReader { proxy in
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
-                            VStack(alignment: .leading, spacing: 5) {
-                                if settings.shadowReading, let shadowReader {
-                                    ShadowLyricsText(text: sentence, fontSize: fontSize,
-                                        active: index == followedSentence, firstWord: firstWord(in: index),
-                                        playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
-                                        seek: { shadowReader.seek(to: $0) })
-                                } else {
-                                    Text(sentence).font(.system(size: fontSize))
-                                        .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+            GeometryReader { viewport in
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
+                                VStack(alignment: .leading, spacing: 5) {
+                                    if settings.shadowReading, let shadowReader {
+                                        ShadowLyricsText(text: sentence, fontSize: fontSize,
+                                            active: index == followedSentence, firstWord: firstWord(in: index),
+                                            playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
+                                            seek: { shadowReader.seek(to: $0) })
+                                    } else {
+                                        Text(sentence).font(.system(size: fontSize))
+                                            .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    if settings.askGloss, let text = gloss.translations[sentence] {
+                                        // Keep the gloss compact even when the floating English script is enlarged.
+                                        Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
+                                    }
                                 }
-                                if settings.askGloss, let text = gloss.translations[sentence] {
-                                    // Keep the gloss compact even when the floating English script is enlarged.
-                                    Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
-                                }
+                                .padding(8)
+                                .background(index == followedSentence ? Palette.accent.opacity(0.09) : .clear,
+                                            in: RoundedRectangle(cornerRadius: 7))
+                                .id(index)
                             }
-                            .padding(8)
-                            .background(index == followedSentence ? Palette.accent.opacity(0.09) : .clear,
-                                        in: RoundedRectangle(cornerRadius: 7))
-                            .id(index)
+                            if !engine.script.committed.isEmpty {
+                                Text("已经说出").font(.system(size: 11)).foregroundStyle(Palette.secondary)
+                                Text(engine.script.spokenText).font(.system(size: max(16, fontSize * 0.8))).foregroundStyle(Palette.secondary)
+                                    .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+                            }
                         }
-                        if !engine.script.committed.isEmpty {
-                            Text("已经说出").font(.system(size: 11)).foregroundStyle(Palette.secondary)
-                            Text(engine.script.spokenText).font(.system(size: max(16, fontSize * 0.8))).foregroundStyle(Palette.secondary)
-                                .textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
-                        }
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .background {
-                    GeometryReader { geometry in
-                        Color.clear.onChange(of: geometry.size) { _, _ in
-                            if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        // Leave enough scroll range to place even the last sentence at the top.
+                        .padding(.bottom, max(0, viewport.size.height - 24))
+                    }
+                    // Keep a fixed margin above the current sentence, even at large font sizes.
+                    .padding(.top, 24)
+                    .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
+                        sentence: followedSentence, sentenceCount: engine.script.sentences.count,
+                        translations: gloss.translations, size: viewport.size, fontSize: fontSize,
+                        follows: followsReading)) {
+                        guard followsReading else { return }
+                        // Coalesce sentence, gloss and layout updates before scrolling. A layout
+                        // correction must retarget the same animation rather than snap to its end.
+                        do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
+                        guard !Task.isCancelled else { return }
+                        let newAnswer = scrollAnswerID != engine.script.answerID
+                        scrollAnswerID = engine.script.answerID
+                        withAnimation(reduceMotion || newAnswer ? nil : .smooth(duration: 0.28, extraBounce: 0)) {
+                            proxy.scrollTo(followedSentence, anchor: .top)
                         }
                     }
                 }
-                .onChange(of: fontSize) { _, _ in
-                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
-                }
-                .onAppear {
-                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
-                }
-                .onChange(of: followedSentence) { _, index in
-                    if followsReading {
-                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.22)) {
-                            proxy.scrollTo(index, anchor: .center)
-                        }
-                    }
-                }
-                .onChange(of: engine.script.answerID) { _, _ in
-                    if followsReading { proxy.scrollTo(followedSentence, anchor: .center) }
-                }
-                .onChange(of: followsReading) { _, follows in
-                    if follows { proxy.scrollTo(followedSentence, anchor: .center) }
-                }
-            }.frame(maxHeight: expanded ? .infinity : compactHeight)
+            }.frame(height: expanded ? nil : compactHeight)
+                .frame(maxHeight: expanded ? .infinity : compactHeight)
                 .task(id: settings.askGloss) {
                     if settings.askGloss { gloss.enqueue(engine.script.sentences) }
                 }
@@ -248,4 +246,15 @@ private struct ShadowStatus: View {
             }
         }
     }
+}
+
+/// Playback time changes do not request scrolling; only the sentence or its layout does.
+private struct ReadingScrollRequest: Equatable {
+    var answerID: String
+    var sentence: Int
+    var sentenceCount: Int
+    var translations: [String: String]
+    var size: CGSize
+    var fontSize: CGFloat
+    var follows: Bool
 }

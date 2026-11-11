@@ -100,9 +100,16 @@ final class WindowController: NSObject {
       if packet.y == 1 || packet.y == -1 { onSentence?(Int(packet.y)) }
     }
     if packet.kind == .cancel, active != nil, state.activeGesture == nil { cancel(); return }
+    // A hold owns playback until lift, including its first and final coordinates.
+    // Freeze any queued smoothing so finger jitter cannot move the answer while reading.
+    let playbackGesture = wasDown || state.isDown
+    if playbackGesture {
+      renderer.synchronize(to: frame.origin)
+      link?.isPaused = true
+    }
     for action in actions {
       switch action {
-      case .move: _ = renderer.receive([action], at: time)
+      case .move where !playbackGesture: _ = renderer.receive([action], at: time)
       case .click(_, let count) where target.isAssistant:
         pendingTap?.cancel()
         if count % 2 == 0 { (onPlaySentence ?? onSentence)?(-1) }
