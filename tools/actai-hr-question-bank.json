@@ -115,7 +115,9 @@
   "source": "10题⑩",
   "question": "What is your current or previous compensation?",
   "must_any": [
-   "26,000"
+   "26,000",
+   "26K",
+   "420K"
   ]
  },
  {
@@ -855,6 +857,53 @@
   ],
   "tags": [
    "crash"
+  ]
+ },
+ {
+  "id": "H01",
+  "group": "Head/Hustle 顾虑",
+  "source": "2026-11-12",
+  "question": "How do you think about work-life balance? This is a startup, and it can get intense.",
+  "must_any": [
+   "sprint"
+  ],
+  "ref": "followup:24"
+ },
+ {
+  "id": "H02",
+  "group": "Head/Hustle 顾虑",
+  "source": "2026-11-12",
+  "question": "How do you feel about working on weekends?",
+  "must_any": [
+   "when the product needs it"
+  ]
+ },
+ {
+  "id": "H03",
+  "group": "Head/Hustle 顾虑",
+  "source": "2026-11-12",
+  "question": "What do you know about our product?",
+  "must_any": [
+   "Cursor"
+  ]
+ },
+ {
+  "id": "H04",
+  "group": "Head/Hustle 顾虑",
+  "source": "2026-11-12",
+  "question": "Tell me about a time you had to move really fast.",
+  "must_any": [
+   "four weeks"
+  ]
+ },
+ {
+  "id": "H05",
+  "group": "Head/Hustle 顾虑",
+  "source": "2026-11-12",
+  "question": "We care about quality, not big-company labels. What in your career shows that quality?",
+  "must_any": [
+   "four weeks",
+   "300,000"
   ]
  }
 ]
