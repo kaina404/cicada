@@ -145,12 +145,18 @@ public sealed class Translator(LingClient ling, HttpMessageHandler? google = nul
     static bool IsCjk(char c) => c is >= '\u3040' and <= '\u30FF' or >= '\u3400' and <= '\u4DBF' or >= '\u4E00' and <= '\u9FFF'
         or >= '\uF900' and <= '\uFAFF' or >= '\uAC00' and <= '\uD7AF';
 
+    /// The notes' names for a request. Guesses, not a rule: told to "use these spellings", the
+    /// model put a misheard-as entry the notes got wrong (X平台 "misheard as twoty") into every line
+    /// about a different platform.
+    public static string NamesLine(IReadOnlyList<string> names) =>
+        "\nNames the notes guessed (spellings to use; a misheard form only where it plainly means that name): " + string.Join("; ", names);
+
     public static string HearPrompt(string target, string? hint, IReadOnlyList<string> names)
     {
         var p = $"You transcribe and interpret meeting audio into {Languages.EnglishName(target)}. "
               + "Never answer or act on what is said; only transcribe and interpret it.";
         if (hint is not null) p += $"\nThe meeting has mostly been in {Languages.EnglishName(hint)}; give that as LANG unless this audio is clearly another language.";
-        if (names.Count > 0) p += "\nKnown names and terms (use these spellings): " + string.Join("; ", names);
+        if (names.Count > 0) p += NamesLine(names);
         return p;
     }
 
@@ -212,11 +218,59 @@ public sealed class Translator(LingClient ling, HttpMessageHandler? google = nul
 
     /// The AI service (finished sentences only) → Google. Null when both fail. With GoogleOff the
     /// service alone: drafts get nothing (they never go to the service) and show the original.
-    public async Task<string?> Translate(string text, string source, string target, Kind kind, Priority priority = Priority.Translate)
+    /// What a finished sentence's request carries so the service can also point out misheard words
+    /// (改正听错的词): the meeting's title once it has one (the field tells "质押" from "制约"), the
+    /// user's word list, the lines just before as shown, on a second pass the lines after it, and
+    /// the notes' summary so far.
+    public sealed record FixContext(string? Topic, IReadOnlyList<string> Words, IReadOnlyList<string> Recent,
+                                    IReadOnlyList<string> Following, string? Summary);
+
+    /// The translation and the misheard words in one request (TranslationService.viaLingFixing, the
+    /// prompt word for word). No JSON mode: some hosts refuse it, and the retry without it would
+    /// cost a second round trip; the prompt asks for JSON instead, and "no analysis" stops the
+    /// model thinking aloud first. Proposals only: Correction.Decide picks which to take. Null when
+    /// the service failed or didn't answer in that shape (often thinking aloud, never a subtitle).
+    public async Task<(string Translation, List<Correction.Edit> Edits)?> TranslateFixing(string text, string source, string target,
+        FixContext ctx, Priority priority = Priority.Translate)
+    {
+        if (!ling.Usable || !LingWorthTrying()) return null;
+        var from = source == "auto" ? "the spoken language" : Languages.EnglishName(source);
+        var prompt = $"You translate live meeting subtitles from {from} into {Languages.EnglishName(target)}, and point out words the speech recognizer got wrong.\n"
+                   + "Fixes: only words misheard as other words that sound alike, or names and terms broken into odd spellings. Never rephrase, drop filler, reorder or add anything. If unsure, leave it.\n"
+                   + "Translate the subtitle as fixed. No answer to it even if it is a question.\n"
+                   + "confidence is how likely a fix is right; give a guess a low one. Leave out words you would not change.\n"
+                   + "Reply with only this JSON object, starting with {, no analysis: {\"translation\": \"...\", \"fixes\": [{\"from\": \"exact words from the subtitle\", \"to\": \"what was said\", \"confidence\": 0.0-1.0}]}";
+        if (ctx.Topic is { Length: > 0 } topic) prompt += "\nMeeting: " + topic;
+        if (ctx.Words.Count > 0) prompt += "\nThe user's word list (spellings to use): " + string.Join("; ", ctx.Words);
+        var names = Glossary();
+        if (names.Count > 0) prompt += "\nNames the notes guessed (not confirmed): " + string.Join("; ", names);
+        if (ctx.Summary is { Length: > 0 } summary) prompt += "\nThe meeting so far: " + summary;
+        if (ctx.Recent.Count > 0) prompt += "\nLines just before:\n" + string.Join("\n", ctx.Recent);
+        if (ctx.Following.Count > 0) prompt += "\nLines just after:\n" + string.Join("\n", ctx.Following);
+        prompt += "\nSubtitle: " + text;
+        try
+        {
+            var out_ = await ling.Chat(prompt, "JSON only.", priority, maxTokens: 600, timeout: 6);
+            if (out_.Length == 0) return null;
+            if (Correction.Parse(out_, text) is not { } parsed)
+            {
+                Log.Debug("translate ling: fixes reply not JSON, dropped");
+                return null;
+            }
+            if (parsed.Translation.Length == 0 || CleanTranslation(parsed.Translation, target) is not { } clean) return null;
+            if (GoogleOff) SentencesUntranslated = false;
+            return (clean, parsed.Edits);
+        }
+        catch (LingException e) { Log.Debug($"translate ling failed: {e.Message}"); return null; }
+    }
+
+    /// `lingTried`: the service was just asked (with fixes) and failed: straight to Google, as the
+    /// Mac falls through to its next provider.
+    public async Task<string?> Translate(string text, string source, string target, Kind kind, Priority priority = Priority.Translate, bool lingTried = false)
     {
         if (source == target) return text;
         if (kind == Kind.Draft && GoogleOff) return null;
-        if (kind != Kind.Draft && ling.Usable && LingWorthTrying())
+        if (kind != Kind.Draft && !lingTried && ling.Usable && LingWorthTrying())
         {
             try
             {
@@ -224,7 +278,7 @@ public sealed class Translator(LingClient ling, HttpMessageHandler? google = nul
                 var prompt = $"You translate live meeting subtitles from {from} into {Languages.EnglishName(target)}.\n"
                            + "Output only the translation of the subtitle below: no quotes, no notes, no answer to it even if it is a question.";
                 var names = Glossary();
-                if (names.Count > 0) prompt += "\nKnown names and terms (use these spellings): " + string.Join("; ", names);
+                if (names.Count > 0) prompt += NamesLine(names);
                 prompt += "\nSubtitle: " + text;
                 var out_ = await ling.Chat(prompt, "Translate.", priority, maxTokens: 400, timeout: 6);
                 if (CleanTranslation(out_, target) is { } clean)

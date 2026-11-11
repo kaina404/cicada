@@ -274,7 +274,6 @@ final class VoiceRecorder: ObservableObject {
     private let format = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true)!
     private var locale = "zh-CN"
     private var generation = UUID()
-    private var rawMic: VoiceMic?
     private var recordingDevice: OutputDevice?
     private let capture = VoiceRecordingCapture()
 
@@ -290,16 +289,13 @@ final class VoiceRecorder: ObservableObject {
                 phase = .failed(L("麦克风没收到声音，请检查麦克风权限"))
                 return
             }
-            let acquired = await voiceMic?.beginRawRecording() ?? true
-            guard self.generation == generation else {
-                if acquired { voiceMic?.endRawRecording() }
-                return
-            }
-            guard acquired else {
+            // The echo-cancelling unit starves a plain mic in this process; one in use (the room or a
+            // press) can't be let go of, an idle one is.
+            if voiceMic?.inUse == true {
                 phase = .failed(L("请先关闭会议麦克风并松开说话键，再录制声音"))
                 return
             }
-            rawMic = voiceMic
+            voiceMic?.release()
             startEngine(locale: locale, device: device)
             if case .failed = phase { stopEngine() }
         }
@@ -335,28 +331,14 @@ final class VoiceRecorder: ObservableObject {
             }
             capture.append(frames: Int(out.frameLength), peak: peak)
         }
-        mic.onStarted = { [weak self, weak mic] in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.mic === mic, self.phase == .starting else { return }
-                debugLog("voice recording: started device=\(mic.deviceName)")
-                self.startMeter()
-            }
+        do {
+            try mic.start()
+            debugLog("voice recording: started device=\(mic.deviceName)")
+            startMeter()
+        } catch {
+            stopEngine()
+            phase = .failed(L("无法打开麦克风：\(error.localizedDescription)"))
         }
-        mic.onFailed = { [weak self, weak mic] error in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.mic === mic else { return }
-                self.stopEngine()
-                self.phase = .failed(L("无法打开麦克风：\(error.localizedDescription)"))
-            }
-        }
-        mic.onRestart = { [weak self, weak mic] _ in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.mic === mic else { return }
-                self.stopEngine()
-                self.phase = .failed(L("所选麦克风已断开，请重新选择"))
-            }
-        }
-        try? mic.start()
     }
 
     private func startMeter() {
@@ -396,10 +378,6 @@ final class VoiceRecorder: ObservableObject {
         phase = .checking
         let url = url, locale = locale, generation = generation
         Task {
-            await withCheckedContinuation { continuation in
-                AudioLifecycle.queue.async { continuation.resume() }
-            }
-            guard self.generation == generation else { return }
             let state = capture.snapshot
             debugLog("voice recording: finished frames=\(state.frames) peak=\(state.peak) writeFailed=\(state.writeFailed)")
             guard state.frames >= Int(Self.minSeconds * 16000), !state.writeFailed, state.peak >= 0.003 else {
@@ -438,8 +416,6 @@ final class VoiceRecorder: ObservableObject {
         mic = nil
         file = nil
         level = 0
-        rawMic?.endRawRecording()
-        rawMic = nil
     }
 
     private static func transcribe(_ url: URL, locale: String) async -> String {

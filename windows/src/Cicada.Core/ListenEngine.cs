@@ -23,6 +23,10 @@ public sealed class ListenEngine
     long began;
     /// 保存会议录音: the main side writes what it hears to the meeting's system.aac.
     IAudioWriter? recorder;
+    /// The main side's recording, which 电脑和会议室's room side adds itself into (`Join`).
+    public RoomMix? Mix => recorder as RoomMix;
+    /// The room side: the main side's recording, where what the room mic hears goes too.
+    RoomMix? roomMix;
     Task? worker;
     Segmenter? segmenter;
     readonly Dictionary<int, Heard?> done = [];
@@ -121,6 +125,23 @@ public sealed class ListenEngine
     CancellationTokenSource? flush;
     readonly Dictionary<int, double> emitted = [];
 
+    /// 改正听错的词 (set by the app): null leaves lines as heard.
+    public LiveFixes? Fixes { get; set; }
+
+    /// Debug (`heard <text>` after `silentlisten`): a finished sentence as if Ming heard it in
+    /// `lang` with no translation, so the record, its translation and fixes and the windows all
+    /// follow without any audio. Each comes as its own line (a pause before it).
+    public void DebugHeard(string text, string lang)
+    {
+        if (!Listening || SessionId is null) return;
+        var start = Math.Max(lastEnd + 2, System.Diagnostics.Stopwatch.GetElapsedTime(began).TotalSeconds);
+        Segment seg;
+        lock (gate) seg = new Segment(++debugSegments, start, new short[Segmenter.Rate / 2]);
+        Record(seg, new Heard(lang, text, null));
+        Changed?.Invoke();
+    }
+    int debugSegments = 100_000;
+
     public ListenEngine(LingClient ling, Translator translator, SessionStore store, NotesEngine notes, AppSettings settings, bool roomSide)
         : this(ling, translator, store, notes, settings) { RoomSide = roomSide; }
 
@@ -133,29 +154,33 @@ public sealed class ListenEngine
         SessionId = session.Id;
         Room = room;
         if (room) store.MarkRoom(session.Id);
-        if (settings.RecordAudio && store.Audio is { } files)
+        // A silent debug meeting has nothing to record: an empty recording would be retried every launch.
+        if (settings.RecordAudio && store.Audio is { } files && from is not SilentSource)
         {
             var path = Recording.Partial(Recording.SystemAudio(session.Id));
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                recorder = files.Open(path);
+                recorder = files.Open(path) is { } file ? new RoomMix(file) : null;
             }
             catch (Exception e) { Log.Debug($"listen: recording not started {e.GetType().Name}"); }
             if (recorder is null) Log.Debug("listen: no recording, the encoder refused");
         }
         Begin(from, room, 0, since);
+        Fixes?.MeetingStarted();
         notes.Language = () => Languages.EnglishName(settings.NotesCode);
         notes.Begin(session.Id);
         Log.Debug($"listen: started {session.Id} target={Target}");
         Changed?.Invoke();
     }
 
-    /// The room side joins the meeting `sessionId`, which began at `startedAt`.
-    public void Join(IAudioSource mic, string sessionId, DateTimeOffset startedAt)
+    /// The room side joins the meeting `sessionId`, which began at `startedAt`; what it hears goes
+    /// into the meeting's recording `mix` (the main side's `Mix`) too.
+    public void Join(IAudioSource mic, string sessionId, DateTimeOffset startedAt, RoomMix? mix = null)
     {
         if (Listening || !RoomSide) return;
         SessionId = sessionId;
+        roomMix = mix;
         Room = true;
         store.MarkRoom(sessionId);
         Begin(mic, true, Math.Max(0, (DateTimeOffset.Now - startedAt).TotalSeconds));
@@ -195,10 +220,10 @@ public sealed class ListenEngine
                 {
                     var silence = new short[gap];
                     segmenter.Feed(silence);
-                    Record(silence);
+                    Record(silence, fed);
                     fed += gap;
                 }
-                Record(buf);
+                Record(buf, fed);
                 fed += buf.Length;
                 Level = Rms(buf);
                 // The computer is playing speech: the room mic would hear it from the speakers.
@@ -235,8 +260,14 @@ public sealed class ListenEngine
 
     void OnSamples(short[] buf) => audio?.Writer.TryWrite((buf, System.Diagnostics.Stopwatch.GetElapsedTime(began).TotalSeconds));
 
-    void Record(short[] pcm)
+    /// `fed`: samples this side gave before these, so the room's land at their place in the meeting.
+    void Record(short[] pcm, long fed)
     {
+        if (RoomSide)
+        {
+            roomMix?.Room(pcm, (long)Math.Round(offset * Segmenter.Rate) + fed);
+            return;
+        }
         if (recorder is null) return;
         try { recorder.Write(pcm); }
         catch (Exception e)
@@ -290,6 +321,7 @@ public sealed class ListenEngine
         Task[] waiting;
         lock (gate) waiting = inFlight.ToArray();
         CloseRecording();
+        roomMix = null;
         await Task.WhenAny(Task.WhenAll(waiting), Task.Delay(15_000));
         var id = SessionId!;
         if (RoomSide)
@@ -438,14 +470,34 @@ public sealed class ListenEngine
             lastEnd = seg.Start + seg.Seconds;
         }
         if (joined) store.Replace(id, line.Copy()); else store.Append(id, line.Copy());
+        // 改正听错的词: the word list's confirmed heard forms, without asking anyone.
+        Fixes?.ApplyKnown(id, line.Id);
 
-        // A joined sentence is translated again as a whole; a line Ming didn't translate gets text translation.
-        if ((joined || line.Dst is null) && line.SrcLang != target)
+        // A joined sentence is translated again as a whole; a line Ming didn't translate gets text
+        // translation. With 改正听错的词 every finished line is translated again by the AI service,
+        // which also points out misheard words in the same request (the Mac's viaLingFixing): Ming
+        // gives the translation with the audio, so there is no text request of its own to ride on.
+        // The new translation (of the sentence as fixed) replaces Ming's; a joined line's second
+        // pass may take back a fix it no longer proposes. Lines Ming already translated go at the
+        // notes' priority, so the subtitles' hearing requests keep going first.
+        var retranslate = (joined || line.Dst is null) && line.SrcLang != target;
+        var context = line.SrcLang != target && ling.Usable ? Fixes?.Context(id, line.Id) : null;
+        if (retranslate || context is not null)
         {
             var src = line.Src;
+            var lineId = line.Id;
             _ = Task.Run(async () =>
             {
-                var dst = await translator.Translate(src, line.SrcLang, target, Translator.Kind.Sentence);
+                string? dst = null;
+                if (context is not null && Fixes is { } fixes
+                    && await translator.TranslateFixing(src, line.SrcLang, target, context, retranslate ? Priority.Translate : Priority.Notes) is { } got)
+                {
+                    lock (gate) if (line.Src != src) return;
+                    dst = got.Translation;
+                    fixes.Received(id, lineId, got.Edits);
+                }
+                if (dst is null && !retranslate) return;
+                dst ??= await translator.Translate(src, line.SrcLang, target, Translator.Kind.Sentence, lingTried: context is not null);
                 TranscriptLine copy;
                 lock (gate)
                 {

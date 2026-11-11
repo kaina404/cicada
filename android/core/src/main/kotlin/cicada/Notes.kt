@@ -99,6 +99,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
     private fun update(id: String, final: Boolean) {
         val session: Session
         val base: MeetingNotes
+        val prior: List<NoteTerm>
         synchronized(gate) {
             if (inFlight) { if (final) pendingFinal = id; return }
             session = store.get(id) ?: return
@@ -108,6 +109,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
             lastAttempt = System.currentTimeMillis()
             status = State.Updating
             base = if (final) MeetingNotes() else if (id == shownId) notes else session.notes ?: MeetingNotes()
+            prior = (if (id == shownId) notes else session.notes)?.terms ?: emptyList()
         }
         changed()
         try {
@@ -118,9 +120,12 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
             // the meeting until, about an hour in, it was cut off at max_tokens or fell into a loop and
             // the notes stopped updating. The final pass still rewrites everything once.
             val frozen = if (final) 0 else maxOf(0, base.topics.size - EDITABLE_TOPICS)
-            val prompt = prompt(base, lines, from, lang, final, frozen = frozen)
+            // Voices told apart go as 说话人N, or the name they've been given (notes then say "George").
+            val numbers = SpeakerLabels.numbers(lines)
+            val names = SpeakerLabels.names(session)
+            val prompt = prompt(base, lines, from, lang, final, frozen = frozen, numbers = numbers, names = names)
             val startedAt = lines.firstOrNull()?.t ?: 0.0
-            var next: MeetingNotes? = if (final) longFinal(lines, lang, startedAt) else null
+            var next: MeetingNotes? = if (final) longFinal(lines, numbers, names, lang, startedAt) else null
             for (attempt in 1..(if (final) 2 else 1)) {
                 if (next != null) break
                 val raw = ling.chat(prompt, "Update the notes. Write them in $lang.", Priority.Notes, json = true, maxTokens = 6000, timeout = 90.0, patient = final)
@@ -134,6 +139,8 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
                 return
             }
             if (!final) next.topics = merge(base.topics, frozen, next.topics).toMutableList()
+            next.terms = NoteTerm.keepingOrder(prior, next.terms).toMutableList()
+            next.terms = heardAsSaid(next.terms, lines).toMutableList()
             carryTimes(base, next)
             next.title = next.title ?: base.title ?: session.notes?.title
             next.covered = lines.size
@@ -163,7 +170,8 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
 
     /// A long meeting's final pass: each part noted on its own, all at once, then merged into one.
     /// null when a step fails: the caller then makes one pass over the whole transcript, as before.
-    private fun longFinal(lines: List<TranscriptLine>, lang: String, startedAt: Double): MeetingNotes? {
+    private fun longFinal(lines: List<TranscriptLine>, numbers: Map<String, Int>, names: Map<Int, String>,
+                          lang: String, startedAt: Double): MeetingNotes? {
         val parts = parts(lines)
         if (parts.size <= 1) return null
         val started = System.currentTimeMillis()
@@ -173,7 +181,8 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
         val pool = Executors.newFixedThreadPool(parts.size) { r -> Thread(r, "NotesPart").apply { isDaemon = true } }
         val replies = try {
             pool.invokeAll(parts.mapIndexed { i, range ->
-                val prompt = prompt(MeetingNotes(), lines.subList(0, range.last + 1), range.first, lang, final = true, part = i + 1 to parts.size)
+                val prompt = prompt(MeetingNotes(), lines.subList(0, range.last + 1), range.first, lang, final = true,
+                                    numbers = numbers, names = names, part = i + 1 to parts.size)
                 Callable {
                     try {
                         ling.chat(prompt, "Write the notes for this part. Write them in $lang.", Priority.Notes, json = true, maxTokens = 6000, timeout = 90.0)
@@ -274,6 +283,13 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
             return out
         }
 
+        /// Terms keep only the heard forms the recognizer really wrote (`src`). The notes read lines
+        /// with fixes in, so a wrong fix came back as a heard form ("X平台 heard as platform"), went to
+        /// the translator and the next fix's request as a known mishearing, and was proposed again.
+        fun heardAsSaid(terms: List<NoteTerm>, lines: List<TranscriptLine>): List<NoteTerm> = terms.map { t ->
+            NoteTerm(t.name, t.note, t.heard.filter { h -> lines.any { it.src.contains(h, ignoreCase = true) } }.toMutableList())
+        }
+
         /// A runaway topic summary cut back to its first sentence (or to the limit, with "…").
         fun shortened(summary: String): String {
             if (summary.length <= TOPIC_SUMMARY_LIMIT) return summary
@@ -307,12 +323,14 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
 
         /// `frozen`: how many first topics a live update leaves alone (sent as a list, not returned).
         /// `part`: in a long meeting's final pass, which part `from until lines.size` is (1-based, of).
+        /// `numbers` / `names`: voices told apart (line id → 说话人N) and the names given to them.
         fun prompt(notes: MeetingNotes, lines: List<TranscriptLine>, from: Int, language: String, final: Boolean,
-                   frozen: Int = 0, part: Pair<Int, Int>? = null): String {
-            fun line(i: Int): String {
+                   frozen: Int = 0, part: Pair<Int, Int>? = null,
+                   numbers: Map<String, Int> = emptyMap(), names: Map<Int, String> = emptyMap()): String {            fun line(i: Int): String {
                 val l = lines[i]
-                val who = if (l.speaker == "me") "你" else "对方"
-                return "[L${i + 1} ${Languages.clock(l.t)} $who] ${l.src}"
+                val n = numbers[l.id]
+                val who = if (l.speaker == "me") "你" else if (n != null) names[n] ?: "说话人$n" else if (numbers.isEmpty()) "对方" else "未识别"
+                return "[L${i + 1} ${Languages.clock(l.t)} $who] ${l.shown}"
             }
             val current = if (notes.isEmpty) "{}" else compactJson(notes, frozen)
             val context = maxOf(0, from - 2)
@@ -362,7 +380,7 @@ class NotesEngine(private val ling: LingClient, private val store: SessionStore)
                 "- At most 5 conclusions and only real to-dos (often none).\n" +
                 "- Add a fishbone only to a topic that discusses causes, reasons or factors (3-5 branches); otherwise null.\n" +
                 "- Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.\n" +
-                "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used; note is a few words.\n" +
+                "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used, and only of that same thing: a name said again and again in one spelling that context doesn't tie to a known one (\"我们 twoty\", \"our platform\") is a thing of its own, its own term with that spelling, not a mishearing of a similar name; note is a few words.\n" +
                 "- Write the meeting title and every summary, title, point, branch, conclusion and to-do in $language, even when the transcript is in another language. Only term names keep the transcript's spelling.\n" +
                 "- Write about what was said, never about the transcript or recognition quality.\n" +
                 "- Use empty arrays when there is nothing. No markdown, no text outside the JSON."

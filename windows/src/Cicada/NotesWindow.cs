@@ -170,6 +170,7 @@ sealed class NotesWindow : Window
         {
             builtFor = mode; headerKey = tabsKey = barsKey = null;
             header = new ContentControl(); bars = new ContentControl(); ending = new ContentControl(); endingKey = null; live = new ContentControl(); tabs = new ContentControl(); footer = new ContentControl();
+            ask = new ContentControl(); toast = new ContentControl(); askKey = toastKey = null;
             scroll = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(20, 16, 16, 12) };
             Content = Subtitles ? SubtitleFrame() : PanelFrame();
         }
@@ -181,6 +182,11 @@ sealed class NotesWindow : Window
         if (ek != endingKey) { endingKey = ek; ending.Content = EndingStrip(); }
         var bk = $"{app.Listen.Problem}|{app.Listen.ProblemStatus}|{(app.Listen.Listening && app.Notes.Status is NotesEngine.State.Failed or NotesEngine.State.RateLimited or NotesEngine.State.Unreachable or NotesEngine.State.Updating ? app.Notes.Status : null)}|{app.Ling.Health.Failure?.Why}|{app.Settings.AiProvider}|{app.CanSwitchToLing}|{app.Translator.GoogleOff && app.Translator.SentencesUntranslated}|{app.Settings.ShowInCapture}|{hiddenFromCapture}";
         if (bk != barsKey) { barsKey = bk; bars.Content = Bars(); }
+        var asking = app.Listen.SessionId is { } aid && !app.Settings.ShowInCapture ? app.Fixes.Asking(aid) : null;
+        var ak = asking is { } a0 ? $"{a0.Line.Id}|{a0.Fix}|{a0.Of}" : null;
+        if (ak != askKey) { askKey = ak; ask.Content = AskCard(asking); }
+        var tk = app.Fixes.Toast is { } t0 ? $"{t0.Id}|{app.Fixes.CanUndo}" : null;
+        if (tk != toastKey) { toastKey = tk; toast.Content = FixViews.Toast(app.Fixes); }
         live.Content = LiveCard();
         var count = app.Listen.SessionId is { } sid ? app.Store.Get(sid)?.Lines.Count ?? 0 : 0;
         if ($"{tab}|{count}" != tabsKey) { tabsKey = $"{tab}|{count}"; tabs.Content = TabRow(); }
@@ -204,6 +210,9 @@ sealed class NotesWindow : Window
         Top(header);
         Top(ending);
         Top(bars);
+        // 这样改对吗？ above both tabs: the window opens on 纪要, where a card in the transcript
+        // would never be seen.
+        Top(ask);
         tabs.Margin = new Thickness(12, 0, 12, 0);
         Top(tabs);
         DockPanel.SetDock(footer, Dock.Bottom);
@@ -211,6 +220,11 @@ sealed class NotesWindow : Window
         live.Margin = new Thickness(12, 8, 12, 0);
         DockPanel.SetDock(live, Dock.Bottom);
         dock.Children.Add(live);
+        // The last fix decision with 撤销, just above the sentence being said.
+        toast.HorizontalAlignment = HorizontalAlignment.Center;
+        toast.Margin = new Thickness(12, 8, 12, 0);
+        DockPanel.SetDock(toast, Dock.Bottom);
+        dock.Children.Add(toast);
         dock.Children.Add(scroll);
         return Ui.Floating(dock, Palette.Surface);
     }
@@ -301,7 +315,7 @@ sealed class NotesWindow : Window
         if (problem is { } p)
         {
             var ling = app.Ling;
-            var (title, body, settings) = ListenEngine.Words(p, app.Listen.ProblemStatus, ling.Config.Name, ling.HearName);
+            var (title, body, settings) = ListenEngine.Words(p, app.Listen.ProblemStatus, ServiceLabel(), ling.HearName);
             var text = (title is null ? body : title.TrimEnd('。', '.') + " · " + body).TrimEnd('。', '.');
             // Can't reach it: picks up by itself once it answers; the proxy hint is in 设置 › AI 服务.
             if (p is LingException.Kind.Network or LingException.Kind.Timeout) Add(Ui.StatusLine(Ui.Tone.Waiting, text, useLing));
@@ -378,12 +392,12 @@ sealed class NotesWindow : Window
         {
             var lines = app.Store.Get(listen.SessionId!)?.Lines ?? [];
             var number = app.Settings.SpeakerVoices && line.Speaker == "them" && SpeakerLabels.Numbers(lines).TryGetValue(line.Id, out var n) ? n : (int?)null;
-            var who = line.Speaker == "me" ? L("你") : number is { } k ? LF("说话人 %lld", k) : Ui.SpokenName(line.SrcLang);
+            var who = line.Speaker == "me" ? L("你 · 同传") : number is { } k ? LF("说话人 %lld", k) : Ui.SpokenName(line.SrcLang);
             var whoRow = Ui.Row(8, Ui.Text(who, 12, NightAccent, wrap: false));
             whoRow.Children.Add(Gap(Ui.Text(listen.Listening && listen.Pending > 0 ? L("正在说") : Languages.Clock(line.T), 12, Palette.NightText, wrap: false), 8));
             stack.Children.Add(whoRow);
-            if (line.Dst is not null && line.Dst != line.Src) stack.Children.Add(Gap(Ui.Text(line.Src, 13, NightBody), 6, top: true));
-            stack.Children.Add(Gap(Ui.Text(line.Dst ?? line.Src, 16, Brushes.White, FontWeights.Bold), 6, top: true));
+            if (line.Dst is not null && line.Dst != line.Src) stack.Children.Add(Gap(Ui.Text(line.Shown, 13, NightBody), 6, top: true));
+            stack.Children.Add(Gap(Ui.Text(line.Dst ?? line.Shown, 16, Brushes.White, FontWeights.Bold), 6, top: true));
         }
         return new Border { Background = Palette.Night, CornerRadius = new CornerRadius(14), Padding = new Thickness(16, 14, 16, 14), Child = stack, MinHeight = 96 };
     }
@@ -566,7 +580,10 @@ sealed class NotesWindow : Window
         var body = new StackPanel();
         // Stored as they arrive (the notes count them); shown in time order, so a sentence I said
         // sits between the other side's, which come back from Ming a little later.
-        foreach (var (l, who, ink, place) in Speakers(lines, app.Settings.SpeakerVoices)) body.Children.Add(TranscriptRow(l, who, ink, place));
+        var sid = app.Listen.SessionId;
+        var latest = lines.Count > 0 ? lines[^1].Id : null;
+        foreach (var (l, who, ink, place) in Speakers(lines, app.Settings.SpeakerVoices))
+            body.Children.Add(TranscriptRow(l, who, ink, place, revert: sid is null ? null : f => app.Fixes.Revert(f, l.Id, sid), open: l.Id == latest && app.Listen.Listening));
         return body;
     }
 
@@ -598,9 +615,14 @@ sealed class NotesWindow : Window
     /// One line of the transcript as on the Mac: who (in their colour) and when, the original in
     /// grey, the translation in ink. With `play` (a record with its recording) the time is a link
     /// that plays from there; it is tagged "time" so the player can light it.
-    internal static FrameworkElement TranscriptRow(TranscriptLine l, string? who = null, Brush? ink = null, bool place = false, Action<double>? play = null)
+    /// 改正听错的词: the fixed words are underlined; pointing at the line (or `open`, the line being
+    /// said: hover in a window that never takes focus isn't to be counted on) shows what each was
+    /// heard as with 改回 (`revert`), and 改这句… (`edit`, the meeting record). `editor` takes the
+    /// original's place while the line is being rewritten.
+    internal static FrameworkElement TranscriptRow(TranscriptLine l, string? who = null, Brush? ink = null, bool place = false, Action<double>? play = null,
+        Action<LineFix>? revert = null, bool open = false, Action? edit = null, FrameworkElement? editor = null)
     {
-        var text = new StackPanel { Margin = new Thickness(0, who is null && !place ? 0 : 6, 0, 12) };
+        var text = new StackPanel { Margin = new Thickness(0, who is null && !place ? 0 : 6, 0, 12), Background = Brushes.Transparent };
         var time = Ui.Text(Languages.Clock(l.T), 12, play is null ? Palette.Tertiary : Palette.TimeLink, wrap: false);
         if (play is not null)
         {
@@ -614,13 +636,44 @@ sealed class NotesWindow : Window
         }
         var head = Ui.Row(8, time);
         if (place) head.Children.Insert(0, PlaceTag(l));
-        if (who is not null) head.Children.Insert(0, Ui.Text(who, 12, ink ?? Palette.Secondary, wrap: false));
+        if (who is not null) head.Children.Insert(0, l.Speaker == "me" ? MeTag(who, ink) : Ui.Text(who, 12, ink ?? Palette.Secondary, wrap: false));
         for (int i = 1; i < head.Children.Count; i++) ((FrameworkElement)head.Children[i]).Margin = new Thickness(i == 1 && place && who is not null ? 6 : 8, 0, 0, 0);
         text.Children.Add(head);
-        var translated = !string.IsNullOrEmpty(l.Dst) && l.Dst != l.Src;
-        text.Children.Add(Gap(Ui.Text(l.Src, translated ? 13 : 15, translated ? Palette.Secondary : Palette.Ink), 3, top: true));
+        var translated = !string.IsNullOrEmpty(l.Dst) && l.Dst != l.Src && l.Dst != l.Shown;
+        if (editor is not null)
+        {
+            text.Children.Add(Gap(editor, 3, top: true));
+            return text;
+        }
+        text.Children.Add(Gap(FixViews.LineText(l, translated ? 13 : 15, translated ? Palette.Secondary : Palette.Ink), 3, top: true));
         if (translated) text.Children.Add(Gap(Ui.Text(l.Dst!, 15, Palette.Ink), 2, top: true));
+        var hasFixes = revert is not null && (l.Fixes ?? []).Any(f => f.Applied);
+        if (hasFixes || edit is not null)
+        {
+            var words = FixViews.FixedWords(l, revert ?? (_ => { }), edit);
+            words.Visibility = open && hasFixes ? Visibility.Visible : Visibility.Collapsed;
+            text.Children.Add(words);
+            if (!open)
+            {
+                text.MouseEnter += (_, _) => words.Visibility = Visibility.Visible;
+                text.MouseLeave += (_, _) => words.Visibility = Visibility.Collapsed;
+            }
+        }
         return text;
+    }
+
+    /// Your own line (SpeakerViews.swift › MeTag): said with the talk key, so what the other side
+    /// heard was its translation; 你 and an outlined 同传.
+    static FrameworkElement MeTag(string who, Brush? ink)
+    {
+        var tag = Ui.Row(5, Ui.Text(who, 12, ink ?? Palette.AccentText, FontWeights.SemiBold, wrap: false), new Border
+        {
+            BorderBrush = new SolidColorBrush(Color.FromArgb(0x73, 0xE8, 0x55, 0x2B)), BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(4), Padding = new Thickness(5, 0, 5, 1), VerticalAlignment = VerticalAlignment.Center,
+            Child = Ui.Text(L("同传"), 10, Palette.AccentText, wrap: false),
+        });
+        tag.ToolTip = L("按住说话键说的，对方听到的是译文");
+        return tag;
     }
 
     /// 现场 / 线上 (SpeakerViews.swift › PlaceTag): the room's filled, the PC's outlined.
@@ -634,6 +687,20 @@ sealed class NotesWindow : Window
             Child = Ui.Text(Places.Place(l), 11, Palette.Secondary, wrap: false),
             ToolTip = room ? L("会议室的麦克风听到的") : L("电脑里放出来的"),
         };
+    }
+
+    // 改正听错的词: the card and the toast, rebuilt only when what they show changes.
+    ContentControl ask = new(), toast = new();
+    string? askKey, toastKey;
+
+    /// 这样改对吗？ for the first name waiting. Not while the window is shown to the other side
+    /// (共享屏幕时让对方看到): names wait for after the meeting then.
+    FrameworkElement? AskCard((TranscriptLine Line, LineFix Fix, int Position, int Of)? asking)
+    {
+        if (asking is not { } a || app.Listen.SessionId is not { } id) return null;
+        var card = FixViews.ConfirmCard(a.Line, a.Fix, a.Of, yes => app.Fixes.Answer(a.Fix, yes, id), () => app.Fixes.Later(a.Fix, id));
+        card.Margin = new Thickness(12, 0, 12, 8);
+        return card;
     }
 
     /// Who can see this window, and when the notes change next.
@@ -697,12 +764,12 @@ sealed class NotesWindow : Window
         else
         {
             var number = app.Settings.SpeakerVoices && line.Speaker == "them" && SpeakerLabels.Numbers(session!.Lines).TryGetValue(line.Id, out var n) ? n : (int?)null;
-            var who = line.Speaker == "me" ? L("你") : number is { } k ? LF("说话人 %lld", k) : null;
+            var who = line.Speaker == "me" ? L("你 · 同传") : number is { } k ? LF("说话人 %lld", k) : null;
             var top = new TextBlock { FontFamily = Palette.Font, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = Palette.NightText };
             if (who is not null) top.Inlines.Add(new System.Windows.Documents.Run(who + "  ") { Foreground = NightAccent });
-            if (line.Dst is not null && line.Dst != line.Src) top.Inlines.Add(new System.Windows.Documents.Run(line.Src));
+            if (line.Dst is not null && line.Dst != line.Src) top.Inlines.Add(new System.Windows.Documents.Run(line.Shown));
             if (top.Inlines.Count > 0) text.Children.Add(top);
-            text.Children.Add(Gap(Ui.Text(line.Dst ?? line.Src, app.Settings.SubtitleSize, Brushes.White, FontWeights.Bold), 4, top: true));
+            text.Children.Add(Gap(Ui.Text(line.Dst ?? line.Shown, app.Settings.SubtitleSize, Brushes.White, FontWeights.Bold), 4, top: true));
         }
         return text;
     }
@@ -744,7 +811,7 @@ sealed class NotesWindow : Window
         dock.Children.Add(box);
         var text = new TextBlock { TextWrapping = TextWrapping.Wrap, FontSize = 14, FontFamily = Palette.Font, Foreground = Palette.Ink };
         text.Inlines.Add(new System.Windows.Documents.Run(todo.Text));
-        if (todo.Owner is { Length: > 0 } owner) text.Inlines.Add(new System.Windows.Documents.Run($" · {owner}") { Foreground = Palette.Secondary });
+        if (todo.OwnerShown is { } owner) text.Inlines.Add(new System.Windows.Documents.Run($" · {owner}") { Foreground = Palette.Secondary });
         dock.Children.Add(text);
         return dock;
     }

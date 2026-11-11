@@ -39,12 +39,17 @@ class AppSettings(
     var silenceEnd: String = "prompt",
     /// 多久算没人说话, in minutes: 5, 10, 15 or 30.
     var silenceMinutes: Double = 10.0,
-    /// 说话人识别: number the other side's voices in records and exports (the Mac's speakerVoices).
+    /// 说话人识别: tell the other side's voices apart and number them (the Mac's speakerVoices).
     var speakerVoices: Boolean = true,
     /// 保存会议录音: keep what was heard as system.m4a beside the record (the Mac's recordAudio).
     var recordAudio: Boolean = true,
     /// 把我说的翻译给对方: 按住说话 in 面对面 (the Mac's 同声传译 switch).
     var speakBack: Boolean = true,
+    /// 会中改正听错的词: finished sentences carry the word list to the AI service, which points out
+    /// misheard words (Correction). On by default; does nothing without an AI service.
+    var fixMisheard: Boolean = true,
+    /// 没见过的名字和专称先问我: a new name is asked about once instead of left as heard.
+    var askNames: Boolean = true,
     /// When GitHub Releases last answered an update check (epoch ms; UpdateChecker).
     var updateLastChecked: Long? = null,
     /// The newest version a notification was posted for, so each one is announced once.
@@ -75,6 +80,7 @@ class AppSettings(
         "showInCapture" to showInCapture, "onboarded" to onboarded, "uiLanguage" to uiLanguage,
         "source" to source, "overlay" to overlay, "silenceEnd" to silenceEnd, "silenceMinutes" to silenceMinutes,
         "speakerVoices" to speakerVoices, "recordAudio" to recordAudio, "speakBack" to speakBack,
+        "fixMisheard" to fixMisheard, "askNames" to askNames,
         "updateLastChecked" to updateLastChecked, "updateNotified" to updateNotified,
     )
 
@@ -111,6 +117,7 @@ class AppSettings(
                             silenceMinutes = (o["silenceMinutes"] as? Number)?.toDouble() ?: d.silenceMinutes,
                             speakerVoices = o["speakerVoices"].bool() ?: true, recordAudio = o["recordAudio"].bool() ?: true,
                             speakBack = o["speakBack"].bool() ?: true,
+                            fixMisheard = o["fixMisheard"].bool() ?: true, askNames = o["askNames"].bool() ?: true,
                             updateLastChecked = (o["updateLastChecked"] as? Number)?.toLong(), updateNotified = o["updateNotified"].str(),
                         )
                     }

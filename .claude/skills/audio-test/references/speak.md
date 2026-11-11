@@ -31,7 +31,13 @@ What 279d045, 08f316b and 7106021 were measured with. `scripts/speak-round.sh <l
 | Meeting playing | `speak-round.sh meeting meeting 56` | mine ≥ 80 %; `english_in_mine` 0 and no meeting content in the `me|` lines |
 | Silent, meeting playing | `speak-round.sh sm silent 56` | sent 0 |
 | Silent, quiet room | `speak-round.sh sq silent 0` | sent 0 (see below) |
-| Room mic on | `MIC=on speak-round.sh mm meeting 56` | as meeting; `in_room_lines` 0 % |
+| Room mic on, quiet | `MIC=on speak-round.sh mq quiet 56` | as quiet; `in_room_lines` 0 % |
+| Room mic on, meeting playing | `MIC=on speak-round.sh mm meeting 56` (and at 100) | as meeting playing (log `voice mic: processing on` / `off` per press) |
+| Room mic on, silent, meeting playing | `MIC=on speak-round.sh msm silent 100` | sent 0 |
+
+2026-11-10: the room mic is heard through the echo-cancelling unit with processing off (`roomEcho:bypass`, the default) and a press turns it on. Room mic on, meeting playing went from 0/3 (the plain mic, `played through 100 % … (echo)`) to 3/3 at 100/100/100 % in seven rounds at 56 and 100 %; silent presses 0 sent. `roomEcho:off` brings back the plain mic and the old drop. Run `lsctl source:auto` first if the dev build listens to a fixed language: the room is recognized in it, and the table's Chinese scores 0 %.
+
+Two rounds right after room rounds had every press at 0.0 s (unit setting changed while running; fixed by stop, set, start) and once more without a cause in the log; the log line `voice mic: N renders since the last change` says whether the unit kept running.
 
 What it found: with the plain mic (`VP=off`) the meeting's English came back from the speakers and Ming interpreted it as me — my sentences 50/27/23 %, the meeting sent back into itself, and a silent press sent the meeting back 3 of 3 times. Through echo cancellation: 86–100 %, none of the meeting. A silent press in a quiet room came back as 嗯 → "Hmm." until PressSpeech and the filler check.
 

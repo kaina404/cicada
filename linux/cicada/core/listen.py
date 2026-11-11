@@ -27,6 +27,89 @@ _END = object()
 ROOM_IDS = 1_000_000
 
 
+class RoomMix:
+    """电脑和会议室 keeps one recording, as the Mac does: the room lane's samples are added into the
+    computer's at the same place on the meeting's clock (each lane counts the samples it heard). The
+    computer's audio waits `DELAY` before it is written, so a room buffer that arrives a little after
+    the computer's is still mixed in; what the room says after the computer's last sample follows it."""
+
+    DELAY = RATE  # 1 s
+    LIMIT = 30 * RATE  # the computer's audio stalled: older room audio goes rather than piling up
+
+    def __init__(self, rec):
+        self.rec = rec
+        self._lock = threading.Lock()
+        self._main = array("h")  # the computer's audio not written yet
+        self._at = 0  # where on the clock self._main[0] is (everything before it is written)
+        self._room = array("h")
+        self._room_at = 0  # where on the clock self._room[0] is
+
+    def write(self, buf) -> None:
+        """The computer's audio (the main lane), in order."""
+        with self._lock:
+            self._main.extend(buf)
+            out = self._take(len(self._main) - self.DELAY)
+        if out:
+            self.rec.write(out)
+
+    def room(self, buf, at: int) -> None:
+        """The room lane's audio; `at`: its first sample's place on the clock."""
+        with self._lock:
+            end = self._room_at + len(self._room)
+            if not self._room:
+                self._room_at = at
+            elif at > end:
+                self._room.frombytes(bytes(2 * (at - end)))  # the room side stopped a while: silence
+            elif at < end:
+                buf = buf[end - at:]
+            self._room.extend(buf)
+            self._drop(self._at)
+            over = len(self._room) - self.LIMIT
+            if over > 0:
+                del self._room[:over]
+                self._room_at += over
+
+    def close(self) -> None:
+        """Everything still held goes into the file, then the recorder closes."""
+        with self._lock:
+            out = self._take(len(self._main))
+            if self._room and self._room_at >= self._at:
+                out.frombytes(bytes(2 * (self._room_at - self._at)))
+                out.extend(self._room)
+                self._room = array("h")
+        if out:
+            self.rec.write(out)
+        self.rec.close()
+
+    def finish(self, until=None) -> None:
+        self.rec.finish(until)
+
+    def _drop(self, upto: int) -> None:
+        """Room audio for a place already written: too late to mix."""
+        late = min(len(self._room), upto - self._room_at)
+        if late > 0:
+            del self._room[:late]
+            self._room_at += late
+
+    def _take(self, n: int):
+        """The next `n` samples of the computer's audio with the room's added."""
+        if n <= 0:
+            return array("h")
+        out, self._main = self._main[:n], self._main[n:]
+        start, self._at = self._at, self._at + n
+        self._drop(start)
+        if self._room and self._room_at < self._at:
+            off = self._room_at - start
+            k = min(len(self._room), self._at - self._room_at)
+            room = self._room
+            for i in range(k):
+                v = out[off + i] + room[i]
+                out[off + i] = 32767 if v > 32767 else -32768 if v < -32768 else v
+            del self._room[:k]
+            self._room_at += k
+        return out
+
+
 class _Lane:
     """One audio source's way through listening: its segments, their replies put back in order, its
     last line and the language it hears. 电脑和会议室 runs two, as the Mac runs a main and a room
@@ -77,7 +160,8 @@ class ListenEngine:
         self.session_id = None
         # 保存会议录音: `recorder(sid)` gives the meeting's recorder (write(samples), close(), finish(until))
         # or None; set by the app when GStreamer can encode AAC. What the main lane hears is written,
-        # buffer for buffer, so the file's clock is the lines' clock (t counts the samples heard).
+        # buffer for buffer, so the file's clock is the lines' clock (t counts the samples heard);
+        # 电脑和会议室's room lane is added in at its place on that clock (RoomMix).
         self.recorder = None
         self._recording = None
         self.source_kind = None  # what this meeting is heard from ("system", "room", "file")
@@ -89,6 +173,7 @@ class ListenEngine:
         # 说话人识别: a voiceprint per segment on its own thread while Ming hears it, labelled in order.
         self.speakers = None  # speakers.Tagger, set by the app
         self.on_voice = None  # called with the meeting's id when a line gets a voice (Ling may name it)
+        self.fixes = None  # LiveFixes (改正听错的词), set by the app
         self._voice_pool = ThreadPoolExecutor(1, thread_name_prefix="Voiceprint")
         self._deliver_lock = threading.Lock()
         self._voices_waiting = 0
@@ -207,7 +292,8 @@ class ListenEngine:
         self._recording = None
         if self.recorder is not None:
             try:
-                self._recording = self.recorder(session.id)
+                rec = self.recorder(session.id)
+                self._recording = RoomMix(rec) if rec is not None else None
             except Exception as e:  # noqa: BLE001 - a recording that can't start never stops listening
                 Log.d("listen: no recording (%s)" % type(e).__name__)
         # Listening before the source starts: a source that fails at once calls on_ended → stop(),
@@ -221,12 +307,13 @@ class ListenEngine:
     def _run(self, lane, at: float = 0.0) -> None:
         """`at`: where in the meeting this lane begins (seconds), so its lines' times are the meeting's."""
         segmenter = Segmenter()
-        segmenter.consumed = int(at * RATE)
+        segmenter.consumed = clock = int(at * RATE)
         segmenter.on_segment = lambda seg: self._send(lane, seg)
         q: queue.Queue = queue.Queue()
         lane.audio = q
 
         def work():
+            nonlocal clock
             # One worker owns the segmenter: audio callbacks only queue buffers.
             while True:
                 buf = q.get()
@@ -237,8 +324,13 @@ class ListenEngine:
                     # Silence rather than nothing keeps the segmenter's clock in step.
                     buf = array("h", bytes(len(buf) * 2))
                 rec = self._recording
-                if rec is not None and lane is self._main:
-                    rec.write(buf)
+                if rec is not None:
+                    # The room side too, into the same file (#19): heard and kept, as on the Mac.
+                    if lane is self._main:
+                        rec.write(buf)
+                    else:
+                        rec.room(buf, clock)
+                clock += len(buf)
                 now = time.monotonic()
                 if lane is not self._main and self.gated:
                     # What the mic really hears, for EchoGate's measurement, before any silencing.
@@ -573,12 +665,24 @@ class ListenEngine:
             self.store.append(sid, copy)
         if voice is not None and self.on_voice is not None:
             self.on_voice(sid)
+        if self.fixes is not None:
+            self.fixes.apply_known(copy.id, sid)
         # A joined sentence is translated again as a whole; a line Ming didn't translate gets text translation.
-        if (joined or line.dst is None) and line.srcLang != target:
+        # 改正听错的词: a line Ming did translate goes to the text model too, for the fixes the Mac gets
+        # with every finished sentence's translation (Ming hears and translates in one call, so on
+        # Linux it is one more text request per line; its translation, as fixed, replaces Ming's).
+        fixing = self.settings.fixMisheard and self.fixes is not None
+        if (joined or line.dst is None or fixing) and line.srcLang != target:
             src = line.src
+            only_fix = not joined and line.dst is not None
 
             def retranslate():
-                dst = self.translator.translate(src, line.srcLang, target, Translator.SENTENCE)
+                if only_fix:
+                    dst = self.translator.fix(src, line.srcLang, target)
+                    if dst is None:
+                        return  # Ming's translation stays
+                else:
+                    dst = self.translator.translate(src, line.srcLang, target, Translator.SENTENCE)
                 if dst is None:
                     # The notes window may now say the user's own service can't be reached.
                     self._changed()

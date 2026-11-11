@@ -107,6 +107,15 @@ spinner { color: #6B7080; }
 .endingstrip { background-color: #FDEEE8; border-radius: 12px; }
 .notice { background-color: #F2F3F5; border-radius: 12px; }
 dialog.endask { background-color: #FFFFFF; border: 1px solid #E4E6EA; border-radius: 12px; }
+/* The share dialog (ShareViews.swift): the review's hits on the accent's pale, the link and password on the fill. */
+.sharehit { background-color: #FCEDE7; border-radius: 8px; }
+.sharefield { background-color: #F2F3F5; border-radius: 6px; }
+/* The share dialog's Copy and its arrow as one control (a linked box). */
+.copybtn button.outline:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.copybtn button.outline.arrow { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; padding: 3px 5px; }
+.copybtn button.outline.arrow image { color: #5A5F6B; }
+dialog.sharesheet separator { background-color: #EEF0F3; min-height: 1px; }
+dialog.sharesheet entry.mono { font-family: "Ubuntu Sans Mono", monospace; }
 .notice.error { background-color: #FDECEA; }
 /* StatusLine (Views.swift): a service in trouble in one line on the plain fill; colour only in the dot. */
 .statusline { background-color: #F2F3F5; border-radius: 10px; min-height: 36px; }
@@ -160,6 +169,8 @@ button.iconbtn.on { background-color: #F3F4F6; color: #15171C; }
 .placetag { border-radius: 4px; border: 1px solid #E4E6EA; }
 .placetag.room { background-color: #F2F3F5; border-color: #F2F3F5; }
 .placetag label { color: #5A5F6B; }
+.metag { border-radius: 4px; border: 1px solid rgba(232,85,43,0.45); }
+.metag label { color: #B33A14; }
 .badge { background-color: #FDEEE8; border-radius: 5px; padding: 0 6px; color: #B33A14; }
 .softcard { background-color: #F5F6F8; border-radius: 12px; }
 .summarycard { background-color: #F5F6F8; border-radius: 12px; }
@@ -257,6 +268,23 @@ button.pillkeep label { color: #15171C; }
 .toast label { color: #F2F3F5; }
 .toast button { background-image: none; background-color: rgba(255,255,255,0.12); color: #FFFFFF; border: none; box-shadow: none; border-radius: 6px; padding: 1px 10px; }
 .toast button label { color: #FFFFFF; }
+.toast button.undo { background-color: transparent; padding: 1px 6px; }
+.toast button.undo label { color: #FFB59C; font-weight: 700; }
+
+/* Fixing misheard words: a fixed word's chip, the confirm card, the review banner. */
+.fixchip { background-color: #F2F3F5; border-radius: 6px; }
+.panel.dark .fixchip { background-color: #2A2C32; }
+button.fixlink { background: none; border: none; box-shadow: none; padding: 0; min-height: 0; color: #B33A14; font-size: 11px; font-weight: 500; }
+button.fixlink label { color: #B33A14; }
+.fixcard { background-color: #FFFFFF; border: 1px solid rgba(0,0,0,0.08); border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+.panel.dark .fixcard { background-color: #22242A; border-color: #3A3C43; }
+.fixbanner { background-color: #FEF6F2; border: 1px solid #FBE0D5; border-radius: 12px; }
+button.softbtn { background-image: none; background-color: #ECEDF0; border: none; box-shadow: none; border-radius: 7px; padding: 4px 14px; color: #5A5F6B; }
+button.softbtn:hover { background-color: #E2E4E8; }
+.fixeditor { border: 1px solid #15171C; border-radius: 8px; background-color: #FFFFFF; }
+.fixeditor text { background-color: #FFFFFF; color: #15171C; }
+.heardchip { background-color: #F2F3F5; border-radius: 5px; }
+.dashed { border: 1px dashed #CDD0D6; border-radius: 9px; }
 
 .notes-window { background-color: transparent; }
 .panel .speakbox { background-color: #FDEEE8; border-radius: 12px; }
@@ -298,6 +326,7 @@ button.pillkeep label { color: #15171C; }
 .panel.dark .placetag { border-color: #44474F; }
 .panel.dark .placetag.room { background-color: #34363D; border-color: #34363D; }
 .panel.dark .placetag label { color: #A3A7B1; }
+.panel.dark .metag label { color: #F08A6C; }
 .panel.dark .link { color: #F08A6C; }
 .panel.dark .badge { background-color: rgba(232,85,43,0.18); color: #F08A6C; }
 .panel.dark button.iconbtn:hover { background-color: rgba(255,255,255,0.08); }
@@ -496,6 +525,82 @@ def marked(s: str, terms: list, size: int = 13, cls: str = "ink", current: bool 
     size_, lang_, bold = l.cicada_format
     l.set_markup('<span size="%d" lang="%s"%s>%s</span>' % (round(size_ * 768), lang_, ' weight="bold"' if bold else "", "".join(out)))
     return l
+
+
+def fixed(line, size: int = 13, cls: str = "ink", terms: list = (), current: bool = False, lang: str | None = None) -> Gtk.Label:
+    """A line as shown (改正听错的词): each fixed word underlined in grey (the Mac's dotted underline;
+    Pango has no dotted one), a word waiting for the user on a pale wash. While searching, the search
+    marks instead."""
+    from ..core.correction import apply
+    if terms or not line.fixes:
+        return marked(line.shown, list(terms), size, cls, current, lang=lang or line.srcLang)
+    s, marks = apply(line.fixes, line.src)
+    asks = []
+    for f in line.fixes:
+        if f.ask is True:
+            i = s.find(f.from_)
+            if i >= 0:
+                asks.append((i, i + len(f.from_)))
+    spans = sorted([(a, b, ' underline="single" underline_color="#9EA2AC"') for a, b in marks]
+                   + [(a, b, ' background="#FBE0D5"') for a, b in asks])
+    out, at = [], 0
+    for a, b, attr in spans:
+        if a < at:
+            continue
+        out.append(esc(s[at:a]))
+        out.append("<span%s>%s</span>" % (attr, esc(s[a:b])))
+        at = b
+    out.append(esc(s[at:]))
+    l = text(s, size, cls, lang=lang or line.srcLang)
+    size_, lang_, bold = l.cicada_format
+    l.set_markup('<span size="%d" lang="%s"%s>%s</span>' % (round(size_ * 768), lang_, ' weight="bold"' if bold else "", "".join(out)))
+    return l
+
+
+def fixed_words(items, on_revert) -> Gtk.Widget:
+    """Under a line: each fixed word, what it was heard as, and 改回. `items`: [(line id, fix)]."""
+    from ..core.correction import label
+    w = Wrap(6)
+    for line_id, f in items:
+        cf, ct = label(f)
+        row = hbox(6)
+        lab = Gtk.Label()
+        lab.set_markup('<span size="%d"><span foreground="#6B7080">%s</span> %s <span foreground="#6B7080">→</span> %s</span>'
+                       % (11 * 768, esc(L("听成")), esc(cf), esc(ct)))
+        classes(lab, "ink")
+        row.pack_start(lab, False, False, 0)
+        b = Gtk.Button(label=L("改回"))
+        classes(b, "fixlink")
+        b.set_can_focus(False)  # the notes window never takes focus
+        b.connect("clicked", lambda *_a, i=line_id, f=f: on_revert(i, f))
+        row.pack_start(b, False, False, 0)
+        w.add(panel(pad(row, 3, 8), "fixchip"))
+    return w
+
+
+def soft_button(label: str, on_click, dark: bool = False) -> Gtk.Button:
+    """The Mac's SoftButton: dark for the answer, soft grey for the rest. Never takes focus."""
+    b = Gtk.Button(label=label)
+    classes(b, "darkbtn" if dark else "softbtn")
+    b.set_can_focus(False)
+    b.connect("clicked", lambda *_: on_click())
+    return b
+
+
+def fix_toast(fixes, message: str) -> Gtk.Widget:
+    """The last fix decision said back (the Mac's FixToast): dark, with 撤销 while there is something
+    to undo. Shown in place, not as an overlay: the notes window lays out top to bottom."""
+    row = hbox(14)
+    row.pack_start(text(message, 13, "", wrap=False), True, True, 0)
+    if fixes.can_undo:
+        b = Gtk.Button(label=L("撤销"))
+        classes(b, "undo")
+        b.set_can_focus(False)
+        b.connect("clicked", lambda *_: fixes.undo())
+        row.pack_start(b, False, False, 0)
+    box = panel(pad(row, 5, 6, 5, 14), "toast")
+    box.set_halign(Gtk.Align.CENTER)
+    return box
 
 
 def helper(s: str) -> Gtk.Label:
@@ -734,6 +839,22 @@ def place_tag(line) -> Gtk.Widget:
     c.set_valign(Gtk.Align.CENTER)
     c.set_tooltip_text(L("会议室的麦克风听到的") if room else L("电脑里放出来的"))
     return c
+
+
+def me_tag() -> Gtk.Widget:
+    """My own line (the Mac's MeTag): said through 同声传译, so what the other side heard was its
+    translation. 你 in the accent, then an outlined 同传 pill."""
+    pill = text(L("同传"), 10, "", wrap=False, ellipsize=False)
+    pad(pill, 1, 5)  # a margin: GTK 3 ignores CSS padding on an EventBox
+    p = panel(pill, "metag")
+    p.set_valign(Gtk.Align.CENTER)
+    box = hbox(5)
+    box.set_halign(Gtk.Align.START)  # the tooltip covers the tag, not the row
+    box.pack_start(text(L("你"), 11, "accent", bold=True, wrap=False, ellipsize=False), False, False, 0)
+    box.pack_start(p, False, False, 0)
+    # Linux turns it on and off (开始说, the shortcut), it has no key to hold: not the Mac's tooltip.
+    box.set_tooltip_text(L("同声传译时说的，对方听到的是译文"))
+    return box
 
 
 def chip(s: str, now: bool = False) -> Gtk.Widget:

@@ -301,7 +301,15 @@ final class SpeakerTagger {
 
     func merge(_ from: Int, into: Int) { queue.async { [self] in clusterer.merge(from, into: into) } }
 
-    /// The voice of a line; nil when unsure. It counts towards that voice.
+    /// `done` once the line has its voice, or is known to have none.
+    func tag(lineID: String, samples: [Float], done: @escaping @MainActor () -> Void = {}) {
+        voice(of: samples) { [weak self] voice in
+            if let voice { self?.onVoice?(lineID, voice) }
+            done()
+        }
+    }
+
+    /// The voice of a line not recorded yet; nil when unsure. Like `tag`, it counts towards that voice.
     func voice(of samples: [Float], _ done: @escaping @MainActor (Int?) -> Void) {
         let seconds = Double(samples.count) / 16000
         queue.async { [self] in
@@ -330,7 +338,7 @@ enum SpeakerNameGuess {
         var out = "Meeting transcript. Speakers: 你 = the user; 说话人N = one person on the other side, told apart by voice; 对方 = someone on the other side, not identified.\n"
         for (i, l) in lines.enumerated() {
             let who = l.speaker == "me" ? "你" : l.isScreen ? "屏幕" : numbers[l.id].map { "说话人\($0)" } ?? "对方"
-            out += "[L\(i + 1) \(TranscriptExport.clock(l.t)) \(who)] \(l.src)\n"
+            out += "[L\(i + 1) \(TranscriptExport.clock(l.t)) \(who)] \(l.shown)\n"
         }
         return out
     }
@@ -359,7 +367,10 @@ enum SpeakerNameGuess {
     /// `refuted`: voices Ling named on a line they neither said nor spoke next to ("I'm Christina"
     /// in an advert, given to the anchor); such a name is dropped, and an earlier copy of it too.
     static func read(_ reply: String, _ s: Session) -> (found: [Int: VoiceGuess], refuted: [Int: String]) {
-        guard let data = reply.data(using: .utf8),
+        // The object alone: a reply asked again without JSON mode may come in a fence.
+        var text = reply
+        if let a = text.firstIndex(of: "{"), let b = text.lastIndex(of: "}"), a < b { text = String(text[a...b]) }
+        guard let data = text.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let list = obj["speakers"] as? [[String: Any]] else { return ([:], [:]) }
         let voiceOf = Dictionary(uniqueKeysWithValues: SpeakerLabels.voiceNumbers(s.lines).map { ($1, $0) })
@@ -384,7 +395,7 @@ enum SpeakerNameGuess {
                 out[other] = nil
             }
             let l = lines[i]
-            let evidence = "\(TranscriptExport.clock(l.t)) “\(l.src.count > 60 ? String(l.src.prefix(60)) + "…" : l.src)”"
+            let evidence = "\(TranscriptExport.clock(l.t)) “\(l.shown.count > 60 ? String(l.shown.prefix(60)) + "…" : l.shown)”"
             out[v] = VoiceGuess(name: name, evidence: evidence)
         }
         return (out, refuted)
@@ -396,7 +407,7 @@ enum SpeakerNameGuess {
         guard let open = g.evidence.firstIndex(of: "“") else { return true }
         let clock = g.evidence[..<open].trimmingCharacters(in: .whitespaces)
         let quote = String(g.evidence[g.evidence.index(after: open)...].dropLast().prefix(while: { $0 != "…" }))
-        guard let i = s.lines.firstIndex(where: { TranscriptExport.clock($0.t) == clock && $0.src.hasPrefix(quote) }) else { return true }
+        guard let i = s.lines.firstIndex(where: { TranscriptExport.clock($0.t) == clock && $0.shown.hasPrefix(quote) }) else { return true }
         return s.lines[max(0, i - evidenceReach)...min(s.lines.count - 1, i + evidenceReach)]
             .contains { $0.speaker == "them" && $0.voice == v }
     }

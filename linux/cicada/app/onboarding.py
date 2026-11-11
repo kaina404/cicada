@@ -450,7 +450,7 @@ class Onboarding(Gtk.Window):
         # The two sounds side by side: people try speaking first, but this step hears the computer.
         sources = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12, homogeneous=True)
         sources.pack_start(self._source(L("对方的声音"), L("这一步"), [L("会议软件"), L("扬声器"), L("知了：字幕和纪要")], True), True, True, 0)
-        sources.pack_start(self._source(L("你的声音 · 麦克风"), L("第 4 步再用"), [L("麦克风"), L("同声传译"), L("对方听到译文")], False), True, True, 0)
+        sources.pack_start(self._source(L("你的声音 · 麦克风"), L("第 4 步再用"), [L("麦克风"), L("同声传译"), L("线上的人听到译文")], False), True, True, 0)
         self.page.pack_start(ui.gap(sources, 12), False, False, 0)
         self.sources = sources
         sources.set_no_show_all(True)  # _fill_silent decides, not the window's show_all
@@ -653,12 +653,12 @@ class Onboarding(Gtk.Window):
         playing = listen.listening and listen.source_kind == "file"
         ui.clear(self.stage)
         if line is not None:
-            if line.dst and line.dst != line.src:
-                src = ui.text(line.src, 12, "stage-dim", width_chars=60, lang=line.srcLang)
+            if line.dst and line.dst != line.shown:
+                src = ui.text(line.shown, 12, "stage-dim", width_chars=60, lang=line.srcLang)
                 src.set_justify(Gtk.Justification.CENTER)
                 src.set_xalign(0.5)
                 self.stage.pack_start(src, False, False, 0)
-            dst = ui.text(line.dst or line.src, 17, "stage-ink", bold=True, width_chars=50, lang=line.dstLang)
+            dst = ui.text(line.dst or line.shown, 17, "stage-ink", bold=True, width_chars=50, lang=line.dstLang)
             dst.set_justify(Gtk.Justification.CENTER)
             dst.set_xalign(0.5)
             self.stage.pack_start(dst, False, False, 0)
@@ -693,8 +693,8 @@ class Onboarding(Gtk.Window):
         on = self.speak_setup if self.speak_setup is not None else app.settings.speakEnabled
         lang = dict((c, n) for n, c in TARGETS).get(app.settings.speak_from_code, app.settings.speak_from_code)
         head = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=24)
-        texts = ui.vbox(8, ui.text(L("开会时要说外语吗？"), 26, "heading", bold=True, width_chars=24),
-                        ui.text(LF("点一下“开始说”或按快捷键说%@，对方听到翻译后的语音。", lang), 14, "secondary", width_chars=50))
+        texts = ui.vbox(8, ui.text(L("线上开会时要说外语吗？"), 26, "heading", bold=True, width_chars=24),
+                        ui.text(LF("点一下“开始说”或按快捷键说%@，线上的人听到翻译后的语音。", lang), 14, "secondary", width_chars=50))
         head.pack_start(texts, True, True, 0)
         if on:
             head.pack_end(self._keycaps(), False, False, 0)

@@ -102,9 +102,8 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
     /// The onboarding window while it's open. The panel floats above it and can't be clicked
     /// through, so it must never sit on it: on a 1024×768 screen the sidebar covered 继续.
     private weak var avoiding: NSWindow?
-    /// The user's own frame, put back when the window closes, and where we put the panel instead.
-    private var ownFrame: NSRect?
-    private var placedFrame: NSRect?
+    /// Moved out of the way: the user's own frame, put back when the window closes, and where we put the panel instead.
+    private var moved: (own: NSRect, placed: NSRect)?
     /// Asked to show while there was no room beside the window: shown once it closes.
     private var waiting = false
 
@@ -118,13 +117,12 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
             }
             return
         }
-        if let ownFrame, let p = panel {
+        if let moved, let p = panel {
             // Unless the user has moved it since; either way it's remembered again from here.
-            if p.frame == placedFrame { p.setFrame(ownFrame, display: true) }
+            if p.frame == moved.placed { p.setFrame(moved.own, display: true) }
             p.setFrameAutosaveName(Self.autosave)
         }
-        ownFrame = nil
-        placedFrame = nil
+        moved = nil
         if waiting {
             waiting = false
             show()
@@ -140,13 +138,11 @@ final class NotesWindowController: NSObject, NSWindowDelegate {
             debugLog("notes window waits: no room beside onboarding \(w.frame) in \(screen.visibleFrame)")
             return false
         }
-        if ownFrame == nil {
-            ownFrame = p.frame
-            // Not remembered: quit during onboarding and the next meeting still opens where the user left it.
-            p.setFrameAutosaveName("")
-        }
+        let own = moved?.own ?? p.frame
+        // Not remembered: quit during onboarding and the next meeting still opens where the user left it.
+        if moved == nil { p.setFrameAutosaveName("") }
         p.setFrame(r, display: true)
-        placedFrame = p.frame
+        moved = (own, p.frame)
         return true
     }
 
@@ -299,6 +295,9 @@ struct NotesWindowView: View {
                                         onMicrophoneSettings: { model.openSettings(.speak) },
                                         onFloat: { model.assistantWindow.show() })
                         }
+                        // 这样改对吗？ above both tabs: the window opens on 纪要, where a card in the
+                        // transcript would never be seen.
+                        fixAsk.padding(.horizontal, 24).padding(.bottom, 4)
                         if live { LanguageNotice(model: model).padding(.horizontal, 24).padding(.bottom, 8) }
                         // Where the scrolling starts: a hairline, and each column fades in under it (`topFade`).
                         Rectangle().fill(MainWindowView.hairline).frame(height: 1)
@@ -327,6 +326,7 @@ struct NotesWindowView: View {
                     // The title bar is transparent: start the header beside its buttons, not below a blank band.
                     .ignoresSafeArea(.container, edges: .top)
                     .overlay(alignment: .bottom) { SpeakerUndoToast(model: model, session: session?.id) }
+                    .overlay(alignment: .bottom) { FixToast(fixes: model.fixes).padding(.bottom, 14) }
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
@@ -523,7 +523,7 @@ struct NotesWindowView: View {
         let terms = searchTerms
         guard !terms.isEmpty else { return [] }
         return (session?.lines ?? []).filter { l in
-            terms.contains { l.src.localizedCaseInsensitiveContains($0) || (l.dst ?? "").localizedCaseInsensitiveContains($0) }
+            terms.contains { l.shown.localizedCaseInsensitiveContains($0) || (l.dst ?? "").localizedCaseInsensitiveContains($0) }
         }.map(\.id)
     }
 
@@ -910,7 +910,8 @@ struct NotesWindowView: View {
                                  coveredUntil: lastCovered > 0 ? lastCovered : nil,
                                  endedAt: session?.lines.last?.t,
                                  behind: behind,
-                                 onJump: { t in jumpTo = t; tab = "transcript" })
+                                 onJump: { t in jumpTo = t; tab = "transcript" },
+                                 fixTerms: fixTermsView)
                     .padding(.horizontal, 24).padding(.top, 16).padding(.bottom, 12)
             }
             .topFade()
@@ -936,6 +937,20 @@ struct NotesWindowView: View {
         if animated { withAnimation(.easeInOut(duration: 0.4)) { proxy.scrollTo(id, anchor: .top) } } else { proxy.scrollTo(id, anchor: .top) }
     }
 
+    /// Not while the window is shown to the other side: names wait in 人名和术语 then.
+    @ViewBuilder private var fixAsk: some View {
+        if let s = session, !model.settings.notesCapturable, let a = model.fixes.asking(in: s.id) {
+            FixConfirmCard(line: a.line, fix: a.fix, count: a.of, onAnswer: { yes in
+                model.fixes.answer(a.fix, yes: yes, in: s.id)
+            }, onLater: { model.fixes.later(a.fix, in: s.id) })
+        }
+    }
+
+    private var fixTermsView: AnyView? {
+        guard let s = session, !FixTermsView.fixedWords(s).isEmpty || !model.fixes.pending(in: s.id).isEmpty else { return nil }
+        return AnyView(FixTermsView(fixes: model.fixes, session: s) { word in query = word; tab = "transcript" })
+    }
+
     private var transcript: some View {
         let ms = matches
         let lines = session?.lines ?? []
@@ -950,8 +965,9 @@ struct NotesWindowView: View {
                                jumpTo: jumpTo, speakers: speakers, startedAt: store.liveStart,
                                identifying: model.identifyingLanguage,
                                voices: speakers.isEmpty ? [:] : SpeakerLabels.voiceNumbers(lines), marked: editingVoice,
-                               places: RecordList.heardBoth(lines),
-                               onAssign: { ids, voice in if let s = session { model.assignLines(session: s.id, ids, to: voice) } }) {
+                               places: RecordList.heardBoth(lines), settling: model.settling, voicePending: model.voicePending,
+                               onAssign: { ids, voice in if let s = session { model.assignLines(session: s.id, ids, to: voice) } },
+                               onRevert: { lineID, fix in if let s = session { model.fixes.revert(fix, lineID: lineID, in: s.id) } }) {
                 LivePartialRow(model: model, startedAt: store.liveStart)
             }
             .equatable()

@@ -245,9 +245,10 @@ def label(number: int, shown: dict) -> str:
 
 
 def speaker_name(line, nums: dict, shown: dict) -> str:
-    """你, a speaker, 对方 (no voices told apart) or 未识别 (a voice not on show) (TranscriptExport.speakerName)."""
+    """你 · 同传 (said through 同声传译), a speaker, 对方 (no voices told apart) or 未识别 (a voice not on
+    show) (TranscriptExport.speakerName)."""
     if line.speaker == "me":
-        return strings.L("你")
+        return strings.L("你 · 同传")
     if line.id in nums:
         return label(nums[line.id], shown)
     return strings.L("对方") if not nums else strings.L("未识别")
@@ -337,7 +338,7 @@ def content(s) -> str | None:
            "对方 = someone on the other side, not identified.\n"]
     for i, l in enumerate(s.lines[-400:]):
         who = "你" if l.speaker == "me" else ("说话人%d" % nums[l.id] if l.id in nums else "对方")
-        out.append("[L%d %s %s] %s\n" % (i + 1, clock(l.t), who, l.src))
+        out.append("[L%d %s %s] %s\n" % (i + 1, clock(l.t), who, l.shown))
     return "".join(out)
 
 
@@ -345,8 +346,10 @@ def read(reply: str, s):
     """(found: voice → VoiceGuess, refuted: voice → name). A name given on a line the voice neither said
     nor spoke next to is refuted; a name Ling gives two voices goes to the one with more lines."""
     from .models import VoiceGuess
+    # Without JSON mode (a host that refuses it) the object may come in a fence or a sentence.
+    a, z = reply.find("{"), reply.rfind("}")
     try:
-        obj = json.loads(reply)
+        obj = json.loads(reply[a:z + 1]) if 0 <= a < z else None
     except ValueError:
         return {}, {}
     lst = obj.get("speakers") if isinstance(obj, dict) else None
@@ -387,7 +390,7 @@ def read(reply: str, s):
                 continue
             del found[other]
         l = lines[i]
-        quote = l.src[:60] + "…" if len(l.src) > 60 else l.src
+        quote = l.shown[:60] + "…" if len(l.shown) > 60 else l.shown
         found[v] = VoiceGuess(name, "%s “%s”" % (clock(l.t), quote))
     return found, refuted
 
@@ -401,7 +404,7 @@ def holds(g, v: int, s) -> bool:
     quote = quote[:-1] if quote.endswith("”") else quote
     quote = quote.split("…")[0]
     for i, l in enumerate(s.lines):
-        if clock(l.t) == at and l.src.startswith(quote):
+        if clock(l.t) == at and l.shown.startswith(quote):
             return any(x.speaker == "them" and x.voice == v
                        for x in s.lines[max(0, i - EVIDENCE_REACH):i + EVIDENCE_REACH + 1])
     return True

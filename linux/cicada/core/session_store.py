@@ -119,6 +119,8 @@ class SessionStore:
                     # Whose line it is stays as stored: a joined half sentence keeps the earlier
                     # line's voice, and the user's 这句是谁说的 isn't undone by a retranslation.
                     line.voice = l.voice
+                    # Its fixes too (改正听错的词): the engine's copy of a line never carries them.
+                    line.fixes = l.fixes
                     if len(line.src) > len(l.src):
                         grew.append(True)  # a half sentence joined: new words, not a retranslation
                     s.lines[i] = line
@@ -126,6 +128,34 @@ class SessionStore:
         self._mutate(sid, change)
         if grew:
             self._words(sid)
+
+    # 改正听错的词 (SessionStore.swift)
+
+    def set_fixes(self, sid: str, line_id: str, fixes: list) -> None:
+        """A line's fixes: what the AI service proposed and the user decided. None when empty."""
+        with self._gate:
+            s = self._sessions.get(sid)
+            l = next((x for x in s.lines if x.id == line_id), None) if s else None
+            if l is None or (l.fixes or []) == fixes:
+                return
+        self._mutate(sid, lambda s: [setattr(x, "fixes", [f.copy() for f in fixes] or None) for x in s.lines if x.id == line_id])
+
+    def line(self, sid: str, line_id: str):
+        """A copy of one line, or None."""
+        with self._gate:
+            s = self._sessions.get(sid)
+            l = next((x for x in s.lines if x.id == line_id), None) if s else None
+            return l.copy() if l else None
+
+    def line_heard(self, text: str):
+        """The line a reply was for, by its text as heard: (meeting id, a copy of the line), the newest
+        such line in the live meeting. Older meetings never: "好的。" is in all of them."""
+        with self._gate:
+            s = self._sessions.get(self.live) if self.live else None
+            if s is None:
+                return None
+            l = next((x for x in reversed(s.lines) if x.src == text), None)
+            return (s.id, l.copy()) if l else None
 
     # Voices (说话人识别, SessionStore.swift)
 
@@ -397,7 +427,7 @@ def notes_markdown(n) -> str:
     if n.conclusions:
         b.append("### %s\n\n" % L("结论") + "".join("- %s\n" % c.text for c in n.conclusions) + "\n")
     if n.todos:
-        b.append("### %s\n\n" % L("待办") + "".join("- [ ] %s%s\n" % (t.text, "（%s）" % t.owner if t.owner else "") for t in n.todos) + "\n")
+        b.append("### %s\n\n" % L("待办") + "".join("- [ ] %s\n" % t.with_owner for t in n.todos) + "\n")
     if n.terms:
         b.append("### %s\n\n" % L("人名和术语") + "".join("- **%s** %s\n" % (t.name, t.note) for t in n.terms) + "\n")
     return "".join(b)
@@ -416,8 +446,8 @@ def markdown(s: Session, voices: bool = False) -> str:
     for l in s.lines:
         # An imported file has no "other side" to name.
         who = (" " + speakers.speaker_name(l, nums, shown)) if s.sourceFile is None else ""
-        out.append("**[%s]%s**  \n%s\n" % (clock(l.t), who, l.src))
-        if l.dst and l.dst != l.src:
+        out.append("**[%s]%s**  \n%s\n" % (clock(l.t), who, l.shown))
+        if l.dst and l.dst != l.shown:
             out.append("> %s\n" % l.dst)
         out.append("\n")
     return "".join(out)

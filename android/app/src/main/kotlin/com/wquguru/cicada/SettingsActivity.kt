@@ -43,7 +43,7 @@ class SettingsActivity : Activity() {
     private fun build() {
         val app = cicada
         val s = app.settings
-        val key = listOf(app.ling.keyState, app.ling.currentKey()?.takeLast(4), app.ling.aiCheck.summary, s.toJson(), app.canOverlay, Strings.language, app.updates.available?.version, app.updates.manual).joinToString("|")
+        val key = listOf(app.ling.keyState, app.ling.currentKey()?.takeLast(4), app.ling.aiCheck.summary, s.toJson(), app.canOverlay, Strings.language, app.updates.available?.version, app.updates.manual, app.vocabulary.terms.size).joinToString("|")
         if (key == shown) return
         shown = key
         page.removeAllViews()
@@ -65,13 +65,20 @@ class SettingsActivity : Activity() {
                 s.uiLanguage = it; app.saveSettings(); app.loadStrings(); shown = null; recreate()
             })))
 
-        // 听对方: the Mac's listening switches. Android doesn't tell voices apart itself yet (no
-        // voiceprint runtime in the framework), so 说话人识别 numbers the voices of records made
-        // on the Mac or Windows; the helper says so.
+        // 听对方: the Mac's listening switches. 说话人识别 tells voices apart on the phone
+        // (NativeVoiceprints); should the library not load, it still numbers the voices of
+        // records made elsewhere, and the helper says so.
         page.addView(ui.sectionLabel(L("听对方")))
+        val voicesHere = app.listen.speakers?.available == true
         page.addView(ui.group(listOf(
-            ui.switchRow(L("说话人识别"), L("显示 Mac 和 Windows 上分出的说话人；这台手机还不能按声音分人"), s.speakerVoices) { s.speakerVoices = it; app.saveSettings() },
-            ui.switchRow(L("保存会议录音"), L("只存在这台手机上，会议记录里能回放原声"), s.recordAudio) { s.recordAudio = it; app.saveSettings() })))
+            ui.switchRow(L("说话人识别"), if (voicesHere) L("按声音标出说话人 1、2…，只在这台手机上处理") else L("显示 Mac 和 Windows 上分出的说话人；这台手机还不能按声音分人"),
+                      s.speakerVoices) { s.speakerVoices = it; app.saveSettings() },
+            ui.switchRow(L("保存会议录音"), L("只存在这台手机上，会议记录里能回放原声"), s.recordAudio) { s.recordAudio = it; app.saveSettings() },
+            // 改正听错的词: its switches and the word list (the Mac's 设置 › 词表).
+            ui.listRow(L("词表"), if (s.fixMisheard && app.ling.usable) L("会中改正听错的词") else L("已关"),
+                       trailing = value(if (app.vocabulary.terms.isEmpty()) "" else "${app.vocabulary.terms.size}")) {
+                startActivity(Intent(this, WordListActivity::class.java))
+            })))
 
         page.addView(ui.sectionLabel(L("我说 · 面对面")))
         page.addView(ui.group(listOf(

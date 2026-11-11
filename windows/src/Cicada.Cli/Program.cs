@@ -143,7 +143,7 @@ switch (args_[0])
             mic.Ended += _ => done.TrySetResult();
             roomEnded = done.Task;
             roomEngine.Changed += show;
-            roomEngine.Join(mic, engine.SessionId!, store.Get(engine.SessionId!)!.StartedAt);
+            roomEngine.Join(mic, engine.SessionId!, store.Get(engine.SessionId!)!.StartedAt, engine.Mix);
         }
         await Task.WhenAll(ended.Task, roomEnded);
         await Task.Delay(TimeSpan.FromSeconds(1.5 + (roomEngine is null ? 0 : EchoMatch.Hold)));

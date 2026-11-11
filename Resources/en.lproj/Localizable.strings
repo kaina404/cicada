@@ -252,7 +252,6 @@
 "与另一个快捷键冲突" = "Conflicts with the other shortcut";
 "%@ 是系统快捷键，换一个吧" = "%@ is a system shortcut; choose another";
 "%@ 已被其他应用占用，换一个吧" = "%@ is taken by another app; choose another";
-"没有可用的麦克风" = "No microphone available";
 "%lld 秒后结束" = "ending in %lld s";
 "%@ 已挂断" = "%@ hung up";
 "已经 %lld 分钟没人说话" = "No one has spoken for %lld min";
@@ -267,56 +266,6 @@
 "正在记录会议" = "A meeting is being recorded";
 "退出会结束这场记录，已记下的内容会保存。" = "Quitting ends this recording. What has been recorded so far is saved.";
 "退出" = "Quit";
-
-/* Ask */
-"本机模型没有回答" = "The local model didn't answer";
-"本机模型没有启动" = "The local model didn't start";
-
-/* AskCard */
-"助手" = "Assistant";
-"答题路线" = "Answer plan";
-"参考回答" = "Reference answer";
-"按此规划" = "Plan this answer";
-"展开" = "Expand";
-"收起" = "Hide";
-"正在规划" = "Planning…";
-"结束规划" = "End plan";
-"现在说" = "Say now";
-"接着说" = "Then";
-"之前的提示 %lld" = "Earlier %lld";
-"刚才的问题" = "Last question";
-"正在载入本机模型" = "Loading the local model";
-"正在回答" = "Answering";
-
-/* AssistantWindow */
-"悬浮回答" = "Floating answer";
-"共享中可见" = "Visible in screen sharing";
-"字号" = "Text size";
-"背景不透明度" = "Background opacity";
-
-/* CandidateFeed */
-"面试阶段" = "Interview stage";
-"文本和截图发送云端" = "Text and screenshots are sent to the cloud";
-"面试教练" = "Interview coach";
-"放大悬浮回答" = "Float enlarged answer";
-"跟随朗读" = "Follow reading";
-"重试" = "Retry";
-"陪读" = "Read along";
-"已暂停" = "Paused";
-"请检查 AI 服务设置" = "Check AI service settings";
-"正在生成完整英文回答…" = "Writing the full English answer…";
-"正在听双方发言 · Gemma 识别与跟读" = "Listening to both sides · Gemma speech recognition and reading";
-"本机 Gemma 未就绪，请查看 AI 服务设置" = "Local Gemma is unavailable. Check AI settings.";
-"正在准备本机 Gemma…" = "Preparing local Gemma…";
-"本机跟读识别暂不可用，稿件已保留" = "Local reading recognition is unavailable. Your script is preserved.";
-"本机模型未能回答，请重试" = "Local model failed. Retry.";
-"尚未听取候选人回答" = "Candidate microphone is off";
-"选择候选人麦克风" = "Choose candidate microphone";
-"关闭麦克风" = "Turn off mic";
-"打开麦克风" = "Turn on mic";
-"已经说出" = "Already spoken";
-"播放速度" = "Playback speed";
-"陪读音量" = "Read-along volume";
 
 /* CloudHearing */
 "key 已失效，到设置 › AI 服务里重填" = "The key stopped working. Enter a new one in Settings › AI Service";
@@ -420,22 +369,9 @@
 "找不到原文件，没法播放" = "Can't find the original file to play";
 "暂停" = "Pause";
 "播放" = "Play";
+"播放速度" = "Playback speed";
 "松开，开始转写" = "Drop to transcribe";
 "录音或视频，一次可放多个" = "Recordings or videos, several at once";
-
-/* InterfaceLanguage */
-"跟随系统" = "Follow system";
-"界面语言" = "App language";
-"重新打开后生效" = "Takes effect after reopening";
-"语言已保存" = "Language saved";
-"重新打开会结束当前会议，请先完成记录" = "Reopening ends the current meeting. Finish recording first.";
-"重新打开" = "Reopen";
-
-/* InterviewCoachLogic */
-"通用" = "General";
-"HR 面" = "HR";
-"CTO 面" = "CTO";
-"CEO 面" = "CEO";
 
 /* LanguageSettings */
 "听对方" = "Listening";
@@ -451,6 +387,7 @@
 "对方说的正是系统语言时，翻成系统里的另一种" = "When they speak your system language, translates into your other system language";
 "对方说的就是这种语言时不翻译" = "Not translated when they already speak this language";
 "跟随系统（%@）" = "Follow system (%@)";
+"跟随系统" = "Follow system";
 "纪要语言" = "Notes language";
 "实时纪要和完整版同一种语言" = "Live and full notes use the same language";
 "我的语言 · %@" = "Mine · %@";
@@ -472,14 +409,15 @@
 "这个服务" = "this service";
 
 /* ListenEngine */
-"正在听" = "Listening";
-"没能下载 %@ 语音模型" = "Couldn't download the %@ speech model";
 "%@（识别中…）→ %@" = "%1$@ (detecting…) → %2$@";
 "自动识别 → %@" = "Auto-detect → %@";
 "等你允许使用麦克风" = "Waiting for microphone access";
+"正在听" = "Listening";
 "此 Mac 不支持本机语音识别" = "This Mac doesn't support on-device speech recognition";
 "请在系统设置里允许“系统音频录制”，再重新打开知了" = "Allow System Audio Recording in System Settings, then reopen Cicada";
 "无法读取系统音频，请在系统设置里允许“系统音频录制”" = "Can't read system audio. Allow “System Audio Recording” in System Settings";
+"没能下载 %@ 语音模型" = "Couldn't download the %@ speech model";
+"已暂停" = "Paused";
 "麦克风无法启动，请在系统设置里允许%@使用麦克风" = "The microphone won't start. Allow %@ to use it in System Settings";
 "%@ 在听" = "%@ is listening";
 "识别出错，%lld 秒后重试" = "Recognition error; retrying in %lld s";
@@ -542,15 +480,17 @@
 "依据较少，仅供参考" = "Little evidence; for reference only";
 "说话的内容会出现在这里" = "What's said will appear here";
 "%lld 句新内容" = "%lld new lines";
-"屏幕" = "Screen";
+"校准中" = "Refining";
 "这段是谁说的" = "Who said this?";
 "这句是谁说的" = "Who said this?";
+"文字稍后会再校准一次，字幕不受影响" = "Text will be refined in a moment. Subtitles aren’t affected.";
 "正在说" = "Speaking";
 "从这里开始听" = "Listening began";
 "原话" = "Original";
 "译文" = "Translation";
 "此刻" = "Now";
 "等有人开口" = "Waiting for someone to speak";
+"收起" = "Hide";
 "展开全部 %lld 个" = "Show all %lld";
 "原识别 %@" = "Heard as %@";
 "有人开口后，约半分钟出第一版" = "First notes about 30 s after someone speaks";
@@ -561,14 +501,12 @@
 "现在结束" = "End now";
 
 /* NotesWindow */
-"Gemma 语音识别暂不可用，正在重试" = "Gemma speech recognition is unavailable. Retrying…";
 "译文和纪要等 %@ 恢复 · 字幕先显示原文" = "Translation and notes wait for %@ · subtitles show the original for now";
 "译文等 %@ 恢复 · 字幕先显示原文" = "Translation waits for %@ · subtitles show the original for now";
 "电脑声音照常在记" = "The Mac's audio is still being recorded";
 "麦克风没声音" = "The mic is silent";
 "重开了一次也没好" = "Reopening it didn't help";
 "会议纪要" = "Meeting notes";
-"回答刚才的问题" = "Answer the last question";
 "结束这场会议" = "End this meeting";
 "收窄" = "Narrow";
 "收成小卡" = "Collapse to card";
@@ -680,12 +618,13 @@
 "识别语音" = "Recognize speech";
 "打开“听写”，允许“语音识别”" = "Turn on Dictation and allow Speech Recognition";
 "已打开" = "On";
+"重新打开" = "Reopen";
 "放一段会议试试" = "Try a meeting";
 "一段 9 秒的英文会议，字幕会跟着声音实时出来。" = "A 9-second meeting in English. Subtitles appear as they talk.";
 "听到" = "Hearing";
 "自动 · %@" = "Auto · %@";
-"开会时要说外语吗？" = "Speaking another language in meetings?";
-"按住一个键说%@，对方听到翻译后的语音。" = "Hold a key and speak %@; they hear it translated.";
+"线上开会时要说外语吗？" = "Speaking another language in online meetings?";
+"按住一个键说%@，线上的人听到翻译后的语音。" = "Hold a key and speak %@; people online hear it translated.";
 "要，现在设置" = "Yes, set it up";
 "约 2 分钟，会装一个虚拟麦克风" = "About 2 minutes; installs a virtual mic";
 "先不用" = "Not now";
@@ -764,29 +703,11 @@
 "回去接上" = "Go back and connect";
 
 /* Overlay */
-"你在说…  " = "You're speaking…  ";
-"翻译中…  " = "Translating…  ";
-"你：" = "You: ";
-
-/* RealtimeSettings */
-"DeepSeek 处理原文和截图，Gemma 在本机跟读" = "DeepSeek processes transcripts and screenshots; Gemma tracks reading on this Mac";
-"Kokoro 本机合成，按住手表播放，松开暂停" = "Local Kokoro speech. Hold Watch to play; release to pause.";
-"简历、项目、预制回答和目标公司，开始听时重新读取" = "Résumé, projects, prepared answers and target company; reread when listening starts";
-"候选人麦克风" = "Candidate microphone";
-"已保存 DeepSeek key" = "DeepSeek key saved";
-"保存" = "Save";
-"Key 保存失败" = "Could not save key";
-"检查本机模型" = "Check local model";
-"安装语音检测" = "Set up speech detection";
-"本机未安装 mlx-vlm" = "mlx-vlm is not installed";
-"正在准备语音检测…" = "Preparing speech detection…";
-"面试资料" = "Interview material";
-"打开资料文件夹" = "Open Folder";
-"资料文件夹创建失败" = "Couldn't create the folder";
-"语音检测已就绪" = "Speech detection is ready";
-"语音检测安装失败，请重试" = "Speech detection setup failed. Please retry.";
-"本机模型已就绪" = "Local model ready";
-"本机模型未能启动，请重试" = "Local model failed to start. Retry.";
+"同传 · 你在说…  " = "Interpreting · you're speaking…  ";
+"同传 · 翻译中…  " = "Interpreting · translating…  ";
+"同传 · 你：" = "Interpreting · you: ";
+"关闭麦克风" = "Turn off mic";
+"打开麦克风" = "Turn on mic";
 
 /* Recognition */
 "请在系统设置 › 键盘里打开“听写”" = "Turn on Dictation in System Settings › Keyboard";
@@ -823,38 +744,17 @@
 "已改用 %@" = "Now using %@";
 "只听电脑了" = "Hearing the Mac only";
 "没有别的麦克风，已暂停" = "No other microphone, so listening is paused";
-"请先结束声音录制，再打开麦克风" = "Finish recording your voice before opening the microphone.";
-"麦克风启动超时，请重新连接设备后再试" = "Microphone startup timed out. Reconnect the device and try again.";
-
-/* ScreenNotes */
-"显示器 %lld×%lld" = "Display %lld×%lld";
-"整个显示器" = "Entire display";
-"你选的窗口" = "The window you picked";
-
-/* ScreenSettings */
-"画面在每场会议的纪要窗口中选择，可跳过" = "Choose a screen in each meeting’s notes window, or skip it";
-"显示中文对照" = "Show Chinese gloss";
-"使用已安装的苹果翻译语言包" = "Uses installed Apple translation languages";
-"已装在 ~/.cicada-mlx" = "Installed in ~/.cicada-mlx";
-"没装：只读文字，不解释画面" = "Not installed: text only, no explanation of the page";
-"看懂画面的本地模型" = "Local model for slides";
-"mlx-vlm 的模型名，留空只读文字" = "A model name for mlx-vlm; leave empty to read text only";
-"不选也可记录；声音来源不变" = "Optional; your audio source stays the same";
-"会议画面（可选）" = "Meeting screen (optional)";
-"选择画面…" = "Choose Screen…";
-"更换画面…" = "Change Screen…";
-"停止读取" = "Stop Reading";
-"暂时无法读取所选画面，请重新选择" = "Unable to read the selected view; choose it again";
-"正在获取所选画面…" = "Loading selected view…";
-"结束会议后停止读取" = "Reading stops when this meeting ends";
+"没有可用的麦克风" = "No microphone available";
 
 /* SessionStore */
 "会议 %@" = "Meeting %@";
+"你 · 同传" = "You · interpreted";
 "未识别" = "Unidentified";
+"同传" = "Interpreted";
 
 /* SettingsWindow */
 "语言" = "Language";
-"屏幕识别" = "Screen Reading";
+"通用" = "General";
 "诊断" = "Diagnostics";
 "有人说话时" = "While someone talks";
 "始终显示" = "Always";
@@ -908,8 +808,8 @@
 "系统麦克风已换好，关掉时换回" = "System mic switched; it goes back when you turn this off";
 "%@已选虚拟麦克风" = "%@ is on the virtual mic";
 "说一句话，听对方听到的声音，看每一步花了多久" = "Say one sentence, hear what they hear, and see how long each step takes";
-"对方听不到你" = "They can't hear you";
-"对方听得到你" = "They can hear you";
+"线上的人听不到你" = "People online can't hear you";
+"线上的人听得到你" = "People online can hear you";
 "同声传译没打开" = "Interpreting is off";
 "上次发言：松开后 %@ 秒，对方听到译文" = "Last time: they heard the translation %@ s after you let go";
 "按住说话，松开后约 1 秒，对方听到译文" = "Hold to talk; about 1 s after you let go, they hear the translation";
@@ -918,6 +818,7 @@
 "打开时把系统麦克风换成 %@" = "Switch the system mic to %@ while on";
 "%@听你说话用" = "%@ listens through";
 "译文送到" = "Send the translation to";
+"只给线上的人听，不从扬声器放" = "Only people online hear it, never the speakers";
 "自动切换系统麦克风" = "Switch the system microphone";
 "自动（%@）" = "Auto (%@)";
 "虚拟麦克风（自动）" = "Virtual microphone (auto)";
@@ -926,8 +827,6 @@
 "切换显示方式" = "Switch display";
 "被其他应用占用了，点右边换一个" = "Taken by another app; click to change";
 "实时纪要 → 字幕条 → 不显示" = "Live notes → Subtitle bar → None";
-"听的时候按，用本机模型回答" = "Press while listening; answered by the local model";
-"要先在屏幕识别里装好本机模型" = "Set up the local model in Screen Reading first";
 "录屏也一样；关着时只有你看得到纪要窗口" = "Recordings too. When off, only you see the notes window";
 "字幕条显示时机" = "Show subtitle bar";
 "安静多久后收起" = "Tuck away after quiet for";
@@ -955,23 +854,19 @@
 "直接结束" = "End";
 "一直记录" = "Keep going";
 
-/* ShadowReader */
-"陪读已关闭" = "Read along is off";
-"请将系统声音输出切到耳机" = "Switch system audio output to headphones";
-"正在准备 Kokoro 语音" = "Preparing Kokoro audio";
-"正在陪读" = "Reading along";
-"按住手表播放，松开暂停" = "Hold Watch to play; release to pause";
-"语音暂不可用，请松手后重新按住" = "Audio unavailable. Release, then hold again to retry.";
-"回答已播放完" = "Answer playback finished";
-
 /* Shortcuts */
 "右 ⌥" = "Right ⌥";
 "请包含 ⌃ 或 ⌘，否则会影响正常打字" = "Include ⌃ or ⌘, or it would get in the way of typing";
 
 /* SpeakEngine */
 "无法准备语音识别：%@" = "Can't prepare speech recognition: %@";
+"同声传译是给线上会议用的" = "Interpreting is for online meetings";
+"还没装虚拟麦克风，线上的人听不到你" = "No virtual microphone yet, so people online can't hear you";
 "语音识别仍在准备中，请再按一次" = "Speech recognition is still getting ready; press again";
+"没有虚拟麦克风 · 没有说出去" = "No virtual microphone · nothing was said";
 "这句没翻译成 · 没有说出去" = "This line wasn't translated · nothing was said";
+"对方在说话时说的，没有说出去" = "Said while they were talking, so not sent";
+"没听清你说的，没有说出去" = "Didn't catch what you said, so not sent";
 
 /* SpeakTest */
 "语音识别还没准备好，请稍后再试" = "Speech recognition isn't ready yet; try again shortly";
@@ -1064,6 +959,7 @@
 /* SpeakerViews */
 "会议室的麦克风听到的" = "Heard by the room mic";
 "电脑里放出来的" = "Played by the Mac";
+"按住说话键说的，对方听到的是译文" = "Said with the talk key; they heard the translation";
 "没认出是谁：太短，或和已知的声音都不像" = "Not recognised: too short, or unlike the known voices";
 "关掉说话人识别，记录里的名字一起收起" = "Turn off speaker identification; the names in your records are hidden too";
 "Ling 从对话里认出，点一下可以改" = "Ling found this name in the conversation; click to change";
@@ -1074,6 +970,7 @@
 "键盘暂时在这里，会议软件收不到 · 回车保存 · Esc 交还" = "Typing here, not in your meeting app · Return to save · Esc to give it back";
 "Ling 正在从对话里找名字…" = "Ling is looking for names in the conversation…";
 "输入名字" = "Type a name";
+"保存" = "Save";
 "Ling 从对话里认出" = "Found by Ling in the conversation";
 "Ling 从对话里认出：%@" = "Found by Ling in the conversation: %@";
 "不是 TA" = "Not them";
@@ -1102,9 +999,8 @@
 "没能自动更新：%@。已打开下载页" = "Couldn’t update automatically: %@. Opened the download page";
 "安装后自动重新打开" = "Reopens after installing";
 "安装并重新打开" = "Install and Reopen";
+"重试" = "Retry";
 "登录时打开" = "Open at Login";
-"在 Dock 中显示" = "Show in Dock";
-"关掉后只在菜单栏，打开窗口时才出现" = "Off: menu bar only, in the Dock just while a window is open";
 "版本 %@" = "Version %@";
 "首次引导" = "Getting started";
 "请在“系统设置 › 通用 › 登录项”中允许" = "Allow it in System Settings › General › Login Items";
@@ -1294,11 +1190,7 @@
 "读完了" = "Done";
 "开始录" = "Start";
 "再录一次" = "Record Again";
-"正在打开麦克风…" = "Opening microphone…";
 "正在听写…" = "Transcribing…";
-"直接录制所选麦克风的原声，不录制电脑播放声。" = "Records the selected microphone directly, without computer playback audio.";
-"录音麦克风" = "Recording microphone";
-"请选择麦克风" = "Choose a microphone";
 "%lld–%lld 秒" = "%lld–%lld s";
 "需先在“AI 服务”中填入 Ling key，才能使用你自己的声音。" = "Add a Ling key under “AI Service” to use your own voice.";
 "听起来不像或有杂音？换个安静的地方重录一次。录音仅保存在本机，可随时删除。" = "Doesn't sound like you, or noisy? Record again somewhere quiet. The recording stays on this Mac and can be deleted anytime.";
@@ -1326,14 +1218,297 @@
 "高品质" = "Premium";
 "增强" = "Enhanced";
 "标准" = "Standard";
-"请先关闭会议麦克风并松开说话键，再录制声音" = "Turn off the meeting microphone and release the talk key before recording.";
 "麦克风没收到声音，请检查麦克风权限" = "The microphone got no sound; check microphone permission";
-"所选麦克风已断开，请重新选择" = "The selected microphone disconnected. Choose a microphone again.";
 "无法打开麦克风：%@" = "Can't open the microphone: %@";
-"没有收到清晰声音，请检查所选麦克风后重录" = "No clear audio received. Check the selected microphone and record again.";
+"录音太短了，请至少朗读 %lld 秒" = "Too short; read for at least %lld seconds";
 "读得有点慢，克隆的声音也会这么慢。请用平时说话的语速再录一次" = "Read a bit slowly: your cloned voice would be just as slow. Record again at your usual pace";
 "没听清录音内容，请换个安静的地方再录一次" = "Couldn't make out the recording; try again somewhere quiet";
-"录音太短了，请至少朗读 %lld 秒" = "Too short; read for at least %lld seconds";
 
-/* Only the ports: Android */
+/* Debug */
 "导入录音或视频" = "Import a Recording or Video";
+
+/* LiveViews */
+"会议室 · %@" = "Room · %@";
+"正在听 · %@" = "Listening · %@";
+"对方说和翻译成" = "They speak, and translate into";
+"%lld 人在说" = "%lld people talking";
+"纪要 · %lld 条新" = "Notes · %lld new";
+"开始说话后，字幕会出现在这里" = "Subtitles show up here once people start talking";
+
+/* RecordView */
+"只看 %@ · %lld 段 · 再点一下取消" = "Only %@ · %lld turns · tap again to clear";
+"只看这个人；按住可改名字，或和别人合并" = "Shows only this person; press and hold to rename or merge";
+"改名字" = "Rename";
+
+/* RecordsView */
+"%lld 人" = "%lld people";
+
+/* RoomListen */
+"正在准备…" = "Getting ready…";
+"请在设置里允许知了使用麦克风" = "Allow Cicada to use the microphone in Settings";
+"识别中断了，请重新开始听" = "Recognition stopped. Start listening again";
+
+/* RootView */
+"下一版就能用" = "Coming in the next version";
+
+/* SettingsView */
+"在 Ling 开放平台点“创建令牌”，复制以 sk- 开头的那串。" = "On the Ling platform, click “Create token” and copy the string that starts with sk-.";
+"打开 Ling 开放平台 ↗" = "Open the Ling platform ↗";
+"Ling 提示此令牌无效，请检查是否复制完整，或重新创建一个" = "Ling says this token is invalid. Check that you copied all of it, or create a new one";
+
+/* NotesViews: 改正听错的词 */
+"听成" = "Heard as";
+"改回" = "Revert";
+"这样改对吗？" = "Is this fix right?";
+"对" = "Yes";
+"不对" = "No";
+
+/* WordListSettings: 词表 */
+"词表" = "Word list";
+"还没有词。把常用的人名、产品名贴进来，会中就照这些写法改" = "No words yet. Paste in the names and products you often say, and meetings will use these spellings.";
+"最多 %lld 个，满了优先用最近的。只存在这台 Mac 上" = "Up to %lld, recent ones first. Stored only on this Mac";
+"最多 %lld 个，满了优先用最近的。只存在这台设备上" = "Up to %lld, recent ones first. Stored only on this device";
+"会中改正听错的词" = "Fix misheard words live";
+"走 %@，只发文字" = "Text only, via %@";
+"接上 AI 服务后才会改" = "Needs an AI service";
+"没见过的名字和专称先问我" = "Ask before fixing unfamiliar names";
+"关掉就只改词表里的词和同音错字" = "When off, only fixes listed words and sound-alike typos";
+"词" = "Words";
+"搜索词表" = "Search words";
+"粘贴导入…" = "Paste to import…";
+"会中确认" = "Confirmed";
+"你加的" = "Added by you";
+"改过 %lld 次" = "Fixed ×%lld";
+"还没用上" = "Not used yet";
+"从词表里删掉" = "Remove from the list";
+"粘贴导入" = "Paste to import";
+"一行一个。常被听错的词，写在 = 后面" = "One per line. Put common mishearings after =";
+"第 %@ 行没加进去：超过 40 个字" = "Line %@ not added: over 40 characters";
+
+/* AISettings: 改正听错的词 */
+"改正听错的词" = "Fix misheard words";
+"已关" = "Off";
+"随翻译一起发，几乎不多花" = "Sent with the translation, barely any extra cost";
+"在“词表”里打开" = "Turn on in Word list";
+
+/* 改正听错的词: 改这句…, 撤销, 词表 */
+"改这句" = "Edit line";
+"记进词表，以后自动改" = "Save to Word list for next time";
+"整场听成 %@ 的 %lld 处都改" = "All %2$lld places heard as %1$@ in this meeting";
+"只改这一处" = "Just this one";
+"回车 改成 · esc 取消" = "Return to apply · Esc to cancel";
+"改成" = "Apply";
+"改了 %lld 处听错的词" = "Misheard words fixed: %lld";
+"改成…" = "Change to…";
+"改了 %lld 处听错的词，%lld 处等你确认" = "Misheard words fixed: %lld · %lld to confirm";
+"已收进人名和术语，稍后再看" = "Saved to Names and terms for later";
+"已改 %@ → %@，记进词表" = "%@ → %@ · Saved to Word list";
+"这场不再问 %@" = "Won't ask about %@ again in this meeting";
+"已改回 %@，这场不再改" = "Reverted to %@ for this meeting";
+"已改 %lld 处：%@ → %@，记进词表" = "Changed %lld: %@ → %@ · Saved to Word list";
+"已改 %lld 处：%@ → %@" = "Changed %lld: %@ → %@";
+"确认后整场一起改，以后也这样改" = "Applies to this meeting and future ones";
+"稍后再看" = "Decide later";
+"等你确认，还没改" = "Waiting for you, not changed yet";
+"听成 %@ · 改了 %lld 处" = "Heard as %@ · %lld fixed";
+"听成 %@" = "Heard as %@";
+"改这句…" = "Edit line…";
+"已删除" = "Deleted";
+"点一下改写法" = "Click to change the spelling";
+"加一个容易听错的词" = "Add misheard form";
+"“%@”已经记在 %@ 下" = "“%@” already belongs to %@";
+"改给 %@" = "Move to %@";
+"两个都留" = "Keep both";
+"删掉这个听错的词" = "Remove this misheard form";
+"新增 %lld · 补充听成 %lld · 跳过 %lld" = "%lld new · %lld updated · %lld skipped";
+"导入 %lld 个" = "Import %lld";
+/* Notes: a to-do's owner after it */
+"待办的负责人 %@" = " (%@)";
+
+/* Share a meeting as a link (ShareViews, ShareProjection) */
+"分享者" = "Sharer";
+"分享这场会议" = "Share this meeting";
+"有效期" = "Expires after";
+"显示说话人名字" = "Show speaker names";
+"用密码保护" = "Protect with a password";
+"预览卡显示摘要" = "Show the summary in link previews";
+"内容将上传至 cicada.indaloop.app，拿到链接的人都能看。" = "It will be uploaded to cicada.indaloop.app. Anyone with the link can read it.";
+"内容" = "Content";
+"只分享纪要" = "Notes only";
+"纪要和双语全文" = "Notes and full bilingual transcript";
+"7 天" = "7 days";
+"30 天" = "30 days";
+"1 年" = "1 year";
+"换一个" = "New one";
+"生成链接" = "Create link";
+"分享得太频繁了，请稍后再试。" = "Too many shares just now. Try again later.";
+"敏感内容检查暂时不可用，没有检查就不会分享。请稍后再试。" = "The check for sensitive content is unavailable right now, and nothing is shared unchecked. Try again later.";
+"分享功能暂时关闭了。" = "Sharing is turned off for now.";
+"请先更新知了。" = "Update Cicada first.";
+"这场会议太长，可以只分享纪要。" = "This meeting is too long. You can share just the notes.";
+"连不上 cicada.indaloop.app，请检查网络。" = "Can't reach cicada.indaloop.app. Check your connection.";
+"服务器出了问题，请稍后再试。" = "Something went wrong on the server. Try again later.";
+"正在检查有没有敏感内容…" = "Checking for sensitive content…";
+"链接尚未生成。请先核对以下内容：" = "No link yet. Check these first:";
+"去掉后再检查一次；你的记录不会改动。" = "They'll be left out and checked again. Your record stays as it is.";
+"检测到潜在敏感内容" = "Possibly sensitive content found";
+"返回修改" = "Go back";
+"去掉这些内容后分享" = "Leave these out and share";
+"密码或密钥" = "Password or key";
+"未公开的公司信息" = "Unpublished company information";
+"不宜跨境传输的信息" = "Information not to send across borders";
+"个人身份信息" = "Personal identity data";
+"违法或危险内容" = "Illegal or dangerous content";
+"链接已复制" = "Link copied";
+"已分享" = "Shared";
+"%lld 天后失效" = "Expires in %lld days";
+"打开 %lld 次" = "Opened %lld times";
+"取消后链接立即失效" = "The link stops working right away";
+"已查看过的人可能留有副本。" = "People who already opened it may have kept a copy.";
+"暂不取消" = "Keep it";
+"取消分享" = "Stop sharing";
+"在浏览器中打开" = "Open in browser";
+"没有分享出去" = "Not shared";
+"分享…" = "Share…";
+"去掉这些内容后就没有可分享的了。" = "Nothing would be left to share without these.";
+"这场会议没有可分享的内容。" = "This meeting has nothing to share.";
+"还有 %lld 处" = "And %lld more";
+
+/* Dock and one-click share copy */
+"更改" = "Change";
+"密码保护" = "Password";
+"无密码" = "No password";
+"1 年有效" = "Open 1 year";
+"%lld 天有效" = "Open %lld days";
+"显示名字" = "Names shown";
+"不显示名字" = "No names";
+"生成并复制" = "Create & Copy";
+"1 年内有效" = "valid for 1 year";
+"%lld 天内有效" = "valid for %lld days";
+"「%@」会议记录" = "Meeting record: %@";
+"链接和密码已复制" = "Link and password copied";
+"只复制链接" = "Copy link only";
+"只复制密码" = "Copy password only";
+"密码：%@（%@）" = "Password: %1$@ (%2$@)";
+"在 Dock 中显示" = "Show in Dock";
+"关掉后只在菜单栏，打开窗口时才出现" = "Off: menu bar only, in the Dock just while a window is open";
+"密码：%@" = "Password: %@";
+"复制" = "Copy";
+
+/* Mic button: the chevron that picks the room's microphone */
+"选择麦克风" = "Choose microphone";
+"会议室用哪个麦克风" = "Microphone for the room";
+"%@（只听得到戴的人）" = "%@ (hears only the wearer)";
+
+/* iOS: 声音来源, interruptions, picture-in-picture subtitles */
+"声音来源" = "Audio source";
+"手机外放" = "Phone speaker";
+"外放" = "Speaker";
+"外放 · %@" = "Speaker · %@";
+"别戴耳机，字幕会浮在小窗里" = "No headphones; subtitles float in a small window";
+"听不到其他 app 的声音，线上会议请用电脑版" = "Can't hear other apps; use a computer for online meetings";
+"已暂停，结束后接着听" = "Paused; resumes when it's over";
+"继续听" = "Listening again";
+"正在听外放…" = "Listening to the speaker…";
+"知了 · 正在听" = "Cicada · Listening";
+"没听到声音，请拔掉耳机或调大音量" = "No sound; unplug headphones or turn it up";
+
+/* feat/screen-notes: 屏幕识别、面试助手 */
+"本机模型没有回答" = "The local model didn't answer";
+"本机模型没有启动" = "The local model didn't start";
+"助手" = "Assistant";
+"答题路线" = "Answer plan";
+"参考回答" = "Reference answer";
+"按此规划" = "Plan this answer";
+"展开" = "Expand";
+"正在规划" = "Planning…";
+"结束规划" = "End plan";
+"现在说" = "Say now";
+"接着说" = "Then";
+"之前的提示 %lld" = "Earlier %lld";
+"刚才的问题" = "Last question";
+"正在载入本机模型" = "Loading the local model";
+"正在回答" = "Answering";
+"悬浮回答" = "Floating answer";
+"共享中可见" = "Visible in screen sharing";
+"字号" = "Text size";
+"背景不透明度" = "Background opacity";
+"面试阶段" = "Interview stage";
+"文本和截图发送云端" = "Text and screenshots are sent to the cloud";
+"面试教练" = "Interview coach";
+"放大悬浮回答" = "Float enlarged answer";
+"跟随朗读" = "Follow reading";
+"陪读" = "Read along";
+"请检查 AI 服务设置" = "Check AI service settings";
+"正在生成完整英文回答…" = "Writing the full English answer…";
+"正在听双方发言 · Gemma 识别与跟读" = "Listening to both sides · Gemma speech recognition and reading";
+"本机 Gemma 未就绪，请查看 AI 服务设置" = "Local Gemma is unavailable. Check AI settings.";
+"正在准备本机 Gemma…" = "Preparing local Gemma…";
+"本机跟读识别暂不可用，稿件已保留" = "Local reading recognition is unavailable. Your script is preserved.";
+"本机模型未能回答，请重试" = "Local model failed. Retry.";
+"尚未听取候选人回答" = "Candidate microphone is off";
+"选择候选人麦克风" = "Choose candidate microphone";
+"已经说出" = "Already spoken";
+"陪读音量" = "Read-along volume";
+"界面语言" = "App language";
+"重新打开后生效" = "Takes effect after reopening";
+"语言已保存" = "Language saved";
+"重新打开会结束当前会议，请先完成记录" = "Reopening ends the current meeting. Finish recording first.";
+"HR 面" = "HR";
+"CTO 面" = "CTO";
+"CEO 面" = "CEO";
+"屏幕" = "Screen";
+"Gemma 语音识别暂不可用，正在重试" = "Gemma speech recognition is unavailable. Retrying…";
+"回答刚才的问题" = "Answer the last question";
+"DeepSeek 处理原文和截图，Gemma 在本机跟读" = "DeepSeek processes transcripts and screenshots; Gemma tracks reading on this Mac";
+"Kokoro 本机合成，按住手表播放，松开暂停" = "Local Kokoro speech. Hold Watch to play; release to pause.";
+"简历、项目、预制回答和目标公司，开始听时重新读取" = "Résumé, projects, prepared answers and target company; reread when listening starts";
+"候选人麦克风" = "Candidate microphone";
+"已保存 DeepSeek key" = "DeepSeek key saved";
+"Key 保存失败" = "Could not save key";
+"检查本机模型" = "Check local model";
+"安装语音检测" = "Set up speech detection";
+"本机未安装 mlx-vlm" = "mlx-vlm is not installed";
+"正在准备语音检测…" = "Preparing speech detection…";
+"面试资料" = "Interview material";
+"打开资料文件夹" = "Open Folder";
+"资料文件夹创建失败" = "Couldn't create the folder";
+"语音检测已就绪" = "Speech detection is ready";
+"语音检测安装失败，请重试" = "Speech detection setup failed. Please retry.";
+"本机模型已就绪" = "Local model ready";
+"本机模型未能启动，请重试" = "Local model failed to start. Retry.";
+"显示器 %lld×%lld" = "Display %lld×%lld";
+"整个显示器" = "Entire display";
+"你选的窗口" = "The window you picked";
+"画面在每场会议的纪要窗口中选择，可跳过" = "Choose a screen in each meeting’s notes window, or skip it";
+"显示中文对照" = "Show Chinese gloss";
+"使用已安装的苹果翻译语言包" = "Uses installed Apple translation languages";
+"已装在 ~/.cicada-mlx" = "Installed in ~/.cicada-mlx";
+"没装：只读文字，不解释画面" = "Not installed: text only, no explanation of the page";
+"看懂画面的本地模型" = "Local model for slides";
+"mlx-vlm 的模型名，留空只读文字" = "A model name for mlx-vlm; leave empty to read text only";
+"不选也可记录；声音来源不变" = "Optional; your audio source stays the same";
+"会议画面（可选）" = "Meeting screen (optional)";
+"选择画面…" = "Choose Screen…";
+"更换画面…" = "Change Screen…";
+"停止读取" = "Stop Reading";
+"暂时无法读取所选画面，请重新选择" = "Unable to read the selected view; choose it again";
+"正在获取所选画面…" = "Loading selected view…";
+"结束会议后停止读取" = "Reading stops when this meeting ends";
+"屏幕识别" = "Screen Reading";
+"听的时候按，用本机模型回答" = "Press while listening; answered by the local model";
+"要先在屏幕识别里装好本机模型" = "Set up the local model in Screen Reading first";
+"陪读已关闭" = "Read along is off";
+"请将系统声音输出切到耳机" = "Switch system audio output to headphones";
+"正在准备 Kokoro 语音" = "Preparing Kokoro audio";
+"正在陪读" = "Reading along";
+"按住手表播放，松开暂停" = "Hold Watch to play; release to pause";
+"语音暂不可用，请松手后重新按住" = "Audio unavailable. Release, then hold again to retry.";
+"回答已播放完" = "Answer playback finished";
+"正在打开麦克风…" = "Opening microphone…";
+"直接录制所选麦克风的原声，不录制电脑播放声。" = "Records the selected microphone directly, without computer playback audio.";
+"录音麦克风" = "Recording microphone";
+"请选择麦克风" = "Choose a microphone";
+"请先关闭会议麦克风并松开说话键，再录制声音" = "Turn off the meeting microphone and release the talk key before recording.";
+"所选麦克风已断开，请重新选择" = "The selected microphone disconnected. Choose a microphone again.";
+"没有收到清晰声音，请检查所选麦克风后重录" = "No clear audio received. Check the selected microphone and record again.";

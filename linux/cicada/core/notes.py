@@ -202,6 +202,10 @@ class NotesEngine:
                 return
             if not final and not fresh:
                 nxt.topics = merge(base.topics, frozen, nxt.topics)
+            if not fresh:
+                prior = self.notes if sid == self.shown_id else session.notes
+                nxt.terms = NoteTerm.keeping_order(prior.terms if prior else [], nxt.terms)
+            nxt.terms = heard_as_said(nxt.terms, lines)
             carry_times(base, nxt)
             nxt.title = nxt.title or base.title or (session.notes.title if session.notes else None)
             nxt.covered = len(lines)
@@ -296,6 +300,14 @@ LIVE_MAX_TOPICS = 12
 EDITABLE_TOPICS = 2
 # A topic summary longer than this is a log the model kept appending to, not one sentence.
 TOPIC_SUMMARY_LIMIT = 160
+
+
+def heard_as_said(terms: list, lines: list) -> list:
+    """Terms keep only the heard forms the recognizer really wrote (`src`). The notes read lines with
+    fixes in, so a wrong fix came back as a heard form ("X平台 heard as platform"), went to the
+    translator and the next fix's request as a known mishearing, and was proposed again."""
+    srcs = [l.src.casefold() for l in lines]
+    return [replace(t, heard=[h for h in t.heard if any(h.casefold() in s for s in srcs)]) for t in terms]
 
 
 def shortened(summary: str) -> str:
@@ -396,7 +408,7 @@ def prompt(notes: MeetingNotes, lines: list, frm: int, language: str, final: boo
         # A named voice goes as its name: notes then say "George" rather than "说话人2".
         who = "你" if l.speaker == "me" else (
             (names.get(nums[l.id]) or "说话人%d" % nums[l.id]) if l.id in nums else ("对方" if not nums else "未识别"))
-        return "[L%d %s %s] %s" % (i + 1, clock(l.t), who, l.src)
+        return "[L%d %s %s] %s" % (i + 1, clock(l.t), who, l.shown)
     current = "{}" if notes.is_empty else _compact_json(notes, frozen)
     context = max(0, frm - 2)
     if part is not None:
@@ -449,7 +461,7 @@ def _format(language: str, voices: bool, final: bool, frozen: int) -> str:
             "- At most 5 conclusions and only real to-dos (often none).\n"
             "- Add a fishbone only to a topic that discusses causes, reasons or factors (3-5 branches); otherwise null.\n"
             "- Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.\n"
-            "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used; note is a few words.\n"
+            "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used, and only of that same thing: a name said again and again in one spelling that context doesn't tie to a known one (\"我们 twoty\", \"our platform\") is a thing of its own, its own term with that spelling, not a mishearing of a similar name; note is a few words.\n"
             "- Write the meeting title and every summary, title, point, branch, conclusion and to-do in %s, even when the transcript is in another language. Only term names keep the transcript's spelling.\n"
             "- Write about what was said, never about the transcript or recognition quality.\n"
             "- Use empty arrays when there is nothing. No markdown, no text outside the JSON."

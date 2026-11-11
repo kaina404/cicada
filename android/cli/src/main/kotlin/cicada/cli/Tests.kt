@@ -22,6 +22,7 @@ object Tests {
         home.mkdirs()
         val tests: List<Pair<String, () -> Unit>> = listOf(
             "sessionJsonMatchesTheMac" to ::sessionJsonMatchesTheMac,
+            "todoOwnersShowInTheUiLanguage" to ::todoOwnersShowInTheUiLanguage,
             "readsAMacRecordAndWritesItBackByteForByte" to ::readsAMacRecord,
             "keepsTheMacsImportAndRoomFields" to ::keepsTheMacsImportAndRoomFields,
             "jsonEdgeCases" to ::jsonEdgeCases,
@@ -62,6 +63,7 @@ object Tests {
             "ignoresClicks" to ::ignoresClicks,
             "wavRoundTrip" to ::wavRoundTrip,
             "parsesNotes" to ::parsesNotes,
+            "termsKeepOnlyFormsTheRecognizerWrote" to ::termsKeepOnlyFormsTheRecognizerWrote,
             "keepsEarliestTimes" to ::keepsEarliestTimes,
             "notesPromptIsTheMacs" to ::notesPromptIsTheMacs,
             "keepsFrozenTopicsAndTakesTheRepliesTail" to ::keepsFrozenTopicsAndTakesTheRepliesTail,
@@ -70,6 +72,7 @@ object Tests {
             "longMeetingsAreNotedInPartsByTime" to ::longMeetingsAreNotedInPartsByTime,
             "topicStartsWhenItsLinesWereSaid" to ::topicStartsWhenItsLinesWereSaid,
             "loadsTheMacsTranslations" to ::loadsTheMacsTranslations,
+            "pluralsFromTheMacsStringsdict" to ::pluralsFromTheMacsStringsdict,
             "keyFileIsPrivate" to ::keyFileIsPrivate,
             "onboardingKeepsAWorkingSavedKey" to ::onboardingKeepsAWorkingSavedKey,
             "lingRequestShape" to ::lingRequestShape,
@@ -83,7 +86,13 @@ object Tests {
             "lingGateSpacesStartsAndServesPriorityFirst" to ::lingGate,
             "listenEngineEndToEndWithAFakeMing" to ::listenEndToEnd,
             "listenSaysServerErrorsInARowAndClearsThem" to ::listenServerErrors,
-        ) + ProviderTests.tests + AICheckTests.tests
+            "clustererMatchesTheMac" to ::clustererMatchesTheMac,
+            "numbersWaitForTwoVoicesWithFiveLines" to ::numbersWaitForTwoVoices,
+            "lingNamesNeedEvidenceNearTheVoice" to ::lingNamesNeedEvidence,
+            "notesPromptNamesTheVoices" to ::notesPromptNamesTheVoices,
+            "aHalfSentenceJoinsOnlyTheSameVoice" to ::aHalfSentenceJoinsOnlyTheSameVoice,
+            "slowVoiceprintsNeverHoldSubtitlesBack" to ::slowVoiceprintsNeverHoldSubtitlesBack,
+        ) + ProviderTests.tests + AICheckTests.tests + FixTests.tests + ShareTests.tests
         var passed = 0; var failed = 0
         for ((name, test) in tests) {
             try { test(); passed++ } catch (e: Throwable) { failed++; println("FAIL $name: ${e.message ?: e.javaClass.simpleName}") }
@@ -307,15 +316,16 @@ object Tests {
         val md = TranscriptExport.markdown(s)
         check(md.contains("**[00:10] 说话人 1**  \nwe should ship it now\n> 我们现在就该发布\n"), "markdown speaker number")
         check(md.contains("**[00:15] Ken**"), "markdown speaker name")
-        check(md.contains("**[01:01] 你**  \n好的\n> OK\n"), "markdown me")
+        check(md.contains("**[01:01] 你 · 同传**  \n好的\n> OK\n"), "markdown me: 同传")
         val srt = TranscriptExport.srt(s)
         check(srt.startsWith("1\n00:00:10,000 --> 00:00:15,000\nwe should ship it now\n我们现在就该发布\n\n2\n"), "srt cue")
-        check(srt.contains("11\n00:01:01,000 --> 00:01:05,000\n好的\nOK\n"), "srt last cue ends 4 s on")
+        check(srt.contains("11\n00:01:01,000 --> 00:01:05,000\n[同传] 好的\nOK\n"), "srt last cue ends 4 s on, my line marked 同传")
         val docx = TranscriptExport.docx(s)
         val names = java.util.zip.ZipInputStream(docx.inputStream()).use { z -> generateSequence { z.nextEntry?.name }.toList() }
         equal(listOf("[Content_Types].xml", "_rels/.rels", "word/document.xml"), names, "docx parts")
         val doc = java.util.zip.ZipInputStream(docx.inputStream()).use { z -> while (z.nextEntry?.name != "word/document.xml") {}; z.readBytes().toString(Charsets.UTF_8) }
         check(doc.contains(">[00:15] Ken<") && doc.contains(">我们现在就该发布<"), "docx text")
+        check(doc.contains(">[01:01] 你 · 同传<"), "docx me: 同传")
         SpeakerLabels.voices = false
         check(TranscriptExport.markdown(s).contains("**[00:15] 对方**"), "说话人识别 off: no numbers")
         SpeakerLabels.voices = true
@@ -420,11 +430,11 @@ object Tests {
 
     /// A 300 Hz tone that swells and fades four times a second like syllables; steady when not, or
     /// rising and falling by `wobble` twice a second like a fan.
-    private fun tone(seconds: Double, amp: Double = 0.3, syllables: Boolean = true, wobble: Double = 0.0) = ShortArray((seconds * 16000).toInt()) {
+    fun tone(seconds: Double, amp: Double = 0.3, syllables: Boolean = true, wobble: Double = 0.0) = ShortArray((seconds * 16000).toInt()) {
         val env = if (syllables) 0.55 + 0.45 * sin(2 * PI * 4 * it / 16000) else 1.0 + wobble * sin(2 * PI * 0.5 * it / 16000)
         (sin(2 * PI * 300 * it / 16000) * env * amp * 32767).toInt().toShort()
     }
-    private fun silence(seconds: Double) = ShortArray((seconds * 16000).toInt())
+    fun silence(seconds: Double) = ShortArray((seconds * 16000).toInt())
     /// Typing: a key click every 0.2 s, 6 ms of decaying crackle peaking near -12 dBFS (scripts/vad-clips.py).
     private fun keys(seconds: Double) = silence(seconds).also { out ->
         var at = 1600
@@ -447,7 +457,7 @@ object Tests {
         val n = (seconds * 16000).toInt()
         return ShortArray(n) { (sin(2 * PI * 7000 * it / 16000) * minOf(1.0, it / 4800.0, (n - it) / 4800.0) * amp * 32767).toInt().toShort() }
     }
-    private fun concat(vararg parts: ShortArray): ShortArray = parts.fold(ShortArray(0)) { a, b -> a + b }
+    fun concat(vararg parts: ShortArray): ShortArray = parts.fold(ShortArray(0)) { a, b -> a + b }
 
     private fun cut(vararg parts: ShortArray): List<Segment> {
         val list = mutableListOf<Segment>()
@@ -518,6 +528,14 @@ object Tests {
 
     // MARK: Notes
 
+    /// A heard form only a fix wrote ("platform" for 平台) isn't one: it would teach the translator
+    /// and the next fix the same mistake.
+    fun termsKeepOnlyFormsTheRecognizerWrote() {
+        val l = TranscriptLine("a", 0.0, "them", "我们 twoty 平台", null, "zh-CN", "en", fixes = mutableListOf(LineFix("平台", "platform")))
+        val terms = listOf(NoteTerm("X平台", "n", mutableListOf("Xplatform", "platform", "Twoty")))
+        equal(listOf("Twoty"), NotesEngine.heardAsSaid(terms, listOf(l)).first().heard.toList(), "heard as said")
+    }
+
     fun parsesNotes() {
         val reply = """
         ```json
@@ -585,6 +603,9 @@ object Tests {
         val abc = listOf(topic(0.0, "a"), topic(100.0, "b"), topic(200.0, "c"))
         equal("a,b,c", NotesEngine.merge(abc, 1, emptyList()).joinToString(",") { it.title }, "an empty reply keeps the topics")
         equal("a,b,c", NotesEngine.merge(abc, 1, listOf(topic(0.0, "a"))).joinToString(",") { it.title }, "only an echo keeps them too")
+        val terms = { names: String -> names.split(",").map { NoteTerm(it) } }
+        equal("A,B,C,D", NoteTerm.keepingOrder(terms("A,B,C"), terms("C,D,A,B")).joinToString(",") { it.name }, "terms keep their place, new ones after")
+        equal("B,E,D", NoteTerm.keepingOrder(terms("A,B,C"), terms("E,B,D")).joinToString(",") { it.name }, "dropped terms leave, new ones keep the reply's order")
         // A runaway summary is cut to its first sentence.
         val runaway = topic(0.0, "t0").apply { summary = "对方展示AI眼镜后觉得是完全新的体验，提议可以出发回去。" + "最新对方又补充了一些内容，".repeat(20) }
         equal("对方展示AI眼镜后觉得是完全新的体验，提议可以出发回去。", NotesEngine.merge(emptyList(), 0, listOf(runaway))[0].summary, "a runaway summary")
@@ -689,6 +710,39 @@ object Tests {
         equal("x\ny", t["a \"b\""], "escapes")
         equal("%@ min", t["%@ 分钟"], "placeholders kept")
         equal("3 分钟", Strings.LF("%@ 分钟", 3), "LF fills %@")
+        equal("1 句", Strings.LF("%lld 句", 1), "Chinese has no plural forms")
+    }
+
+    fun todoOwnersShowInTheUiLanguage() {
+        val notes = MeetingNotes(summary = "s", todos = mutableListOf(NoteItem("Ship it", "对方"), NoteItem("Review", "说话人2"), NoteItem("Call", "Anna"), NoteItem("Plan")))
+        try {
+            loadStrings("en")
+            equal(listOf("Ship it (Them)", "Review (Speaker 2)", "Call (Anna)", "Plan"), notes.todos.map { it.withOwner }, "English")
+            check(TranscriptExport.notesMarkdown(notes).contains("- [ ] Ship it (Them)\n"), "markdown export")
+        } finally { loadStrings("zh-Hans") }
+        equal("Ship it（对方）", notes.todos[0].withOwner, "Chinese as stored")
+        equal("对方", notes.todos[0].owner, "the record keeps the Chinese label")
+    }
+
+    fun pluralsFromTheMacsStringsdict() {
+        loadStrings("en")
+        equal("1 line", Strings.LF("%lld 句", 1), "one")
+        equal("2 lines", Strings.LF("%lld 句", 2), "other")
+        equal("0 lines", Strings.LF("%lld 句", 0), "zero is other in English")
+        equal("Heard 1 line", Strings.LF("已听到 %lld 句", 1), "text around the plural")
+        equal("12:00 · 1 line", Strings.LF("%@ · %lld 句", "12:00", 1), "positional %2$#@n@ after %1$@")
+        equal("Recorded 03:15 · 7 lines. Ending stops listening and writes the full notes.",
+              Strings.LF("已记录 %@ · %lld 句。结束后停止收听，并整理一份完整版纪要。", "03:15", 7), "positional, other")
+        equal("1 point", Strings.LF("%lld 条要点", 1L), "a Long counts too")
+        equal("Live notes", Strings.L("实时纪要"), "plain strings still load")
+        loadStrings("ja")
+        equal("1文", Strings.LF("%lld 句", 1), "no stringsdict: the .strings value")
+        loadStrings("zh-Hans")   // the other tests read the Chinese
+        val p = Strings.parsePlurals("<?xml version=\"1.0\"?>\n<!DOCTYPE plist>\n<plist version=\"1.0\"><dict><key>a &amp; b</key><dict>" +
+            "<key>NSStringLocalizedFormatKey</key><string>%#@x@ &lt;</string><key>x</key><dict><key>one</key><string>%lld y</string>" +
+            "<key>other</key><string>%lld ys</string></dict></dict></dict></plist>")
+        equal("%#@x@ <", p["a & b"]?.format, "entities")
+        equal("%lld ys", p["a & b"]?.forms?.get("x")?.get("other"), "forms")
     }
 
     fun onboardingKeepsAWorkingSavedKey() {
@@ -711,7 +765,7 @@ object Tests {
 
     // MARK: Ling
 
-    private class Fake(val respond: (String) -> Transport.Response) : Transport {
+    class Fake(val respond: (String) -> Transport.Response) : Transport {
         val calls = mutableListOf<Pair<Long, String>>()
         override fun send(url: String, method: String, body: String?, headers: Map<String, String>, timeoutMs: Int): Transport.Response {
             synchronized(calls) { calls.add(System.currentTimeMillis() to (body ?: "")) }
@@ -719,12 +773,12 @@ object Tests {
         }
     }
 
-    private fun reply(content: String, finish: String? = "stop") = Transport.Response(200, Json.write(mapOf(
+    fun reply(content: String, finish: String? = "stop") = Transport.Response(200, Json.write(mapOf(
         "choices" to listOf(mapOf("message" to mapOf("content" to content), "finish_reason" to finish)),
         "usage" to mapOf("prompt_tokens" to 1, "completion_tokens" to 1),
     ), pretty = false))
 
-    private fun client(fake: Fake, clock: GateClock = GateClock()): LingClient {
+    fun client(fake: Fake, clock: GateClock = GateClock()): LingClient {
         val key = AIKey(PlainProtector)
         key.save("sk-test-0000000000")
         return LingClient(key, fake, clock = clock)
@@ -1084,6 +1138,151 @@ object Tests {
             engine.stop()
         } finally { LingClient.spacing = old }
         check(PressSpeech.filler("嗯嗯。") && PressSpeech.filler("Um, uh...") && !PressSpeech.filler("嗯，好的。") && !PressSpeech.filler("OK."), "fillers")
+    }
+
+    // MARK: 说话人识别 (linux/tests/test_core.py › Speakers)
+
+    private fun unit(seed: Long, dims: Int = 256): FloatArray {
+        val r = java.util.Random(seed)
+        val v = FloatArray(dims) { r.nextGaussian().toFloat() }
+        val n = kotlin.math.sqrt(v.sumOf { (it * it).toDouble() }).toFloat()
+        return FloatArray(dims) { v[it] / n }
+    }
+
+    private fun near(v: FloatArray, seed: Long, mix: Float = 0.3f): FloatArray {
+        val w = unit(seed)
+        val out = FloatArray(v.size) { v[it] + mix * w[it] }
+        val n = kotlin.math.sqrt(out.sumOf { (it * it).toDouble() }).toFloat()
+        return FloatArray(out.size) { out[it] / n }
+    }
+
+    private fun them(i: Int, voice: Int?, text: String = "we should ship this on Friday", t: Double = i.toDouble()) =
+        TranscriptLine(id = "h$i-$i", t = t, src = text, srcLang = "en", dstLang = "zh-CN", voice = voice)
+
+    fun clustererMatchesTheMac() {
+        val c = VoiceClusterer()
+        val a = unit(1); val b = unit(2)
+        equal(null, c.label(a, 1.5), "too short to start a voice")
+        equal(0, c.label(a, 3.0), "first voice")
+        equal(1, c.label(b, 3.0), "second voice")
+        equal(0, c.label(near(a, 7), 1.0), "joins the closest voice even when short")
+        equal(1, c.label(near(b, 8), 3.0), "the second again")
+        c.merge(1, 0)
+        equal(0, c.label(near(b, 9), 3.0), "after a merge, either voice goes to the one kept")
+    }
+
+    fun numbersWaitForTwoVoices() {
+        val old = SpeakerLabels.voices
+        SpeakerLabels.voices = true
+        try {
+            val lines = (0 until 5).map { them(it, 0) }.toMutableList()
+            equal(emptyMap<Int, Int>(), SpeakerLabels.voiceNumbers(lines), "one voice: still 对方")
+            lines += (0 until 4).map { them(10 + it, 1) } + them(20, 1, "ok")
+            equal(emptyMap<Int, Int>(), SpeakerLabels.voiceNumbers(lines), "a short line doesn't count")
+            lines += them(21, 1)
+            equal(mapOf(0 to 1, 1 to 2), SpeakerLabels.voiceNumbers(lines), "two voices with five lines")
+        } finally { SpeakerLabels.voices = old }
+    }
+
+    fun lingNamesNeedEvidence() {
+        val lines = mutableListOf<TranscriptLine>()
+        for (i in 0 until 5) { lines += them(2 * i, 0, t = 2.0 * i); lines += them(2 * i + 1, 1, t = 2.0 * i + 1) }
+        lines += them(40, 1, "Thanks so much, George, that was clear", t = 40.0)
+        val (found, refuted) = SpeakerNamer.read("{\"speakers\": [{\"speaker\": 2, \"name\": \"George\", \"evidence\": \"L11\"}," +
+            "{\"speaker\": 1, \"name\": \"Christina\", \"evidence\": \"L99\"}]}", lines)
+        equal("George", found[1]?.name, "named on the voice's own line")
+        check(found[1]!!.evidence.startsWith("00:40 “Thanks"), "evidence is the line: ${found[1]!!.evidence}")
+        equal(mapOf(0 to "Christina"), refuted.toMap(), "no evidence near the voice")
+        equal(0, SpeakerNamer.read("not json", lines).first.size, "not JSON")
+        // Without JSON mode (a host that refuses it) the reply may come fenced.
+        equal("George", SpeakerNamer.read("```json\n{\"speakers\": [{\"speaker\": 2, \"name\": \"George\", \"evidence\": \"L11\"}]}\n```", lines).first[1]?.name, "fenced")
+        check(SpeakerNamer.content(lines)!!.contains("说话人1"), "Ling sees the numbers")
+        check(SpeakerNamer.holds(found[1]!!, 1, lines), "the guess stands while its line does")
+
+        val store = SessionStore()
+        val s = store.begin()
+        lines.forEach { store.append(s.id, it) }
+        store.setVoiceGuesses(s.id, found, refuted)
+        equal(mapOf(2 to "George"), SpeakerLabels.names(store.get(s.id)!!), "the guess names speaker 2")
+        store.setVoiceGuesses(s.id, emptyMap(), mapOf(1 to "George"))
+        equal(null, store.get(s.id)!!.voiceGuesses, "a refuted guess goes")
+    }
+
+    fun notesPromptNamesTheVoices() {
+        val lines = (0 until 10).map { them(it, it % 2) } + them(20, null)
+        val p = NotesEngine.prompt(MeetingNotes(), lines, 0, "Chinese", false, numbers = SpeakerLabels.numbers(lines), names = mapOf(2 to "George"))
+        check(p.contains(" 说话人1] "), "a number")
+        check(p.contains("George] "), "a name")
+        check(p.contains("未识别] "), "a voice not on show")
+        check(NotesEngine.prompt(MeetingNotes(), lines, 0, "Chinese", false).contains("对方] "), "no voices: 对方")
+    }
+
+    /// Ming cuts "so we will ship" | "on Friday then." mid-sentence; `voices` says whose each half is.
+    private fun halves(voices: List<Int>): Pair<List<Pair<Int?, String>>, Int> {
+        val fake = Fake { body ->
+            if (body.contains("Ming-3.0-audio-flash")) {
+                val url = content(body, 1).arr()[0].obj()!!["audio_url"].obj()!!["url"] as String
+                reply(if (url.length < 60_000) "LANG: en\nORIGINAL: so we will ship\nTRANSLATION: 所以我们会发布"
+                      else "LANG: en\nORIGINAL: on Friday then.\nTRANSLATION: 那就周五。")
+            } else reply("{}")
+        }
+        val order = voices.iterator()
+        val old = LingClient.spacing
+        LingClient.spacing = 0.05
+        try {
+            val ling = client(fake)
+            val store = SessionStore()
+            val engine = ListenEngine(ling, Translator(ling), store, NotesEngine(ling, store), AppSettings(target = "zh-CN"))
+            // Each "voiceprint" is the voice to give: one dimension, and a clusterer stand-in below.
+            engine.speakers = object : SpeakerTagger(object : Voiceprinter {
+                override fun embed(samples: ShortArray) = synchronized(order) { floatArrayOf(order.next().toFloat()) }
+            }) { override fun label(vector: FloatArray?, seconds: Double) = vector?.get(0)?.toInt() }
+            val heard = AtomicInteger()
+            engine.onVoice = { heard.incrementAndGet() }
+            val src = PcmAudioSource({ concat(tone(1.0), silence(0.8), tone(1.4), silence(1.0)) }, speed = 0.0)
+            val ended = CountDownLatch(1)
+            src.onEnded = { ended.countDown() }
+            engine.start(src, "file")
+            ended.await()
+            Thread.sleep(200)
+            engine.stop()
+            return store.get(engine.sessionId!!)!!.lines.map { it.voice to it.src } to heard.get()
+        } finally { LingClient.spacing = old }
+    }
+
+    fun aHalfSentenceJoinsOnlyTheSameVoice() {
+        val (lines, heard) = halves(listOf(1, 2))
+        equal(listOf(1 to "so we will ship", 2 to "on Friday then."), lines, "two voices, two lines")
+        equal(2, heard, "each voiced line asks for names")
+        equal(listOf(1 to "so we will ship on Friday then."), halves(listOf(1, 1)).first, "the same voice: one sentence")
+    }
+
+    fun slowVoiceprintsNeverHoldSubtitlesBack() {
+        val fake = Fake { body ->
+            if (body.contains("Ming-3.0-audio-flash")) reply("LANG: en\nORIGINAL: We should ship it on Friday.\nTRANSLATION: 我们周五发布。")
+            else reply("{}")
+        }
+        val old = LingClient.spacing
+        LingClient.spacing = 0.01
+        try {
+            val ling = client(fake)
+            val store = SessionStore()
+            val engine = ListenEngine(ling, Translator(ling), store, NotesEngine(ling, store), AppSettings(target = "zh-CN"))
+            engine.speakers = object : SpeakerTagger(object : Voiceprinter {
+                override fun embed(samples: ShortArray): FloatArray { Thread.sleep(600); return floatArrayOf(1f) } // a phone that can't keep up
+            }) { override fun label(vector: FloatArray?, seconds: Double) = if (vector == null) null else 0 }
+            val src = PcmAudioSource({ concat(*Array(5) { concat(tone(1.0), silence(1.0)) }) }, speed = 0.0)
+            val ended = CountDownLatch(1)
+            src.onEnded = { ended.countDown() }
+            engine.start(src, "file")
+            ended.await()
+            Thread.sleep(2500)
+            engine.stop()
+            val voices = store.get(engine.sessionId!!)!!.lines.map { it.voice }
+            equal(5, voices.size, "every line")
+            check(null in voices, "some lines went unlabelled rather than waiting: $voices")
+            check(0 in voices, "the others have their voice: $voices")
+        } finally { LingClient.spacing = old }
     }
 
     // MARK: Meeting end (MeetingEndTests.swift, the same cases)

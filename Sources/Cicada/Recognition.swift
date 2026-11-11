@@ -78,6 +78,29 @@ enum Recognition {
         var translation: String? = nil
     }
 
+    /// A few characters of a finished sentence and when they were said, from the meeting record's
+    /// own recognizer (`RecordHearing`), so its text can be laid over the lines already recorded.
+    struct Run: Sendable, Equatable {
+        var text: String
+        var start: Double
+        var end: Double
+    }
+
+    /// Dev builds compare the record with and without its own recognizer: `lsctl recordTrack:off`.
+    nonisolated(unsafe) static var recordTrackOff = DevBuild.isDev && ProcessInfo.processInfo.environment["CICADA_RECORD_TRACK"] == "off"
+
+    /// The meeting record gets a second recognizer that is never hurried: no `.fastResults` and no
+    /// lines cut short for the subtitles. Both cost Chinese about a third more wrong characters
+    /// (meeting audio: 20% offline, 25–30% live). macOS 26's `SpeechTranscriber` only.
+    static var recordTrack: Bool { host == nil && !cloudOnly && !legacy && !dictationModel && !recordTrackOff }
+
+    /// The record's recognizer for `locale`, taking the same audio as the live one (`format`). Nil
+    /// where there is none (`recordTrack`).
+    static func startRecord(_ locale: String, format: AVAudioFormat) async throws -> RecordHearing? {
+        guard recordTrack, #available(macOS 26, *) else { return nil }
+        return try await RecordTrack.start(locale, format: format)
+    }
+
     enum ModelStatus { case installed, downloadable, unsupported }
 
     static var isAvailable: Bool {
@@ -156,9 +179,10 @@ enum Recognition {
     }
 
     /// Fetches the model for `locale` when it isn't on the Mac; `progress` is called once a
-    /// download starts. Throws when this Mac can't recognize the language.
-    // Progress updates engine/UI state. Without actor isolation this async function resumes on
-    // the generic executor after AssetInventory awaits, deadlocking Combine against SwiftUI.
+    /// download starts, on the main actor: every caller sets UI state there, and from the
+    /// cooperative pool it redrew the menu bar panel off the main thread, which ended the app
+    /// (`TSMGetInputSourceProperty` asserts the main queue). Throws when this Mac can't recognize
+    /// the language.
     @MainActor
     static func install(_ locale: String, progress: @MainActor (Progress) -> Void = { _ in }) async throws {
         if host != nil || cloudOnly { return }
@@ -457,8 +481,20 @@ final class LegacyStream: RecognitionStream, @unchecked Sendable {
     private var recent: [AVAudioPCMBuffer] = []
     private var recentSeconds = 0.0
     /// Speech that came during a language check or the talk key, waiting in `recent`.
-    private var holding = false
-    private var heldVoice = false
+    private enum Held {
+        case nothing
+        /// Audio held with no speech in it yet: just the quiet before the next line, if it stays so.
+        case quiet
+        case speech
+    }
+    private var held = Held.nothing
+    /// Keeps `buffer` for later (in `recent`), noting whether it had speech in it. Lock held.
+    private func hold(_ buffer: AVAudioPCMBuffer, seconds: Double, voiced: Bool) {
+        recent.append(buffer)
+        recentSeconds += seconds
+        fed += seconds
+        if voiced || held == .speech { held = .speech } else { held = .quiet }
+    }
     private var finished = false
     private var finishWaiter: CheckedContinuation<Void, Never>?
     /// A draft of the next line held back until the line before it has come back finished, so
@@ -504,11 +540,7 @@ final class LegacyStream: RecognitionStream, @unchecked Sendable {
             // The user is speaking: the line in progress ends now, and the meeting's last few
             // seconds wait for the talk key to be let go (two tasks at once both come back empty).
             if current != nil { end() }
-            recent.append(buffer)
-            recentSeconds += seconds
-            fed += seconds
-            holding = true
-            if voiced { heldVoice = true }
+            hold(buffer, seconds: seconds, voiced: voiced)
             while recentSeconds > Self.holdLimit, recent.count > 1 {
                 recentSeconds -= Double(recent.removeFirst().frameLength) / buffer.format.sampleRate
             }
@@ -518,23 +550,18 @@ final class LegacyStream: RecognitionStream, @unchecked Sendable {
             // The line before is still being finished, or a language check is running: starting a
             // task now would make the other come back empty. Keep the words until then (a few seconds).
             let importing = role == .listen && Gate.backgroundBusy
-            if voiced || holding, (!lines.isEmpty || Gate.clipRunning || importing), recentSeconds < Self.holdLimit {
+            if voiced || held != .nothing, (!lines.isEmpty || Gate.clipRunning || importing), recentSeconds < Self.holdLimit {
                 // An import's line is in the recognizer: it ends its line and waits for this one.
                 if importing { Gate.meetingWaits(true) }
-                recent.append(buffer)
-                recentSeconds += seconds
-                fed += seconds
-                holding = true
-                if voiced { heldVoice = true }
+                hold(buffer, seconds: seconds, voiced: voiced)
                 return
             }
             // Held audio with no speech in it (the meeting was quiet while the user spoke) is just
             // the quiet before the next line, not the start of one.
-            if holding, !heldVoice, !voiced { holding = false }
-            if voiced || holding {
-                let spokenBefore = heldVoice
-                holding = false
-                heldVoice = false
+            if held == .quiet, !voiced { held = .nothing }
+            if voiced || held != .nothing {
+                let spokenBefore = held == .speech
+                held = .nothing
                 // The quiet just before the first word belongs to it: a soft onset is still heard.
                 begin(at: fed - recentSeconds)
                 for b in recent { lines[current!]?.request.append(b) }
@@ -545,7 +572,7 @@ final class LegacyStream: RecognitionStream, @unchecked Sendable {
             } else {
                 recent.append(buffer)
                 recentSeconds += seconds
-                while !holding, recentSeconds > Self.preroll, recent.count > 1 {
+                while held == .nothing, recentSeconds > Self.preroll, recent.count > 1 {
                     recentSeconds -= Double(recent.removeFirst().frameLength) / buffer.format.sampleRate
                 }
                 fed += seconds
@@ -681,9 +708,9 @@ final class LegacyStream: RecognitionStream, @unchecked Sendable {
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             lock.lock()
             finished = true
-            if current == nil, holding {
+            if current == nil, held != .nothing {
                 // Words held back for the line before: they still need a line of their own.
-                holding = false
+                held = .nothing
                 begin(at: fed - recentSeconds)
                 for b in recent { lines[current!]?.request.append(b) }
                 recent = []
@@ -785,5 +812,117 @@ final class DeferredStream: RecognitionStream, @unchecked Sendable {
     func cancel() async {
         lock.withLock { closed = true; pending = [] }
         await opening?.value?.cancel()
+    }
+}
+
+// MARK: - The meeting record's recognizer
+
+/// Finished sentences only, each as runs with their times (`Recognition.Run`) and the end of the
+/// audio it covers.
+protocol RecordHearing: AnyObject, Sendable {
+    var sentences: AsyncThrowingStream<(runs: [Recognition.Run], through: Double), Error> { get }
+    func append(_ buffer: AVAudioPCMBuffer)
+    /// No more audio: returns once every sentence has come back.
+    func finish() async
+    func cancel() async
+}
+
+@available(macOS 26, *)
+final class RecordTrack: RecordHearing, @unchecked Sendable {
+    let sentences: AsyncThrowingStream<(runs: [Recognition.Run], through: Double), Error>
+    private let analyzer: SpeechAnalyzer
+    private let input: AsyncStream<AnalyzerInput>.Continuation
+    private let reader: Task<Void, Never>
+
+    static func start(_ locale: String, format: AVAudioFormat) async throws -> RecordTrack {
+        let t = SpeechTranscriber(locale: Locale(identifier: locale), transcriptionOptions: [],
+                                  reportingOptions: [], attributeOptions: [.audioTimeRange])
+        let analyzer = SpeechAnalyzer(modules: [t])
+        try await analyzer.prepareToAnalyze(in: format)
+        let (stream, input) = AsyncStream.makeStream(of: AnalyzerInput.self, bufferingPolicy: .unbounded)
+        let me = RecordTrack(t, analyzer: analyzer, input: input)
+        try await analyzer.start(inputSequence: stream)
+        return me
+    }
+
+    private init(_ t: SpeechTranscriber, analyzer: SpeechAnalyzer, input: AsyncStream<AnalyzerInput>.Continuation) {
+        self.analyzer = analyzer
+        self.input = input
+        let (sentences, out) = AsyncThrowingStream.makeStream(of: (runs: [Recognition.Run], through: Double).self)
+        self.sentences = sentences
+        reader = Task {
+            do {
+                for try await r in t.results where r.isFinal {
+                    let runs = Self.runs(r.text, r.range)
+                    if !runs.isEmpty { out.yield((runs, CMTimeGetSeconds(r.range.end))) }
+                }
+                out.finish()
+            } catch {
+                out.finish(throwing: error)
+            }
+        }
+    }
+
+    /// Punctuation comes without a time: it stays with the run before it.
+    static func runs(_ text: AttributedString, _ range: CMTimeRange) -> [Recognition.Run] {
+        var out: [Recognition.Run] = []
+        for run in text.runs {
+            let piece = String(text[run.range].characters)
+            if let r = run.audioTimeRange {
+                out.append(.init(text: piece, start: CMTimeGetSeconds(r.start), end: CMTimeGetSeconds(r.end)))
+            } else if !out.isEmpty {
+                out[out.count - 1].text += piece
+            } else {
+                let t = CMTimeGetSeconds(range.start)
+                out.append(.init(text: piece, start: t, end: t))
+            }
+        }
+        return out.filter { $0.start.isFinite && $0.end.isFinite }
+    }
+
+    func append(_ buffer: AVAudioPCMBuffer) { input.yield(AnalyzerInput(buffer: buffer)) }
+
+    func finish() async {
+        input.finish()
+        do { try await analyzer.finalizeAndFinishThroughEndOfInput() } catch { debugLog("record track finish: \(error)") }
+        await reader.value
+    }
+
+    func cancel() async {
+        input.finish()
+        await analyzer.cancelAndFinishNow()
+    }
+}
+
+/// The live recognizer and the record's, fed the same audio from the same moment so their clocks
+/// agree. Only the live one is cut short for the subtitles.
+final class TeeStream: RecognitionStream, @unchecked Sendable {
+    let live: RecognitionStream
+    let record: RecordHearing
+    var format: AVAudioFormat { live.format }
+    var results: AsyncThrowingStream<Recognition.Piece, Error> { live.results }
+
+    init(live: RecognitionStream, record: RecordHearing) {
+        self.live = live
+        self.record = record
+    }
+
+    func append(_ buffer: AVAudioPCMBuffer) {
+        live.append(buffer)
+        record.append(buffer)
+    }
+
+    func finalize(through seconds: Double) async throws { try await live.finalize(through: seconds) }
+
+    func finish() async {
+        async let a: Void = live.finish()
+        async let b: Void = record.finish()
+        _ = await (a, b)
+    }
+
+    func cancel() async {
+        async let a: Void = live.cancel()
+        async let b: Void = record.cancel()
+        _ = await (a, b)
     }
 }

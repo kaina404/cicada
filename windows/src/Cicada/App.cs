@@ -59,6 +59,12 @@ sealed class Controller
     public readonly SpeakEngine Speak;
     public readonly WindowsVoice WindowsVoice = new();
     public readonly UpdateChecker Updates;
+    public readonly Vocabulary Vocabulary;
+    public readonly LiveFixes Fixes;
+    /// 分享…: the share service, its device key and the links made (sealed files, never the record).
+    public readonly ShareClient Sharing = new(new DpapiProtector(), "windows", Version);
+    /// Dev (`silentlisten`): the language `heard` lines are in.
+    public string? SilentLang;
     /// Started with Windows (--background): stay in the tray. Opened by hand, the main window shows.
     public bool Background { get; init; }
     Onboarding? onboarding;
@@ -72,9 +78,14 @@ sealed class Controller
     public static string? Arrived;
     PushToTalk? talk;
     SpeakBar? speakBar;
+    /// The press's microphone: through echo cancellation, or the plain one when that won't open.
+    EchoMic? echoMic;
+    bool echoLogged;
     DeviceRecorder? mic;
     /// Dev builds: a WAV that stands in for the microphone (the VM has none).
     string? fakeMic;
+    /// Dev builds: the input the talk key reads instead of the microphone (`talkmic CABLE Output`).
+    string? talkMic;
     readonly Forms.NotifyIcon tray = new();
     System.Drawing.Icon? idleIcon, liveIcon, updateIcon;
     /// Something only the user can fix (AICheck.Blocking), said beyond the panel: the tray's orange
@@ -128,7 +139,13 @@ sealed class Controller
         var loudness = new LoudnessLog();
         Listen.Loudness = loudness;
         Speak.Echo = loudness;
-        RoomListen = new ListenEngine(Ling, Translator, Store, Notes, Settings, roomSide: true);
+        // 改正听错的词: the word list beside the records, and the fixes both sides' lines take.
+        Vocabulary = new Vocabulary(Vocabulary.DefaultPath);
+        Fixes = new LiveFixes(Store, Vocabulary, Settings);
+        Fixes.Changed += Changed;
+        Vocabulary.Changed += Changed;
+        Listen.Fixes = Fixes;
+        RoomListen = new ListenEngine(Ling, Translator, Store, Notes, Settings, roomSide: true) { Fixes = Fixes };
         RoomListen.Changed += Changed;
         Listen.Changed += Changed;
         Notes.Changed += Changed;
@@ -153,9 +170,11 @@ sealed class Controller
         Store.Audio = new MediaFoundationAudio();
         Store.FinishLeftovers();
         hotkey = new Hotkey(() => Dispatch.BeginInvoke(() => _ = ToggleListening()));
-        talk = new PushToTalk();
+        PushToTalk.Current = TalkKey.Named(Settings.TalkKey);
+        talk = new PushToTalk(() => Settings.Speak);
         talk.Pressed += () => Dispatch.BeginInvoke(PressBegan);
         talk.Released += () => Dispatch.BeginInvoke(PressEnded);
+        talk.Interrupted += () => Dispatch.BeginInvoke(PressInterrupted);
         Log.Debug($"audio: speakers {Endpoints.Default(Endpoints.Flow.Render)?.Name ?? "none"}, mic {Endpoints.Microphone()?.Name ?? "none"}, cable {(Endpoints.Cable() is null ? "absent" : "present")}");
         DebugServer.Start(this);
         WatchNetwork();
@@ -178,9 +197,29 @@ sealed class Controller
         else
         {
             if (Ling.HasKey) _ = Ling.Check();
+            NotifyCableSpeaker();
             if (Arrived == "--updated") Toast(LF("知了已更新到 %@", Version), L("会议记录、设置和 Ling key 都在。"));
             else if (Arrived is not null) FromInstaller();
         }
+    }
+
+    /// VB-Cable holds the speaker (installed before Cicada gave it back, or outside Cicada): the user
+    /// hears nothing and may blame Cicada. Said once (CableDefaults.ShouldNotify); a click gives a
+    /// real speaker back.
+    public void NotifyCableSpeaker()
+    {
+        var onCable = Endpoints.SpeakerIsCable();
+        if (CableDefaults.ShouldNotify(onCable, Settings.CableSpeakerNotified))
+        {
+            Toast(L("听不到电脑声音了？"), L("Windows 把输出改成了 CABLE Input，点此恢复"), () =>
+            {
+                if (!Endpoints.RestoreSpeaker()) Toast(L("自动恢复失败"), L("请去 Windows 声音设置，把输出设备改回你的耳机或扬声器"), () => Open("ms-settings:sound"));
+            });
+            Log.Debug("cable: speaker notified");
+        }
+        if (Settings.CableSpeakerNotified == onCable) return;
+        Settings.CableSpeakerNotified = onCable;
+        Settings.Save();
     }
 
     /// The installer ran again with this version (or an older one) already here: bring the main window.
@@ -231,7 +270,8 @@ sealed class Controller
             if (e.Button == Forms.MouseButtons.Left) Dispatch.BeginInvoke(() => { if (Listen.Listening && Settings.View == "notes") ToggleNotes(); else ShowFlyout(); });
             else if (e.Button == Forms.MouseButtons.Right) Dispatch.BeginInvoke(ShowMenu);
         };
-        tray.BalloonTipClicked += (_, _) => Dispatch.BeginInvoke(() => { balloonClicked?.Invoke(); balloonClicked = null; });
+        // Cleared before the run: a click may show the next notification, with its own action.
+        tray.BalloonTipClicked += (_, _) => Dispatch.BeginInvoke(() => { var c = balloonClicked; balloonClicked = null; c?.Invoke(); });
         UpdateTray();
     }
 
@@ -440,7 +480,7 @@ sealed class Controller
             });
         };
         HybridMicDenied = false;
-        RoomListen.Join(mic, id, session.StartedAt);
+        RoomListen.Join(mic, id, session.StartedAt, Listen.Mix);
         Log.Debug("hybrid: room side started");
     }
 
@@ -580,7 +620,18 @@ sealed class Controller
         ShowNotes();
     }
 
-    public async Task StopListening(DateTimeOffset? endedAt = null, bool auto = false)
+    /// The meeting being ended: Quit waits for it, or a meeting ended a moment before quitting
+    /// (its last sentences still out at the AI service) was never closed and came back empty.
+    Task stopping = Task.CompletedTask;
+
+    public Task StopListening(DateTimeOffset? endedAt = null, bool auto = false)
+    {
+        var t = Stopping(endedAt, auto);
+        if (!t.IsCompleted) stopping = t; // a second, empty stop mustn't hide the one still running
+        return t;
+    }
+
+    async Task Stopping(DateTimeOffset? endedAt, bool auto)
     {
         var id = Listen.SessionId;
         endWatch = null;
@@ -722,8 +773,12 @@ sealed class Controller
     // MARK: Speaking (同声传译)
 
     public bool NotesVisible => notesWindow?.IsVisible == true;
+    /// Where the notes panel is on screen, when it shows as a panel: the talk bar keeps out of it.
+    public Rect? NotesBounds => NotesVisible && Settings.View == "notes"
+        ? new Rect(notesWindow!.Left, notesWindow.Top, notesWindow.ActualWidth, notesWindow.ActualHeight) : null;
 
     public void SetFakeMic(string? path) { fakeMic = path; Log.Debug($"speak: fake mic {(path is null ? "off" : "on")}"); }
+    public void SetTalkMic(string? name) { talkMic = name; Log.Debug($"speak: talk mic {name ?? "default"}"); }
 
     /// Dev: what the meeting hears. Records "CABLE Output" for `seconds` into `path` ("8 C:\x.wav").
     public async Task RecordCable(string arg)
@@ -744,33 +799,136 @@ sealed class Controller
         if (!Settings.Speak || Speak.State is SpeakEngine.Phase.Recording or SpeakEngine.Phase.Translating) return;
         if (!Ling.HasKey) { Speak.Report(Ling.Config.IsLing ? L("需要 Ling key 才能说") : LF("需要 %@ 的 key 才能说", Ling.Config.Name)); return; }
         if (Endpoints.Cable() is null) { Speak.Report(L("还没装虚拟麦克风，去设置里装一下")); return; }
-        if (fakeMic is null)
+        // With a fake mic the WAV is what is sent; a dev talk mic still opens, to run the real capture.
+        if (fakeMic is null || talkMic is not null)
         {
-            if (Endpoints.Microphone() is not { } m) { Speak.Report(L("没找到麦克风")); return; }
-            mic = new DeviceRecorder(m.Id);
-            mic.Start();
-            if (mic.Error is { } err) { mic = null; Speak.Report(err == "denied" ? L("Windows 不让知了用麦克风：设置 › 隐私和安全性 › 麦克风") : L("麦克风打不开")); return; }
+            if (TalkMic() is not { } m) { if (fakeMic is null) { Speak.Report(L("没找到麦克风")); return; } }
+            else if (OpenTalkMic(m) is { } err)
+            {
+                if (fakeMic is null) { Speak.Report(err == "denied" ? L("Windows 不让知了用麦克风：设置 › 隐私和安全性 › 麦克风") : L("麦克风打不开")); return; }
+            }
         }
         Speak.BeginRecording();
         // What you say isn't someone in the room.
         foreach (var r in roomSources) r.Muted = true;
     }
 
+    /// The press's microphone: through Windows' echo cancellation when it opens, so what I say while
+    /// the other side talks on the speakers is sent (EchoMic); the plain mic when it doesn't. Null,
+    /// or why the mic can't be had ("denied").
+    string? OpenTalkMic(Endpoints.Device m)
+    {
+        var speakers = Endpoints.Default(Endpoints.Flow.Render);
+        // The cable is where my own voice goes, never the meeting's speakers.
+        var reference = speakers is not null && speakers.Id != Endpoints.Cable()?.Id ? speakers.Id : null;
+        var aec = new EchoMic(m.Id, reference);
+        aec.Start();
+        if (aec.Error is null)
+        {
+            echoMic = aec;
+            echoLogged = aec.EchoCancelled;
+            Log.Debug($"speak: mic {(aec.EchoCancelled ? "with echo cancellation" : "plain, no echo cancellation")} ({aec.Detail})");
+            return null;
+        }
+        if (aec.Error == "denied") return "denied";
+        mic = new DeviceRecorder(m.Id);
+        mic.Start();
+        Log.Debug($"speak: mic plain, the communications stream failed {aec.Error}");
+        if (mic.Error is { } err) { mic = null; return err; }
+        return null;
+    }
+
+    /// The talk key's microphone. Dev: `talkmic <name>` picks any input (the VM's only one is CABLE Output).
+    Endpoints.Device? TalkMic() => talkMic is { } name
+        ? Endpoints.All(Endpoints.Flow.Capture).FirstOrDefault(d => d.Description == name || d.Name.StartsWith(name))
+        : Endpoints.Microphone();
+
+    /// Ends the press's recording: what it heard, and whether through echo cancellation.
+    (short[] pcm, bool echoCancelled) StopTalkMic()
+    {
+        // As logged when the press began (a stream still opening then counts as plain), and still so.
+        var cancelled = echoLogged && echoMic?.EchoCancelled == true;
+        echoLogged = false;
+        var pcm = echoMic?.Stop() ?? mic?.Stop() ?? [];
+        echoMic = null;
+        mic = null;
+        return (pcm, cancelled);
+    }
+
+    /// Another key went down while a modifier talk key was held (Ctrl C): a shortcut, not talking.
+    void PressInterrupted()
+    {
+        foreach (var r in roomSources) r.Muted = false;
+        if (Speak.State != SpeakEngine.Phase.Recording) return;
+        StopTalkMic();
+        Speak.Cancel();
+        Log.Debug("talk: interrupted by another key");
+    }
+
+    /// 更改 the talk key: the next key pressed anywhere comes to `chosen` (on the UI thread).
+    public void ChooseTalkKey(Action<int> chosen)
+    {
+        if (talk is null) return;
+        talk.Capture = vk => Dispatch.BeginInvoke(() => chosen(vk));
+    }
+
+    public void StopChoosingTalkKey() { if (talk is not null) talk.Capture = null; }
+
+    public void SetTalkKey(TalkKey.Key key)
+    {
+        PushToTalk.Current = key;
+        Settings.TalkKey = key.Name; Settings.Save();
+        Log.Debug($"talk: key {key.Name}");
+        Changed();
+    }
+
     void PressEnded()
     {
         foreach (var r in roomSources) r.Muted = false;
         if (Speak.State != SpeakEngine.Phase.Recording) return;
-        var pcm =fakeMic is { } f ? Wav.Read(f) : mic?.Stop() ?? [];
-        mic = null;
+        var (recorded, echoCancelled) = StopTalkMic();
+        var pcm = fakeMic is { } f ? Wav.Read(f) : recorded;
         // A tap, not a sentence.
         if (pcm.Length < Segmenter.Rate * 3 / 10) { Speak.Cancel(); return; }
         // Held but nothing said (a muted mic): Ming would make something up from the hiss.
         if (pcm.Max(x => Math.Abs((int)x)) < 300) { Speak.Report(L("没听到你说话，没有发出去")); return; }
-        _ = Speak.Speak(Wav.Bytes(pcm), new DeviceSpeaker(Endpoints.Cable));
+        _ = Speak.Speak(Wav.Bytes(pcm), new DeviceSpeaker(Endpoints.Cable), echoCancelled);
     }
 
-    /// 试听: a voice speaks its sample line on the speakers (not into the meeting).
-    public Task Preview(string language) => Speak.Voice(VoiceCatalog.Sample(language), language, new DeviceSpeaker(() => Endpoints.Default(Endpoints.Flow.Render)));
+    public enum PreviewResult { Played, Stopped, NoSpeaker, NoVoice, FellBack, Failed }
+    DeviceSpeaker? previewing;
+    public bool Previewing => previewing is not null;
+    public void StopPreview() => previewing?.Stop();
+
+    /// 试听: a voice speaks its sample line on the speakers (not into the meeting). It used to fail
+    /// without a word (#22); now the result says why, for the line under the voice.
+    public async Task<PreviewResult> Preview(string language)
+    {
+        previewing?.Stop();
+        var speaker = new DeviceSpeaker(() => Endpoints.Default(Endpoints.Flow.Render));
+        PreviewResult result;
+        if (!speaker.Ready) result = PreviewResult.NoSpeaker;
+        else
+        {
+            previewing = speaker;
+            Changed();
+            try
+            {
+                var chosen = VoiceCatalog.Chosen(Settings, language, Ling.Config, Ling.Speaks, WindowsVoice.Has(language));
+                var voiced = await Speak.Voice(VoiceCatalog.Sample(language), language, speaker);
+                result = speaker.Stopped ? PreviewResult.Stopped
+                    : !voiced ? (WindowsVoice.Has(language) ? PreviewResult.Failed : PreviewResult.NoVoice)
+                    : speaker.Failed ? PreviewResult.NoSpeaker
+                    : chosen != VoiceCatalog.SystemId && Speak.LastVoice == "system" ? PreviewResult.FellBack
+                    : PreviewResult.Played;
+            }
+            catch (Exception e) { Log.Debug($"preview: failed {e.GetType().Name}"); result = PreviewResult.Failed; }
+            finally { if (previewing == speaker) previewing = null; }
+        }
+        Log.Debug($"preview: {language} {result}");
+        Changed();
+        return result;
+    }
 
     // MARK: Windows
 
@@ -848,6 +1006,15 @@ sealed class Controller
     public void OpenRecord(string id, string tab) { ShowRecords(id); mainWindow?.Select(id, tab); }
     public void Play(string arg) => mainWindow?.DebugPlay(arg);
 
+    /// 分享…: the dialog over the records window (or the screen's centre without it).
+    public ShareDialog ShareSheet(Session s)
+    {
+        ShareDialog.Current?.Close();
+        var d = new ShareDialog(this, s, mainWindow is { IsVisible: true } ? mainWindow : null);
+        d.Show();
+        return d;
+    }
+
     public void ShowRecords(string? id)
     {
         if (mainWindow is null) { mainWindow = new MainWindow(this, id); mainWindow.Closed += (_, _) => { mainWindow = null; WindowClosed(); }; }
@@ -865,6 +1032,11 @@ sealed class Controller
     }
 
     public void SettingsPage(string id) => settingsWindow?.Show(id);
+    /// The open settings window, for the debug pipe's preview and talkkey.
+    public SettingsWindow? OpenSettings => settingsWindow;
+    /// Debug: 改这句… on a record's line; 词表 › 粘贴导入 with `text` pasted in.
+    public void DebugEditLine(string id, string line) { ShowRecords(id); mainWindow?.DebugEdit(id, line); }
+    public void DebugPaste(string text) { ShowSettings(); SettingsPage("words"); settingsWindow?.DebugImport(text); }
 
     // MARK: AI 服务
 
@@ -1112,6 +1284,7 @@ sealed class Controller
     public async Task Quit()
     {
         if (Listen.Listening) await StopListening();
+        else await stopping;
         Store.Flush();
         hotkey?.Dispose();
         talk?.Dispose();
@@ -1178,6 +1351,9 @@ sealed class Controller
 ///   aacencode <wav>|<out.aac> | aacrewrap <in.aac>|<out.m4a>[|<seconds>]
 ///   ai-check | ai-check-sim <reason|lowBalance|off> (unreachable, invalidKey, noCredit, noModel, deaf, busy…)
 ///   ai-custom-only on|off (语音和文字只发给你的服务; acts with the custom service only)
+///   改正听错的词: silentlisten [lang] | heard <text> (a finished sentence, no audio) | fixes on|off | asknames on|off
+///   vocabadd <word = heard、…|…> | vocabremove <word> | vocabstate | fixstate [@id] | fixanswer yes|no [@id]
+///   fixlater | fixrevert <line> [@id] | fixedit <line>=<text>[|one][|keep0] [@id] | fixundo
 static class DebugServer
 {
     static string Pipe => Paths.Dev ? "cicada-dev" : "cicada";
@@ -1273,7 +1449,24 @@ static class DebugServer
                 break;
             }
             case "speakers": app.Settings.SpeakerVoices = arg == "on"; app.Settings.Save(); app.SettingsChanged(); break;
+            // speaker: the defaults and whether the cable holds the speaker; "cable" hands it the speaker
+            // (what Windows may do on install), "install" does that and then the installer's give-back,
+            // "restore" is 恢复声音, "notify" the startup notification again.
+            case "speaker":
+                if (arg is "cable" or "install")
+                {
+                    var before = Endpoints.Defaults();
+                    var to = Endpoints.Cable()!.Id;
+                    for (var role = 0; role < 3; role++) Endpoints.SetDefault(to, role);
+                    if (arg == "install") _ = CableInstaller.GiveBackDefaults(before); // about 4 s; ask "speaker" after
+                }
+                else if (arg == "restore") Endpoints.RestoreSpeaker();
+                else if (arg == "notify") { app.Settings.CableSpeakerNotified = false; app.NotifyCableSpeaker(); }
+                return new JsonObject { ["onCable"] = Endpoints.SpeakerIsCable(), ["speaker"] = Endpoints.Default(Endpoints.Flow.Render)?.Name, ["notified"] = app.Settings.CableSpeakerNotified,
+                    ["defaults"] = string.Join(" ", Endpoints.Defaults().OrderBy(d => d.Key).Select(d => $"{d.Key}={(Endpoints.CableIds().Contains(d.Value) ? "cable" : "real")}")) };
             case "fakemic": app.SetFakeMic(arg == "off" ? null : arg); break;
+            // talkmic <name>: the talk key reads this input (with fakemic the WAV is still what is sent).
+            case "talkmic": app.SetTalkMic(arg is "" or "off" ? null : arg); break;
             case "record": _ = app.RecordCable(arg); break;
             // 回放: "open <id> [transcript]", "play <seconds>|toggle|speed", "recordaudio on|off".
             case "open": { var p = arg.Split(' '); app.OpenRecord(p[0], p.Length > 1 ? p[1] : "notes"); break; }
@@ -1295,7 +1488,16 @@ static class DebugServer
                     var p = arg.Split('|');
                     return new JsonObject { ["ok"] = app.Store.Audio?.Rewrap(p[0], p[1], p.Length > 2 ? double.Parse(p[2], System.Globalization.CultureInfo.InvariantCulture) : null) ?? false };
                 }
-            case "preview": _ = app.Preview(arg.Length > 0 ? arg : app.Speak.Target); break;
+            // preview: 试听 in the open settings (its result line shows there), else on its own.
+            case "preview":
+                if (arg.Length == 0 && app.OpenSettings is { } sw) _ = sw.RunPreview();
+                else _ = app.Preview(arg.Length > 0 ? arg : app.Speak.Target);
+                break;
+            // talkkey <name>: set it; talkkey choose: settings' 更改 (the next key pressed).
+            case "talkkey":
+                if (arg == "choose") app.OpenSettings?.StartChoosingKey();
+                else if (TalkKey.All.FirstOrDefault(k => k.Name == arg) is { } tk) app.SetTalkKey(tk);
+                return new JsonObject { ["talkKey"] = PushToTalk.Current.Name };
             case "calls":
                 app.FakeCalls = arg switch { "real" => null, "" or "none" => [], _ => arg.Split(',').Select(p => p.Split('=', 2)).ToDictionary(p => p[0], p => p[^1]) };
                 break;
@@ -1308,10 +1510,125 @@ static class DebugServer
             case "updatefeed": app.Updates.Feed = arg; _ = app.CheckForUpdates(); break;
             case "updateinstall": app.InstallUpdate(); break;
             case "checkupdate": _ = app.CheckForUpdates(); break;
+            // 改正听错的词 (AppModel.debugCommand's fix commands). A command acts on the meeting being
+            // listened to, else the newest; "… @<id>" names another.
+            case "silentlisten": app.SilentLang = arg.Length > 0 ? arg : "zh-CN"; app.StartListening(new SilentSource()); break;
+            case "heard": app.Listen.DebugHeard(arg, app.SilentLang ?? "zh-CN"); break;
+            case "target": app.SetTarget(arg.Length > 0 ? arg : "system"); break;  // 翻译成: a code, or system
+            case "fixes": app.Settings.FixMisheard = arg != "off"; app.Settings.Save(); app.SettingsChanged(); break;
+            case "asknames": app.Settings.AskNames = arg != "off"; app.Settings.Save(); app.SettingsChanged(); break;
+            case "vocabadd": return new JsonObject { ["result"] = app.Vocabulary.Import(arg.Replace('|', '\n')).ToString() };
+            case "vocabremove": app.Vocabulary.Remove(arg); break;
+            case "vocabstate":
+                return new JsonObject { ["terms"] = new JsonArray(app.Vocabulary.Terms.Select(t => (JsonNode)$"{t.Word} = {string.Join("、", t.Heard)} · {t.Source} · {t.Fixes}").ToArray()) };
+            case "fixstate":
+                {
+                    var (id, _) = FixTarget(app, arg);
+                    var lines = app.Store.Get(id)?.Lines.ToList() ?? [];
+                    var all = lines.SelectMany(l => l.Fixes ?? []).ToList();
+                    return new JsonObject
+                    {
+                        ["session"] = id, ["on"] = app.Settings.FixMisheard,
+                        ["applied"] = all.Count(f => f.Applied), ["asked"] = all.Count(f => f.Ask == true), ["off"] = all.Count(f => f.Off == true),
+                        ["asking"] = app.Fixes.Asking(id) is { } ask ? $"{ask.Fix.From}→{ask.Fix.To}" : null,
+                        ["toast"] = app.Fixes.Toast?.Text, ["canUndo"] = app.Fixes.CanUndo,
+                        ["lines"] = new JsonArray(lines.Where(l => l.Fixes is not null).Select(l => (JsonNode)
+                            $"{l.Id} [{string.Join(", ", l.Fixes!.Select(f => $"{f.From}→{f.To}{(f.Ask == true ? "?" : f.Off == true ? "✗" : f.User == true ? "✓" : "")}"))}] {l.Shown} | {l.Dst}").ToArray()),
+                    };
+                }
+            case "fixanswer":   // fixanswer yes|no [@id]
+                {
+                    var (id, rest) = FixTarget(app, arg);
+                    if ((app.Fixes.Asking(id)?.Fix ?? app.Fixes.Pending(id).Select(p => p.Fix).FirstOrDefault()) is { } f) app.Fixes.Answer(f, rest == "yes", id);
+                    break;
+                }
+            case "fixlater": { var (id, _) = FixTarget(app, arg); if (app.Fixes.Asking(id) is { } ask) app.Fixes.Later(ask.Fix, id); break; }
+            case "fixrevert":   // fixrevert <line id> [@id]: the line's first applied fix
+                {
+                    var (id, lineId) = FixTarget(app, arg);
+                    if (app.Store.Get(id)?.Lines.FirstOrDefault(l => l.Id == lineId)?.Fixes?.FirstOrDefault(f => f.Applied) is { } f) app.Fixes.Revert(f, lineId, id);
+                    break;
+                }
+            case "fixedit":     // fixedit <line id>=<new text>[|one][|keep0] [@id]
+                {
+                    var (id, rest) = FixTarget(app, arg);
+                    var p = rest.Split('=', 2);
+                    if (p.Length < 2) break;
+                    var opts = p[1].Split('|');
+                    return new JsonObject { ["changed"] = app.Fixes.Edit(p[0], id, opts[0], everywhere: !opts.Contains("one"), remember: !opts.Contains("keep0")) };
+                }
+            case "fixundo": app.Fixes.Undo(); break;
+            case "fixeditor": { var (id, lineId) = FixTarget(app, arg); app.DebugEditLine(id, lineId); break; }  // fixeditor <line> [@id]
+            case "vocabpaste": app.DebugPaste(arg); break;  // vocabpaste <line|line…>: 粘贴导入, filled in, not imported
+            case "share":
+            {
+                // share <record id>[,full][,pw] shares a meeting as the dialog would (CICADA_SHARE_SERVER
+                // points a dev build at a local Worker); unshare <record id> turns it off.
+                var p = arg.Split(',');
+                if (app.Store.Get(p[0]) is not { } s) return new JsonObject { ["error"] = "no such record" };
+                var o = new ShareOptions
+                {
+                    Scope = p.Contains("full") || s.Notes is not { IsEmpty: false } ? ShareScope.Full : ShareScope.Notes,
+                    Password = p.Contains("pw") ? SharePassword.Make() : null,
+                };
+                _ = Task.Run(async () =>
+                {
+                    var r = await app.Sharing.Share(s, o);
+                    Log.Debug(r switch
+                    {
+                        ShareOutcome.Shared x => $"share: {x.Record.Url}",
+                        ShareOutcome.Blocked b => $"share: blocked lines {string.Join(",", ShareHit.RecordLines(b.Hits, b.Kept).Order())}{(b.Hits.Any(h => h.Part == "notes") ? " and notes" : "")}",
+                        ShareOutcome.Failed f => $"share: failed {f.Code}",
+                        _ => "share: ?",
+                    });
+                });
+                break;
+            }
+            case "unshare":
+            {
+                if (app.Sharing.Store.Read(arg) is not { } r) return new JsonObject { ["error"] = "not shared" };
+                _ = Task.Run(async () => Log.Debug($"share: revoked {await app.Sharing.Revoke(r, arg)}"));
+                break;
+            }
+            // sharesheet <record id>[,full][,pw][,names][,30|365][,more][,go] opens 分享… (more presses 更改,
+            // go 生成并复制); sharesheet leaveout presses 去掉这些内容后分享; on the done step
+            // sharesheet copy|copylink|copypw|menu presses 复制, its menu's items, or opens the menu;
+            // sharesheet alone closes it.
+            case "sharesheet" or "shareSheet":
+            {
+                var p = arg.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                if (p.Length == 0) { ShareDialog.Current?.Close(); break; }
+                if (p[0] == "leaveout") { ShareDialog.Current?.DebugLeaveOut(); break; }
+                if (p[0] is "copy" or "copylink" or "copypw" or "menu") { ShareDialog.Current?.Debug(p); break; }
+                if (app.Store.Get(p[0]) is not { } s) return new JsonObject { ["error"] = "no such record" };
+                app.ShowRecords(p[0]);
+                app.Dispatcher().BeginInvoke(() => app.ShareSheet(s).Debug(p));
+                break;
+            }
+            // shareinfo <record id>: the link kept for it (dev builds only, never logged) and the open dialog's step.
+            case "shareinfo":
+            {
+                var r = app.Sharing.Store.Read(arg);
+                return new JsonObject
+                {
+                    ["url"] = r?.Url, ["expiresAt"] = r?.ExpiresAt.ToUnixTimeSeconds(), ["scope"] = r?.Scope, ["password"] = r?.Password,
+                    ["sheet"] = ShareDialog.Current?.StepName,
+                };
+            }
             case "state": break;
             default: return new JsonObject { ["error"] = $"unknown command {parts[0]}" };
         }
         return app.State();
+    }
+
+    /// The meeting a fix command acts on ("… @<id>", else the one being listened to, else the
+    /// newest), and the rest of its argument.
+    static (string Id, string Arg) FixTarget(Controller app, string arg)
+    {
+        var at = arg.LastIndexOf(" @", StringComparison.Ordinal);
+        if (arg.StartsWith('@')) return (arg[1..].Trim(), "");
+        if (at >= 0) return (arg[(at + 2)..].Trim(), arg[..at].Trim());
+        return (app.Listen.SessionId ?? app.Store.All().FirstOrDefault()?.Id ?? "", arg);
     }
 
     /// Sends one command to the running app (a second launch uses it to bring records forward).

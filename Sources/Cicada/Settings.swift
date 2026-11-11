@@ -225,10 +225,25 @@ final class AppSettings: ObservableObject {
         didSet { save() }
     }
 
+    /// 会中改正听错的词: finished sentences carry the word list to the AI service, which points out
+    /// misheard words (`Correction`). On by default; does nothing without an AI service.
+    @Published var fixMisheard: Bool {
+        didSet { save() }
+    }
+
+    /// 没见过的名字先问我: a new name is asked about once instead of left as heard.
+    @Published var askNames: Bool {
+        didSet { save() }
+    }
+
     /// Record per-sentence timings (never text) and show the 诊断 tab. On by default in dev builds.
     /// 听哪里: "system" (what the Mac plays), "room" (a real microphone, for a meeting in the room) or
     /// "both" (电脑和会议室: people online and in the room, each heard on its own).
     @Published var listenSource: String {
+        didSet { save() }
+    }
+    /// The microphone chosen beside 打开麦克风, by UID; empty is 自动. Never the system default's.
+    @Published var roomMicUID: String {
         didSet { save() }
     }
     /// Only the room: nothing is in a call on this Mac (the translation is read out of the speakers).
@@ -306,8 +321,11 @@ final class AppSettings: ObservableObject {
         silenceEnd = defaults.string(forKey: "silenceEnd") ?? "prompt"
         silenceMinutes = defaults.object(forKey: "silenceMinutes") as? Double ?? 10
         listenSource = ["room", "both"].contains(defaults.string(forKey: "listenSource")) ? defaults.string(forKey: "listenSource")! : "system"
+        roomMicUID = defaults.string(forKey: "roomMicUID") ?? ""
         diagnostics = defaults.object(forKey: "diagnostics") as? Bool ?? DevBuild.isDev
         notesCapturable = defaults.bool(forKey: "notesCapturable")
+        fixMisheard = defaults.object(forKey: "fixMisheard") as? Bool ?? true
+        askNames = defaults.object(forKey: "askNames") as? Bool ?? true
         // Off by default while it was an experiment, and save() stores every key, so a stored false
         // mostly means "never touched": turn it on once for everyone when it became a regular feature.
         if defaults.bool(forKey: "speakerVoicesRegular") {
@@ -372,9 +390,12 @@ final class AppSettings: ObservableObject {
         defaults.set(silenceEnd, forKey: "silenceEnd")
         defaults.set(silenceMinutes, forKey: "silenceMinutes")
         defaults.set(listenSource, forKey: "listenSource")
+        defaults.set(roomMicUID, forKey: "roomMicUID")
         defaults.set(diagnostics, forKey: "diagnostics")
         defaults.set(notesCapturable, forKey: "notesCapturable")
         defaults.set(speakerVoices, forKey: "speakerVoices")
+        defaults.set(fixMisheard, forKey: "fixMisheard")
+        defaults.set(askNames, forKey: "askNames")
     }
 
     /// Target language. "Follow system" translates into my language, or into the next system
@@ -402,6 +423,7 @@ final class AppSettings: ObservableObject {
 }
 
 func debugLog(_ message: String) {
+    if Thread.isMainThread, debugLogCapture != nil { debugLogCapture?.append(message) }
     let line = "\(Date()) \(message)\n"
     let path = DevBuild.logPath
     if let handle = FileHandle(forWritingAtPath: path) {
@@ -417,3 +439,5 @@ func debugLog(_ message: String) {
 func contentLog(_ message: @autoclosure () -> String) {
     if UserDefaults.standard.bool(forKey: "debug") { debugLog(message()) }
 }
+
+extension AppSettings: FixSwitches {}

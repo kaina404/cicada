@@ -114,4 +114,70 @@ import Testing
         }
         print("lines: \(s.lines.count) → \(out.count)")
     }
+
+    @Test func endsSentenceOnlyAtAFullSentence() {
+        #expect(HeardText.endsSentence("いつも動画をご覧いただきありがとうございます。"))
+        #expect(HeardText.endsSentence("We should ship the fix this week."))
+        #expect(HeardText.endsSentence("Are we shipping it this week?"))
+        // Too short to be a line, mid-sentence, trailing off, or a number being read.
+        #expect(!HeardText.endsSentence("はい。"))
+        #expect(!HeardText.endsSentence("Yes it is."))
+        #expect(!HeardText.endsSentence("いつも動画をご覧いただきありがとうござい"))
+        #expect(!HeardText.endsSentence("and then we went over the numbers..."))
+        #expect(!HeardText.endsSentence("the growth this quarter was about 3."))
+    }
+
+    @Test func splitAtSentenceEndKeepsTheRunOnForTheNextLine() {
+        // Heard in session 20261108-100300: the cut came back a second into the next sentence.
+        let s = HeardText.splitAtSentenceEnd("にもこの新型 iPad mini Proモデルが届いたので開封をしていきたいと思います。前回こちらの動画で")
+        #expect(s?.head == "にもこの新型 iPad mini Proモデルが届いたので開封をしていきたいと思います。")
+        #expect(s?.tail == "前回こちらの動画で")
+        #expect(HeardText.splitAtSentenceEnd("We should ship the fix this week. And then")?.tail == "And then")
+        // Nothing after the end, or a head too short to stand alone: left whole.
+        #expect(HeardText.splitAtSentenceEnd("開封をしていきたいと思います。今日はですね新型のお話です。") == nil)
+        #expect(HeardText.splitAtSentenceEnd("はい。それではですね") == nil)
+    }
+
+    @Test func chineseClausesEndAtCommasConnectivesAndParticles() {
+        // Heard in a fast review: no 。 for 80 characters.
+        let zh = "站着是会弯一点，但是松开它可以恢复原样那真正屁股坐上去的场景实际受力面积会比这个还要大一些所以很多人设想的"
+        let clauses = HeardText.boundaries(zh, language: "zh").filter { $0.kind == .clause }.map(\.at)
+        #expect(clauses.contains(8))                                        // after "，"
+        #expect(clauses.contains(zh.distance(from: zh.startIndex, to: zh.range(of: "所以")!.lowerBound)))
+        // "那个" is a word, not the clause word "那"; "吧台" is no particle.
+        #expect(!HeardText.boundaries("我们去那个吧台坐一下好不好", language: "zh").contains { $0.kind == .clause })
+        #expect(HeardText.boundaries("我们先这样吧然后再说", language: "zh").contains { $0.at == 6 && $0.kind == .clause })
+        // Two connectives in a row start one clause, at the first.
+        let both = HeardText.boundaries("需求会更小众和纠结一点因为如果你问有些人", language: "zh").filter { $0.kind == .clause }.map(\.at)
+        #expect(both == [11])
+        #expect(!HeardText.boundaries("还要大一些所以很多人设想的", language: "zh").contains { $0.at == 6 })
+        // The final dropped the draft's comma: the word gap there.
+        #expect(HeardText.split("要好很多很多即便施加了比较多的下压力而且", near: 6, kind: .clause, language: "zh") == nil)
+        #expect(HeardText.split("结论就是他会比要好很多很多即便施加了比较多的下压力", near: 13, kind: .clause, language: "zh")?.tail == "即便施加了比较多的下压力")
+    }
+
+    @Test func splitAtClauseNearTheCut() {
+        let final = "站着是会弯一点但是松开它可以恢复原样那真正屁股坐上去的场景实际受力面积会比这个还要大一些所以很多人"
+        let at = final.distance(from: final.startIndex, to: final.range(of: "所以")!.lowerBound)
+        let s = HeardText.split(final, near: at - 2, kind: .clause, language: "zh")
+        #expect(s?.tail == "所以很多人")
+        // Between words, for a line past the cap: never inside a word.
+        let en = "and then we went over all of the numbers for the next quarter with the team in Berlin"
+        let w = HeardText.split(en, near: 40, kind: .word, language: "en")
+        #expect(w.map { en.hasPrefix($0.head + " ") } == true)
+        #expect(w?.head.last?.isLetter == true && w?.tail.first?.isLetter == true)
+        // No boundary near the cut: left whole.
+        #expect(HeardText.split("站着是会弯一点但是松开它可以恢复原样", near: 3, kind: .clause, language: "zh") == nil)
+    }
+
+    @Test func joinsStopAtTheCap() {
+        let a = "ではこちらペリペリ剥がしますはいこっちもですねそれではオープンよいしょはいはいで"   // 40
+        #expect(HeardText.continues(a, "いつもですね", gap: 0.2, cut: true))
+        #expect(!HeardText.continues(a, "いつもですねこれですねこちらのフィルムも丁寧に剥がしておお", gap: 0.2, cut: true))
+    }
+
+    @Test func noLineEndsInsideAConnective() {
+        let t = Array("还要大一些所以很多人")
+        #expect(HeardText.insideConnectives(t) == [6: 5])
+    }
 }

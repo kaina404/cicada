@@ -119,6 +119,7 @@ public sealed class NotesEngine
     {
         Session? session;
         MeetingNotes baseNotes;
+        List<NoteTerm> prior;
         lock (gate)
         {
             if (inFlight) { if (final) pendingFinal = id; return; }
@@ -129,6 +130,7 @@ public sealed class NotesEngine
             lastAttempt = DateTime.UtcNow;
             Status = State.Updating;
             baseNotes = final ? new MeetingNotes() : (id == ShownId ? Notes : session.Notes ?? new MeetingNotes());
+            prior = (id == ShownId ? Notes : session.Notes)?.Terms ?? [];
         }
         Changed?.Invoke();
         try
@@ -163,6 +165,8 @@ public sealed class NotesEngine
                 return;
             }
             if (!final && !fresh) next.Topics = Merge(baseNotes.Topics, frozen, next.Topics);
+            if (!fresh) next.Terms = NoteTerm.KeepingOrder(prior, next.Terms);
+            next.Terms = HeardAsSaid(next.Terms, lines);
             CarryTimes(baseNotes, next);
             next.Title ??= baseNotes.Title ?? session.Notes?.Title;
             next.Covered = lines.Count;
@@ -192,6 +196,15 @@ public sealed class NotesEngine
             Changed?.Invoke();
             if (queued is not null) await Update(queued, final: true);
         }
+    }
+
+    /// Terms keep only the heard forms the recognizer really wrote (`Src`). The notes read lines
+    /// with fixes in, so a wrong fix came back as a heard form ("X平台 heard as platform"), went to
+    /// the translator and the next fix's request as a known mishearing, and was proposed again.
+    public static List<NoteTerm> HeardAsSaid(List<NoteTerm> terms, IReadOnlyList<TranscriptLine> lines)
+    {
+        foreach (var t in terms) t.Heard = t.Heard.Where(h => lines.Any(l => l.Src.Contains(h, StringComparison.OrdinalIgnoreCase))).ToList();
+        return terms;
     }
 
     /// The model echoes points it already had without evidence: keep the times they had, and a
@@ -370,7 +383,7 @@ public sealed class NotesEngine
             // As Notes.swift: a named voice as its name, else 说话人N once voices are told apart,
             // 未识别 for a voice not on show.
             var who = l.Speaker == "me" ? "你" : numbers.TryGetValue(l.Id, out var n) ? names?.GetValueOrDefault(n) ?? $"说话人{n}" : numbers.Count == 0 ? "对方" : "未识别";
-            return $"[L{i + 1} {Languages.Clock(l.T)} {who}] {l.Src}";
+            return $"[L{i + 1} {Languages.Clock(l.T)} {who}] {l.Shown}";
         }
         var current = notes.IsEmpty ? "{}" : CompactJson(notes, frozen);
         int context = Math.Max(0, from - 2);
@@ -427,7 +440,7 @@ public sealed class NotesEngine
            + "- At most 5 conclusions and only real to-dos (often none).\n"
            + "- Add a fishbone only to a topic that discusses causes, reasons or factors (3-5 branches); otherwise null.\n"
            + "- Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.\n"
-           + "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used; note is a few words.\n"
+           + "- terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used, and only of that same thing: a name said again and again in one spelling that context doesn't tie to a known one (\"我们 twoty\", \"our platform\") is a thing of its own, its own term with that spelling, not a mishearing of a similar name; note is a few words.\n"
            + $"- Write the meeting title and every summary, title, point, branch, conclusion and to-do in {language}, even when the transcript is in another language. Only term names keep the transcript's spelling.\n"
            + "- Write about what was said, never about the transcript or recognition quality.\n"
            + "- Use empty arrays when there is nothing. No markdown, no text outside the JSON.";

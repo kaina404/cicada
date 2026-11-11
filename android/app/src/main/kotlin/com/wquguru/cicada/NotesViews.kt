@@ -30,8 +30,10 @@ object NotesViews {
         val listen = app.listen
         val line = listen.sessionId?.let { app.store.lines(it).lastOrNull() }
         return listOf(listen.listening, listen.sourceKind, listen.sessionId, listen.pending > 0, listen.problem, app.startProblem, silent(app), app.micSilenced,
-                      line?.id, line?.src, line?.dst, app.notes.status, app.notes.notes.updatedAt, app.notes.notes.covered,
-                      app.ending?.deadline, app.ling.blocking, listen.problemKind, app.ling.provider.id, customOnlyUntranslated(app)).joinToString("|")
+                      line?.id, line?.shown, line?.dst, app.notes.status, app.notes.notes.updatedAt, app.notes.notes.covered,
+                      app.ending?.deadline, app.ling.blocking, listen.problemKind, app.ling.provider.id, customOnlyUntranslated(app),
+                      // 改正听错的词: the newest line's fixes, the card and the 撤销 message.
+                      line?.fixes, listen.sessionId?.let { app.fixes.asking(it)?.fix }, app.fixes.toastNow()?.at, app.settings.showInCapture).joinToString("|")
     }
 
     /// "正在听 · 03:12" / "面对面 · 03:12".
@@ -202,7 +204,8 @@ object NotesViews {
 
     /// One line as a white bubble: who and when, the original small and grey, the translation in
     /// ink. The newest is outlined in the accent while more may come.
-    fun bubble(ui: Ui, line: TranscriptLine, numbers: Map<String, Int>, names: Map<Int, String>, newest: Boolean, listening: Boolean): LinearLayout {
+    fun bubble(ui: Ui, line: TranscriptLine, numbers: Map<String, Int>, names: Map<Int, String>, newest: Boolean, listening: Boolean,
+               onRevert: ((String, cicada.LineFix) -> Unit)? = null): LinearLayout {
         val who = cicada.SpeakerLabels.speakerName(line, numbers, names)
         val card = ui.stack(6)
         card.background = if (newest && listening) ui.rounded(Palette.card, 22, android.graphics.Color.parseColor("#F2C3B2"), 1.5) else ui.rounded(Palette.card, 22)
@@ -210,9 +213,11 @@ object NotesViews {
         // An initial only for someone known (你, a numbered or named voice); 对方 has no face.
         val head = ui.text("$who · ${Languages.clock(line.t)}", 12f, Palette.secondary, lines = 1)
         card.addView(if (line.speaker == "me" || numbers[line.id] != null) ui.row(8, avatar(ui, line, numbers, who), head) else head)
-        val translated = !line.dst.isNullOrEmpty() && line.dst != line.src
-        if (translated) card.addView(ui.text(line.src, Ui.Type.ORIGINAL, Palette.secondary).apply { leading(1.45f) })
-        card.addView(ui.text(line.dst?.takeIf { translated } ?: line.src, Ui.Type.TRANSLATION, Palette.ink).apply { leading(1.5f) })
+        val translated = !line.dst.isNullOrEmpty() && line.dst != line.shown
+        if (translated) card.addView(ui.text(FixViews.text(ui, line), Ui.Type.ORIGINAL, Palette.secondary).apply { leading(1.45f) })
+        card.addView(ui.text(line.dst?.takeIf { translated } ?: FixViews.text(ui, line), Ui.Type.TRANSLATION, Palette.ink).apply { leading(1.5f) })
+        // The line being said shows its fixed words open (the Mac's notes window does too): nothing to hover with.
+        if (onRevert != null) FixViews.fixedWords(ui, line.id, line.fixes ?: emptyList(), onRevert)?.let { card.addView(it, ui.lp(top = 4)) }
         if (newest) card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         return card
     }
@@ -225,7 +230,11 @@ object NotesViews {
         val numbers = cicada.SpeakerLabels.numbers(lines)
         val names = app.listen.sessionId?.let { app.store.get(it) }?.let { cicada.SpeakerLabels.names(it) } ?: emptyMap()
         val shown = lines.takeLast(count)
-        shown.forEachIndexed { i, l -> box.addView(bubble(ui, l, numbers, names, i == shown.lastIndex, app.listen.listening)) }
+        val id = app.listen.sessionId
+        shown.forEachIndexed { i, l ->
+            val revert: ((String, cicada.LineFix) -> Unit)? = if (i == shown.lastIndex && id != null) { lineId, f -> app.fixes.revert(f, lineId, id) } else null
+            box.addView(bubble(ui, l, numbers, names, i == shown.lastIndex, app.listen.listening, revert))
+        }
         if (app.listen.listening) box.addView(LinearLayout(ui.context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -252,7 +261,7 @@ object NotesViews {
         }
         for (l in lines.dropLast(1).takeLast(earlier)) {
             val texts = ui.stack(2, ui.text(said(l), 13f, Palette.secondary))
-            if (!l.dst.isNullOrEmpty() && l.dst != l.src) texts.addView(ui.text(l.dst!!, 16f, Palette.ink), ui.lp(top = 2))
+            if (!l.dst.isNullOrEmpty() && l.dst != l.shown) texts.addView(ui.text(l.dst!!, 16f, Palette.ink), ui.lp(top = 2))
             box.addView(LinearLayout(ui.context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 addView(ui.text(Languages.clock(l.t), 12f, Palette.secondary, bold = true), LinearLayout.LayoutParams(-2, -2).apply { topMargin = ui.dp(1); rightMargin = ui.dp(10) })
@@ -265,17 +274,17 @@ object NotesViews {
 
     /// The newest line as a card, with the "still listening" dots under it.
     /// The original as shown above its translation: mine is marked, so it's clear who said it.
-    fun said(l: TranscriptLine) = if (l.speaker == "me") L("你") + " · " + l.src else l.src
+    fun said(l: TranscriptLine) = if (l.speaker == "me") L("你 · 同传") + " · " + l.shown else l.shown
 
     fun liveCard(ui: Ui, app: CicadaApp, line: TranscriptLine, big: Float, bg: Int = Palette.card, lines: Int = 0, dots: Boolean = true): LinearLayout {
         val card = ui.stack(0)
         card.background = ui.rounded(bg, 20)
         card.setPadding(ui.dp(18), ui.dp(16), ui.dp(18), ui.dp(16))
         card.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
-        val translated = !line.dst.isNullOrEmpty() && line.dst != line.src
-        if (!translated && line.speaker == "me") card.addView(ui.text(L("你"), 14f, Palette.secondary))
-        if (translated) card.addView(ui.text(said(line), 14f, Palette.secondary, lines = if (lines > 0) lines - 1 else 0))
-        card.addView(ui.text(line.dst ?: line.src, big, Palette.ink, bold = true, lines = lines).apply { leading(1.25f) }, ui.lp(top = if (translated || line.speaker == "me") 8 else 0))
+        val translated = !line.dst.isNullOrEmpty() && line.dst != line.shown
+        if (!translated && line.speaker == "me") card.addView(ui.text(L("你 · 同传"), 14f, Palette.secondary))
+        if (translated) card.addView(ui.text(if (line.speaker == "me") said(line) else FixViews.text(ui, line), 14f, Palette.secondary, lines = if (lines > 0) lines - 1 else 0))
+        card.addView(ui.text(line.dst ?: FixViews.text(ui, line), big, Palette.ink, bold = true, lines = lines).apply { leading(1.25f) }, ui.lp(top = if (translated || line.speaker == "me") 8 else 0))
         if (dots && app.listen.listening) card.addView(LinearLayout(ui.context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -339,7 +348,7 @@ object NotesViews {
         }
         if (!compact && notes.todos.isNotEmpty()) {
             body.addView(ui.notesLabel(L("待办")), ui.lp(top = 22))
-            for (t in notes.todos) body.addView(todo(ui, t.text, t.owner), ui.lp(top = 8))
+            for (t in notes.todos) body.addView(todo(ui, t.withOwner), ui.lp(top = 8))
         }
         return body
     }
@@ -522,9 +531,9 @@ object NotesViews {
         addView(ui.text(text, size, Palette.ink).apply { leading(if (size >= Ui.Type.BODY) Ui.Type.LINE else 1.35f) }, ui.weight())
     }
 
-    fun todo(ui: Ui, text: String, owner: String?) = LinearLayout(ui.context).apply {
+    fun todo(ui: Ui, text: String) = LinearLayout(ui.context).apply {
         orientation = LinearLayout.HORIZONTAL
         addView(View(ui.context).apply { background = ui.rounded(0, 8, Palette.tertiary, 1.5) }, LinearLayout.LayoutParams(ui.dp(16), ui.dp(16)).apply { topMargin = ui.dp(5); rightMargin = ui.dp(10) })
-        addView(ui.notesText(text + (owner?.let { " · $it" } ?: "")), ui.weight())
+        addView(ui.notesText(text), ui.weight())
     }
 }

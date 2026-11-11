@@ -1,12 +1,88 @@
 <p align="center">
-
-Assistant는 `2000`, `10%`, `0.1%` 같은 숫자에도 영국식 IPA를 표시합니다. 소수점 아래는 한 자리씩 읽으며 IPA는 음성 재생, 번역, 읽기 진행률에서 제외합니다。
-
-실행 중 Dock에 표시되며 기록 중에는 아이콘에 주황색 점이 나타납니다. 오른쪽 클릭으로 기록 시작·중지, 실시간 회의록, 회의 기록 및 설정을 열 수 있습니다. 설정에서 “Dock에 표시”를 끌 수 있습니다.
   <img src="docs/icon.png" width="128" height="128" alt="Cicada 아이콘">
 </p>
 
 <h1 align="center">Cicada · 知了</h1>
+
+<p align="center">
+  어떤 회의도, 어떤 방송도 언어 장벽 없이.<br>
+  알아듣고, 말하고, 기록합니다. Mac, Windows, Linux, Android에서 실시간 회의록, 이중 언어 기록, 자막, 동시통역을 제공합니다.
+</p>
+
+<p align="center">
+  <a href="https://cicada.indaloop.app/ko/"><img src="https://img.shields.io/badge/%EC%9B%B9%EC%82%AC%EC%9D%B4%ED%8A%B8-cicada.indaloop.app-E8552B?style=for-the-badge" alt="웹사이트: cicada.indaloop.app" height="36"></a>
+  &nbsp;
+  <a href="https://cicada.indaloop.app/ko/download/"><img src="https://img.shields.io/badge/%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-Mac%20·%20Windows%20·%20Linux%20·%20Android-15171C?style=for-the-badge" alt="Mac, Windows, Linux, Android 다운로드" height="36"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-14.4%2B-black" alt="macOS 14.4+">
+  <img src="https://img.shields.io/badge/Windows-10%202004%2B-black" alt="Windows 10 2004+">
+  <img src="https://img.shields.io/badge/Ubuntu-22.04%2B-black" alt="Ubuntu 22.04+">
+  <img src="https://img.shields.io/badge/Android-10%2B-black" alt="Android 10+">
+  <img src="https://img.shields.io/badge/%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4-Apache--2.0-blue" alt="Apache-2.0">
+</p>
+
+<p align="center"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
+
+회의를 하거나 라이브 방송을 볼 때, Cicada는 실시간으로 이중 언어 자막을 보여주고 들으면서 체계적인 회의록을 작성합니다. 발언 차례가 되면 말하기 키(Mac은 오른쪽 `⌥`, Windows는 오른쪽 `Ctrl`, 변경 가능)를 누른 채 말하면 상대방이 회의에서 바로 번역된 음성을 듣습니다. Cicada는 시스템 소리를 직접 읽기 때문에 회의에 봇을 넣지 않아 상대방은 전혀 눈치채지 못합니다. Apple silicon Mac에서는 인식이 모두 기기 안에서 이루어져 소리가 컴퓨터 밖으로 나가지 않습니다.
+
+**사용 가능한 곳**: 컴퓨터에서 소리가 나는 모든 곳에서 쓸 수 있습니다. Tencent Meeting, Feishu, DingTalk, WeCom, Zoom, Teams, Google Meet, Webex, Discord, Telegram 음성 채팅은 물론 X Spaces, YouTube, Twitch, Bilibili 라이브, 팟캐스트 및 웹페이지도 지원합니다. 스마트폰에서는 시스템에서 통화 및 회의 앱 소리 녹음을 허용하지 않으므로, 스피커폰을 켜고 '대면' 모드를 사용하면 됩니다.
+
+<p align="center">
+  <img src="docs/demo.gif" width="800" alt="YouTube에서 재생 중인 Bloomberg 영어 라이브 방송과 오른쪽의 Cicada가 실시간으로 정리한 중국어 회의록, 안건, 피시본 다이어그램, 하단의 이중 언어 자막">
+</p>
+
+## 지원 플랫폼
+
+| 플랫폼 | 요구 사항 | 비고 |
+|---|---|---|
+| Mac | macOS 14.4+, Apple silicon / Intel | 모든 기능 지원. Apple silicon은 기기 내 음성 인식(키 없이도 사용 가능), Intel 버전은 Ling 키 필요(Ming으로 음성 인식) |
+| Windows | Windows 10 2004+, x64 / ARM64 | Ling, OpenRouter, ZenMux 등 AI 서비스 키 필요. [windows/](windows/README.md) 참고 |
+| Linux | Ubuntu 22.04 / 24.04 데스크톱 | AI 서비스 키 필요. 화면 공유 시 회의록 창이 보임. [linux/](linux/README.md) 참고 |
+| Android | Android 10+ | AI 서비스 키 필요. 동영상·라이브 자막, 대면 통역. [android/](android/README.md) 참고 |
+
+설치 파일은 [웹사이트 다운로드 페이지](https://cicada.indaloop.app/ko/download/)와 [Releases](https://github.com/wquguru/cicada/releases)에서 받을 수 있습니다. 네 플랫폼 모두 버전 번호와 회의 기록 형식을 공유하며, 아래 기능은 Mac 버전을 기준으로 설명합니다.
+
+## 주요 기능
+
+### 실시간 회의록 및 이중 언어 기록
+
+회의록 창에서 들으면서 요약, 안건 요점, 결론, 할 일, 피시본 다이어그램, 인명·용어집을 정리하며, 결론이나 할 일을 클릭하면 원래 발언으로 바로 이동합니다. `⌘F`로 검색하면 잘못 인식된 표기까지 함께 찾아줍니다.
+
+AI 서비스를 연결하면 잘못 들은 인명과 용어를 그 자리에서 고칩니다. 발음이 비슷한 오타는 바로 고치고, 낯선 이름은 먼저 한 번 물어본 뒤 "네"라고 답하면 그다음부터 자동으로 고칩니다. 자주 쓰는 단어는 설정의 "단어 목록"에 미리 붙여 넣을 수 있습니다. 회의 후에도 "이 줄 고치기…"로 회의 전체의 같은 오류를 한꺼번에 고칠 수 있으며 언제든 되돌릴 수 있습니다.
+
+### 실시간 자막 및 언어 감지
+
+상대방이 말하기 시작하면 몇 초 안에 언어를 자동으로 감지해 시스템 언어로 번역하며, `⌃⌥S`로 표시 방식을 전환합니다. 자막 바는 누군가 말할 때만 나타나고 마우스를 올리면 자동으로 투명해져 버튼을 가리지 않습니다. Apple silicon 탑재 macOS 26에서는 15~30초 뒤에 기기에서 다시 듣고 보정하여 오타와 빠진 글자를 고칩니다.
+
+### 오프라인 및 하이브리드 회의
+
+"마이크 켜기"를 누르면 회의실에 있는 사람들의 말을 들을 수 있습니다. 온·오프라인 혼합 회의도 이 버튼 하나로 됩니다. 컴퓨터 소리는 "온라인", 마이크는 "현장"으로 하나의 기록에 함께 남깁니다(macOS 14와 15에서는 마이크를 켜면 현장 소리만 듣습니다). 스피커를 쓸 때는 자동으로 중복을 제거해 두 번 기록하지 않으며, 이어폰을 끼면 양쪽이 동시에 말해도 모두 기록합니다. Windows와 Linux도 규칙이 같습니다. Mac에서는 버튼 옆 작은 화살표로 마이크(iPhone이나 회의용 마이크 등)만 따로 바꿀 수 있으며, 시스템 기본 설정은 건드리지 않습니다.
+
+### 동시통역
+
+오른쪽 `⌥` 키를 누른 채 말하면 상대방이 회의 앱에서 번역된 음성을 듣습니다. 기능을 켜면 클릭 한 번으로 내려받아 설치하는 가상 드라이버 BlackHole 2ch로 시스템 마이크를 자동 전환합니다. Ling API 키를 입력하면 자연스러운 음성을 쓰거나 8~30초 녹음으로 내 목소리를 복제할 수 있고, 키를 입력하지 않아도 Mac 기본 음성을 쓸 수 있습니다.
+
+<p align="center">
+  <img src="docs/interpreting.png" width="640" alt="오른쪽 Option 말하기 키, 대상 언어, Ming 음성 미리 듣기, macOS 음성이 표시된 동시통역 설정 화면">
+</p>
+
+### 회의 기록
+
+이중 언어 기록, 회의록, 원본 녹음은 모두 기기에 저장됩니다. 아무 문장이나 클릭하면 그 위치부터 다시 들을 수 있고, 기기 내 성문 모델이 화자를 자동으로 구분하며(Ling 키가 있으면 이름도 채움), 잘못 구분되면 언제든 이름을 바꾸거나 합칠 수 있습니다.
+
+회의 후 회의록을 추가로 생성하고 Markdown, Word, SRT 자막으로 내보내거나, "파일 › 녹음 또는 동영상 가져오기…"로 로컬 오디오·비디오를 이중 언어 기록으로 변환할 수 있습니다. "공유…"를 누르면 회의록(선택 시 이중 언어 전문 포함)을 링크로 만들 수 있으며, 유효 기간과 비밀번호 설정 및 한 번에 복사를 지원합니다. 업로드 전에는 키나 미공개 회사 정보 같은 민감한 내용을 자동으로 차단합니다. 현재 기록에 남는 내 발언은 말하기 키를 누르고 말한 내용뿐이며, 회의에서 바로 말한 부분은 [로드맵](#로드맵)을 참고하세요.
+
+<p align="center">
+  <img src="docs/records.png" width="640" alt="구분된 화자 이름과 문장별 영중 이중 언어 기록이 표시된 회의 기록 창">
+</p>
+
+### 면접 코치와 화면 인식 (Mac)
+
+Assistant는 `2000`, `10%`, `0.1%` 같은 숫자에도 영국식 IPA를 표시합니다. 소수점 아래는 한 자리씩 읽으며 IPA는 음성 재생, 번역, 읽기 진행률에서 제외합니다。
+
+실행 중 Dock에 표시되며 기록 중에는 아이콘에 주황색 점이 나타납니다. 오른쪽 클릭으로 기록 시작·중지, 실시간 회의록, 회의 기록 및 설정을 열 수 있습니다. 설정에서 “Dock에 표시”를 끌 수 있습니다.
 
 Mac 면접 코치 설정은 기본으로 접혀 있습니다. 제목을 클릭하면 면접 단계, 읽어주기, 상태 및 마이크 설정이 펼쳐져 답변 공간을 더 넓게 사용할 수 있습니다.
 
@@ -36,59 +112,13 @@ Mac 면접 코치의 마이크 버튼 옆 장치 이름을 누르면 설정 › 
 
 Mac 설정 창의 가장자리를 드래그하여 크기를 조절하면 크기가 저장됩니다. 설정 › 일반 › 앱 언어에서 简体中文, English 또는 시스템 언어를 선택한 후 앱을 다시 열면 적용됩니다。
 
-<p align="center">
-  어떤 회의도, 어떤 방송도 언어 장벽 없이.<br>
-  알아듣고, 말하고, 기록합니다. Mac, Windows, Linux, Android에서 실시간 회의록, 이중 언어 기록, 자막, 동시통역을 제공합니다.
-</p>
-
-<p align="center">
-  <a href="https://cicada.indaloop.app/ko/"><img src="https://img.shields.io/badge/%EC%9B%B9%EC%82%AC%EC%9D%B4%ED%8A%B8-cicada.indaloop.app-E8552B?style=for-the-badge" alt="웹사이트: cicada.indaloop.app" height="36"></a>
-  &nbsp;
-  <a href="https://cicada.indaloop.app/ko/download/"><img src="https://img.shields.io/badge/%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C-Mac%20·%20Windows%20·%20Linux%20·%20Android-15171C?style=for-the-badge" alt="Mac, Windows, Linux, Android 다운로드" height="36"></a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/macOS-14.4%2B-black" alt="macOS 14.4+">
-  <img src="https://img.shields.io/badge/Windows-10%202004%2B-black" alt="Windows 10 2004+">
-  <img src="https://img.shields.io/badge/Ubuntu-22.04%2B-black" alt="Ubuntu 22.04+">
-  <img src="https://img.shields.io/badge/Android-10%2B-black" alt="Android 10+">
-  <img src="https://img.shields.io/badge/%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4-Apache--2.0-blue" alt="Apache-2.0">
-</p>
-
-<p align="center"><a href="README.md">简体中文</a> · <a href="README.en.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
-
-Zoom, Teams, Feishu 회의부터 X Spaces, Discord 스테이지, YouTube 라이브 방송까지 컴퓨터에서 재생되는 모든 소리에 작동합니다. 시스템 오디오를 직접 듣기 때문에 회의에 봇을 넣거나 다른 사람에게 설치를 부탁할 필요 없이 실시간 이중 언어 자막과 체계적인 회의록을 보여줍니다. 발언할 때는 말하기 키(Mac은 오른쪽 `⌥`, Windows는 오른쪽 `Ctrl`)를 누른 채 말하면 번역된 음성이 회의실로 바로 전달됩니다. Mac에서는 음성 인식이 기기 안에서 처리되어 오디오가 밖으로 나가지 않습니다.
-
-<p align="center">
-  <img src="docs/demo.gif" width="800" alt="YouTube에서 재생 중인 Bloomberg 영어 라이브 방송과 오른쪽의 Cicada 실시간 회의록, 안건, 피시본 다이어그램, 하단의 이중 언어 자막">
-</p>
-
 Mac 앱은 재시작 없이 macOS의 라이트·다크 모드를 자동으로 따릅니다. 회의 기록, 실시간 노트, 어시스턴트, 메뉴 막대 패널, 설정 및 초기 설정에 적용됩니다.
 
 Mac 면접 코치의 확대 버튼으로 실시간 답변을 반투명 창에 띄울 수 있습니다. 창을 이동하거나 크기를 바꾸고 글자 크기(16–96)와 배경 불투명도(0–100%)를 조절하면 설정이 저장됩니다. 원고와 읽기 위치가 동기화되며 화면 공유 표시 설정을 따릅니다.
 
 Assistant의 중국어 번역은 작은 글자(영어 크기의 50%, 11–18 pt)로 표시합니다. 플로팅 답변은 더 작은 글자(10–14 pt, 기본 12 pt)를 사용해 공간을 줄입니다.
 
-## 지원 플랫폼
-
 새 회의를 시작할 때마다 실시간 메모 상단에서 창이나 화면을 선택할 수 있습니다. 오디오 소스는 유지되며 화면을 선택하지 않아도 기록할 수 있습니다. 회의 중 변경하거나 읽기를 중지할 수 있고, 회의를 끝내면 캡처와 선택이 해제됩니다. 다음 회의에서는 다시 선택합니다.
-
-| 플랫폼 | 요구 사항 | 비고 |
-|---|---|---|
-| Mac | macOS 14.4+, Apple silicon / Intel | 모든 기능 지원. Apple silicon은 기기 내 음성 인식(키 없이도 사용 가능), Intel 버전은 Ling 키 필요(Ming으로 음성 인식) |
-| Windows | Windows 10 2004+, x64 / ARM64 | Ling 키 필요(쓸 수 없으면 OpenRouter, ZenMux 등도 가능). [windows/](windows/README.md) 참고 |
-| Linux | Ubuntu 22.04 / 24.04 데스크톱 | Ling 또는 다른 AI 서비스 키 필요. 화면 공유 시 회의록 창이 보임. [linux/](linux/README.md) 참고 |
-| Android | Android 10+ | Ling 또는 다른 AI 서비스 키 필요. 동영상·라이브 자막, 대면 통역. [android/](android/README.md) 참고 |
-
-> **AI 서비스:** Mac에서는 회의록과 자연스러운 음성에 OpenRouter(추천), Ling, ZenMux, OpenAI를 쓸 수 있습니다([설정 방법](#ling-api-key)). Windows, Linux, Android 버전도 같은 서비스를 쓸 수 있으며, 이때는 상대방 음성 인식도 그 서비스가 맡아 자막이 Ling보다 1~2초 늦습니다.
-
-네 플랫폼 모두 같은 버전 번호와 회의 기록 형식을 공유합니다. 설치 파일은 [웹사이트](https://cicada.indaloop.app/ko/download/)와 [Releases](https://github.com/wquguru/cicada/releases)에서 받을 수 있습니다. 아래 기능 설명은 Mac 앱 기준입니다.
-
-## 주요 기능
-
-### 실시간 회의록 및 이중 언어 기록
-
-회의가 진행되는 동안 회의록 창에서 요약, 안건 및 요점, 결론, 할 일, 피시본 다이어그램, 인명·용어집을 실시간으로 정리합니다. 결론이나 할 일을 클릭하면 이중 언어 기록의 해당 발언으로 바로 이동합니다. 회의록 전체에서 인명과 용어 표기를 통일하고 잘못 인식된 표기도 기억하므로, `⌘F`로 검색하면 표준 표기와 오인식된 변형을 함께 찾아줍니다. AI 서비스에 내가 직접 고쳐야 하는 문제(키, 잔액, 모델)가 생기면 회의록 창이 알려 주고 메뉴 막대 아이콘에 주황색 점이 붙습니다. 마이크를 켰는데 마이크를 쓸 수 없을 때는 회의록 창, 자막 바, 메뉴 막대 아이콘 모두에서 알려 줍니다.
 
 설정 › AI 서비스 › 면접 코치에서 「폴더 열기」를 눌러 여섯 개의 Markdown(`00_profile.md`, `01_job_target.md`, `02_companies_past.md`, `03_projects.md`, 자기소개를 포함한 `04_talk_tracks.md`, 지원 회사와 채용 공고의 `05_target_company.md`)을 원하는 편집기로 관리하세요. 듣기를 시작할 때마다 통째로 다시 읽습니다. DeepSeek key를 설정하면 DeepSeek Flash가 답변 생성과 기존 원고의 유효성 판단을 담당합니다. 로컬 `mlx-community/gemma-4-E4B-it-qat-4bit`은 마이크 읽기 진행을 추적합니다. 컴퓨터 소리는 면접관, 켠 마이크는 지원자로 구분합니다. 답변 생성에는 Apple이 인식한 면접관 원문과 Gemma가 인식한 지원자 원문, 화면 읽기를 켰을 때 압축한 핵심 화면을 전달하며 번역문은 사용하지 않습니다. 원문, 검색한 배경과 선택 화면의 압축 이미지는 DeepSeek로 보내고 읽기 추적 음성은 로컬에서 처리합니다. 번역 및 회의록 서비스 설정은 별도입니다. 자동 답변은 면접관의 발화 종료 판단까지 최신 전사를 모아 생성합니다. 문장 부호나 대소문자 수정은 생성을 다시 시작하지 않습니다. 수동 질문은 즉시 시작할 수 있습니다。
 
@@ -100,100 +130,61 @@ Assistant의 중국어 번역은 작은 글자(영어 크기의 50%, 11–18 pt)
 
 영어 문장이 완성되면 기기 내 중국어 번역을 시작하고 완료 즉시 표시합니다. 한 문장의 실패는 재시도하며 회의 전체의 대조 번역을 중단하지 않습니다.
 
-### 실시간 자막 및 언어 감지
-
-상대방이 말하기 시작하면 몇 초 안에 기기에서 언어를 감지해 시스템 언어로 번역합니다. `⌃⌥S`를 누르면 회의록 창, 자막 바, 숨김 상태를 오갈 수 있습니다. 자막 바는 누군가 말할 때만 나타나며, 마우스 포인터를 올리면 투명해져 아래에 있는 버튼을 그대로 클릭할 수 있습니다.
-
-### 오프라인 회의
-
-회의실에 모여 회의할 때는 메뉴 막대 패널이나 회의록 창에서 **마이크 켜기**를 누르세요. Mac 마이크로 테이블에 있는 사람들의 말을 듣고 온라인 회의와 똑같이 자막, 회의록, 기록을 남깁니다. Mac 소리도 계속 듣고, 아무 소리도 나지 않으면 테이블의 말만 기록합니다. 동시통역이 번역을 읽어 주는 동안에는 마이크가 듣지 않아 번역이 다른 사람의 말로 기록되지 않습니다. 앱을 실행할 때마다 마이크는 꺼진 상태로 시작합니다.
-
-회의실에 있는 사람과 온라인 참석자가 섞인 회의도 같은 버튼입니다. 온라인 참석자는 컴퓨터 소리로, 테이블의 사람은 마이크로 듣고, 각자의 언어로 하나의 회의 기록에 남깁니다(macOS 14와 15에서는 마이크가 Mac 소리를 대신합니다). 스피커에서 나온 온라인 목소리는 마이크에도 들어가므로, Cicada는 그 소리가 마이크에 닿는지 측정합니다. 닿으면 온라인 참석자가 말하는 동안만 마이크를 멈추고, 헤드폰이나 회의용 마이크를 쓰면 멈추지 않아 동시에 말해도 모두 남습니다. Mac에서 음악이 나올 때도 멈추지 않습니다. 마지막으로 글자를 비교해, Mac 소리에서 방금 나온 말과 거의 같은 회의실 줄은 두 번 기록하지 않습니다.
-
-이런 회의에서는 줄마다 **현장**인지 **온라인**인지 표시됩니다. 회의 중에 외장 마이크가 빠지면 남은 마이크로 바꾸고 알려 줍니다. 마이크가 계속 조용하면 한 번 다시 열고, 그래도 안 되면 회의록 창에서 마이크를 바꾸라고 알려 줍니다. Windows와 Linux에도 같은 **마이크 켜기**와 같은 규칙이 있습니다.
-
-### 상대방 언어로 말하기
-
-오른쪽 `⌥` 키를 누른 채 말하면 번역된 음성이 가상 마이크인 BlackHole 2ch를 통해 회의 앱으로 전달됩니다. BlackHole 2ch는 앱에서 클릭 한 번으로 설치할 수 있으며, 동시통역을 켜면 Cicada가 자동으로 마이크를 전환합니다. AI 서비스 키를 설정하면 자연스러운 음성(OpenRouter나 ZenMux의 Gemini, Ling의 Ming)을 쓸 수 있고, Ling에서는 8~30초 분량의 녹음으로 내 목소리를 복제할 수도 있습니다. 키가 없어도 macOS 기본 음성을 사용할 수 있습니다.
-
 Mac에서는 회의 마이크와 누르고 말하기의 오디오 자원을 함께 관리합니다. 기기 변경으로 인한 중복 재시작을 합치고, 일반 녹음 중에는 에코 제거 장치를 다시 만들지 않으며, 하드웨어 시작과 중지는 백그라운드에서 처리합니다.
 
-<p align="center">
-  <img src="docs/interpreting.png" width="640" alt="오른쪽 Option 말하기 키, 대상 언어, Ming 음성 미리 듣기, macOS 음성이 표시된 동시통역 설정 화면">
-</p>
-
-### 회의 기록
-
-모든 회의의 이중 언어 기록, 회의록, 원본 녹음은 Mac에 저장됩니다. 회의가 끝나면 기록에서 녹음을 다시 들을 수 있고, 시간을 클릭하면 그 문장부터 재생되며 재생 중인 문장이 강조됩니다. 목소리로 상대방 화자를 구분하고 Ling 키가 있으면 이름도 채워 넣습니다. 잘못 구분된 화자는 실시간 회의록 창에서 바로 이름을 바꾸거나 합치거나 다른 사람의 발언으로 바꿀 수 있습니다. 통화가 끝나거나 10분 동안 침묵이 이어지면 자동으로 회의를 마치고 뒷부분의 무음을 잘라냅니다. 회의가 끝난 뒤 언제든 회의록을 다시 생성하거나 Markdown, Word, SRT 자막으로 내보낼 수 있습니다. 기존 녹음이나 동영상 파일을 회의 기록 창에 끌어다 놓으면(또는 **파일 › 녹음 또는 동영상 가져오기…** 사용) Mac에서 실시간보다 훨씬 빠르게 이중 언어 기록으로 받아씁니다. 시간을 클릭하면 원본 파일의 해당 위치부터 재생됩니다. 당시 언어를 인식하지 못한 회의도 녹음은 남으므로, 언어를 선택하고 **다시 받아쓰기**를 누르면 됩니다. 현재 기록에 남는 내 발언은 말하기 키를 누르고 말한 내용뿐이며, 회의에서 그냥 말한 내용을 기록하는 기능은 [로드맵](#로드맵)에 있습니다.
-
-<p align="center">
-  <img src="docs/records.png" width="640" alt="구분된 화자 이름과 문장별 영중 이중 언어 기록이 표시된 회의 기록 창">
-</p>
+내 목소리를 녹음할 때 대화상자에서 Mac, AirPods 또는 외장 마이크를 선택할 수 있습니다. 마이크 원음을 녹음하며 대기 중인 동시통역 에코 제거 장치와의 충돌을 방지합니다. 소리가 없거나 마이크 연결이 끊기면 다시 녹음하도록 안내합니다.
 
 ## 개인정보 보호 및 권한
 
-Mac에서는 오디오 캡처, 언어 감지, 음성 인식(Apple SpeechAnalyzer, macOS 14.4–15에서는 SFSpeechRecognizer 기기 내 모드), 회의 녹음이 모두 컴퓨터 안에서 이루어집니다. 기기 밖으로 나가는 데이터는 번역과 회의록 생성을 위해 전송되는 인식된 텍스트와, Ling API 키를 쓴 채 말하기 키를 누르고 말한 짧은 음성뿐입니다. 음성 모델 다운로드가 느릴 때 "먼저 Ling 사용하기"를 고르면 모델이 설치될 때까지 회의 음성도 Ling이 인식합니다. "설정 › AI 서비스"에서 음성 인식을 "내 서비스"로 바꾸면 회의 음성이 그 머신으로 전송됩니다. API 키가 없어도 자막, 번역(Google 번역 사용, macOS 26에서는 실패 시 Apple 기기 내 번역으로 전환), 회의 기록, 동시통역 모두 작동합니다. 실시간 회의록에는 사용자의 AI 서비스 키가 필요합니다. OpenRouter(추천)나 Ling(Ant Group의 모델 서비스)을 쓸 수 있습니다([아래 설명](#ling-api-key) 참고). 원스텝 음성 번역과 목소리 복제는 Ling에서만 지원됩니다. Ling을 쓰면 1시간 회의 기준 현재 요금으로 약 0.15~1위안이 들며, Ling에서 매달 제공하는 무료 크레딧 10위안으로 약 10~50시간 동안 회의할 수 있습니다.
+**Apple silicon Mac**: 소리 캡처, 언어 감지, 음성 인식, 회의 녹음이 모두 기기 안에서 이루어집니다. 컴퓨터 밖으로 나가는 것은 인식된 텍스트(번역 및 회의록 작성용)와, Ling 키로 동시통역을 쓸 때 내가 말한 몇 마디 음성뿐입니다(음성 모델 다운로드가 느려 "먼저 Ling 사용하기"를 눌렀거나, "설정 › AI 서비스"에서 음성 인식을 자체 서비스로 바꾼 경우에는 회의 소리도 해당 서비스로 전송됩니다). API 키를 입력하지 않아도 실시간 자막, 번역, 회의 기록, 동시통역을 무료로 쓸 수 있습니다. 실시간 회의록, 원스텝 음성 번역, 목소리 복제에는 사용자의 Ling(Ant Group 대규모 모델 서비스) API 키가 필요하며, 1시간 회의에 약 0.15~1위안이 들고 Ling에서 매달 주는 10위안 무료 크레딧으로 10~50시간 동안 쓸 수 있습니다.
 
-Windows, Linux, Android 버전은 클라우드에서 음성을 인식합니다. 말소리를 짧게 나누어 Ling의 Ming(또는 바꾼 OpenRouter, ZenMux 등의 서비스)으로 보내므로 AI 서비스 키가 꼭 필요합니다. 녹음과 회의 기록은 이 플랫폼들에서도 기기에만 저장됩니다.
+**Intel Mac, Windows, Linux, Android**: 음성 인식이 클라우드에서 이루어지며, 말소리를 나누어 Ling의 Ming이나 선택한 OpenRouter, ZenMux 등의 서비스로 보내므로 AI 서비스 키를 꼭 입력해야 합니다. 녹음과 회의 기록은 여전히 기기에만 저장됩니다.
 
-아래는 Mac 앱 기준 설명입니다. Cicada는 해당 기능을 실제로 쓸 때만 권한을 요청하며, 거부하더라도 나머지 기능은 그대로 쓸 수 있습니다.
+Mac 버전은 해당 기능을 쓸 때만 권한을 요청하며, 거부해도 다른 기능은 그대로 작동합니다.
 
-| 권한 | 용도 | 요청 시점 | 허용하지 않을 경우 |
-|---|---|---|---|
-| 시스템 오디오 녹음(화면 및 시스템 오디오 녹음) | Mac에서 재생되는 소리를 듣고 자막 생성. 화면이나 Cicada 자체 소리는 녹음하지 않음 | 초기 안내 1단계 또는 처음 듣기를 시작할 때 | 자막과 회의록 사용 불가 |
-| 마이크 | 말하기 키를 누르고 말할 때 동시통역용 녹음, **마이크 켜기**를 눌렀을 때 주변 소리 듣기 | 동시통역을 켜거나 처음 마이크를 켤 때 | 말하기 통역 및 회의실 듣기 불가 |
-| 입력 모니터링 | 오른쪽 `⌥` 키가 단독으로 눌렸는지 확인(감지만 하며 다른 키 입력을 막거나 기록하지 않음) | 오른쪽 `⌥` 키로 처음 말할 때 | 설정에서 `⌃`/`⌘` 조합 키로 바꾸면 이 권한 없이 사용 가능 |
-| 관리자 암호 | 가상 마이크 BlackHole 2ch 설치 및 시스템 오디오 서비스 재시작 | 초기 안내나 설정에서 설치를 누를 때 한 번 | 상대방에게 번역 음성을 들려줄 수 없음, 다른 기능은 정상 작동 |
+| 권한 | 용도 | 허용하지 않을 경우 |
+|---|---|---|
+| 시스템 오디오 녹음(화면 및 시스템 오디오 녹음) | 시스템에서 재생되는 소리를 듣고 자막 생성, 화면은 녹화하지 않음 | 자막과 회의록 사용 불가 |
+| 마이크 | 말하기 키를 눌러 동시통역, "마이크 켜기"를 눌러 회의실 소리 듣기 | 말하기 통역 및 회의실 듣기 불가 |
+| 입력 모니터링 | 오른쪽 `⌥` 키가 눌렸는지 확인(다른 키를 가로채거나 기록하지 않음) | 설정에서 `⌃`/`⌘` 조합 키로 바꾸면 이 권한 불필요 |
+| 관리자 암호 | 가상 마이크 BlackHole 2ch 설치(한 번만 물어봄) | 상대방이 동시통역을 들을 수 없음, 나머지는 정상 작동 |
 
-- **네트워크 및 가상 마이크**. Cicada는 Google 번역(`translate.googleapis.com`), 키 설정 시 Ling / Ming(`api.ant-ling.com`) 또는 선택한 다른 AI 서비스, BlackHole 공식 다운로드, 그리고 하루 한 번 GitHub 업데이트 확인에만 연결합니다. BlackHole은 Apple 공증을 받은 공식 패키지를 내려받으며, 설치 전에 코드에 고정된 SHA-256 체크섬을 대조합니다.
-- **자체 분석 도구나 서버 없음**. 사용 통계 수집, 추적, 자체 백엔드 서버가 전혀 없습니다. 진단 기능은 소요 시간과 횟수만 기기의 회의 폴더에 기록합니다.
-- **로컬 저장소**. 회의 기록, 녹음, 회의록은 `~/Library/Application Support/LiveSubs`에 저장됩니다. Ling 키와 목소리 샘플은 현재 사용자 계정만 읽을 수 있고, Time Machine 백업에서 제외되며, 로그나 내보낸 파일에 절대 기록되지 않습니다.
-- **화면 공유 시 숨겨지는 회의록 창**. 시연 영상을 찍기 위해 화면 공유 시 표시 옵션을 켜지 않는 한, 화면 공유, 화면 기록, 스크린샷에 찍히지 않습니다.
+- **투명한 네트워크 연결**: 번역(`translate.googleapis.com`), 설정한 AI 서비스(예: `api.ant-ling.com`), Apple 공증을 받은 BlackHole 드라이버 다운로드(SHA-256 대조), 하루 한 번 GitHub 업데이트 확인에만 인터넷에 연결합니다. 통계 수집이나 추적 코드, 자체 서버가 없습니다.
+- **로컬 데이터 저장**: 기록과 녹음은 `~/Library/Application Support/LiveSubs`에 저장됩니다. 키와 목소리 샘플은 현재 시스템 계정만 읽을 수 있으며 Time Machine과 로그에 들어가지 않습니다.
+- **화면 녹화 방지**: Mac에서 화면 공유, 화면 기록, 스크린샷에 회의록 창이 찍히지 않으며, 시연 영상을 녹화할 때는 "화면 공유 시 상대방에게 표시"를 수동으로 켤 수 있습니다.
 
 ## 사용 모델
 
-키가 없으면 Apple 기기 내 모델과 Google 번역만으로 작동합니다. Ling 키를 입력하면 아래 작업을 Ling과 Ming 모델이 처리하고, 요청이 실패하면 자동으로 대체 수단으로 넘어갑니다. OpenRouter, ZenMux, OpenAI를 쓰면 번역과 회의록은 해당 서비스에서 고른 모델이 Ling을 대신하고, 동시통역 시 내 말은 Mac에서 직접 인식합니다. 말하는 중인 문장은 항상 Google 번역을 사용합니다. 내 서비스(기타(OpenAI 호환))를 쓸 때는 "설정 › AI 서비스"에서 "음성과 텍스트를 내 서비스로만 전송"을 켜면 음성과 텍스트 모두 Google을 거치지 않습니다.
+아래는 Apple silicon Mac 기준 구성입니다. 자체 서비스("기타(OpenAI 호환)")를 쓸 때는 "설정 › AI 서비스"에서 "음성과 텍스트를 내 서비스로만 전송"을 켜면 Google을 전혀 거치지 않습니다.
 
 | 기능 | Ling 키 사용 시 | 키 없음 / 대체 작동 시 |
 |---|---|---|
-| 음성 인식 및 언어 감지 | Apple `SpeechAnalyzer` / `SpeechTranscriber`(기기 내), macOS 14.4–15: `SFSpeechRecognizer`(기기 내, 받아쓰기 켜야 함) | 왼쪽과 같음 |
-| 끝난 문장 번역 | Ling `Ling-3.1-flash`(또는 **설정 › AI 서비스**에서 `Ling-3.0-flash`로 변경 가능) | Google 번역 → Apple `Translation`(기기 내, macOS 26 전용) |
-| 말하는 중인 문장 번역 | Google 번역(Ling 호출 한도 절약, 내 서비스를 쓸 때는 끌 수 있음) | 없음: 문장이 끝나 번역될 때까지 원문 표시. Google에 연결되지 않으면 1분 일시중지 |
-| 실시간 회의록 및 최종본 | Ling `Ling-3.1-flash`(위 설정과 같음) | 사용 불가 |
-| 키 유효성 확인 | Ling `Ling-3.0-tiny`(1토큰 사용) | — |
-| 동시통역: 내 말 인식 및 번역 | Ming `Ming-3.0-audio-flash`, 원스텝 처리 | Apple 기기 내 음성 인식 후 위 번역 순서대로 처리 |
-| 동시통역: 상대방이 듣는 음성, 목소리 복제 | Ming `Ming-3.0-tts-0.5B` | macOS 시스템 음성(`AVSpeechSynthesizer`), 복제 불가 |
-| 화자 구분(说话人识别, 기본 켜짐) | 앱에 포함된 WeSpeaker ResNet34-LM 성문 모델, 기기 내 실행(Core ML) | 왼쪽과 같음 |
+| 음성 인식, 언어 감지 | Apple `SpeechAnalyzer` / `SpeechTranscriber`(기기 내); macOS 14.4–15는 `SFSpeechRecognizer`(기기 내, 받아쓰기 켜야 함) | 왼쪽과 같음 |
+| 끝난 문장 번역 | Ling `Ling-3.1-flash`("설정 › AI 서비스"에서 `Ling-3.0-flash`로 변경 가능) | Google 번역 → Apple `Translation`(기기 내, macOS 26 전용) |
+| 말하는 중인 문장 번역 | Google 번역 | 원문만 표시, 말이 끝나면 전체 문장 번역으로 교체 |
+| 실시간 회의록, 회의 후 전체본 | Ling `Ling-3.1-flash` | 사용 불가 |
+| 키 유효성 확인 | Ling `Ling-3.0-tiny`(1토큰) | — |
+| 동시통역: 듣고 번역하기 | Ming `Ming-3.0-audio-flash`(원스텝 처리) | Apple 기기 내 인식 + 위 번역 체인 |
+| 동시통역: 음성 합성 및 목소리 복제 | Ming `Ming-3.0-tts-0.5B` | Mac 기본 음성(`AVSpeechSynthesizer`), 복제 불가 |
+| 화자 구분 | WeSpeaker ResNet34-LM(앱에 포함, 기기 내 Core ML 실행) | 왼쪽과 같음 |
 | Assistant (Mac) | DeepSeek Flash · local Gemma reading · Silero VAD / Smart Turn | — |
 
+## Ling API 키 설정
 
-<a id="ling-api-key"></a>
-## AI 서비스 키 설정
+1. [Ling 오픈 플랫폼](https://chat.ant-ling.com/platform/api)에 가입·로그인하여 토큰을 만들고 `sk-`로 시작하는 키를 복사합니다.
+2. Cicada의 "설정 › AI 서비스"(또는 회의록 창 상단 입력란)를 열고 붙여넣어 저장하면 됩니다.
 
-어느 서비스든 괜찮습니다. 가입할 수 있는 쪽을 고르세요. **OpenRouter**(추천)는 같은 Ling 텍스트 모델과 자연스러운 Gemini 음성을 모두 제공합니다.
-
-1. [OpenRouter](https://openrouter.ai/settings/keys)에서 키를 만듭니다.
-2. Cicada에서 **설정 › AI 서비스**를 열고 오른쪽 위 메뉴에서 **OpenRouter**를 고른 뒤, 키를 붙여넣고 **저장 및 확인**을 클릭합니다(초기 안내 화면에서는 **Ling을 사용할 수 없나요?** 클릭).
-3. 품질과 가격을 고려한 기본 모델이 이미 선택되어 있으며, 같은 화면에서 원하는 모델로 바꿀 수 있습니다.
-
-같은 메뉴에서 ZenMux, OpenAI 또는 OpenAI 호환 서비스 주소(예: Mac에서 로컬로 실행 중인 모델)도 똑같은 방식으로 쓸 수 있으며, ZenMux 역시 Gemini 음성을 지원합니다. 실시간 회의록과 문장 번역은 모든 서비스에서 작동합니다. 원스텝 음성 번역과 목소리 복제는 Ling 전용이며, 다른 서비스에서는 Apple 실리콘 Mac이 먼저 음성을 인식한 뒤 번역합니다(Intel 버전은 듣기와 통역 모두 Ling이 필요합니다). 서비스마다 키가 따로 저장되므로 다시 입력할 필요 없이 전환할 수 있습니다. 직접 운영하는 모델(Ollama, vLLM, SGLang 등)은 기능별로 설정합니다. 번역과 회의록, 통역 음성, 음성 인식을 각각 다른 컴퓨터에 둘 수 있고, 로컬 네트워크 주소는 http도 쓸 수 있습니다. 확인할 때 실제 문장 하나를 번역해 보고, 모델이 먼저 생각하거나 너무 느리면 그대로 알려 줍니다(Qwen3 같은 모델에는 생각하지 말라고 요청합니다). Mac의 음성 인식은 내 Qwen3-ASR, Whisper 등에 맡길 수도 있습니다(기본은 Mac이며, 연결되지 않으면 자동으로 돌아옵니다). Windows, Linux, Android에서는 듣기 모델에 별도 주소를 넣을 수 있습니다. 서비스에 연결할 수 없거나 키·모델에 문제가 있으면 설정에서 어느 단계가 막혔는지와 해결 방법을 차례로 보여 줍니다. 프록시가 꺼져 있는지, 프록시 앱이 시스템 프록시로 설정되지 않았는지, 프록시를 켜도 연결되지 않는지까지 구분합니다(Cicada는 프록시 설정을 직접 바꾸지 않습니다. [설정 페이지](https://cicada.indaloop.app/ko/start/#proxy) 참고). OpenRouter에서는 잔액이 거의 떨어지기 전에 미리 알려 줍니다.
-
-**Ling**(Ant Group의 모델 서비스)은 내 목소리를 포함한 모든 기능을 쓸 수 있고, 매달 ¥10 크레딧을 제공합니다:
-
-1. [Ling 오픈 플랫폼](https://chat.ant-ling.com/platform/api)에서 가입하거나 로그인합니다.
-2. **创建令牌**(토큰 생성)을 클릭하고 `sk-`로 시작하는 키를 복사합니다.
-3. Cicada에서 **설정 › AI 서비스**를 열고 키를 붙여넣은 뒤 **저장 및 확인**을 클릭합니다(또는 회의록 창 상단 입력란에 바로 붙여넣기). 1토큰짜리 요청을 보내 키가 작동하는지 확인합니다.
-4. 필요한 경우 같은 화면에서 모델(기본값 `Ling-3.1-flash`)을 고르고, **설정 › 동시통역**에서 언어별 Ming 음성을 선택합니다. 키를 지우려면 같은 화면에서 **제거**를 클릭하세요.
+**Ling에 가입할 수 없나요?** "설정 › AI 서비스" 오른쪽 위(또는 초기 안내에서 "Ling을 사용할 수 없나요?" 클릭)에서 OpenRouter, ZenMux, OpenAI 또는 모든 OpenAI 호환 서비스(Ollama, vLLM, SGLang, Qwen3-ASR, Whisper 등 로컬·LAN 서비스 포함)로 바꿀 수 있습니다. 실시간 회의록과 문장 번역 모두 작동하며, OpenRouter와 ZenMux에서는 Gemini의 자연스러운 음성으로 동시통역도 쓸 수 있습니다. 원스텝 음성 번역과 목소리 복제는 Ling만 지원합니다. Windows, Linux, Android에서 다른 서비스로 바꾸면 "상대방 듣기"도 해당 서비스가 처리하며 자막이 Ling보다 1~2초 늦습니다. 연결되지 않을 때는 키, 모델, 프록시 중 어디에 문제가 있는지 설정에서 바로 알려 줍니다(프록시 설명은 [설정 페이지](https://cicada.indaloop.app/ko/start/#proxy) 참고).
 
 ## 시스템 요구 사항 및 설치
 
+설치 파일은 모두 [Releases 페이지](https://github.com/wquguru/cicada/releases/latest)나 [웹사이트](https://cicada.indaloop.app/ko/)에 있으며, Releases의 `checksums.txt`로 SHA-256을 대조할 수 있습니다. 문의 사항은 X에서 개발자 [@wquguru](https://x.com/wquguru)에게 연락해 주세요.
+
 ### Mac
 
-**Apple silicon 또는 Intel**이 탑재된 Mac과 **macOS 14.4 이상**이 필요합니다. Apple silicon Mac의 경우 macOS 26에서는 더 정확한 최신 기기 내 음성 인식을 사용하며, 14.4–15에서는 이전 시스템 음성 인식을 쓰므로 **시스템 설정 › 키보드**에서 **받아쓰기**를 켜고 인식할 언어를 받아쓰기 언어에 추가해야 합니다. Intel 버전 Mac에서는 클라우드 Ming 모델로 음성을 인식하므로 Ling 키가 필요합니다. 인터페이스는 한국어, 영어, 중국어, 일본어를 지원하며, macOS 기본 언어를 따르거나 **시스템 설정 › 일반 › 언어 및 지역**에서 앱별로 지정할 수 있습니다.
+macOS 14.4 이상(Apple silicon 및 Intel 지원)이 필요합니다. Apple silicon의 경우 macOS 14.4–15에서는 먼저 시스템 설정 › 키보드에서 "받아쓰기"를 켜고 들을 언어를 추가해야 하며, macOS 26에서는 새 기기 내 모델을 바로 쓰므로 받아쓰기를 켤 필요가 없습니다. Intel 버전은 클라우드 Ming으로 인식하므로 Ling 키를 설정해야 합니다.
 
-[Releases](https://github.com/wquguru/cicada/releases/latest)나 [웹사이트](https://cicada.indaloop.app/ko/)에서 `Cicada-<version>-macOS-AppleSilicon.dmg`(Apple silicon) 또는 `Cicada-<version>-macOS-Intel.dmg`(Intel)를 내려받아 열고 **Cicada**를 **응용 프로그램**으로 끌어다 놓으세요. 현재 빌드는 로컬 서명만 되어 있고 아직 Apple 공증을 받지 않았으므로([로드맵](#로드맵) 참고), 처음 실행할 때 macOS가 차단하면 **시스템 설정 › 개인정보 보호 및 보안**을 열고 **확인 없이 열기**를 클릭하세요. 릴리스마다 `checksums.txt`가 함께 제공되며 `shasum -a 256 Cicada-*.dmg` 명령으로 검증할 수 있습니다. 궁금한 점은 X에서 개발자 [@wquguru](https://x.com/wquguru)에게 문의해 주세요.
-
-처음 실행하면 안내에 따라 권한 하나를 허용하고, 짧은 2인 샘플 회의를 재생해 실시간 자막을 바로 확인한 뒤, AI 서비스 키를 연결(건너뛰기 가능)하고, 동시통역을 쓸 경우 가상 마이크를 설치합니다. 이후 새 버전이 나오면 메뉴 막대 아이콘에 주황색 점이 표시되며, 클릭 한 번으로 기존 권한을 유지한 채 업데이트됩니다.
+`Cicada-<버전>-macOS-AppleSilicon.dmg` 또는 `Cicada-<버전>-macOS-Intel.dmg`를 내려받아 응용 프로그램 폴더로 끌어다 놓으세요(`shasum -a 256 Cicada-*.dmg`로 검증 가능). 아직 Apple 공증을 받지 않아 처음 열 때 차단되면 시스템 설정 › 개인정보 보호 및 보안에서 확인 없이 열기를 누르세요. 초기 안내에 따라 권한을 켜고 샘플 회의를 들어보면 됩니다.
 
 <p align="center">
   <img src="docs/onboarding.png" width="640" alt="2인 샘플 회의를 재생하며 실시간 이중 언어 자막을 보여주는 초기 안내 2단계">
@@ -201,34 +192,30 @@ Windows, Linux, Android 버전은 클라우드에서 음성을 인식합니다. 
 
 ### Windows
 
-**Windows 10 2004** 이상이 필요합니다. Windows 설치 파일(대부분의 PC는 x64, Snapdragon 노트북은 ARM64)를 내려받아 더블 클릭하면 관리자 권한 없이 바로 설치됩니다. 설치 파일에 아직 코드 서명이 없으므로 SmartScreen이 실행을 막으면 **추가 정보 › 실행**을 클릭하세요. 앱을 열면 메인 창에 남은 설정 단계(Ling 키 연결, 테스트 소리 재생, 샘플 회의 보기)가 표시됩니다. 동시통역에는 무료 가상 마이크인 VB-Cable이 필요하며 안내에 따라 설치할 수 있습니다. 새 버전이 나오면 앱 안에서 알려주며 클릭 한 번으로 업데이트됩니다.
+Windows 10 2004 이상(x64 또는 Snapdragon ARM64)이 필요합니다. 설치 파일을 내려받아 더블 클릭하면 관리자 권한 없이 바로 설치됩니다. SmartScreen이 막으면 추가 정보 › 실행을 누르세요. 동시통역을 쓸 때는 무료 VB-Cable 가상 마이크를 설치하도록 안내합니다.
 
 ### Linux
 
-**Ubuntu 22.04 또는 24.04 데스크톱**(x86_64 또는 arm64)이 필요합니다. `Cicada-<version>-Linux.tar.gz`를 내려받고 터미널에서 `tar xzf Cicada-<version>-Linux.tar.gz && cicada-linux/install.sh`를 실행하면 앱 메뉴에 Cicada가 나타납니다. 동시통역은 별도 드라이버 설치 없이 자체적으로 "Cicada 마이크"를 만듭니다. Linux에서는 화면 공유 시 특정 창을 숨길 수 없으므로, 회의록 창에 화면 공유 시 보인다는 안내가 항상 표시됩니다. 회의 녹음에는 AAC 인코더가 필요한데 Ubuntu에는 기본으로 없습니다. 서드파티 미디어 형식(예: `ubuntu-restricted-extras`)을 설치하면 "설정 › 일반 › 회의 녹음 저장"을 켤 수 있고, 녹음은 회의 기록에서 각 문장의 시간부터 다시 들을 수 있습니다. 설치하지 않으면 이 스위치는 회색으로 표시되며 다른 기능은 그대로 쓸 수 있습니다.
+Ubuntu 22.04 또는 24.04 데스크톱 버전(x86_64 또는 arm64)이 필요합니다. `Cicada-<버전>-Linux.tar.gz`를 내려받아 터미널에서 `tar xzf Cicada-<버전>-Linux.tar.gz && cicada-linux/install.sh`를 실행하세요. 동시통역은 드라이버 설치 없이 "Cicada 마이크"를 자동으로 만듭니다. Linux 창은 화면 공유를 피할 수 없어 회의록 창에 "화면 공유 시 이 창이 보입니다"라고 표시됩니다. "설정 › 일반 › 회의 녹음 저장"을 켜려면 AAC 인코더를 제공하는 시스템 서드파티 미디어 형식(예: `ubuntu-restricted-extras`)을 먼저 설치해야 합니다. "설정 › 단어 목록 › 회의 중 잘못 들은 단어 고치기"를 켜면 문장마다 텍스트 요청을 한 번 더 보냅니다.
 
 ### Android
 
-**Android 10** 이상이 필요합니다. 휴대폰에서 `Cicada-<version>-Android.apk`를 내려받아 열고 안내에 따라 알 수 없는 앱 설치를 허용하세요. Android 15 이상에서는 플로팅 자막을 처음 켤 때 앱 정보에서 제한된 설정 허용이 먼저 필요합니다. 전화나 회의 앱의 소리는 시스템이 다른 앱에서 녹음하지 못하게 막으므로, 스피커폰을 켜고 **대면** 모드로 전환해 사용하세요.
-
-모든 플랫폼의 설치 파일은 Releases 페이지의 `checksums.txt`로 SHA-256을 검증할 수 있습니다.
+Android 10 이상이 필요합니다. `Cicada-<버전>-Android.apk`를 내려받아 설치하세요. Android 15부터는 플로팅 자막을 처음 켤 때 앱 정보에서 제한된 설정을 먼저 허용해야 합니다. 마찬가지로 기기 내 성문으로 화자를 구분하고 "듣는 중"일 때 잘못 들은 단어를 실시간으로 고칩니다. 위챗 통화나 회의 앱 소리는 시스템이 내부 녹음을 막으므로 스피커폰을 켜고 "대면"으로 바꾸면 됩니다.
 
 ## 로드맵
 
-대략적인 우선순위 순이며, 필요한 기능은 Issues에 남겨 주세요.
+우선순위 순이며, 원하는 항목이 있다면 Issue로 남겨 주세요. 자세한 내용은 [docs/ROADMAP.md](docs/ROADMAP.md)를 참고하세요.
 
-- **내 발언 기록**: 회의 중 반향을 제거하며 마이크를 계속 들어, 내가 직접 말한 제안이나 할 일도 기록과 회의록에 포함.
-- **Developer ID 서명 및 공증**: 첫 실행 시 "확인 없이 열기"를 누를 필요가 없도록 하고 AI 키를 macOS 키체인에 보관. Windows 설치 프로그램에도 코드 서명 추가.
-- **화자 인식**: 현재의 화자 구분 기능을 발전시켜 자주 함께 회의하는 사람의 목소리를 Mac에 기억하고 다음 회의에서도 자동으로 이름을 표시.
-- **API 키 없는 로컬 회의록**: 지원되는 Mac에서 Apple 기기 내 모델로 회의록 작성.
-- **Android 앱 스토어 출시**: 브라우저에서 APK를 받지 않고 바로 설치.
-- **iPhone 및 iPad**: iOS는 다른 앱의 오디오를 캡처할 수 없으므로 회의실 듣기, 대면 통역, 회의 기록부터 지원.
-
-각 항목의 자세한 내용과 기술적 고려 사항은 [docs/ROADMAP.md](docs/ROADMAP.md)에서 볼 수 있습니다.
+- **내 발언 기록**: 회의 중 반향을 제거하며 마이크를 계속 들어, 내가 직접 입을 열어 말한 내용도 기록과 회의록에 포함.
+- **정식 서명 및 공증**: Mac과 Windows 설치 파일에 정식 서명과 공증을 추가해 차단 팝업을 없애고 AI 키를 시스템 키체인에 보관.
+- **성문 인식**: 자주 회의하는 동료의 목소리를 기기에 기억해 다음번에 자동으로 인식.
+- **키 없이 쓰는 회의록**: 지원되는 Mac에서 Apple 기기 내 모델로 회의록 정리.
+- **Android 앱 스토어 출시**: APK를 수동으로 설치할 필요 없음.
+- **iPhone 및 iPad**: 회의실 듣기, 대면 통역, 회의 기록부터 지원.
 
 ## 제거
 
-Cicada를 종료하고 **응용 프로그램** 폴더에서 휴지통으로 끌어다 놓으세요. 저장된 모든 기록, 회의록, 오디오 녹음을 지우려면 `~/Library/Application Support/LiveSubs` 폴더를 삭제하면 됩니다. 환경설정을 초기화하려면 다음 명령을 실행하세요.
+Cicada를 종료하고 응용 프로그램 폴더에서 휴지통으로 끌어다 놓으면 됩니다. 회의 기록과 녹음은 `~/Library/Application Support/LiveSubs`에 있으며 필요 없으면 수동으로 지우세요. 설정을 지우려면 다음을 실행하세요.
 
 ```bash
 defaults delete com.wquguru.cicada
@@ -236,18 +223,16 @@ defaults delete com.wquguru.cicada
 
 ## 개발
 
-소스에서 Mac 앱을 빌드하려면 Xcode Command Line Tools(`xcode-select --install`)만 있으면 됩니다. Cicada는 외부 라이브러리 의존성 없이 macOS 시스템 프레임워크만으로 빌드됩니다. macOS 27에서 `SwiftUIMacros`가 없다며 빌드에 실패하면 해당 Command Line Tools 버전에 SwiftUI 매크로 플러그인이 빠진 것이므로, 전체 Xcode를 설치하고 `sudo xcode-select -s /Applications/Xcode.app`을 실행하세요. Windows, Linux, Android 빌드 방법은 [windows/README.md](windows/README.md), [linux/README.md](linux/README.md), [android/README.md](android/README.md)를 참고하세요.
+Mac 버전은 Xcode Command Line Tools(`xcode-select --install`)만 설치하면 되며 서드파티 의존성이 없습니다. macOS 27에서 `SwiftUIMacros` 누락 오류가 나면 전체 Xcode를 설치하고 `sudo xcode-select -s /Applications/Xcode.app`을 실행하세요. 다른 플랫폼 빌드는 [windows/README.md](windows/README.md), [linux/README.md](linux/README.md), [android/README.md](android/README.md)를 참고하세요.
 
 ```bash
-scripts/build.sh            # 개발 빌드 → build/Cicada.app ("Cicada Dev", 설치된 정식 버전과 동시에 실행 가능)
+scripts/build.sh            # 개발 버전 빌드 → build/Cicada.app (이름은 Cicada Dev, 정식 버전과 동시 실행 가능)
 open build/Cicada.app
-scripts/package.sh          # 릴리스용 DMG + zip + 체크섬 패키징
+scripts/package.sh          # 정식 버전 DMG, zip 및 SHA-256 체크섬 패키징
 ```
 
-아키텍처와 릴리스 과정은 [AGENTS.md](AGENTS.md)에 정리되어 있습니다. 웹사이트 소스는 `site/`에 있으며 `scripts/site.py`로 생성합니다. 변경 내역은 [CHANGELOG.md](CHANGELOG.md)와 웹사이트의 [cicada.indaloop.app/ko/changelog](https://cicada.indaloop.app/ko/changelog/)에서 확인할 수 있습니다.
+코드 아키텍처는 [AGENTS.md](AGENTS.md)에 있으며, 웹사이트 소스는 `site/`(`scripts/site.py`로 생성)에 있고, 업데이트 내역은 [CHANGELOG.md](CHANGELOG.md) 또는 [웹사이트 변경 로그](https://cicada.indaloop.app/ko/changelog/)에서 볼 수 있습니다.
 
 ## 라이선스
 
-[Apache-2.0](LICENSE) 라이선스를 따릅니다. BlackHole 2ch 가상 오디오 드라이버는 GPL 라이선스이며, Cicada에 포함되지 않고 사용자가 설치를 선택할 때 공식 릴리스에서 직접 내려받습니다. 앱에 포함된 성문 모델은 [WeSpeaker](https://github.com/wenet-e2e/wespeaker)가 VoxCeleb으로 학습한 ResNet34-LM(CC BY 4.0 라이선스)을 `scripts/convert-voiceprint.py`로 Core ML 형식으로 변환한 것입니다.
-
-내 목소리를 녹음할 때 대화상자에서 Mac, AirPods 또는 외장 마이크를 선택할 수 있습니다. 마이크 원음을 녹음하며 대기 중인 동시통역 에코 제거 장치와의 충돌을 방지합니다. 소리가 없거나 마이크 연결이 끊기면 다시 녹음하도록 안내합니다.
+이 프로젝트는 [Apache-2.0](LICENSE) 라이선스로 공개되어 있습니다. 가상 마이크 드라이버 BlackHole 2ch는 GPL 라이선스를 따르며 설치 패키지에 포함되지 않고 설치를 누를 때 공식 주소에서 내려받습니다. 포함된 성문 모델은 [WeSpeaker](https://github.com/wenet-e2e/wespeaker)가 VoxCeleb으로 학습한 ResNet34-LM(CC BY 4.0 라이선스)이며 `scripts/convert-voiceprint.py`로 Core ML로 변환했습니다.

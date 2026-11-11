@@ -43,6 +43,19 @@ struct PlaceTag: View {
     }
 }
 
+/// Your own line: said with the talk key, so what the other side heard was its translation (同传).
+struct MeTag: View {
+    var body: some View {
+        HStack(spacing: 5) {
+            Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk)
+            Text("同传").font(.system(size: 10, weight: .medium)).foregroundStyle(Palette.accentInk)
+                .padding(.horizontal, 5).padding(.vertical, 1)
+                .overlay(RoundedRectangle(cornerRadius: 4).stroke(Palette.accent.opacity(0.45), lineWidth: 1))
+        }
+        .help(L("按住说话键说的，对方听到的是译文"))
+    }
+}
+
 /// A line from the other side whose voice isn't one of the people on show.
 struct UnknownSpeakerTag: View {
     var body: some View {
@@ -331,12 +344,12 @@ struct SpeakerPreview: View {
             ForEach(session.lines.prefix(12)) { l in
                 VStack(alignment: .leading, spacing: 3) {
                     if !starts.contains(l.id) {
-                    } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
+                    } else if l.speaker == "me" { MeTag() }
                     else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if l.isAI { Text("AI").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if let n = numbers[l.id] { SpeakerTag(number: n) }
                     else if !numbers.isEmpty { UnknownSpeakerTag() }
-                    Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.ink)
+                    Text(l.shown).font(.system(size: 13)).foregroundStyle(Palette.ink)
                 }
             }
         }

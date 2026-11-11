@@ -26,17 +26,24 @@ class TranscriptLine(
     var dst: String? = null,
     var srcLang: String = "",
     var dstLang: String = "",
-    /// Experimental voice id on the Mac; Android doesn't tell voices apart yet.
+    /// The other side's voice, as SpeakerTagger grouped it (null: not told apart).
     var voice: Int? = null,
     /// "room": heard by the Mac's room microphone in a 电脑和会议室 meeting; kept so a Mac record
     /// opened here keeps its 现场 / 线上.
     var via: String? = null,
+    /// Words the AI service or the user fixed (Correction.kt); `src` stays what was heard. Absent
+    /// when none, as the Mac writes it.
+    var fixes: MutableList<LineFix>? = null,
 ) {
-    fun copy() = TranscriptLine(id, t, speaker, src, dst, srcLang, dstLang, voice, via)
+    fun copy() = TranscriptLine(id, t, speaker, src, dst, srcLang, dstLang, voice, via, fixes?.map { it.copy() }?.toMutableList())
+
+    /// What the line says once its fixes are in: shown, searched, exported and read by the notes.
+    val shown: String get() = fixes?.let { Correction.apply(it, src).text } ?: src
 
     fun toJson(): Map<String, Any?> = mapOf(
         "id" to id, "t" to t, "speaker" to speaker, "src" to src, "dst" to dst,
         "srcLang" to srcLang, "dstLang" to dstLang, "voice" to voice, "via" to via,
+        "fixes" to fixes?.map { it.toJson() },
     )
 
     companion object {
@@ -44,6 +51,7 @@ class TranscriptLine(
             id = o["id"].str() ?: "", t = o["t"].num() ?: 0.0, speaker = o["speaker"].str() ?: "them",
             src = o["src"].str() ?: "", dst = o["dst"].str(), srcLang = o["srcLang"].str() ?: "",
             dstLang = o["dstLang"].str() ?: "", voice = o["voice"].int(), via = o["via"].str(),
+            fixes = (o["fixes"] as? List<*>)?.mapNotNull { it.obj()?.let(LineFix::from) }?.toMutableList(),
         )
     }
 }
@@ -189,6 +197,18 @@ class NoteItem(
     var t: Double? = null,
 ) {
     fun toJson(): Map<String, Any?> = mapOf("text" to text, "owner" to owner, "support" to support, "t" to t)
+
+    /// The owner as stored ("你", "对方", "说话人2" or a name) in the UI language.
+    val ownerShown: String? get() {
+        val o = owner ?: return null
+        when (o) { "你", "对方", "未识别" -> return Strings.L(o) }
+        if (o.startsWith("说话人")) o.substring(3).trim().toIntOrNull()?.let { return Strings.LF("说话人 %lld", it) }
+        return o
+    }
+
+    /// The to-do with its owner after it: "（对方）" in Chinese, " (Them)" in English.
+    val withOwner: String get() = text + (ownerShown?.let { Strings.LF("待办的负责人 %@", it) } ?: "")
+
     companion object {
         fun from(o: Map<String, Any?>) = NoteItem(o["text"].str() ?: "", o["owner"].str(), o["support"].int() ?: 0, o["t"].num())
     }
@@ -203,5 +223,13 @@ class NoteTerm(var name: String = "", var note: String = "", var heard: MutableL
 
         /// Corrected spellings first: what a reader can't work out alone.
         fun ordered(terms: List<NoteTerm>) = terms.filter { it.heard.isNotEmpty() } + terms.filter { it.heard.isEmpty() }
+
+        /// The reply's terms in the order they were shown before, new ones after: the model often
+        /// returns the same names reshuffled, which would make the chips jump on every update.
+        fun keepingOrder(old: List<NoteTerm>, new: List<NoteTerm>): List<NoteTerm> {
+            val rank = HashMap<String, Int>()
+            old.forEachIndexed { i, t -> rank.putIfAbsent(t.name, i) }
+            return new.withIndex().sortedWith(compareBy({ rank[it.value.name] ?: (old.size + it.index) }, { it.index })).map { it.value }
+        }
     }
 }

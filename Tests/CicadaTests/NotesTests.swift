@@ -12,6 +12,15 @@ import Testing
         (0..<n).map { TranscriptLine(id: "l\($0)", t: Double($0 * 10), speaker: "them", src: "line \($0)", dst: nil, srcLang: "zh-CN", dstLang: "en") }
     }
 
+    /// A heard form only a fix wrote ("platform" for 平台) isn't one: it would teach the translator
+    /// and the next fix the same mistake.
+    @Test func termsKeepOnlyFormsTheRecognizerWrote() {
+        var l = TranscriptLine(id: "a", t: 0, speaker: "them", src: "我们 twoty 平台", dst: nil, srcLang: "zh-CN", dstLang: "en")
+        l.fixes = [LineFix(from: "平台", to: "platform")]
+        let terms = [NoteTerm(name: "X平台", note: "n", heard: ["Xplatform", "platform", "Twoty"])]
+        #expect(NotesEngine.heardAsSaid(terms, lines: [l]).first?.heard == ["Twoty"])
+    }
+
     /// A rewritten topic cites only its newest lines; its points keep when they were first said,
     /// and the topic starts no later than they do (a 35-minute replay showed 17:20 for points at 12:50).
     @Test func fishboneBranchTimeComesFromItsLines() {
@@ -163,5 +172,26 @@ import Testing
         #expect(NotesEngine.thinned(other, to: 2, end: 8990).map(\.start) == [6000, 7500])
         #expect(NotesEngine.subject("Budget review (cont.)") == "Budget review")
         #expect(NotesEngine.subject("(续)") == "(续)")
+    }
+
+    @Test func termsKeepTheirPlaceAcrossUpdates() {
+        let t = { (n: String) in NoteTerm(name: n, note: "", heard: []) }
+        let before = [t("A"), t("B"), t("C")]
+        #expect(NoteTerm.keepingOrder(before, [t("C"), t("D"), t("A"), t("B")]).map(\.name) == ["A", "B", "C", "D"])
+        #expect(NoteTerm.keepingOrder(before, [t("E"), t("B"), t("D")]).map(\.name) == ["B", "E", "D"])
+        #expect(NoteTerm.keepingOrder([], [t("B"), t("A")]).map(\.name) == ["B", "A"])
+    }
+
+    @Test func fixedWordsKeepOneOrderAcrossRedraws() {
+        var lines: [TranscriptLine] = []
+        for (i, w) in ["王总", "Kubernetes", "李雷", "OpenAI", "张三", "Cicada", "李雷"].enumerated() {
+            var l = TranscriptLine(id: "l\(i)", t: Double(i), speaker: "them", src: w, dst: nil, srcLang: "zh-CN", dstLang: "en")
+            l.fixes = [LineFix(from: "x\(i)", to: w)]
+            lines.append(l)
+        }
+        let s = Session(id: "s", title: "t", startedAt: Date(), endedAt: nil, lines: lines, hasAudio: false)
+        let first = FixTermsView.fixedWords(s).map(\.word)
+        #expect(first == ["李雷", "Cicada", "Kubernetes", "OpenAI", "张三", "王总"])
+        for _ in 0..<20 { #expect(FixTermsView.fixedWords(s).map(\.word) == first) }
     }
 }

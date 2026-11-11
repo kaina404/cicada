@@ -14,6 +14,10 @@ struct Segment {
     /// and whether Cicada ended it at a pause: what deciding a join needs (`HeardText.continues`).
     var start = 0.0, end = 0.0, clock = 0
     var cut = false
+    /// Cicada ended it where a sentence or clause ends, on purpose: the next line doesn't join it.
+    var split = false
+    /// The record's own recognizer heard it too and will settle its words (`onRefined`).
+    var refining = false
 }
 
 /// System audio → language detection → on-device transcription → translation.
@@ -36,6 +40,9 @@ final class ListenEngine {
     /// A finished sentence; `secondsAgo` ≈ how long ago it started.
     var onFinal: ((Segment, _ secondsAgo: Double) -> Void)?
     var onTranslated: ((_ segmentID: Int, _ translation: String) -> Void)?
+    /// The record's own recognizer settled segment `id` (`RecordRefiner`): its text for the meeting
+    /// record, "" when it heard nothing there.
+    var onRefined: ((_ segmentID: Int, _ text: String) -> Void)?
     /// Diagnostics: how long a sentence took from its last new words to its translation on screen.
     var onTiming: ((SentenceTiming) -> Void)?
     /// The recognizer heard words (a draft or a line), whether or not they are shown.
@@ -49,8 +56,10 @@ final class ListenEngine {
     private(set) var isRunning = false
     private(set) var statusText = L("准备就绪")
     private(set) var activeLang: Lang?
-    private(set) var languageConfirmed = false
-    private(set) var detecting = false
+    /// Where "auto" stands on the language, and when to check it next.
+    private var detection = LanguageDetection()
+    var languageConfirmed: Bool { detection.confirmed }
+    var detecting: Bool { detection.checking }
     private(set) var candidates: [Lang] = []
     private(set) var installedLocales: Set<String> = []
     /// The speech model fetched in the background so "auto" has two to compare.
@@ -79,18 +88,23 @@ final class ListenEngine {
         return (d.lang, d.since, fetchingModel?.lang == d.lang)
     }
 
-    /// 先用○○听: the AI service hears the meeting while the model it needs downloads (`CloudStream`).
-    private(set) var cloudListening = false
-    /// What listening was before, restored by 换回等待.
-    private var cloudReplaced: (lang: Lang?, confirmed: Bool)?
-    /// The model being waited for: once it is on the Mac, listening goes back to it.
-    private var cloudAwaiting: Lang?
-    /// The language the service says is spoken.
-    private var cloudLang: Lang?
-    private var cloudFailures = 0
-    /// Who was hearing the meeting when it went to a service, and whether it was the user's own
-    /// recognition server (rather than 先用○○听): a change in settings must not move the audio elsewhere.
-    private var cloudVia: (provider: AIProvider.Kind?, server: Bool)?
+    /// A service hearing the meeting (`CloudStream`): 先用○○听 while the model it needs downloads,
+    /// or the user's own recognition server.
+    private struct CloudSession {
+        /// What listening was before, restored by 换回等待.
+        var replaced: (lang: Lang?, confirmed: Bool)
+        /// The model being waited for: once it is on the Mac, listening goes back to it.
+        let awaiting: Lang?
+        /// Who was hearing the meeting when it went to a service, and whether it was the user's own
+        /// recognition server (rather than 先用○○听): a change in settings must not move the audio elsewhere.
+        let via: (provider: AIProvider.Kind?, server: Bool)
+        /// The language the service says is spoken.
+        var lang: Lang?
+        var failures = 0
+    }
+    /// nil while this Mac listens.
+    private var cloud: CloudSession?
+    var cloudListening: Bool { cloud != nil }
     /// The user's own service stopped answering in this meeting: listening went back to this Mac.
     private var serverFellBack = false
     /// The meeting is recognized by the user's own service (`Recognition.serverPreferred`).
@@ -126,7 +140,6 @@ final class ListenEngine {
 
     private var audioTap: AudioSource?
     private let audioReconnect = AudioReconnect()
-    private var roomSilentRetries = 0
     private var screenAudioFailed = false
     /// 会议室: the microphone Cicada listens to the room with; nil leaves the input on its default.
     var roomDevice: (() -> OutputDevice?)?
@@ -147,20 +160,22 @@ final class ListenEngine {
     }
     private var recognizer: RecognitionStream?
     private var resultsTask: Task<Void, Never>?
+    /// The record's recognizer for the current transcriber (`Recognition.recordTrack`). Its lines
+    /// keep settling after `stop()`, so it has a generation of its own.
+    private var refiner: RecordRefiner?
+    private var refinerGen = 0
+    private var recordTask: Task<Void, Never>?
     /// The room engine's clocks and segment ids start far above the main one's, so lines from the two
     /// never look like one recognizer's (joins, translations).
     private var generation: Int
-    private var pendingSwitch: Lang?
-    private var needsDetection = true
-    private var nextPeriodicDetection = 30.0
     private var lastForeignCheck = Date.distantPast
-    private var lastDetectionAt = Date.distantPast
-    private var ambiguousDetections = 0
+    /// When the recognizer last wrote anything: speech, even where the loudness gate heard none.
+    private var lastWordsAt = Date.distantPast
     /// Sentences finished before detection settled the language: recorded once it confirms the
     /// language they were heard in, dropped on a switch (the replay into the new model redoes them).
     private var unconfirmed: [(seg: Segment, at: Date, duration: Double)] = []
     private var recordable: Bool {
-        gemmaCandidate || settings.sourceMode != .auto || languageConfirmed || (ambiguousDetections >= 2 && !mismatch)
+        gemmaCandidate || settings.sourceMode != .auto || detection.settledEnough
             || legacySingleLanguage || cloudListening
             // The room side's 听不出 never reaches the panel (it reads the main engine): held lines would
             // stay held all meeting. Measured: a show from a phone across the table scored 0.56–0.71 for
@@ -170,11 +185,8 @@ final class ListenEngine {
     /// macOS 14/15 with one Dictation language: nothing to compare it with and none Cicada could
     /// fetch, and every check takes the recognizer from the meeting. It is taken as heard.
     private var legacySingleLanguage: Bool { Recognition.legacy && candidates.count < 2 }
-    /// The only model there is checked the audio and it isn't its language: what it writes is
-    /// noise, neither shown nor kept, until another model or a pick settles it.
-    private(set) var mismatch = false
-    private var unsureStreak = 0
-    private var sureStreak = 0
+    /// The only model there is checked the audio and it isn't its language (`LanguageDetection.Verdict.notThis`).
+    var mismatch: Bool { detection.mismatch }
     /// The model for the language it starts with couldn't be had, and there is none to fall back
     /// on: nothing is listening, so the problem shows without waiting for 听不出.
     var blockedByModel: Bool { isRunning && modelProblem?.picked == true && recognizer == nil && modelProblem?.lang == activeLang }
@@ -211,6 +223,26 @@ final class ListenEngine {
     private var lastCutThrough = 0.0
     /// A cut was asked for: the next final line ends at Cicada's pause, not the speaker's.
     private var cutAsked = false
+    /// The last draft that ended a sentence and its audio time (`HeardText.endsSentence`), and the
+    /// head of one a cut was asked to end at: the final is checked against that, not the whole draft.
+    private var volatileSentence: (head: String, end: Double)?
+    private var sentenceCutHead: String?
+    /// Where the line in progress could end short of a sentence (`HeardText.boundaries`, offsets in
+    /// `shownDraft`), each with the audio time of the draft it first showed in.
+    private var seenBoundaries: [(at: Int, kind: HeardText.Boundary, end: Double)] = []
+    /// The cut asked for ends there: the final is split at it.
+    private var pendingSplit: (near: Int, kind: HeardText.Boundary)?
+    /// When the last cut was asked for: the next waits for its line (a moment at most), or it
+    /// would take the place the first one is to be split at.
+    private var cutAskedAt = Date.distantPast
+    /// What a line ended at a sentence ran on into the next one: it starts the next line, and the
+    /// draft shows it in front (`HeardText.splitAtSentenceEnd`).
+    private var carry: (text: String, start: Double)?
+    /// The line in progress as shown: what was carried over, then the draft.
+    private var shownDraft: String {
+        guard let carry else { return volatileText }
+        return [carry.text, volatileText].filter { !$0.isEmpty }.joined(separator: joiner(for: activeLang?.code ?? ""))
+    }
     /// Final transcript time and how long after the last word it came, per segment, until its translation lands.
     private var finalTiming: [Int: (at: Date, recognize: Double?)] = [:]
 
@@ -315,16 +347,13 @@ final class ListenEngine {
             self.downloads[lang.locale] = nil
             // The new model gets its 20 s to settle the language before 听不出 is offered.
             if self.firstHeardAt != nil { self.firstHeardAt = Date() }
+            self.detection.modelFetched(ok: ok)
             if ok {
-                self.mismatch = false
-                self.unsureStreak = 0
-                self.sureStreak = 0
                 self.simulatedModels?.insert(lang.locale)
                 if self.modelProblem?.lang == lang { self.modelProblem = nil }
             } else {
                 self.fetchFailed.insert(lang.locale)
             }
-            self.needsDetection = true
             await self.refreshInstalledLocales()
             if ok { self.detectHeld() }
         }
@@ -347,28 +376,30 @@ final class ListenEngine {
             setStatus(L("请先在设置 › AI 服务里填入 Ling key"))
             return
         }
-        languageConfirmed = false
-        pendingSwitch = nil
-        needsDetection = true
-        nextPeriodicDetection = 30
-        ambiguousDetections = 0
-        unsureStreak = 0
-        sureStreak = 0
+        detection.start()
         unconfirmed = []
-        lastDetectionAt = .distantPast
+        lastWordsAt = .distantPast
         firstHeardAt = nil
         askShown = false
         fetchFailed = []
         modelProblem = nil
-        mismatch = false
-        resetCloud()
+        cloud = nil
         cloudBack = nil
         serverFellBack = false
         startedAt = Date()
         updateHold()
         debugLog("listen start mode=\(settings.sourceMode) target=\(resolvedTarget)")
 
-        roomSilentRetries = 0
+        // Debug (`silentListen:<locale>`): a meeting with no audio at all, its lines given by
+        // `heard:` — to try what follows a finished sentence while another app is recording.
+        if let locale = Self.silentLocale {
+            activeLang = sourceLanguages.first { $0.locale == locale } ?? sourceLanguages[0]
+            detection.setConfirmed(true)
+            isRunning = true
+            debugLog("listen start: silent (debug), no audio, \(activeLang!.code)")
+            return
+        }
+
         guard startTap() else { return }
         router.setVoiceCapture(settings.speakerVoices)
         isRunning = true
@@ -400,12 +431,13 @@ final class ListenEngine {
         // Lines still waiting for the language are recorded rather than dropped: the meeting
         // ended before detection settled it. Not when the only model said the audio isn't its
         // language: those lines are noise, and the recording keeps what was said.
+        flushCarry()
         if settings.sourceMode == .auto, !recordable, !mismatch { flushUnconfirmed() }
         unconfirmed = []
         heardSpeech = isRunning && (router.stats().voicedTotal >= 3 || firstHeardAt != nil)
         isRunning = false
         generation += 1
-        resetCloud()
+        cloud = nil
         cloudBack = nil
         tickTimer?.invalidate()
         tickTimer = nil
@@ -414,16 +446,26 @@ final class ListenEngine {
         router.reset()
         resultsTask?.cancel()
         resultsTask = nil
-        if let recognizer {
+        if let tee = recognizer as? TeeStream {
+            // The record's recognizer hears out what it has, and its last lines settle.
+            Task {
+                await tee.live.cancel()
+                await tee.record.finish()
+            }
+        } else if let recognizer {
             Task { await recognizer.cancel() }
         }
         recognizer = nil
         segments.removeAll()
         volatileText = ""
+        volatileSentence = nil
+        carry = nil
+        seenBoundaries = []
+        pendingSplit = nil
         volatileTranslation = ""
         lastVolatileSent = ""
         volatileInFlight = false
-        detecting = false
+        detection.checkEnded()
         setStatus(L("已暂停"))
     }
 
@@ -503,7 +545,8 @@ final class ListenEngine {
         }
         // 电脑和会议室: the remote voices from the speakers are taken out of the mic (`VoiceMic`).
         if role == .room, echoCancelled, let voiceMic, let device = roomDevice?() {
-            let mic = EchoCancelledRoomMic(mic: voiceMic, device: device)
+            let mic = EchoCancelledRoomMic(mic: voiceMic, device: device, processing: !echoBypassed)
+            if echoBypassed { mic.echoGate = echoGate }
             mic.muted = roomMuted
             let router = self.router
             mic.onAudio = { pcm in router.push(pcm) }
@@ -516,34 +559,10 @@ final class ListenEngine {
             audioTap = mic
             return true
         }
-        let mic = RoomMic(device: roomDevice?(), voiceMic: voiceMic)
+        let mic = RoomMic(device: roomDevice?())
         mic.muted = roomMuted
         if role == .room { mic.echoGate = echoGate }
         roomMicSilent = false
-        mic.retrySilence = roomSilentRetries == 0
-        mic.onRestart = { [weak self, weak mic] why in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
-                if why == "silent since it started" { self.roomSilentRetries += 1 }
-                debugLog("room mic: \(why), requesting reconnect")
-                self.reconnectAudio()
-            }
-        }
-        mic.onStarted = { [weak self, weak mic] in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
-                debugLog("room mic started: \(mic.deviceName)")
-                self.setStatus(L("正在听"))
-            }
-        }
-        mic.onFailed = { [weak self, weak mic] error in
-            MainActor.assumeIsolated {
-                guard let self, let mic, self.isRunning, self.audioTap === mic else { return }
-                debugLog("room mic start failed: \(error)")
-                self.stop()
-                self.setStatus(error.localizedDescription)
-            }
-        }
         mic.onSilent = { [weak self, weak mic] in
             MainActor.assumeIsolated {
                 guard let self, let mic, self.audioTap === mic else { return }
@@ -556,6 +575,7 @@ final class ListenEngine {
         do {
             try mic.start()
             audioTap = mic
+            debugLog("room mic started: \(mic.deviceName)")
             DispatchQueue.main.asyncAfter(deadline: .now() + 15) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self, self.audioTap === mic else { return }
@@ -574,7 +594,13 @@ final class ListenEngine {
     /// 电脑和会议室: take the online voices out of the room mic with the echo-cancelling unit. Off,
     /// or when the unit can't be had, the plain mic is gated while the Mac plays speech (`gateEcho`).
     var echoCancelled = true
+    /// With `echoCancelled`: the room through the unit with processing off (the plain mic's sound,
+    /// gated as `RoomMic` is), so a talk-key press can turn it on (`VoiceMic.attach(processing:)`).
+    var echoBypassed = false
     var voiceMic: VoiceMic?
+    /// Whether the plain room mic is open: the echo-cancelling unit would starve it, so it lets the
+    /// unit go each time it starts (`startRoomMic`).
+    var holdsPlainMic: Bool { isRunning && audioTap is RoomMic }
     /// Whether the room is heard through the echo-cancelling unit right now.
     var hearsEchoCancelled: Bool { audioTap is EchoCancelledRoomMic }
     /// The microphone hearing the room right now, to notice it going away (nil: the default input).
@@ -617,11 +643,8 @@ final class ListenEngine {
     // MARK: Settings changes
 
     func sourceModeChanged() {
-        languageConfirmed = false
-        mismatch = false
+        detection.modeChanged()
         updateHold()
-        pendingSwitch = nil
-        needsDetection = true
         if isRunning, case .fixed(let lang) = settings.sourceMode {
             // Chosen by hand: what was held back in that language is now confirmed.
             if lang == activeLang { flushUnconfirmed() }
@@ -643,14 +666,8 @@ final class ListenEngine {
 
     func redetect() {
         guard isRunning, settings.sourceMode == .auto else { return }
-        languageConfirmed = false
+        detection.redetect()
         updateHold()
-        pendingSwitch = nil
-        needsDetection = true
-        ambiguousDetections = 0
-        unsureStreak = 0
-        sureStreak = 0
-        lastDetectionAt = .distantPast
         onStateChange?()
     }
 
@@ -687,7 +704,7 @@ final class ListenEngine {
             return
         }
         if cloudListening { debugLog("cloud: off, \(lang.locale) on this Mac") }
-        resetCloud()
+        cloud = nil
         generation += 1
         let gen = generation
         router.detach()
@@ -703,14 +720,19 @@ final class ListenEngine {
         if activeLang != lang {
             segments.removeAll()
             unconfirmed = []
-            mismatch = false
+            detection.clearMismatch()
         }
         activeLang = lang
         volatileText = ""
+        carry = nil
+        seenBoundaries = []
+        pendingSplit = nil
         volatileTranslation = ""
         lastVolatileSent = ""
         volatileEpoch += 1
         cutAsked = false
+        volatileSentence = nil
+        sentenceCutHead = nil
         // The new transcriber's audio clock starts again at zero.
         lastCutThrough = 0
         onStateChange?()
@@ -728,7 +750,7 @@ final class ListenEngine {
                     return
                 }
                 fetchFailed.insert(lang.locale)
-                languageConfirmed = false
+                detection.unconfirm()
                 // macOS 14/15: a language is added in Dictation settings, which only the user can do.
                 setStatus(Recognition.needsUser(error) ? error.localizedDescription : L("没能下载 \(lang.name) 语音模型"))
                 guard isRunning, gen == generation else { return }
@@ -751,7 +773,7 @@ final class ListenEngine {
             if gemmaCandidate {
                 // Candidate speech is English even when the meeting's source language is automatic.
                 activeLang = sourceLanguages.first(where: { $0.code == "en" }) ?? lang
-                languageConfirmed = true; mismatch = false
+                detection.setConfirmed(true)
                 stream = CandidateRecognition()
             } else {
                 stream = try await Recognition.start(lang.locale, drafts: true, confidence: true)
@@ -760,9 +782,23 @@ final class ListenEngine {
                 await stream.cancel()
                 return
             }
-            router.attach(stream, replaySeconds: replaySeconds)
+            var listening: RecognitionStream = stream
+            // Gemma hears the candidate in Float32, which SpeechAnalyzer can't take: no record track
+            // there (it ended the app as soon as the mic's audio arrived).
+            if !gemmaCandidate, let record = try? await Recognition.startRecord(lang.locale, format: stream.format) {
+                guard isRunning, gen == generation else {
+                    await stream.cancel()
+                    await record.cancel()
+                    return
+                }
+                listening = TeeStream(live: stream, record: record)
+                startRefining(record)
+            } else {
+                refiner = nil
+            }
+            router.attach(listening, replaySeconds: replaySeconds)
             updateHold()
-            self.recognizer = stream
+            self.recognizer = listening
             resultsTask = Task { [weak self] in
                 do {
                     for try await piece in stream.results {
@@ -808,14 +844,33 @@ final class ListenEngine {
         onRecognitionFailure?(false)
         var text = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
         // Before any holding for the language: words at all is what tells speech from music.
-        if !text.isEmpty { onWords?() }
+        if !text.isEmpty { lastWordsAt = Date(); onWords?() }
         if result.isFinal {
             text = HeardText.clean(text)
-            let fuller = HeardText.fuller(final: text, draft: volatileText)
+            let fuller = HeardText.fuller(final: text, draft: sentenceCutHead ?? volatileText)
+            let splitAt = pendingSplit
+            pendingSplit = nil
+            sentenceCutHead = nil
+            volatileSentence = nil
+            seenBoundaries = []
             if !gemmaCandidate, fuller != text {
                 debugLog("final dropped words the draft had: kept the draft")
                 contentLog("FINAL was: \(text)")
                 text = fuller
+            }
+            var start = result.start, end = result.end
+            if let c = carry {
+                carry = nil
+                text = HeardText.clean(c.text + joiner(for: activeLang?.code ?? "") + text)
+                start = c.start
+            }
+            let code = activeLang?.code ?? ""
+            if let at = splitAt, let split = at.kind == .sentence ? HeardText.splitAtSentenceEnd(text)
+                : HeardText.split(text, near: at.near, kind: at.kind, language: code) {
+                // Times shared out by length: the tail is a second or so of the next sentence.
+                let at = start + (end - start) * Double(split.head.count) / Double(max(1, text.count))
+                carry = (split.tail, at)
+                (text, end) = (split.head, at)
             }
             volatileText = ""
             volatileEpoch += 1
@@ -831,17 +886,20 @@ final class ListenEngine {
             let provisional = given ?? (volatileTranslation.isEmpty ? nil : volatileTranslation)
             var seg = Segment(id: nextSegmentID, text: text, sourceCode: result.language ?? activeLang?.code ?? "auto",
                               translation: provisional)
-            seg.start = result.start
-            seg.end = result.end
+            seg.start = start
+            seg.end = end
             seg.clock = gen
             seg.cut = cutAsked
+            seg.split = splitAt != nil
             cutAsked = false
+            seg.refining = refiner != nil
+            if refiner != nil { settled(refiner!.emitted(id: seg.id, start: seg.start, end: seg.end, text: seg.text)) }
             if settings.speakerVoices {
-                seg.voiceSamples = router.voiceSamples(from: result.start, to: result.end)
+                seg.voiceSamples = router.voiceSamples(from: start, to: end)
             }
             nextSegmentID += 1
             // How long ago, in real time, the sentence's last word was spoken.
-            let ago = router.fedSeconds() - result.end
+            let ago = router.fedSeconds() - end
             finalTiming[seg.id] = (Date(), ago.isFinite && ago >= 0 && ago < 30 ? ago : nil)
             if finalTiming.count > 40, let oldest = finalTiming.keys.min() { finalTiming[oldest] = nil }
             var shown = seg
@@ -853,7 +911,7 @@ final class ListenEngine {
             volatileTranslation = ""
             lastVolatileSent = ""
             contentLog(String(format: "FINAL conf=%.2f [%@] %@", conf, activeLang?.locale ?? "?", text))
-            let duration = max(0, result.end - result.start)
+            let duration = max(0, end - start)
             // Only confirmed-language sentences go into the meeting record; earlier ones wait.
             let spoken = duration.isFinite ? duration : 0
             if recordable {
@@ -873,24 +931,41 @@ final class ListenEngine {
                 translateSegment(id: seg.id)
             }
             if settings.sourceMode == .auto, conf < 0.6, text.count >= 4, !cloudListening {
-                needsDetection = true
+                detection.due = true
             }
             checkForeignLetters(text)
         } else {
             if firstHeardAt == nil, text.contains(where: \.isLetter) { firstHeardAt = Date() }
             if volatileText.isEmpty { volatileStartedAt = Date(); volatileStartClock = router.fedSeconds() }
             if text != volatileText { volatileChangedAt = Date() }
+            // A sentence just ended: remember where, until words past it come to end the line there.
+            if HeardText.endsSentence(text) { volatileSentence = (text, result.end) }
             volatileText = text
             if gemmaCandidate { onCandidateTranscript?(text, false) }
+            noteBoundaries(at: result.end)
             checkForeignLetters(text)
         }
         renderSubtitles()
     }
 
+    /// 改正听错的词: a finished line as shown once its fixes are in. Kept apart from the segment's own
+    /// text, which deciding a join and the record's settling compare with what was heard.
+    private var fixedText: [Int: String] = [:]
+
+    /// The app fixed segment `id`'s words: the bar shows them if the line is still on it.
+    func showFixed(_ id: Int, text: String) {
+        guard let seg = segments.first(where: { $0.id == id }) else { return }
+        fixedText[id] = text == seg.text ? nil : text
+        if fixedText.count > 50, let oldest = fixedText.keys.min() { fixedText[oldest] = nil }
+        if segments.last?.id == id { renderSubtitles() }
+    }
+
     private func renderSubtitles() {
-        guard !(segments.isEmpty && volatileText.isEmpty) else { return }
+        let draft = shownDraft
+        guard !(segments.isEmpty && draft.isEmpty) else { return }
         let srcJoin = joiner(for: activeLang?.code ?? "en")
-        let source = [segments.last?.text ?? "", volatileText].filter { !$0.isEmpty }
+        let last = segments.last.map { fixedText[$0.id] ?? $0.text } ?? ""
+        let source = [last, draft].filter { !$0.isEmpty }
             .joined(separator: srcJoin.isEmpty ? " " : srcJoin)
         if settings.sourceMode == .auto, !recordable {
             onSubtitle?(source, asksLanguage ? L("听不出是哪种语言，到菜单栏里选一下") : L("正在识别语言…"))
@@ -910,12 +985,12 @@ final class ListenEngine {
     /// ends in a run of Latin letters counts: English words mixed into Chinese ("还在做 onboarding
     /// 的 UI") would ask for checks that each risk a wrong switch.
     private func checkForeignLetters(_ text: String) {
-        guard !gemmaCandidate, settings.sourceMode == .auto, !needsDetection, !cloudListening, let code = activeLang?.code,
+        guard !gemmaCandidate, settings.sourceMode == .auto, !detection.due, !cloudListening, let code = activeLang?.code,
               ["zh", "ja", "ko"].contains(where: { code.hasPrefix($0) }),
               Date().timeIntervalSince(lastForeignCheck) >= 8, HeardText.endsInLatin(text) else { return }
         lastForeignCheck = Date()
         debugLog("detect: Latin letters from the \(code) model, checking the language")
-        needsDetection = true
+        detection.due = true
     }
 
     private func maybeDetectLanguage() {
@@ -923,15 +998,26 @@ final class ListenEngine {
         guard !gemmaCandidate, isRunning, settings.sourceMode == .auto, !detecting, !legacySingleLanguage, !cloudListening,
               candidates.count >= 2 || (!languageConfirmed && candidates.first == activeLang && activeLang != nil) else { return }
         var stats = router.stats(window: 6)
-        if stats.silenceRun >= AudioRouter.gapSeconds { needsDetection = true }
-        if stats.voicedTotal >= nextPeriodicDetection { needsDetection = true }
-        guard needsDetection, Date().timeIntervalSince(lastDetectionAt) >= 3 else { return }
+        // Speech under the gate's line (a quiet remote voice, an app turned low: measured at RMS 0.008
+        // against 0.01) is still written down, but never voiced 2.5 s, so nothing was checked and
+        // 听不出 came at 20 s. The words say someone is talking: check what was just played.
+        if stats.recentVoiced < 2.5, Date().timeIntervalSince(lastWordsAt) < 2 {
+            if Date().timeIntervalSince(detection.lastCheckAt) >= 20 { detection.due = true }
+            guard detection.due, let firstHeardAt, Date().timeIntervalSince(firstHeardAt) >= 4,
+                  Date().timeIntervalSince(detection.lastCheckAt) >= 4 else { return }
+            debugLog("detect: words under the loudness gate, checking the last 6 s")
+            runDetection(router.snapshot(seconds: 6))
+            return
+        }
+        if stats.silenceRun >= AudioRouter.gapSeconds { detection.due = true }
+        if stats.voicedTotal >= detection.nextPeriodic { detection.due = true }
+        guard detection.due, Date().timeIntervalSince(detection.lastCheckAt) >= 3 else { return }
         let clipSeconds = min(6, stats.sinceGap)
         guard clipSeconds >= 3 else { return }
         stats = router.stats(window: clipSeconds)
         guard stats.recentVoiced >= 2.5 else { return }
 
-        nextPeriodicDetection = stats.voicedTotal + 20
+        detection.nextPeriodic = stats.voicedTotal + 20
         runDetection(router.snapshot(seconds: clipSeconds))
     }
 
@@ -946,16 +1032,14 @@ final class ListenEngine {
 
     private func runDetection(_ clip: [AVAudioPCMBuffer]) {
         guard !gemmaCandidate else { return }
-        needsDetection = false
-        lastDetectionAt = Date()
-        detecting = true
+        detection.checkStarted()
         onStateChange?()
         let candidates = self.candidates
         Task { [weak self] in
             let started = Date()
             let ranked = await LanguageDetector.rank(clip, candidates: candidates)
             guard let self else { return }
-            self.detecting = false
+            self.detection.checkEnded()
             guard !self.gemmaCandidate, self.isRunning, self.settings.sourceMode == .auto else { return }
             let summary = ranked.map { String(format: "%@ s=%.2f c=%.2f n=%d", $0.lang.locale, $0.score, $0.confidence, $0.chars) }
             debugLog("detect (\(String(format: "%.2f", Date().timeIntervalSince(started)))s): \(summary.joined(separator: " | "))")
@@ -965,79 +1049,34 @@ final class ListenEngine {
     }
 
     private func applyDetection(_ ranked: [LanguageDetector.Candidate]) {
-        guard let best = ranked.first else { return }
-        if ranked.count == 1 {
-            // The right model is ≥0.85 sure; English heard by a French model scored 0.12.
-            guard best.lang == activeLang, best.confidence >= 0.6, best.score >= 0.6 else {
-                // Asked again only by the usual triggers (a pause, 20 s more speech), or when a model arrives.
-                if !mismatch { debugLog("detect: not \(best.lang.locale), holding lines for another model") }
-                mismatch = true
-                // Checked on speech: someone is talking even if the model wrote nothing down.
-                if firstHeardAt == nil { firstHeardAt = Date() }
-                renderSubtitles()
-                return
-            }
-            mismatch = false
-        }
-        // Every model unsure: a language with no model here, not a close call. On their own language
-        // English scored 0.95, Chinese 0.84, Korean 0.97; Japanese heard by the Chinese model 0.66,
-        // German and Spanish heard by English or Chinese at most 0.48.
-        // Twice in a row, so one noisy clip doesn't ask; nothing is kept meanwhile.
-        if ranked.count >= 2, best.score < 0.72 {
-            unsureStreak += 1
-            sureStreak = 0
-            if unsureStreak >= 2, !mismatch, !languageConfirmed {
-                debugLog("detect: none of \(ranked.map(\.lang.locale).joined(separator: ",")), holding lines")
-                mismatch = true
-                if firstHeardAt == nil { firstHeardAt = Date() }
-            }
-            if !languageConfirmed { needsDetection = true }
-            renderSubtitles()
+        switch detection.apply(ranked, active: activeLang) {
+        case .none, .pending:
             return
-        }
-        unsureStreak = 0
-        // Said no once: Japanese heard by the Chinese model reached 0.73 now and then, so one sure
-        // answer doesn't take it back; two in a row do.
-        if mismatch, ranked.count >= 2 {
-            sureStreak += 1
-            if sureStreak < 2 {
-                needsDetection = true
-                return
+        case .notThis(let lang, let firstTime):
+            if firstTime { debugLog("detect: not \(lang.locale), holding lines for another model") }
+            // Checked on speech: someone is talking even if the model wrote nothing down.
+            if firstHeardAt == nil { firstHeardAt = Date() }
+            renderSubtitles()
+        case .noneOfThem(let now):
+            if now {
+                debugLog("detect: none of \(ranked.map(\.lang.locale).joined(separator: ",")), holding lines")
+                if firstHeardAt == nil { firstHeardAt = Date() }
             }
-        }
-        let runnerUp = ranked.dropFirst().first?.score ?? 0
-        guard best.confidence >= 0.6, best.score - runnerUp >= 0.08 else {
+            renderSubtitles()
+        case .ambiguous:
             debugLog("detect: ambiguous, keeping \(activeLang?.locale ?? "-")")
-            ambiguousDetections += 1
-            if !languageConfirmed { needsDetection = true }
             if recordable { flushUnconfirmed() }
             renderSubtitles()
-            return
-        }
-        if best.lang == activeLang {
-            languageConfirmed = true
-            mismatch = false
+        case .confirmed(let lang):
             updateHold()
             flushUnconfirmed()
-            pendingSwitch = nil
-            if role == .main { UserDefaults.standard.set(best.lang.locale, forKey: "lastDetected") }
+            if role == .main { UserDefaults.standard.set(lang.locale, forKey: "lastDetected") }
             renderSubtitles()
-            return
-        }
-        let currentScore = ranked.first(where: { $0.lang == activeLang })?.score ?? 0
-        let overwhelming = best.score - currentScore >= 0.30
-        if !languageConfirmed || overwhelming || pendingSwitch == best.lang {
-            debugLog("detect: switching \(activeLang?.locale ?? "-") → \(best.lang.locale)")
-            // The first answer replays everything held back; a later switch, the last sentence or so.
-            let replay = languageConfirmed ? 8 : Self.holdUnknown
-            languageConfirmed = true
+        case .switchTo(let lang, let replayAll):
+            debugLog("detect: switching \(activeLang?.locale ?? "-") → \(lang.locale)")
             unconfirmed = []
-            pendingSwitch = nil
-            if role == .main { UserDefaults.standard.set(best.lang.locale, forKey: "lastDetected") }
-            Task { await switchTranscriber(to: best.lang, replaySeconds: replay) }
-        } else {
-            pendingSwitch = best.lang
-            needsDetection = true
+            if role == .main { UserDefaults.standard.set(lang.locale, forKey: "lastDetected") }
+            Task { await switchTranscriber(to: lang, replaySeconds: replayAll ? Self.holdUnknown : 8) }
         }
     }
 
@@ -1078,7 +1117,7 @@ final class ListenEngine {
             // Nothing is listening: start the language again, with all the speech held since the start.
             Task { await switchTranscriber(to: p.lang, replaySeconds: languageConfirmed ? 0 : Self.holdUnknown) }
         } else if p.picked, isRunning {
-            languageConfirmed = false
+            detection.unconfirm()
             pickLanguage(p.lang)
         } else {
             fetchSecondModel()
@@ -1134,13 +1173,8 @@ final class ListenEngine {
         guard isRunning, settings.sourceMode == .auto else { return }
         debugLog("language picked: \(lang.locale) (was \(activeLang?.locale ?? "-"))")
         let replay = languageConfirmed ? 8 : Self.holdUnknown
-        languageConfirmed = true
-        mismatch = false
-        pendingSwitch = nil
-        needsDetection = false
+        detection.picked()
         askShown = false
-        unsureStreak = 0
-        sureStreak = 0
         modelProblem = nil
         if role == .main { UserDefaults.standard.set(lang.locale, forKey: "lastDetected") }
         if lang == activeLang, recognizer != nil {
@@ -1188,18 +1222,17 @@ final class ListenEngine {
             recognizer = nil
             Task { await old.cancel() }
         }
-        cloudListening = true
-        cloudVia = (translator.ling.provider.id, serverHears)
-        cloudReplaced = replaced
-        cloudAwaiting = awaiting
-        cloudLang = nil
-        cloudFailures = 0
+        cloud = CloudSession(replaced: replaced, awaiting: awaiting, via: (translator.ling.provider.id, serverHears))
         unconfirmed = []
         segments.removeAll()
         volatileText = ""
+        volatileSentence = nil
+        carry = nil
+        seenBoundaries = []
+        pendingSplit = nil
         volatileTranslation = ""
         lastVolatileSent = ""
-        mismatch = false
+        detection.clearMismatch()
         modelProblem = nil
         let stream = CloudStream(format: format) { [weak self] wav, seconds in
             guard let self, gen == self.generation else { return nil }
@@ -1213,20 +1246,20 @@ final class ListenEngine {
                     try await Task.sleep(for: .seconds(1))
                     heard = try await translator.hear(wav: wav, seconds: seconds, target: self.resolvedTarget, hint: self.cloudHint)
                 }
-                if self.cloudFailures >= 3 { self.setStatus(L("\(self.cloudService ?? "AI") 在听")) }
-                self.cloudFailures = 0
+                if (self.cloud?.failures ?? 0) >= 3 { self.setStatus(L("\(self.cloudService ?? "AI") 在听")) }
+                self.cloud?.failures = 0
                 return heard
             } catch {
-                guard gen == self.generation, self.cloudListening, !(error is CancellationError) else { return nil }
+                guard gen == self.generation, self.cloud != nil, !(error is CancellationError) else { return nil }
                 debugLog("cloud: hear failed: \(error)")
-                self.cloudFailures += 1
+                self.cloud?.failures += 1
                 // The service is down or the key stopped working: listening shouldn't go quiet with it.
-                if self.cloudFailures >= 3 {
+                if (self.cloud?.failures ?? 0) >= 3 {
                     if self.serverHears, !Recognition.cloudOnly {
                         // The user's own service is down: this Mac recognizes the rest of the meeting.
                         debugLog("cloud: own service failed 3 times, back to this Mac for this meeting")
                         self.serverFellBack = true
-                        if self.cloudReplaced?.lang == nil { self.cloudReplaced = (self.activeLang, false) }
+                        if self.cloud?.replaced.lang == nil { self.cloud?.replaced = (self.activeLang, false) }
                         self.stopCloud()
                         self.setStatus(L("\(self.cloudService ?? "AI") 连不上 · 字幕改用本机识别"))
                     } else if !Recognition.cloudOnly { self.stopCloud() }
@@ -1250,13 +1283,12 @@ final class ListenEngine {
 
     /// 换回等待 (or the service failing): back to what listened before, the download carrying on.
     func stopCloud() {
-        guard cloudListening, !Recognition.cloudOnly else { return }
-        let back = cloudReplaced
-        let lang = back?.lang ?? activeLang
+        guard let back = cloud?.replaced, !Recognition.cloudOnly else { return }
+        let lang = back.lang ?? activeLang
         debugLog("cloud: off, back to \(lang?.locale ?? "nothing")")
-        resetCloud()
+        cloud = nil
         generation += 1
-        languageConfirmed = back?.confirmed ?? false
+        detection.setConfirmed(back.confirmed)
         updateHold()
         onStateChange?()
         guard let lang else { return }
@@ -1267,34 +1299,28 @@ final class ListenEngine {
     /// it went to: another service (Ling chosen instead of a custom one), or 语音识别 set back to
     /// 本机, takes the meeting back to this Mac rather than sending its audio to a service nobody chose.
     func aiServiceChanged() {
-        guard cloudListening, let via = cloudVia else { return }
+        guard let via = cloud?.via else { return }
         let provider = translator?.ling.provider.id
         guard provider != via.provider || (via.server && !Recognition.serverPreferred) else { return }
         debugLog("cloud: the AI service changed (\(via.provider?.rawValue ?? "?") → \(provider?.rawValue ?? "?")), back to this Mac")
         stopCloud()
     }
 
-    private func resetCloud() {
-        cloudVia = nil
-        cloudListening = false
-        cloudReplaced = nil
-        cloudAwaiting = nil
-        cloudLang = nil
-        cloudFailures = 0
-    }
 
     /// The language the meeting has been in, which keeps Ming from flipping on a short stretch.
     private var cloudHint: String? {
         if case .fixed(let lang) = settings.sourceMode { return lang.code }
-        return cloudLang?.code ?? (cloudReplaced?.confirmed == true ? cloudReplaced?.lang?.code : nil)
+        guard let cloud else { return nil }
+        return cloud.lang?.code ?? (cloud.replaced.confirmed ? cloud.replaced.lang?.code : nil)
     }
 
     /// The service said which language a line was in: it answers what detection would have.
     private func cloudHeard(_ code: String) {
         guard let lang = sourceLanguages.first(where: { $0.code == code })
                 ?? sourceLanguages.first(where: { code.hasPrefix("zh") && $0.code.hasPrefix("zh") }) else { return }
-        if cloudLang != lang { debugLog("cloud: heard \(lang.locale)") }
-        cloudLang = lang
+        guard cloud != nil else { return }
+        if cloud?.lang != lang { debugLog("cloud: heard \(lang.locale)") }
+        cloud?.lang = lang
         if settings.sourceMode == .auto, activeLang != lang {
             activeLang = lang
             if role == .main { UserDefaults.standard.set(lang.locale, forKey: "lastDetected") }
@@ -1305,11 +1331,11 @@ final class ListenEngine {
     private func cloudModelArrived() {
         // The user chose their service: a model arriving is only the fallback getting ready.
         guard !serverHears else { return }
-        guard let awaiting = cloudAwaiting, installedLocales.contains(awaiting.locale) else { return }
+        guard let awaiting = cloud?.awaiting, installedLocales.contains(awaiting.locale) else { return }
         let want: Lang
         if case .fixed(let lang) = settings.sourceMode {
             want = lang
-        } else if let heard = cloudLang, installedLocales.contains(heard.locale) {
+        } else if let heard = cloud?.lang, installedLocales.contains(heard.locale) {
             want = heard
         } else {
             want = awaiting
@@ -1318,10 +1344,10 @@ final class ListenEngine {
         debugLog("cloud: \(awaiting.locale) is on the Mac, back to \(want.locale) here")
         cloudBack = (cloudService ?? "AI", Date())
         // What the service heard settles the language; without a line from it, detection still decides.
-        let confirmed = cloudLang == want
-        resetCloud()
+        let confirmed = cloud?.lang == want
+        cloud = nil
         generation += 1
-        languageConfirmed = confirmed
+        detection.setConfirmed(confirmed)
         updateHold()
         Task { await switchTranscriber(to: want) }
     }
@@ -1370,7 +1396,7 @@ final class ListenEngine {
         // A partial without a translation is fine while the AI service will translate the sentence.
         let coming = kind == .draft && translator?.ling.usable == true
         if out == nil, !coming, segments.allSatisfy({ $0.translation == nil }) && volatileTranslation.isEmpty {
-            onSubtitle?(volatileText.isEmpty ? (segments.last?.text ?? "") : volatileText, L("翻译暂不可用"))
+            onSubtitle?(shownDraft.isEmpty ? (segments.last?.text ?? "") : shownDraft, L("翻译暂不可用"))
         }
         return out
     }
@@ -1378,6 +1404,23 @@ final class ListenEngine {
     /// `retry` counts the earlier tries of a line every provider failed (Ling rate-limited while
     /// Google answers 429, and no on-device model): it is asked again a little later, as the copy
     /// `again`, since it may have scrolled off the bar meanwhile; the record still takes it.
+    /// Debug: listen without any audio (`silentListen`), the locale its lines are in.
+    static var silentLocale: String?
+
+    /// Debug (`heard:<text>`): a finished sentence as if the recognizer gave it, in a silent meeting.
+    /// The record, its translation and fixes, the bar and the notes window all follow.
+    func debugHeard(_ text: String) {
+        guard isRunning, Self.silentLocale != nil, let lang = activeLang else { return }
+        let seg = Segment(id: nextSegmentID, text: text, sourceCode: lang.code, translation: nil)
+        nextSegmentID += 1
+        segments.append(seg)
+        if segments.count > 8 { segments.removeFirst(segments.count - 8) }
+        finalTiming[seg.id] = (Date(), 0.5)
+        onFinal?(seg, 2)
+        translateSegment(id: seg.id)
+        renderSubtitles()
+    }
+
     private func translateSegment(id: Int, retry: Int = 0, again: Segment? = nil) {
         guard !translationOff(), let seg = again ?? segments.first(where: { $0.id == id }) else { return }
         let trace = TranslateTrace()
@@ -1440,12 +1483,89 @@ final class ListenEngine {
         renderSubtitles()
     }
 
+    // MARK: The record's recognizer
+
+    private func startRefining(_ record: RecordHearing) {
+        recordTask?.cancel()
+        refinerGen += 1
+        let gen = refinerGen
+        refiner = RecordRefiner()
+        recordTask = Task { [weak self] in
+            do {
+                for try await sentence in record.sentences {
+                    guard let self, gen == self.refinerGen, self.refiner != nil else { return }
+                    contentLog("RECORD \(sentence.runs.map(\.text).joined())")
+                    self.settled(self.refiner!.heard(sentence.runs, through: sentence.through))
+                }
+            } catch {
+                debugLog("record track: \(error)")
+            }
+            guard let self, gen == self.refinerGen, self.refiner != nil else { return }
+            self.settled(self.refiner!.finish())
+            self.refiner = nil
+        }
+    }
+
+    private func settled(_ lines: [(id: Int, text: String)]) {
+        for l in lines { onRefined?(l.id, l.text) }
+    }
+
+    /// Stopping: what a sentence cut carried over is a line of its own, not lost with the draft.
+    private func flushCarry() {
+        guard let c = carry, isRunning else { carry = nil; return }
+        carry = nil
+        volatileText = ""
+        volatileSentence = nil
+        sentenceCutHead = nil
+        handle(.init(text: c.text, isFinal: true, start: c.start, end: max(c.start, router.fedSeconds()), confidence: nil),
+               generation: generation)
+    }
+
+    /// Each place the line could end, timed by the first draft that showed it: the words before it
+    /// were heard by then. One that moves a character or so as the draft is revised keeps its time.
+    private func noteBoundaries(at end: Double) {
+        let text = shownDraft
+        let carried = text.count - volatileText.count
+        let now = HeardText.boundaries(text, language: activeLang?.code ?? "").filter { $0.at > carried }
+        seenBoundaries = now.map { b in
+            let old = seenBoundaries.first { $0.kind == b.kind && abs($0.at - b.at) <= 1 }
+            return (b.at, b.kind, old?.end ?? end)
+        }
+    }
+
+    /// A clause end for a long line (a Chinese line past 24 characters), or past `capped` any
+    /// place between words: the latest one heard a moment ago, with enough before it to be a line.
+    /// The notes window is read, not glanced at: there a Chinese line waits a little longer for a
+    /// clause before it is cut between words ("不是很 | 大"); the subtitle bar keeps up with the
+    /// speaker. Japanese has few clause marks besides 、: waiting there only made lines longer.
+    private func boundaryCut(_ fed: Double, held: Double) -> (at: Int, kind: HeardText.Boundary, end: Double)? {
+        let code = activeLang?.code ?? ""
+        let line = HeardText.size(shownDraft)
+        let patient = settings.displayMode != "bar" && code.hasPrefix("zh")
+        let cap = HeardText.capped(code) + (patient ? HeardText.capped(code) / 3 : 0)
+        let kind: HeardText.Boundary
+        if line >= cap || held >= (patient ? 15 : 12) { kind = .word }
+        else if line >= HeardText.clauseFrom(code) { kind = .clause }
+        else { return nil }
+        let text = shownDraft
+        let fit = seenBoundaries.filter { b in
+            b.kind >= kind && b.end > lastCutThrough && b.end > volatileStartClock + 0.5 && fed - b.end >= 0.4
+                && HeardText.size(String(text.prefix(b.at))) >= (HeardText.isCJK(text) ? 12 : 5)
+        }
+        // Past the cap a clause end still beats a word gap, if it leaves at least half the line.
+        if kind == .word, let clause = fit.filter({ $0.kind >= .clause && $0.at * 2 >= text.count }).max(by: { $0.at < $1.at }) {
+            return clause
+        }
+        return fit.max { $0.at < $1.at }
+    }
+
     /// SpeechTranscriber ends a sentence only at a clear pause; in a quick conversation that can
     /// take 15–20 s, and the subtitle stays a draft that long (the notes wait for it too). A long
-    /// line in progress is ended at the next small pause: a dip in the sound, or no new words for
-    /// a moment.
+    /// line in progress is ended where a sentence ends, at the next small pause (a dip in the
+    /// sound), at a clause, past a cap between words, or when no new words come for a moment.
     private func maybeCutSentence() {
-        guard !gemmaCandidate, isRunning, !cutting, let recognizer, !volatileText.isEmpty, volatileText != lastCut else { return }
+        guard !gemmaCandidate, isRunning, !cutting, let recognizer, !volatileText.isEmpty, volatileText != lastCut,
+              (pendingSplit == nil && !cutAsked) || Date().timeIntervalSince(cutAskedAt) > 2 else { return }
         let cjk = joiner(for: activeLang?.code ?? "") == ""
         let long = cjk ? volatileText.count >= 24 : volatileText.split(separator: " ").count >= 10
         guard long else { return }
@@ -1455,17 +1575,40 @@ final class ListenEngine {
         let c = router.clock()
         let mid = c.pause.end - c.pause.length / 2
         let through: Double, why: String
-        if c.silence >= needed {
+        var boundary: (at: Int, kind: HeardText.Boundary)?
+        // The draft went on past the sentence, and still ends it about there (drafts get revised).
+        if let s = volatileSentence, volatileText.count > s.head.count + 1,
+           volatileText.prefix(s.head.count + 2).suffix(5).contains(where: { "。！？.!?".contains($0) }), s.end > lastCutThrough,
+           s.end > volatileStartClock + 1, c.fed - s.end >= 0.5 {
+            // The speaker finished a sentence and went straight on: end the line there. Its "." is
+            // the speaker's, so the next piece doesn't join it back (`HeardText.continues`).
+            (through, why) = (s.end, "sentence")
+        } else if c.silence >= needed {
             (through, why) = (c.fed, "quiet")
         } else if c.pause.length >= needed, mid > volatileStartClock + 1.5, mid > lastCutThrough, c.pause.end <= c.fed {
             (through, why) = (mid, "pause")  // a pause already behind us: end the line there
+        } else if let b = boundaryCut(c.fed, held: held) {
+            (through, why) = (b.end, b.kind == .clause ? "clause" : "word")
+            boundary = (b.at, b.kind)
         } else if Date().timeIntervalSince(volatileChangedAt) >= (held >= 8 ? 0.6 : 1.2) {
             (through, why) = (c.fed, "stalled")
         } else {
             return
         }
         cutting = true
-        cutAsked = true
+        cutAskedAt = Date()
+        cutAsked = why != "sentence" && boundary == nil
+        let carried = shownDraft.count - volatileText.count
+        if why == "sentence", let s = volatileSentence {
+            sentenceCutHead = s.head
+            pendingSplit = (carried + s.head.count, .sentence)
+        } else if let b = boundary {
+            sentenceCutHead = String(volatileText.prefix(max(0, b.at - carried)))
+            pendingSplit = (b.at, b.kind)
+        } else {
+            sentenceCutHead = nil
+            pendingSplit = nil
+        }
         lastCut = volatileText
         lastCutThrough = through
         let chars = volatileText.count
@@ -1477,14 +1620,16 @@ final class ListenEngine {
             } catch {
                 debugLog("cut: finalize failed \(error)")
                 self?.cutAsked = false
+                self?.sentenceCutHead = nil
+                self?.pendingSplit = nil
             }
             self?.cutting = false
         }
     }
 
     private func translateVolatile() {
-        guard isRunning, !translationOff(), !volatileInFlight, volatileText.count >= 2, volatileText != lastVolatileSent else { return }
-        let text = volatileText
+        let text = shownDraft
+        guard isRunning, !translationOff(), !volatileInFlight, text.count >= 2, text != lastVolatileSent else { return }
         let epoch = volatileEpoch
         let source = activeLang?.code ?? "auto"
         lastVolatileSent = text

@@ -70,7 +70,7 @@ struct SpeakMicTests {
     @Test func roomMicAndRepeatedPressesKeepCapturingWithoutRebuildingVoiceIO() async throws {
         let (_, device) = try devices()
         let voiceMic = VoiceMic()
-        let room = RoomMic(device: device, voiceMic: voiceMic)
+        let room = RoomMic(device: device)
         let roomFrames = MicFrames()
         room.onAudio = { roomFrames.append($0) }
         try room.start()

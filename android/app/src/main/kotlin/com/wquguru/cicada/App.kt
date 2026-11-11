@@ -10,6 +10,9 @@ import android.os.Looper
 import android.provider.Settings
 import cicada.AIKey
 import cicada.AppSettings
+import cicada.Correction
+import cicada.LiveFixes
+import cicada.Vocabulary
 import cicada.AudioSource
 import cicada.LingClient
 import cicada.ListenEngine
@@ -20,7 +23,10 @@ import cicada.Paths
 import cicada.PcmAudioSource
 import cicada.Providers
 import cicada.SessionStore
+import cicada.ShareClient
 import cicada.SpeakerLabels
+import cicada.SpeakerNamer
+import cicada.SpeakerTagger
 import cicada.Strings
 import cicada.Translator
 import cicada.Wav
@@ -39,9 +45,16 @@ class CicadaApp : Application() {
     lateinit var notes: NotesEngine
     lateinit var translator: Translator
     lateinit var listen: ListenEngine
+    lateinit var vocabulary: Vocabulary
+    lateinit var fixes: LiveFixes
+    lateinit var namer: SpeakerNamer
     lateinit var overlay: Overlay
     lateinit var voice: Voice
     lateinit var updates: AppUpdates
+    /// 分享…: the share service on cicada.indaloop.app (Share.kt). Its version without "-dev".
+    val share by lazy {
+        ShareClient("android", (packageManager.getPackageInfo(packageName, 0).versionName ?: "0.0.0").substringBefore('-'))
+    }
     val main = Handler(Looper.getMainLooper())
     val background = Executors.newCachedThreadPool { r -> Thread(r, "App").apply { isDaemon = true } }
     private val observers = LinkedHashSet<() -> Unit>()
@@ -91,6 +104,19 @@ class CicadaApp : Application() {
         translator = Translator(ling)
         translator.googleOff = settings.customOnly
         listen = ListenEngine(ling, translator, store, notes, settings)
+        // 改正听错的词: the phone's ICU gives the pinyin the sound check compares, as the Mac's system transform does.
+        Correction.pinyinOf = Pinyin::of
+        vocabulary = Vocabulary()
+        fixes = LiveFixes(store, vocabulary, settings)
+        listen.fixes = fixes
+        translator.fixContext = { fixes.context(it) }
+        translator.onFixes = { text, edits -> fixes.received(text, edits) }
+        fixes.onChange(::changed)
+        vocabulary.onChange(::changed)
+        // 说话人识别: voiceprints on the phone, names from Ling once two voices are on show.
+        listen.speakers = SpeakerTagger(NativeVoiceprints.create(this))
+        namer = SpeakerNamer(ling, store)
+        listen.onVoice = { namer.guess(it) }
         listen.encoder = { pcm ->
             val t = System.currentTimeMillis()
             AacEncoder.encode(pcm)?.also { Log.d("listen: ${pcm.size * 2 / 1024} KB PCM → ${it.bytes.size / 1024} KB ${it.type} in ${System.currentTimeMillis() - t} ms") }
@@ -337,6 +363,8 @@ class CicadaApp : Application() {
         val imported = importing; importing = null
         background.execute {
             listen.stop(endedAt)
+            // The whole meeting read once more for names.
+            recId?.let { namer.guess(it, force = true) }
             if (imported != null && recId != null) store.update(recId) { it.importing = null }
             rec?.finish { ok -> if (ok && recId != null && store.get(recId) != null) store.update(recId) { it.hasAudio = true } }
             main.post {

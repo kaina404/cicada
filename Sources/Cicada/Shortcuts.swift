@@ -236,7 +236,11 @@ final class RightOptionKey {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
         case .flagsChanged:
             let flags = event.flags.rawValue
-            let isRight = event.getIntegerValueField(.keyboardEventKeycode) == Int64(kVK_RightOption)
+            let code = event.getIntegerValueField(.keyboardEventKeycode)
+            let isRight = code == Int64(kVK_RightOption)
+            // "I held ⌥ and nothing happened" was the left one (or a keyboard or remote session
+            // that only sends it): say so in the log.
+            if code == Int64(kVK_Option), flags & 0x20 != 0 { debugLog("right option: left ⌥ pressed, not the talk key") }
             if isRight, flags & RightOptionKey.rightAlt != 0 {
                 // Only a clean press starts talking, not ⌘ + right ⌥ and the like.
                 if !active, flags & RightOptionKey.otherModifiers == 0 { active = true; onDown?() }

@@ -31,6 +31,16 @@ import Testing
         #expect(!PressSpeech.spoken(press(quiet: 2, noise: 0.003, seconds: 0.1, level: 0.2)))
     }
 
+    /// The log's numbers: a loud quiet (the meeting's leftover echo) holds the line at its cap, and
+    /// a voice just under it counts for nothing.
+    @Test func theMeasureSaysWhyAPressWasQuiet() {
+        let m = PressSpeech.measure(press(quiet: 2, noise: 0.008, seconds: 2, level: 0.01))
+        #expect(m.line == 0.016)
+        #expect(!m.spoken)
+        #expect(m.summary.contains("line -36 dBFS"))
+        #expect(PressSpeech.measure([]).voiced == 0)
+    }
+
     @Test func fillersAloneAreNotSent() {
         #expect(PressSpeech.filler("嗯。"))
         #expect(PressSpeech.filler("嗯嗯"))

@@ -52,10 +52,59 @@ import Testing
         #expect(groups.map { $0.map(\.id) } == [["a", "b", "c"], ["d"], ["e"], ["f"]])
     }
 
+    @Test func paragraphsStopGrowingOnceFull() {
+        // Fast Japanese with no break (issue #20): a few sentences to a paragraph, not 30 s of them.
+        let ja = "いつも動画をご覧いただきありがとうございます。今回は新型が届いたので開封していきます。"  // 42 letters
+        let fast = (0..<6).map { line("j\($0)", Double($0) * 4, "them", ja) }
+        #expect(TranscriptParagraphs.group(fast, [:]).map { $0.map(\.id) } == [["j0", "j1"], ["j2", "j3"], ["j4", "j5"]])
+        // Ordinary English lines: 30 s still decides.
+        let en = (0..<4).map { line("e\($0)", Double($0) * 7, "them", "we should ship the fix this week") }
+        #expect(TranscriptParagraphs.group(en, [:]).map(\.count) == [4])
+    }
+
     @Test func paragraphsSplitBetweenSpeakers() {
         let lines = [line("a", 0), line("b", 2), line("c", 4)]
         let groups = TranscriptParagraphs.group(lines, ["a": 1, "b": 2, "c": 2])
         #expect(groups.map { $0.map(\.id) } == [["a"], ["b", "c"]])
+    }
+
+    @Test func paragraphsSplitBetweenVoicesBeforeNumbersShow() {
+        func said(_ id: String, _ t: Double, _ voice: Int?, _ src: String = "three whole words") -> TranscriptLine {
+            var l = line(id, t, "them", src); l.voice = voice; return l
+        }
+        // A speaks, B asks, A answers; a short "Yeah." heard as A stays put. b was like no voice,
+        // and reads on its own.
+        let lines = [said("a", 0, 1), said("b", 5, nil), said("c", 9, 2), said("d", 12, 1, "Yeah."),
+                     said("e", 14, 1), said("f", 18, 1)]
+        #expect(TranscriptParagraphs.group(lines, [:]).map { $0.map(\.id) } == [["a"], ["b"], ["c", "d"], ["e", "f"]])
+        // Once numbers show, they decide: lines without one stay together as before.
+        let shown = TranscriptParagraphs.group(lines, ["x": 1])
+        #expect(shown.map { $0.map(\.id) } == [["a", "b", "c", "d", "e", "f"]])
+        // A line whose voice is still being heard stays with the paragraph meanwhile.
+        let waiting = [said("a", 0, 1), said("b", 3, 1), said("c", 6, nil)]
+        #expect(TranscriptParagraphs.group(waiting, [:], pending: ["c"]).map { $0.map(\.id) } == [["a", "b", "c"]])
+        #expect(TranscriptParagraphs.group(waiting, [:]).map { $0.map(\.id) } == [["a", "b"], ["c"]])
+    }
+
+    /// The sample meeting: "Great, let's lock that in." is too short to start a voice of its own
+    /// and like no voice heard so far, so it has none. It doesn't join the answer before it.
+    @Test func lineLikeNoVoiceStartsItsOwnParagraph() {
+        func said(_ id: String, _ t: Double, _ voice: Int?, _ src: String) -> TranscriptLine {
+            var l = line(id, t, "them", src); l.voice = voice; return l
+        }
+        let lines = [said("a", 0, 0, "Okay, so where are we on the launch?"),
+                     said("b", 2, 1, "Uh, I think we can ship March 3rd if design signs off by Friday."),
+                     said("c", 7, nil, "Great, let's lock that in."),
+                     said("d", 9, nil, "Then I'll tell the team today."),
+                     said("e", 12, 1, "Sounds good to me.")]
+        #expect(TranscriptParagraphs.group(lines, [:]).map { $0.map(\.id) } == [["a"], ["b"], ["c", "d"], ["e"]])
+        // The live recognizer gave "Great." a line of its own: too short to compare, but it has no
+        // voice either, and starts the next speaker's paragraph.
+        let short = [lines[1], said("g", 7, nil, "Great."), said("h", 8, nil, "Let's lock that in")]
+        #expect(TranscriptParagraphs.group(short, [:]).map { $0.map(\.id) } == [["b"], ["g", "h"]])
+        // Voices off: no line has one, and one person's lines still read as a paragraph.
+        let off = lines.map { var l = $0; l.voice = nil; return l }
+        #expect(TranscriptParagraphs.group(off, [:]).map(\.count) == [5])
     }
 
     @Test func joinSpacesWordsNotChinese() {

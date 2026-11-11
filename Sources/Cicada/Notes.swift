@@ -55,6 +55,22 @@ struct NoteItem: Codable, Equatable, Identifiable {
     /// When it was said (first evidence line).
     var t: Double?
     var id: String { text }
+
+    /// The owner as stored ("你", "对方", "说话人2" or a name) in the UI language.
+    var ownerShown: String? {
+        guard let owner else { return nil }
+        switch owner {
+        case "你": return L("你")
+        case "对方": return L("对方")
+        case "未识别": return L("未识别")
+        default: break
+        }
+        if owner.hasPrefix("说话人"), let n = Int(owner.dropFirst(3).trimmingCharacters(in: .whitespaces)) { return L("说话人 \(n)") }
+        return owner
+    }
+
+    /// The to-do with its owner after it: "（对方）" in Chinese, " (Them)" in English.
+    var withOwner: String { text + (ownerShown.map { L("待办的负责人 \($0)") } ?? "") }
 }
 
 /// A name or term as the notes settled on it, and how speech recognition heard it.
@@ -67,6 +83,15 @@ struct NoteTerm: Codable, Equatable, Identifiable {
     /// Corrected spellings first: what a reader can't work out alone.
     static func ordered(_ terms: [NoteTerm]) -> [NoteTerm] {
         terms.filter { !$0.heard.isEmpty } + terms.filter { $0.heard.isEmpty }
+    }
+
+    /// The reply's terms in the order they were shown before, new ones after: the model often
+    /// returns the same names reshuffled, which would make the chips jump on every update.
+    static func keepingOrder(_ old: [NoteTerm], _ new: [NoteTerm]) -> [NoteTerm] {
+        let rank = Dictionary(old.enumerated().map { ($1.name, $0) }, uniquingKeysWith: { a, _ in a })
+        return new.enumerated().sorted { a, b in
+            (rank[a.element.name] ?? old.count + a.offset, a.offset) < (rank[b.element.name] ?? old.count + b.offset, b.offset)
+        }.map(\.element)
     }
 
     /// Roles that say a term is a person, for offering it as a speaker's name.
@@ -293,6 +318,8 @@ final class NotesEngine: ObservableObject {
                 return
             }
             if !final, !fresh { next.topics = Self.merge(base.topics, frozen: frozen, returned: next.topics) }
+            if !fresh { next.terms = NoteTerm.keepingOrder((id == shownID ? notes : session.notes)?.terms ?? [], next.terms) }
+            next.terms = Self.heardAsSaid(next.terms, lines: lines)
             Self.carryTimes(from: base, into: &next)
             // A reply without a name keeps the last one (not after a language change).
             if next.title == nil, !fresh { next.title = (id == shownID ? notes : session.notes)?.title }
@@ -424,6 +451,17 @@ final class NotesEngine: ObservableObject {
                          pointTimes: times.contains { $0 != nil } ? times : nil)
     }
 
+    /// Terms keep only the heard forms the recognizer really wrote (`src`). The notes read lines
+    /// with fixes in, so a wrong fix came back as a heard form ("X平台 heard as platform"), went to
+    /// the translator and the next fix's request as a known mishearing, and was proposed again.
+    static func heardAsSaid(_ terms: [NoteTerm], lines: [TranscriptLine]) -> [NoteTerm] {
+        terms.map { t in
+            var t = t
+            t.heard = t.heard.filter { h in lines.contains { $0.src.localizedCaseInsensitiveContains(h) } }
+            return t
+        }
+    }
+
     /// A runaway topic summary cut back to its first sentence (or to the limit, with "…").
     static func shortened(_ summary: String) -> String {
         guard summary.count > topicSummaryLimit else { return summary }
@@ -476,7 +514,7 @@ final class NotesEngine: ObservableObject {
             let l = lines[i]
             // A named voice goes as its name: notes then say "George" rather than "说话人2".
             let who = l.speaker == "me" ? "你" : l.isScreen ? "屏幕" : numbers[l.id].map { names[$0] ?? "说话人\($0)" } ?? (numbers.isEmpty ? "对方" : "未识别")
-            return "[L\(i + 1) \(clock(l.t)) \(who)] \(l.src)"
+            return "[L\(i + 1) \(clock(l.t)) \(who)] \(l.shown)"
         }
         var current = "{}"
         if !notes.isEmpty, let data = try? JSONEncoder().encode(Compact(notes, from: frozen)), let s = String(data: data, encoding: .utf8) {
@@ -537,7 +575,7 @@ final class NotesEngine: ObservableObject {
         - At most 5 conclusions and only real to-dos (often none).
         - Add a fishbone only to a topic that discusses causes, reasons or factors (3-5 branches); otherwise null.
         - Every topic, point, branch, conclusion and to-do needs evidence: the ids of the lines that say it. Never state anything the transcript does not say.
-        - terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used; note is a few words.
+        - terms: at most 10 in total, replacing less useful ones rather than adding: first names the transcript misspells (heard), then the people, places and jargon a reader would not know. Leave out what everyone knows (a famous company, index or politician) unless it was misheard. name is the correct spelling in the transcript's language (no translation in brackets); heard lists only the wrong forms the transcript used, and only of that same thing: a name said again and again in one spelling that context doesn't tie to a known one ("我们 twoty", "our platform") is a thing of its own, its own term with that spelling, not a mishearing of a similar name; note is a few words.
         - Write the meeting title and every summary, title, point, branch, conclusion and to-do in \(language), even when the transcript is in another language. Only term names keep the transcript's spelling.
         - 屏幕 lines: use them to complete what speakers refer to ("as you can see", "this chart"). Copy numbers, units and periods from 原文 exactly ($1.28M, (1,284), YoY +12.3%, Q3 FY26); never round, convert or recompute them, and never state a number that 原文 does not show.
         - Write about what was said, never about the transcript or recognition quality.

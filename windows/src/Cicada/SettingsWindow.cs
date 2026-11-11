@@ -9,7 +9,7 @@ namespace Cicada.App;
 /// 设置, as the Mac's settings window with no title bar: the categories as plain words on the left,
 /// the chosen one on a white pill, and its page on the right under a big title, the settings in
 /// white cards on the grey ground with each control at the right.
-sealed class SettingsWindow : Window
+sealed partial class SettingsWindow : Window
 {
     readonly Controller app;
     readonly ScrollViewer scroll = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Padding = new Thickness(40, 44, 40, 40) };
@@ -46,6 +46,9 @@ sealed class SettingsWindow : Window
         scroll.ScrollChanged += (_, e) => { if (e.ViewportWidthChange != 0 && scroll.Content is FrameworkElement p) p.Width = PageWidth(); };
         app.Ling.Changed += OnLingChanged;
         Closed += (_, _) => app.Ling.Changed -= OnLingChanged;
+        // While a talk key is being chosen no key reaches any app: leaving the window ends it.
+        Deactivated += (_, _) => StopChoosingKey();
+        Closed += (_, _) => { if (choosingKey) app.StopChoosingTalkKey(); };
         Render();
     }
 
@@ -61,6 +64,7 @@ sealed class SettingsWindow : Window
             Card(Icons.Globe, L("翻译成"), null, Ui.Choice(Ui.TargetOptions(), app.Settings.Target, app.SetTarget)),
             Card(null, L("纪要语言"), null, Ui.Choice([("system", L("和字幕一样")), .. Languages.Targets.Select(t => (t.Code, t.Name))], app.Settings.NotesLanguage, v => { app.Settings.NotesLanguage = v; Save(); })),
             Card(null, L("界面语言"), L("重新打开知了后生效"), Ui.Choice([("system", L("跟随系统")), ("zh-Hans", "简体中文"), ("en", "English"), ("ja", "日本語"), ("ko", "한국어")], app.Settings.UiLanguage, v => { app.Settings.UiLanguage = v; Save(); }))));
+        if (current == "words") Section(page, "words", L("词表"), WordCards());
         var size = new Slider { Minimum = 18, Maximum = 32, Value = app.Settings.SubtitleSize, Width = 200, IsSnapToTickEnabled = true, TickFrequency = 1, VerticalAlignment = VerticalAlignment.Center };
         System.Windows.Automation.AutomationProperties.SetName(size, L("字幕文字大小"));
         size.ValueChanged += (_, e) => { app.Settings.SubtitleSize = (int)e.NewValue; Save(); };
@@ -146,7 +150,7 @@ sealed class SettingsWindow : Window
         nav.Children.Clear();
         (string id, string icon, string label)[] items =
         [
-            ("ai", Icons.Key, L("AI 服务")), ("lang", Icons.Globe, L("语言")), ("listen", Icons.Wave, L("听的时候")),
+            ("ai", Icons.Key, L("AI 服务")), ("lang", Icons.Globe, L("语言")), ("words", Icons.List, L("词表")), ("listen", Icons.Wave, L("听的时候")),
             ("speak", Icons.Mic, L("同声传译")), ("end", Icons.Stop, L("结束会议")), ("privacy", Icons.Shield, L("隐私与启动")), ("about", Icons.Info, L("关于")),
         ];
         foreach (var (id, icon, label) in items)
@@ -260,21 +264,117 @@ sealed class SettingsWindow : Window
         var config = app.Ling.Config;
         var voices = VoiceCatalog.Options(target, config, app.WindowsVoice.Has(target))
             .Select(v => (v.Id, v.Id == VoiceCatalog.SystemId ? L("Windows 自带") : v.Tags.Length == 0 ? v.Name : $"{v.Name} · {string.Join(" · ", v.Tags.Split(" · ").Select(L))}")).ToList();
-        var chosen = VoiceCatalog.Chosen(s, target, config, app.Ling.Speaks);
+        var chosen = VoiceCatalog.Chosen(s, target, config, app.Ling.Speaks, app.WindowsVoice.Has(target));
         var voice = Ui.Row(8,
-            Ui.Choice(voices, chosen, v => { s.SpeakVoices[VoiceCatalog.Key(target)] = v; Save(); }, 280),
-            Ui.Button(L("试听"), () => _ = app.Preview(target), height: 32));
+            Ui.Choice(voices, chosen, v => { s.SpeakVoices[VoiceCatalog.Key(target)] = v; previewNote = null; Save(); Render(); }, 280),
+            Ui.Button(app.Previewing ? L("停止") : L("试听"), () => { if (app.Previewing) app.StopPreview(); else _ = RunPreview(); }, height: 32));
+        // No voice at all for the language (Windows has none, the service speaks none): say so before
+        // 试听 is pressed, as it would after.
+        var note = previewNote ?? (voices.Count == 0 ? PreviewNote(Controller.PreviewResult.NoVoice, target) : null);
         var mine = Languages.Sources.FirstOrDefault(x => x.Code == Languages.FromSystem(System.Globalization.CultureInfo.CurrentUICulture.Name))?.Name ?? "";
+        var key = PushToTalk.Current;
+        FrameworkElement keyControl = choosingKey ? ChoosingKeyBox()
+            : Ui.Row(10, Ui.Keycap(PushToTalk.Label, big: true), Ui.Button(L("更改"), StartChoosingKey, height: 32));
+        var keyHelp = choosingKey ? L(keyRefused ?? "Esc 取消")
+            : TalkKey.Note(key) is { } n ? L(n) : LF("按住%@说话，线上的人听到的是翻译后的声音", PushToTalk.Label);
         yield return Label(L("说话"));
         yield return Group(
-            Card(null, L("按住说话"), LF("按住%@说话，对方听到的是翻译后的声音", PushToTalk.Label), Ui.Keycap(PushToTalk.Label, big: true)),
+            Card(null, L("按住说话"), keyHelp, keyControl),
             Card(null, L("我说的语言"), null, Ui.Choice([("system", LF("跟随系统（%@）", mine)), .. Languages.Sources.Select(x => (x.Code, x.Name))], s.SpeakFrom, v => { s.SpeakFrom = v; Save(); Render(); })),
-            Card(null, L("对方听到的语言"), s.SpeakTo == "room" ? LF("现在是 %@", Ui.TargetName(target)) : null,
+            Card(null, L("线上的人听到的语言"), s.SpeakTo == "room" ? LF("现在是 %@", Ui.TargetName(target)) : null,
                 Ui.Choice([("room", L("对方说的语言")), .. Languages.Targets.Select(t => (t.Code, t.Name))], s.SpeakTo, v => { s.SpeakTo = v; Save(); Render(); })),
-            Card(null, LF("对方听到的声音（%@）", Ui.TargetName(target)), null, voice));
+            note is null ? Card(null, LF("线上的人听到的声音（%@）", Ui.TargetName(target)), null, voice)
+                : Ui.Stack(0, Card(null, LF("线上的人听到的声音（%@）", Ui.TargetName(target)), null, voice), PreviewNoteBox(note.Value)));
         yield return Label(L("麦克风"));
-        yield return Group(
-            Card(null, L("译文送进会议"), cable ? L("在会议软件里把麦克风选成 CABLE Output") : L("需要装免费的 VB-Cable；装的时候 Windows 会请你确认"), cableControl));
+        var mic = Card(null, L("译文送进会议"), cable ? L("在会议软件里把麦克风选成 CABLE Output") : L("需要装免费的 VB-Cable；装的时候 Windows 会请你确认"), cableControl);
+        if (cable && Endpoints.SpeakerIsCable())
+        {
+            var strip = CableInstaller.SpeakerStrip(this, Render);
+            strip.Margin = new Thickness(0, 4, 0, 12);
+            yield return Group(mic, strip);
+        }
+        else yield return Group(mic);
+    }
+
+    // 按住说话's 更改: waiting for a key, and why the last one pressed can't be it.
+    bool choosingKey;
+    string? keyRefused;
+
+    public void StartChoosingKey()
+    {
+        choosingKey = true; keyRefused = null;
+        app.ChooseTalkKey(KeyPressed);
+        Render();
+    }
+
+    void StopChoosingKey()
+    {
+        if (!choosingKey) return;
+        choosingKey = false; keyRefused = null;
+        app.StopChoosingTalkKey();
+        Render();
+    }
+
+    void KeyPressed(int vk)
+    {
+        if (!choosingKey) return;
+        if (vk == 0x1B) { StopChoosingKey(); return; }
+        var (key, refused) = TalkKey.Choose(vk);
+        if (key is null) { keyRefused = refused; app.ChooseTalkKey(KeyPressed); Render(); return; }
+        choosingKey = false; keyRefused = null;
+        app.SetTalkKey(key);
+        Render();
+    }
+
+    /// "按下想用的键…" in a dashed accent box where the keycap was.
+    static FrameworkElement ChoosingKeyBox()
+    {
+        var box = new Grid { Width = 176, Height = 36 };
+        box.Children.Add(new System.Windows.Shapes.Rectangle { Fill = Palette.AccentPale, Stroke = Palette.AccentFill, StrokeThickness = 1.5, StrokeDashArray = [4, 3], RadiusX = 8, RadiusY = 8 });
+        var t = Ui.Text(L("按下想用的键…"), 13, Palette.AccentText, wrap: false);
+        t.HorizontalAlignment = HorizontalAlignment.Center; t.VerticalAlignment = VerticalAlignment.Center;
+        box.Children.Add(t);
+        System.Windows.Automation.AutomationProperties.SetName(box, L("按下想用的键…"));
+        return box;
+    }
+
+    // 试听's result, shown under the voice until another voice is picked or 试听 is pressed again.
+    (string Title, string Help, bool VoiceSettings)? previewNote;
+
+    public async Task RunPreview()
+    {
+        var target = app.Speak.Target;
+        previewNote = null;
+        var playing = app.Preview(target);
+        Render();
+        var result = await playing;
+        previewNote = PreviewNote(result, target);
+        Render();
+    }
+
+    (string Title, string Help, bool VoiceSettings)? PreviewNote(Controller.PreviewResult result, string target) => result switch
+    {
+        Controller.PreviewResult.NoVoice => (LF("这台电脑没有%@的声音，没放出来。", Ui.TargetName(target)), L("在 Windows 设置里添加这个语言的语音，或者换一个 AI 服务的声音。"), true),
+        Controller.PreviewResult.NoSpeaker => (L("没放出声音：找不到扬声器。"), L("看看耳机或扬声器有没有连上。"), false),
+        Controller.PreviewResult.FellBack => (LF("%@ 的声音没连上，刚才放的是 Windows 自带的。", app.Ling.Config.Name), L("开会时也会这样换过去，不会不出声。"), false),
+        Controller.PreviewResult.Failed => (L("没放出声音。"), L("再试一次，还不行就换一个声音。"), false),
+        _ => null,
+    };
+
+    static FrameworkElement PreviewNoteBox((string Title, string Help, bool VoiceSettings) note)
+    {
+        // One wrapping line with the link inline: English runs wider than the card.
+        var help = Ui.Helper(note.Help);
+        help.TextWrapping = TextWrapping.Wrap;
+        if (note.VoiceSettings)
+        {
+            var link = new System.Windows.Documents.Hyperlink(new System.Windows.Documents.Run(L("打开语音设置"))) { Foreground = Palette.AccentText, TextDecorations = null, Cursor = System.Windows.Input.Cursors.Hand };
+            link.Click += (_, _) => { try { Process.Start(new ProcessStartInfo("ms-settings:speech") { UseShellExecute = true }); } catch { } };
+            help.Inlines.Add(new System.Windows.Documents.Run(" "));
+            help.Inlines.Add(link);
+        }
+        var text = Ui.Stack(3, Ui.Text(note.Title, 13, Palette.Ink), help);
+        return new Border { Background = Palette.Mica, CornerRadius = new CornerRadius(8), Padding = new Thickness(12, 9, 12, 10), Margin = new Thickness(0, 0, 0, 12), Child = text };
     }
 
     async Task InstallCable()
@@ -361,6 +461,12 @@ sealed class SettingsWindow : Window
             : notesOn ? Row(L("实时纪要"), uses, "ok", L("会中每 45 秒更新"))
             : Row(L("实时纪要"), off, "off", reason == AICheck.Reason.NoJSON ? L("这个服务不支持 JSON") : reason == AICheck.Reason.NoModel ? L("换一个模型后可用") : later);
         yield return textOn ? Row(L("翻译"), uses, "ok", L("整句用它；不行时换 Google")) : Row(L("翻译"), "Google", "off", ling.HasKey ? L("先用 Google 翻译") : L("没有 key 时照常可用"));
+        // 改正听错的词 (the Mac hides this row where the service hears, as here: Windows has no other
+        // way to hear, so it is shown, and says what it costs: Ming's translation leaves no text
+        // request to ride on, so each finished line is one more).
+        var fixOn = textOn && app.Settings.FixMisheard;
+        yield return Row(L("改正听错的词"), fixOn ? uses : textOn ? L("已关") : off, fixOn ? "ok" : "off",
+            fixOn ? L("每句话说完多发一次文字请求") : textOn ? L("在“词表”里打开") : later);
         // Windows speaks when the service can't, as the Mac does with its own voice.
         var speaks = ling.Speaks && !down;
         yield return speaks ? Row(L("同传声音"), uses, "ok", ling.LastVoice is { } last ? (last.Ok ? L("上次同传时正常") : L("上次同传没出声，用了 Windows 的声音")) : c.IsLing ? L("Ming 的声音") : c.VoiceModel!)

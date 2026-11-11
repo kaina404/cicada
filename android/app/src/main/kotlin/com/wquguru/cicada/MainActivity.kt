@@ -110,7 +110,7 @@ class MainActivity : Activity() {
         clockText = status
         val card = ui.card(ui.row(8, ui.dot(Palette.accent), status), gap = 12)
         card.addView(ui.helper(NotesViews.sourceLine(app)), ui.lp(top = 4))
-        NotesViews.currentLines(app).lastOrNull()?.let { l -> card.addView(ui.text(l.dst ?: l.src, 18f, Palette.ink, bold = true, lines = 3).apply { leading(1.4f) }, ui.lp(top = 12)) }
+        NotesViews.currentLines(app).lastOrNull()?.let { l -> card.addView(ui.text(l.dst ?: l.shown, 18f, Palette.ink, bold = true, lines = 3).apply { leading(1.4f) }, ui.lp(top = 12)) }
         card.addView(ui.button(L("回到正在听"), "primary", R.drawable.i_waves) { app.openLive() }, ui.lp(top = 16))
         return card
     }
@@ -265,7 +265,7 @@ class MainActivity : Activity() {
             // Under a day's heading: the time, how long, how many lines, and where it came from.
             val from = s.sourceFile?.let { L("导入") }
             val meta = if (live) "${time(s.startedAt)} · ${Languages.clock(s.durationSeconds)}"
-                       else listOfNotNull("${time(s.startedAt)}", Languages.clock(s.durationSeconds), "${s.lines.size} ${L("句")}", from).joinToString(" · ")
+                       else listOfNotNull("${time(s.startedAt)}", Languages.clock(s.durationSeconds), LF("%lld 句", s.lines.size), from).joinToString(" · ")
             val todos = s.notes?.todos?.size ?: 0
             val trailing = if (todos > 0) ui.badge(LF("%@ 个待办", todos), Palette.body, Palette.ground) else null
             return ui.listRow(title, meta, trailing = trailing, titleView = titleView) {

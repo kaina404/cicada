@@ -18,7 +18,10 @@ per connection, one JSON line back. Never in release builds.
   online both|no (answer 线上也有人？) | room-mic-force <source>|"" (a null sink's monitor as the room mic)
   hide notes | problem-wait <seconds>|off (how long unreachable lasts before its notification; off: 2 min)
   codecs (AAC encoder / decoders here) | play [<seconds>] | pause | rate (next speed) | playstate (the shown record's
-  recording: state, time, length, rate, the highlighted line) | settings-general (设置 at 通用)"""
+  recording: state, time, length, rate, the highlighted line) | settings-general (设置 at 通用)
+  share <record id>[,full][,pw] | unshare <record id> | share-last (how the last ended) | shareSheet <record id>|""
+  share-ui scope notes|full | days 7|30|365 | names|pw|summary on|off | options (更改) | go | strip | back | confirm
+           | copy all|link|password | revoke | close | state"""
 from __future__ import annotations
 
 import os
@@ -94,7 +97,8 @@ def _window(w) -> dict | None:
     gdk = w.get_window()
     return {"visible": w.get_visible(), "x": x, "y": y, "w": width, "h": height, "title": w.get_title(),
             "xid": gdk.get_xid() if gdk is not None and hasattr(gdk, "get_xid") else None,
-            "acceptFocus": w.get_accept_focus(), "active": w.is_active()}
+            "acceptFocus": w.get_accept_focus(), "active": w.is_active(),
+            "iconified": getattr(w, "iconified", None)}
 
 
 def _speakers(app, s) -> dict:
@@ -236,6 +240,16 @@ def command(app, line: str) -> dict:
     if cmd == "view":
         app.set_view(arg)
         return {"ok": True, "view": app.settings.view}
+    if cmd == "dock":  # dock on|off: 在 Dock 中显示, as its switch sets it
+        if arg in ("on", "off"):
+            app.set_show_in_dock(arg == "on")
+        w = app.records_window
+        return {"ok": True, "on": app.settings.showInDock, "records": _window(w),
+                "parked": w.parked if w is not None else None}
+    if cmd == "close" and arg == "records":  # the ✕ of the records window
+        if app.records_window is not None:
+            app.records_window.close()
+        return {"ok": True}
     if cmd == "show":
         {"records": app.show_records, "notes": app.show_notes, "settings": app.show_settings,
          "onboarding": app.show_onboarding}[arg]()
@@ -296,11 +310,13 @@ def command(app, line: str) -> dict:
             return {"ok": True, "on": app.settings.speakerVoices}
         return {"ok": True, **_speakers(app, app.store.get(arg))}
     if cmd == "speak-enable":
-        return {"ok": app.set_speak_enabled(arg == "on"), "enabled": app.settings.speakEnabled, "realMic": app.room.real_mic}
+        return {"ok": app.set_speak_enabled(arg == "on"), "enabled": app.settings.speakEnabled, "realMic": app.room.real_mic,
+                "talkEcho": app.talk_echo.on}
     if cmd == "speak":
         if (arg == "on") != app.speak.active:
             app.toggle_speaking()
-        return {"ok": True, "speaking": app.speak.active}
+        # echoCancelled: this press reads the talk key's echo canceller (else the plain mic, echo drop on)
+        return {"ok": True, "speaking": app.speak.active, "echoCancelled": app.speak.echo_cancelled}
     if cmd == "codecs":
         from . import media
         return {"ok": True, **media.codecs(), "recordAudio": app.settings.recordAudio, "recording": listen.recording}
@@ -411,9 +427,254 @@ def command(app, line: str) -> dict:
         app.show_onboarding()
         app.onboarding.go(int(arg))
         return {"ok": True, "step": app.onboarding.step if app.onboarding is not None else "done"}
+    if cmd.startswith(("fix", "vocab")) or cmd in ("heard", "ask-names", "resettle", "word-list"):
+        return _fixes(app, cmd, arg)
+    if cmd in ("share", "unshare", "share-last", "shareSheet", "share-ui"):
+        return _share(app, cmd, arg)
     if cmd == "quit":
         app.quit()
         return {"ok": True}
+    return {"ok": False, "error": "unknown command " + cmd}
+
+
+_share_last: dict = {}
+
+
+def _share(app, cmd: str, arg: str) -> dict:
+    """分享… (the Mac's share / unshare / shareSheet debug commands). The network runs on a thread:
+    `share` and `unshare` answer at once, `share-last` says how the last one ended."""
+    from ..core import share
+    from . import share_dialog
+    if cmd == "share-last":
+        return {"ok": True, **_share_last}
+    if cmd in ("share", "unshare"):
+        p = arg.split(",")
+        sid = p[0]
+        s = app.store.get(sid)
+        if s is None:
+            return {"ok": False, "error": "no such record"}
+        _share_last.clear()
+        _share_last["running"] = cmd
+
+        def run():
+            c = share_dialog.client()
+            if cmd == "unshare":
+                r = share.ShareStore.read(sid)
+                ok = r is not None and c.revoke(r, sid)
+                Log.d("share: revoked %s" % ok)
+                out = {"revoked": ok, "id": r.id if r else None}
+            else:
+                o = share.Options(scope="full" if "full" in p else "notes", password=share.make_password() if "pw" in p else None)
+                res = c.share(s, o)
+                out = {"kind": res.kind, "code": res.code, "hits": res.hits,
+                       "lines": sorted(share.record_lines(res.hits, res.kept))}
+                if res.record is not None:
+                    out.update({"id": res.record.id, "url": res.record.url, "password": res.record.password})
+                    Log.d("share: %s" % res.record.url)
+            _share_last.clear()
+            _share_last.update(out)
+        threading.Thread(target=run, name="Share", daemon=True).start()
+        return {"ok": True, "started": cmd}
+    if cmd == "shareSheet":
+        if not arg:
+            if app.share_dialog is not None:
+                app.share_dialog.close()
+            return {"ok": True}
+        s = app.store.get(arg)
+        if s is None:
+            return {"ok": False, "error": "no such record"}
+        app.show_records()
+        w = app.records_window
+        w.selected = arg
+        w.fill()
+        return {"ok": True, **share_dialog.open_for(app, s, w).state()}
+    # share-ui scope notes|full | days 7|30|365 | names|pw|summary on|off | options | go | strip | back | confirm
+    #          | copy all|link|password | revoke | close | state
+    d = app.share_dialog
+    if d is None:
+        return {"ok": False, "error": "no share dialog"}
+    act, _, val = arg.partition(" ")
+    if act == "scope":
+        d.scope = val
+    elif act == "days":
+        d.days = int(val)
+    elif act in ("names", "pw", "summary"):
+        setattr(d, {"names": "names", "pw": "use_password", "summary": "summary"}[act], val == "on")
+    elif act == "go":
+        d.go()
+    elif act == "strip":
+        d.strip()
+    elif act == "back":
+        d.step = "settings"
+    elif act == "confirm":
+        d.confirm = True
+    elif act == "options":
+        d.show_options = True
+    elif act == "copy" and d.record is not None:
+        r = d.record
+        d._copy({"link": r.url, "password": r.password or ""}.get(val) or d._message(r), val or "all")
+    elif act == "revoke":
+        d.revoke()
+    elif act == "close":
+        d.close()
+        return {"ok": True}
+    if act in ("scope", "days", "names", "pw", "summary", "back", "confirm", "options", "copy"):
+        d.render()
+    return {"ok": True, **d.state()}
+
+
+def _fix_state(app, sid: str) -> dict:
+    lines = app.store.lines(sid)
+    every = [f for l in lines for f in l.fixes or []]
+    return {"session": sid, "on": app.settings.fixMisheard, "askNames": app.settings.askNames,
+            "applied": sum(1 for f in every if f.applied), "asked": sum(1 for f in every if f.ask),
+            "off": sum(1 for f in every if f.off), "toast": app.fixes.toast_text(), "canUndo": app.fixes.can_undo,
+            "asking": (lambda a: [a[1].from_, a[1].to, a[3]] if a else None)(app.fixes.asking(sid)),
+            "pending": [[f.from_, f.to] for _l, f in app.fixes.pending(sid)],
+            "lines": [{"id": l.id, "src": l.src, "shown": l.shown, "dst": l.dst,
+                       "fixes": [f.to_json() for f in l.fixes]} for l in lines if l.fixes]}
+
+
+def _fixes(app, cmd: str, arg: str) -> dict:
+    """改正听错的词 (the Mac's fixes / heard / fixState / fixAnswer / fixLater / fixUndo / fixEdit /
+    fixRevert / vocabAdd / vocabState / resettle):
+      fixes on|off | ask-names on|off | heard <text>[|<translation>] (a finished sentence as if Ming heard it, in the
+      meeting being listened to: the record, the fixing request, the notes window all follow) |
+      fix-state [<id>] | fix-answer yes|no [<id>] | fix-later [<id>] | fix-undo | fix-revert <line> [<id>] |
+      fix-edit <line>=<text>[|one][|keep0][|@<id>] | vocab-add Morpho=莫拉、莫法[|…] | vocab-remove <word> |
+      vocab-state | fix-editor <line>=<text> (改这句… open in the records window) |
+      word-list [import <text>|edit <word>|delete <word>] (设置 › 词表 on screen) |
+      resettle <line>=<text> (the line heard again as <text>, then translated and fixed
+      again with the lines after it in view)"""
+    words = arg.split()
+    fx = app.fixes
+
+    def sid_at(i):
+        return words[i] if len(words) > i else (app.store.live or (app.store.all()[0].id if app.store.all() else ""))
+    if cmd == "fixes":
+        app.settings.fixMisheard = arg != "off"
+        app.settings.save()
+        app.changed()
+        return {"ok": True, "on": app.settings.fixMisheard}
+    if cmd == "ask-names":
+        app.settings.askNames = arg != "off"
+        app.settings.save()
+        return {"ok": True, "askNames": app.settings.askNames}
+    if cmd == "heard":
+        listen = app.listen
+        if not listen.listening or listen.session_id is None:
+            return {"ok": False, "error": "not listening"}
+        from types import SimpleNamespace
+        from ..core.translator import Heard
+        lang = listen._main.hint or "zh-CN"
+        seg = SimpleNamespace(start=listen.heard_seconds, seconds=2.0, index=0, voiceprint=None,
+                              asked=app.settings.resolved_target(lang))
+        # `heard <text>|<translation>`: a line Ming translated, the usual path (the fixing request
+        # replaces its translation); without one, the path of a line Ming left untranslated.
+        text, _, dst = arg.partition("|")
+        heard = Heard(lang, text, dst or None)
+
+        def run():
+            listen._record(listen._main, seg, heard)
+            app.changed()
+        threading.Thread(target=run, daemon=True).start()
+        return {"ok": True}
+    if cmd == "resettle":
+        line_id, _, text = arg.partition("=")
+        sid = app.store.live
+        line = app.store.line(sid, line_id) if sid else None
+        if line is None:
+            return {"ok": False, "error": "no such live line"}
+        line.src = text
+        app.store.replace(sid, line)
+        fx.apply_known(line_id, sid)
+
+        def run():
+            dst = app.translator.translate(text, line.srcLang, line.dstLang, app.translator.SENTENCE)
+            if dst:
+                now = app.store.line(sid, line_id)
+                now.dst = dst
+                app.store.replace(sid, now)
+        threading.Thread(target=run, daemon=True).start()
+        return {"ok": True}
+    if cmd == "fix-state":
+        return {"ok": True, **_fix_state(app, sid_at(0))}
+    if cmd == "fix-answer":
+        sid = sid_at(1)
+        a = fx.asking(sid) or next(((l, f, 1, 1) for l, f in fx.pending(sid)), None)
+        if a is None:
+            return {"ok": False, "error": "nothing waiting"}
+        fx.answer(a[1], words[0] == "yes", sid)
+        return {"ok": True, **_fix_state(app, sid)}
+    if cmd == "fix-later":
+        sid = sid_at(0)
+        a = fx.asking(sid)
+        if a is not None:
+            fx.later(a[1], sid)
+        return {"ok": a is not None, **_fix_state(app, sid)}
+    if cmd == "fix-undo":
+        fx.undo()
+        return {"ok": True}
+    if cmd == "fix-editor":
+        # 改这句… open on a line of the record shown, with <text> typed in (the VM can't type Chinese).
+        line_id, _, text = arg.partition("=")
+        w = app.records_window
+        if w is None or not w.get_visible():
+            return {"ok": False, "error": "records window not shown"}
+        w.edit_line(line_id, text or None)
+        return {"ok": True}
+    if cmd == "word-list":
+        # 设置 › 词表 on screen: `word-list` scrolls to it; `word-list import <text>` opens 粘贴导入 with
+        # <text> pasted ("|" for new lines); `word-list edit <word>` opens its spelling.
+        app.show_settings()
+        sw = app.settings_window
+        wl = sw.word_list
+        kind, _, rest = arg.partition(" ")
+        if kind == "import":
+            wl._import()
+            wl.dialog_view.get_buffer().set_text(rest.replace("|", "\n"))
+        elif kind == "edit":
+            wl._edit(rest)
+        elif kind == "heard":  # word-list heard <word>=<form>: typed into its 加一个容易听错的词
+            word, _, form = rest.partition("=")
+            t = next((t for t in app.vocabulary.snapshot() if t.word == word), None)
+            if t is not None:
+                wl._add_heard(t, form)
+        elif kind == "delete":
+            t = next((t for t in app.vocabulary.snapshot() if t.word == rest), None)
+            if t is not None:
+                wl._remove(t)
+
+        def scroll():
+            pos = sw.word_list_group.translate_coordinates(sw.scroll.get_child().get_child(), 0, 0)
+            if pos:
+                sw.scroll.get_vadjustment().set_value(max(0, pos[-1] - 12))
+            return False
+        GLib.timeout_add(200, scroll)
+        return {"ok": True}
+    if cmd == "fix-revert":
+        sid = sid_at(1)
+        line = app.store.line(sid, words[0]) if words else None
+        f = next((f for f in (line.fixes or []) if f.applied), None) if line else None
+        if f is None:
+            return {"ok": False, "error": "no applied fix on that line"}
+        fx.revert(f, line.id, sid)
+        return {"ok": True, **_fix_state(app, sid)}
+    if cmd == "fix-edit":
+        line_id, _, rest = arg.partition("=")
+        opts = rest.split("|")
+        sid = next((o[1:] for o in opts[1:] if o.startswith("@")), None) or sid_at(99)
+        n = fx.edit(line_id, sid, opts[0], everywhere="one" not in opts, remember="keep0" not in opts)
+        return {"ok": n > 0, "changed": n, **_fix_state(app, sid)}
+    if cmd == "vocab-add":
+        r = app.vocabulary.import_text(arg.replace("|", "\n"))
+        return {"ok": True, "added": r.added, "updated": r.updated, "skipped": r.skipped}
+    if cmd == "vocab-remove":
+        app.vocabulary.remove(arg)
+        return {"ok": True}
+    if cmd == "vocab-state":
+        return {"ok": True, "path": app.vocabulary.path,
+                "terms": [t.to_json() for t in app.vocabulary.snapshot()]}
     return {"ok": False, "error": "unknown command " + cmd}
 
 

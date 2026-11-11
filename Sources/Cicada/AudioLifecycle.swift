@@ -1,10 +1,5 @@
 import Foundation
 
-/// Hardware input creation, disposal and format queries share one lane. None may wait on UI.
-enum AudioLifecycle {
-    static let queue = DispatchQueue(label: "com.wquguru.cicada.audio-lifecycle", qos: .userInitiated)
-}
-
 /// A newer device event replaces pending work; stopping also invalidates callbacks from old sources.
 struct AudioRevision {
     private(set) var value: UInt64 = 0

@@ -16,7 +16,8 @@ sys.path.insert(0, HERE)
 import test_core as tc  # noqa: E402 - its helpers; a module import, so its tests aren't collected twice
 from cicada.core import aac  # noqa: E402
 from cicada.core.audio import RATE, PcmAudioSource  # noqa: E402
-from cicada.core.listen import ListenEngine  # noqa: E402
+from cicada.core.listen import ListenEngine, RoomMix  # noqa: E402
+from array import array  # noqa: E402
 from cicada.core.models import TranscriptLine  # noqa: E402
 from cicada.core.notes import NotesEngine  # noqa: E402
 from cicada.core.session_store import SessionStore  # noqa: E402
@@ -79,6 +80,7 @@ class HasAudio(tc.Base):
 class FakeRecorder:
     def __init__(self):
         self.samples = 0
+        self.pcm = array("h")
         self.closed = False
         self.finished = threading.Event()
         self.until = "unset"
@@ -86,6 +88,7 @@ class FakeRecorder:
     def write(self, buf):
         assert not self.closed
         self.samples += len(buf)
+        self.pcm.extend(buf)
 
     def close(self):
         self.closed = True
@@ -142,6 +145,73 @@ class Recording(tc.Base):
         engine.start(src, "file")
         self.assertFalse(engine.recording)
         engine.stop()
+
+
+def loud(pcm, a, b):
+    """The largest sample between a and b seconds."""
+    return max((abs(v) for v in pcm[int(a * RATE):int(b * RATE)]), default=0)
+
+
+class Mix(unittest.TestCase):
+    """电脑和会议室: the room mic goes into the meeting's one recording, at its place on the clock (#19)."""
+
+    def test_the_room_is_added_where_it_was_heard(self):
+        rec = FakeRecorder()
+        mix = RoomMix(rec)
+        for i in range(30):  # 3 s of the computer at 1000, in 0.1 s buffers; the room at 500 from 1 s to 2 s
+            mix.write(array("h", [1000] * 1600))
+            if 10 <= i < 20:
+                mix.room(array("h", [500] * 1600), i * 1600)
+        mix.close()
+        self.assertTrue(rec.closed)
+        self.assertEqual(3 * RATE, rec.samples)
+        self.assertEqual(1000, loud(rec.pcm, 0, 1))
+        self.assertEqual(1500, loud(rec.pcm, 1, 2))
+        self.assertEqual(1000, loud(rec.pcm, 2, 3))
+
+    def test_a_room_buffer_a_little_late_is_still_mixed(self):
+        rec = FakeRecorder()
+        mix = RoomMix(rec)
+        for i in range(20):
+            mix.write(array("h", [0] * 1600))
+            if i >= 5:  # the room's buffer for each 0.1 s arrives half a second after the computer's
+                mix.room(array("h", [700] * 1600), (i - 5) * 1600)
+        mix.close()
+        self.assertEqual(700, min(rec.pcm[:int(1.5 * RATE)]))
+
+    def test_the_room_alone_is_the_recording_and_it_clips_instead_of_wrapping(self):
+        rec = FakeRecorder()
+        mix = RoomMix(rec)
+        mix.write(array("h", [30000] * 1600))
+        mix.room(array("h", [30000] * 1600), 0)
+        mix.room(array("h", [800] * 1600), 2 * RATE)  # the computer stopped sending: the room goes on
+        mix.close()
+        self.assertEqual(32767, rec.pcm[0])
+        self.assertEqual(2 * RATE + 1600, rec.samples)
+        self.assertEqual(0, loud(rec.pcm, 0.2, 2))
+        self.assertEqual(800, rec.pcm[-1])
+
+    def test_both_lanes_end_up_in_the_file(self):
+        from test_hybrid import both_engine
+        store = SessionStore()
+        e = both_engine(store, "x")
+        rec = FakeRecorder()
+        e.recorder = lambda sid: rec
+        # In real time, as the sound server sends them: the computer's tone 0-1 s, the room's 0.5-2.1 s.
+        main = PcmAudioSource(lambda: tc.concat(tc.tone(1.0), tc.silence(1.0)), speed=1)
+        room = PcmAudioSource(lambda: tc.concat(tc.silence(0.5), tc.tone(1.6, amp=0.2), tc.silence(0.4)), speed=1)
+        done = [threading.Event(), threading.Event()]
+        main.on_ended = lambda why: done[0].set()
+        room.on_ended = lambda why: done[1].set()
+        e.start(main, "both")
+        e.start_room(room, gated=False)
+        for d in done:
+            d.wait(10)
+        time.sleep(0.3)
+        e.stop()
+        self.assertTrue(rec.closed)
+        self.assertTrue(rec.finished.wait(5))
+        self.assertGreater(loud(rec.pcm, 1.2, 2.0), 3000, "the room's tone, after the computer's ended")
 
 
 if __name__ == "__main__":

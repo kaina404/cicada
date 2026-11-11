@@ -69,4 +69,64 @@ enum AudioFileWriter {
             try? FileManager.default.removeItem(at: url)
         }
     }
+
+    /// Adds `other` into `url` (two recordings on one clock from their first sample) and writes
+    /// the sum over `url` in its format; the longer of the two sets the length. False leaves both.
+    nonisolated static func mix(_ other: URL, into url: URL) -> Bool {
+        guard let a = try? AVAudioFile(forReading: url), let b = try? AVAudioFile(forReading: other) else { return false }
+        let format = a.processingFormat
+        let tmp = url.deletingLastPathComponent().appendingPathComponent("mixing-" + url.lastPathComponent)
+        try? FileManager.default.removeItem(at: tmp)
+        let chunk: AVAudioFrameCount = 16384
+        guard format.commonFormat == .pcmFormatFloat32,
+              let out = open(tmp, format: format),
+              let bufA = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: chunk),
+              let bufB = AVAudioPCMBuffer(pcmFormat: b.processingFormat, frameCapacity: chunk) else { return false }
+        let converter = PCMConverter()
+        var pending: [Float] = [] // `other`, in `url`'s format, not mixed yet
+        var aDone = false, bDone = false
+        do {
+            while true {
+                while !bDone, pending.count < Int(chunk) {
+                    do { try b.read(into: bufB, frameCount: chunk) } catch { bDone = true; break }
+                    if bufB.frameLength == 0 { bDone = true; break }
+                    if let c = converter.convert(bufB, to: format), let d = c.floatChannelData {
+                        pending.append(contentsOf: UnsafeBufferPointer(start: d[0], count: Int(c.frameLength)))
+                    }
+                }
+                if !aDone {
+                    do { try a.read(into: bufA, frameCount: chunk) } catch { bufA.frameLength = 0 }
+                    if bufA.frameLength == 0 { aDone = true }
+                }
+                if aDone {
+                    // `url` ended first: the rest of `other` over silence.
+                    let n = min(Int(chunk), pending.count)
+                    if n == 0 { break }
+                    bufA.frameLength = AVAudioFrameCount(n)
+                    for ch in 0..<Int(format.channelCount) { bufA.floatChannelData![ch].update(repeating: 0, count: n) }
+                }
+                let n = Int(bufA.frameLength), take = min(n, pending.count)
+                for ch in 0..<Int(format.channelCount) {
+                    let d = bufA.floatChannelData![ch]
+                    for i in 0..<take { d[i] = max(-1, min(1, d[i] + pending[i])) }
+                }
+                pending.removeFirst(take)
+                try out.write(from: bufA)
+            }
+        } catch {
+            debugLog("audio mix failed \(url.lastPathComponent): \(error)")
+            try? FileManager.default.removeItem(at: tmp)
+            return false
+        }
+        // Closes the file before it takes `url`'s place.
+        _ = consume out
+        do {
+            _ = try FileManager.default.replaceItemAt(url, withItemAt: tmp)
+            return true
+        } catch {
+            debugLog("audio mix failed \(url.lastPathComponent): \(error)")
+            try? FileManager.default.removeItem(at: tmp)
+            return false
+        }
+    }
 }

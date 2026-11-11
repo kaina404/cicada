@@ -418,7 +418,8 @@ extension MenuPanelView {
 
 /// 打开麦克风 / 关闭麦克风, the same switch in the panel and the notes window. In the panel it is
 /// the dark button while off (the thing to do) and a quiet one while on; in the notes window's
-/// header it sits beside 结束 like it, tinted while the microphone is on.
+/// header it sits beside 结束 like it, tinted while the microphone is on. Its chevron picks the
+/// microphone, where the user is when the room sounds wrong rather than in Settings.
 struct MicButton: View {
     @ObservedObject var model: AppModel
     @ObservedObject var settings: AppSettings
@@ -426,22 +427,58 @@ struct MicButton: View {
 
     var body: some View {
         let on = model.micOn
-        Button { model.setMic(!on) } label: {
-            HStack(spacing: 5) {
-                Image(systemName: on ? "mic.fill" : "mic")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(on ? Palette.accent : (inHeader ? Palette.ink : Color.white))
-                Text(on ? L("关闭麦克风") : L("打开麦克风")).font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(!on && !inHeader ? Color.white : Palette.ink)
-                    .lineLimit(1).fixedSize()
+        HStack(spacing: 0) {
+            Button { model.setMic(!on) } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: on ? "mic.fill" : "mic")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(on ? Palette.accent : (inHeader ? Palette.ink : Color.white))
+                    Text(on ? L("关闭麦克风") : L("打开麦克风")).font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(ink(on))
+                        .lineLimit(1).fixedSize()
+                }
+                .padding(.leading, inHeader ? 10 : 12).padding(.trailing, 7).frame(height: 28)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, inHeader ? 10 : 12).frame(height: 28)
-            .background(RoundedRectangle(cornerRadius: 7).fill(background(on)))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(border(on), lineWidth: 1))
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(on ? L("关闭麦克风") : L("打开麦克风"))
+            Rectangle().fill(divider(on)).frame(width: 1, height: 14)
+            chooser(on)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(on ? L("关闭麦克风") : L("打开麦克风"))
+        .background(RoundedRectangle(cornerRadius: 7).fill(background(on)))
+        .overlay(RoundedRectangle(cornerRadius: 7).stroke(border(on), lineWidth: 1))
+    }
+
+    /// The room's microphones, with 自动 first naming the one it would take. A chosen one that is
+    /// unplugged shows as 自动 until it is back.
+    private func chooser(_ on: Bool) -> some View {
+        let choices = AudioDevices.roomMicChoices()
+        let chosen = choices.contains { $0.device.uid == settings.roomMicUID } ? settings.roomMicUID : ""
+        let auto = AudioDevices.roomMic()?.name
+        return Menu {
+            Picker(L("会议室用哪个麦克风"), selection: Binding(get: { chosen }, set: { model.setRoomMic($0) })) {
+                Text(auto.map { L("自动（\($0)）") } ?? L("自动")).tag("")
+                ForEach(choices, id: \.device.uid) { c in
+                    // A headset hears its wearer, not the table: fine for your own notes, so say it.
+                    Text(c.bluetooth ? L("\(c.device.name)（只听得到戴的人）") : c.device.name).tag(c.device.uid)
+                }
+            }
+            .pickerStyle(.inline)
+        } label: {
+            Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
+                .foregroundStyle(ink(on).opacity(0.75))
+                .frame(width: 24, height: 28).contentShape(Rectangle())
+        }
+        .menuStyle(.button).buttonStyle(.plain).menuIndicator(.hidden).fixedSize()
+        .accessibilityLabel(L("选择麦克风"))
+        .help(L("选择麦克风"))
+    }
+
+    private func ink(_ on: Bool) -> Color { !on && !inHeader ? Color.white : Palette.ink }
+
+    private func divider(_ on: Bool) -> Color {
+        if inHeader { return on ? Palette.accent.opacity(0.25) : Palette.line }
+        return on ? Palette.line : Color.white.opacity(0.25)
     }
 
     private func background(_ on: Bool) -> Color {
@@ -768,6 +805,12 @@ struct MainWindowView: View {
     /// The bilingual column beside the notes is opt-in: three full columns of text read as crowded.
     @AppStorage("mainShowQuotes") private var showQuotes = false
     @State private var showOlder = false
+    /// 分享…: the meeting whose share sheet is open.
+    @State private var sharing: Session?
+    /// 改这句…: the line being rewritten, and what the editor opens with.
+    @State private var editingLine: String?
+    @State private var editingStart = ""
+    @State private var hoveredLine: String?
 
     /// Wide enough for the notes and the bilingual transcript side by side.
     private var sideBySide: Bool { showQuotes && wideEnough }
@@ -777,7 +820,7 @@ struct MainWindowView: View {
         guard !query.isEmpty else { return store.sessions }
         return store.sessions.filter { s in
             s.displayTitle.localizedCaseInsensitiveContains(query)
-                || s.lines.contains { $0.src.localizedCaseInsensitiveContains(query) || ($0.dst ?? "").localizedCaseInsensitiveContains(query) }
+                || s.lines.contains { $0.shown.localizedCaseInsensitiveContains(query) || ($0.dst ?? "").localizedCaseInsensitiveContains(query) }
         }
     }
 
@@ -817,9 +860,13 @@ struct MainWindowView: View {
         .onChange(of: current?.id, initial: true) { _, _ in loadPlayer() }
         // A meeting that ends while it is shown, and its recording once it is rewrapped into an .m4a.
         .onChange(of: store.liveID) { _, _ in loadPlayer() }
-        .onChange(of: store.audioFinished) { _, id in if id == current?.id { loadPlayer() } }
+        // Opened afresh: a file opened before the room was mixed in (#19) would play one side only.
+        .onChange(of: store.audioFinished) { _, id in if id == current?.id { player.unload(); loadPlayer() } }
         .onReceive(NotificationCenter.default.publisher(for: .debugPlay)) { n in
             if let t = n.object as? Double { player.play(from: t) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .debugShareSheet)) { n in
+            sharing = (n.object as? String).flatMap { store.session($0) }
         }
         .onChange(of: model.mainShow) { _, show in
             guard let parts = show?.split(separator: ",").map(String.init), let id = parts.first else { return }
@@ -1102,6 +1149,13 @@ struct MainWindowView: View {
                 .buttonStyle(.plain)
                 .help(showQuotes ? L("收起原话") : L("在纪要旁显示原话"))
             }
+            // Not while the meeting is still going, nor before an import has its text.
+            Button { sharing = s } label: {
+                Text("分享…").font(.system(size: 13)).foregroundStyle(Palette.secondary)
+            }
+            .buttonStyle(.plain)
+            .disabled((s.lines.isEmpty && (s.notes?.isEmpty ?? true)) || store.liveID == s.id || importer.status(of: s) != nil)
+            .sheet(item: $sharing) { shared in ShareSheet(session: shared) { sharing = nil } }
             Menu {
                 Button("复制为 Markdown") { model.export(s, kind: "copy") }
                 Divider()
@@ -1260,10 +1314,8 @@ struct MainWindowView: View {
             }
             else if let speaker { SpeakerTag(number: speaker).padding(.bottom, 2) }
             else if voices, l.speaker != "me" { UnknownSpeakerTag().padding(.bottom, 2) }
-            else if l.speaker == "me" {
-                Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk).padding(.bottom, 2)
-            }
-            Text(l.src).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineSpacing(1)
+            else if l.speaker == "me" { MeTag().padding(.bottom, 2) }
+            Text(l.shown).font(.system(size: 12)).foregroundStyle(Palette.secondary).lineSpacing(1)
                 .textSelection(.enabled)
             // What the screen showed is read, not heard: it is never translated.
             if !l.isScreen, !l.isAI || (model.settings.askGloss && l.dst != nil) {
@@ -1301,10 +1353,18 @@ struct MainWindowView: View {
                     let starts = SpeakerLabels.runStarts(s.lines, speakers).union(both ? RecordList.placeStarts(s.lines) : [])
                     let voices = SpeakerLabels.voiceNumbers(s.lines)
                     let playingLine = player.lineID(in: s)
+                    if s.id != store.liveID {
+                        FixReviewBanner(fixes: model.fixes, session: s, onShow: { id in withAnimation { proxy.scrollTo(id, anchor: .center) } },
+                                        onEdit: { l, suggestion in editingStart = suggestion; editingLine = l.id; proxy.scrollTo(l.id, anchor: .center) })
+                            .padding(.bottom, 10)
+                    }
                     ForEach(s.lines) { l in
                         lineRow(l, speaker: speakers[l.id], label: speakers.isEmpty || starts.contains(l.id), voices: !speakers.isEmpty, place: both, in: s,
                                 current: l.id == playingLine)
-                            .contextMenu { if !speakers.isEmpty, l.speaker == "them" { assignMenu(s, l, voices) } }
+                            .contextMenu {
+                                Button(L("改这句…")) { editingStart = l.shown; editingLine = l.id }
+                                if !speakers.isEmpty, l.speaker == "them" { assignMenu(s, l, voices) }
+                            }
                             .id(l.id)
                     }
                 }
@@ -1319,6 +1379,7 @@ struct MainWindowView: View {
                 if pinned { pinnedBar(s) { withAnimation { proxy.scrollTo(PinnedHeader.top, anchor: .top) } } }
             }
             .animation(.easeOut(duration: 0.15), value: pinned)
+            .overlay(alignment: .bottom) { FixToast(fixes: model.fixes).padding(.bottom, 18) }
             .onChange(of: s.lines.count) { _, _ in
                 if s.id == store.liveID, let last = s.lines.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -1369,8 +1430,9 @@ struct MainWindowView: View {
                     } else if let speaker { SpeakerTag(number: speaker) }
                     else if shownSession?.sourceFile == nil {
                         // An imported file has no "other side": its lines carry no label.
-                        Text(me ? L("你") : L("对方")).font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(me ? Palette.accentInk : Palette.secondary)
+                        if me { MeTag() } else {
+                            Text("对方").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary)
+                        }
                     }
                     if place, label, l.speaker == "them" { PlaceTag(line: l) }
                 }
@@ -1379,8 +1441,10 @@ struct MainWindowView: View {
                     Text(l.src).font(.system(size: 13)).foregroundStyle(Palette.secondary).lineSpacing(2)
                         .textSelection(.enabled)
                 }
-                if view != "dst" || (l.isAI && !model.settings.askGloss), !l.isScreen {
-                    Text(l.src)
+                if editingLine == l.id, let s = shownSession {
+                    LineEditor(line: l, session: s.id, fixes: model.fixes, start: editingStart) { editingLine = nil }
+                } else if view != "dst" || (l.isAI && !model.settings.askGloss), !l.isScreen {
+                    Text(TranscriptParagraphs.joinFixed([l]))
                         .font(.system(size: view == "src" ? 15 : 13))
                         .foregroundStyle(view == "src" ? Palette.ink : Palette.tertiary)
                         .lineSpacing(2)
@@ -1392,9 +1456,21 @@ struct MainWindowView: View {
                         .foregroundStyle(l.dst == nil ? Palette.tertiary : Palette.ink)
                         .textSelection(.enabled)
                 }
+                // Pointing at a line: what its fixed words were heard as, 改回, and 改这句….
+                if hoveredLine == l.id, editingLine != l.id, let s = shownSession {
+                    HStack(spacing: 8) {
+                        let fixed = (l.fixes ?? []).filter(\.applied).map { (l.id, $0) }
+                        if !fixed.isEmpty { FixedWords(fixes: fixed) { id, f in model.fixes.revert(f, lineID: id, in: s.id) } }
+                        Button(L("改这句…")) { editingStart = l.shown; editingLine = l.id }
+                            .buttonStyle(.plain).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.link)
+                    }
+                    .padding(.top, 2)
+                }
             }
             Spacer(minLength: 0)
         }
+        .contentShape(Rectangle())
+        .onHover { inside in if inside { hoveredLine = l.id } else if hoveredLine == l.id { hoveredLine = nil } }
         .padding(.vertical, 12)
         // The line the recording is playing.
         .background(RoundedRectangle(cornerRadius: 10).fill(current ? Palette.accentPale : .clear).padding(.horizontal, -10))
@@ -1678,4 +1754,6 @@ struct LanguageNotice: View {
 extension Notification.Name {
     /// Debug `play:<seconds>`: the shown record plays from there.
     static let debugPlay = Notification.Name("cicada.debugPlay")
+    /// Debug `shareSheet:<id>`: the 分享… sheet opens for that record (no id: it closes).
+    static let debugShareSheet = Notification.Name("cicada.debugShareSheet")
 }

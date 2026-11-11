@@ -1,50 +1,18 @@
 <p align="center">
-
-Assistant 的数字（如 `2000`、`10%`、`0.1%`）也会显示完整英式音标；小数逐位读出，音标不计入耳返、翻译或阅读进度。
-
-运行时常驻 Dock，记录时图标显示橙点；右键可开始或停止记录、打开实时纪要、会议记录和设置。可在设置中关闭“在 Dock 中显示”。
-  <img src="docs/icon.png" width="128" height="128" alt="知了图标">
+  <img src="docs/icon.png" width="128" height="128" alt="Cicada icon">
 </p>
 
-<h1 align="center">知了 · Cicada</h1>
-
-Mac 面试教练设置默认收起；点击“面试教练”标题展开面试阶段、陪读、状态和麦克风设置，为回答留出更多空间。
-
-Mac 面试教练的资料统一放在一个文件夹：个人简介、求职需求、历史公司、项目、预制回答和目标公司各一份 Markdown，每次整份交给 AI，不再检索切片；回答优先依据资料，可用常识自然展开。
-
-Mac 面试教练改进中英文离职、薪资和交接追问：优先检索相关背景，直接陈述已知事实，减少缺失资料的套话。
-
-Mac Assistant 已补充 ActAI 自我介绍追问资料：SKU 提速按已确认事实回答，待核对方案不当作个人经历。
-
-Mac 面试教练按已提供的背景回答团队人数、职责变化和汇报关系；缺失的历史组织信息不作估算，团队追问优先回答当前问题。
-
-Assistant 陪读的播放速度旁新增喇叭按钮，可调节 0–100% 音量；播放中立即生效并记住设置。原默认音量为 55%，可调到 100%。
-
-Mac 面试教练在面试官要求开场自我介绍时使用用户确认的 HR 版英文稿（标准版四段，另有约 45 秒短版）；明确要求简短版时用短版，后续追问按当前问题回答。
-
-Mac 实时纪要浮窗默认高度为所在屏幕可用高度的 3/4，仍可拖动边缘调整并记住尺寸。
-
-Mac 下载语音模型时，进度状态在主线程更新，避免开始记录时界面卡死。
-
-Mac 面试教练可在 Assistant 中选择通用、HR、CTO 或 CEO 面试阶段；回答结合背景补充工程细节和合理估算，按当前问题调整口吻与篇幅。
-
-Mac 面试教练可勾选“陪读”：本机 Kokoro-82M 提前预热并合成英文回答，打开 Cicada 的 Assistant 悬浮回答和独立 Apple Watch App 后，长按手表续播、松开立即请求暂停，保留音频位置。无需开启候选人麦克风。默认关闭，只向当前系统耳机（含 AirPods）输出，不接会议虚拟麦克风；耳机断开即停止。首次启用自动准备本机运行环境与模型，需联网下载；回答合成留在本机。实际手表与 AirPods 停声时延仍需真人验收。 手表单击选中并播放下一句、双击选中并播放上一句，播放一句后暂停；滚轮上下切句并从句首待播，再长按播放。播放出错后松手重新长按可重试。直接滑动移动浮窗；长按期间及松手时均不移动浮窗。Mac 接收端已集成 Cicada，无需 WatchControl 或辅助功能权限。开发构建和本机配对见 [Apple Watch 模块](watch/README.md)。 跟随朗读默认开启：当前句平滑滚动到列表顶部附近并留出间距，便于预看后续未读内容；第一句回到列表开头。
-
-陪读文字按音频实际位置逐词填色，文字固定并垂直跟随；点击单词可跳播，支持 0.75×、1×、1.25×，松手暂停时填色也停住。
-
-Mac 面试教练的麦克风开关旁显示当前设备；点击设备名直接打开「设置 › 同声传译」，通过「知了听你说话用」统一选择候选人发言和按住说话的输入麦克风。
-
-Mac 设置窗口可拖动边缘调整宽高，并记住窗口大小。在「设置 › 通用 › 界面语言」选择简体中文、English 或跟随系统，重新打开软件后生效。
+<h1 align="center">Cicada · 知了</h1>
 
 <p align="center">
-  任何会议、任何直播，没有语言障碍。<br>
-  听得懂，说得出，记得住。Mac、Windows、Linux 和 Android 上的实时纪要、双语文字记录、字幕与同声传译。
+  Every call. Every stream. No language barrier.<br>
+  Understand, speak back, and remember everything. Live meeting notes, bilingual transcripts, subtitles and interpreting on Mac, Windows, Linux and Android.
 </p>
 
 <p align="center">
-  <a href="https://cicada.indaloop.app"><img src="https://img.shields.io/badge/官网-cicada.indaloop.app-E8552B?style=for-the-badge" alt="官网 cicada.indaloop.app" height="36"></a>
+  <a href="https://cicada.indaloop.app"><img src="https://img.shields.io/badge/Website-cicada.indaloop.app-E8552B?style=for-the-badge" alt="Website: cicada.indaloop.app" height="36"></a>
   &nbsp;
-  <a href="https://cicada.indaloop.app/download/"><img src="https://img.shields.io/badge/下载-Mac%20·%20Windows%20·%20Linux%20·%20Android-15171C?style=for-the-badge" alt="下载 Mac、Windows、Linux、Android 版" height="36"></a>
+  <a href="https://cicada.indaloop.app/en/download/"><img src="https://img.shields.io/badge/Download-Mac%20·%20Windows%20·%20Linux%20·%20Android-15171C?style=for-the-badge" alt="Download for Mac, Windows, Linux and Android" height="36"></a>
 </p>
 
 <p align="center">
@@ -55,187 +23,216 @@ Mac 设置窗口可拖动边缘调整宽高，并记住窗口大小。在「设�
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0">
 </p>
 
-<p align="center"><a href="README.md">简体中文</a> · <a href="README.en.md">English</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
+<p align="center"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 
-无论是用 Zoom、飞书、腾讯会议开会，还是听 X Spaces 和 YouTube 直播，知了都能实时给出双语字幕、边听边写结构化纪要。遇到需要发言的时候，按住说话键（Mac 上是右 `⌥`，Windows 上是右 `Ctrl`）开口，对方就能在会里直接听到翻译好的语音。知了直接读取系统声音，不用往会里塞机器人，对方完全无感；在 Apple 芯片的 Mac 上还全部在本机识别，声音不出电脑。
+In meetings or livestreams, Cicada gives you live bilingual subtitles and writes structured meeting notes as it listens. When it's your turn to speak, hold the talk key (right `⌥` on Mac, right `Ctrl` on Windows, customizable) and talk—the other side hears your translated voice right in the call. Cicada listens to system audio directly without sending bots into the meeting, so no one else notices a thing. On Apple silicon Macs, all speech recognition runs on device, so audio never leaves your computer.
+
+**Where it works**: Anything that plays sound on your computer—Tencent Meeting, Feishu, DingTalk, WeCom, Zoom, Teams, Google Meet, Webex, Discord, and Telegram voice chats, plus X Spaces, YouTube, Twitch, Bilibili Live, podcasts, and web pages. On phones, the system blocks recording audio from call and meeting apps—put it on speaker and use In person instead.
 
 <p align="center">
-  <img src="docs/demo.gif" width="800" alt="YouTube 播着 Bloomberg 英文直播，右边是知了实时整理的中文纪要、议题与鱼骨图，底部是双语字幕">
+  <img src="docs/demo.gif" width="800" alt="A Bloomberg English livestream on YouTube with Cicada's live Chinese notes, topics, and fishbone diagram on the right and bilingual subtitles at the bottom">
 </p>
 
-Mac 界面自动跟随 macOS 的浅色或深色外观，切换系统外观时无需重启；会议记录、实时纪要、助手、菜单栏面板、设置和新手引导一起适配。
+## Platforms
 
-Mac 面试教练支持放大悬浮回答：点击助手右上角的放大按钮，可拖动和调整浮层大小，直接调节字号（16–96）与背景不透明度（0–100%），设置自动保存。浮层实时同步稿件和跟读位置，沿用“共享屏幕时让对方看到”设置。
-
-Assistant 中文翻译使用更小字号（英文的 50%，11–18 pt）；悬浮回答的中文进一步缩小至 10–14 pt（默认 12 pt），减少占用空间。
-
-## 平台
-
-每次开始会议后，可在纪要窗口顶部的「会议画面（可选）」选择窗口或屏幕，声音沿用当前来源。不选择也能记录；会中可更换或停止读取，结束会议会停止捕获并清除选择，新会议重新选择。
-
-| 平台 | 系统要求 | 说明 |
+| Platform | Requirements | Notes |
 |---|---|---|
-| Mac | macOS 14.4+，Apple 芯片 / Intel | 功能最全；Apple 芯片本机识别（不填 key 也能用），Intel 版需要 Ling key（识别走 Ming） |
-| Windows | Windows 10 2004+，x64 / ARM64 | 需要 Ling key（用不了 Ling 时可换 OpenRouter、ZenMux 等）；见 [windows/](windows/README.md) |
-| Linux | Ubuntu 22.04 / 24.04 桌面版 | 需要 Ling 或其他 AI 服务的 key；纪要窗会被屏幕共享看到；见 [linux/](linux/README.md) |
-| Android | Android 10+ | 需要 Ling 或其他 AI 服务的 key；视频与直播字幕、面对面互译；见 [android/](android/README.md) |
+| Mac | macOS 14.4+, Apple silicon / Intel | Full feature set. On-device recognition on Apple silicon (works without a key); Intel needs a Ling key (speech recognized by Ming) |
+| Windows | Windows 10 2004+, x64 / ARM64 | Needs an AI service key (Ling, OpenRouter, ZenMux, etc.); see [windows/](windows/README.md) |
+| Linux | Ubuntu 22.04 / 24.04 desktop | Needs an AI service key; the notes window is visible in screen sharing; see [linux/](linux/README.md) |
+| Android | Android 10+ | Needs an AI service key; subtitles for videos and streams, face-to-face interpreting; see [android/](android/README.md) |
 
-四个平台共用一个版本号和同一种会议记录格式，安装包都在 [官网下载页](https://cicada.indaloop.app/download/) 和 [Releases](https://github.com/wquguru/cicada/releases)。下面的功能说明以 Mac 版为准。
+Installers are available on [the download page](https://cicada.indaloop.app/en/download/) and [Releases](https://github.com/wquguru/cicada/releases). All four platforms share the same version number and meeting record format. The sections below use the Mac app to walk through the features.
 
-## 主要功能
+## Features
 
-### 实时纪要与双语文字记录
+### Live notes and bilingual transcript
 
-开会时纪要窗口边听边整理总结、议题要点、结论、待办、鱼骨图和人名术语表，点一下结论或待办就能跳回双语文字记录里的原话。纪要会统一文中人名和术语的写法并记下听错的变体，按 `⌘F` 搜索时能连同识别错的写法一起搜出来。AI 服务出了只有你能修的问题（key、余额、模型）时，纪要窗口会说明，菜单栏图标多一个橙点；打开了麦克风却没拿到麦克风权限时，纪要窗口、字幕条和菜单栏图标都会提示。
+As the meeting runs, the notes window organizes a summary, topics and key points, conclusions, to-dos, a fishbone diagram, and a glossary of names and terms. Click any conclusion or to-do to jump straight back to the original lines. Pressing `⌘F` searches both the canonical spelling and misrecognized variants.
 
-在「设置 › AI 服务 › 面试教练」点「打开资料文件夹」，用任意编辑器维护六份 Markdown：`00_profile.md` 个人简介、`01_job_target.md` 求职需求、`02_companies_past.md` 历史公司、`03_projects.md` 项目、`04_talk_tracks.md` 预制回答（含自我介绍原文）、`05_target_company.md` 目标公司与 JD；开始听时整份重新读取。教练使用 DeepSeek Flash 生成回答和判断原稿是否仍然有效，需配置 DeepSeek key；本机 `mlx-community/gemma-4-E4B-it-qat-4bit` 负责候选人麦克风转写与跟读。电脑声音归为面试官，打开的麦克风归为候选人。回答生成输入为 Apple 识别的面试官原文和 Gemma 识别的候选人原文，以及启用屏幕识别后的压缩关键帧，不使用翻译文本。双方原文、全部面试资料及选定画面的压缩截图发送至 DeepSeek；候选人跟读原声留在本机。其他翻译、纪要的服务设置独立。 自动回答在面试官停顿判定到达后合并最新转写发起，标点或大小写修正不会重启正在生成的回答；手动提问仍可立即发起。
+With an AI service connected, misheard names and terms are fixed on the spot: sound-alike typos are corrected right away, while unfamiliar names are asked about once and fixed automatically once you confirm. You can paste your usual spellings into **Word list** in Settings. After the meeting, select **Edit line…** to batch-fix the same misheard word across the whole session, with full undo support.
 
-教练统一生成可直接朗读的完整英文回答，使用 B1–B2 英语、短句和结论先行的表达。 按中国大陆高三英语水平提供较少的音标辅助，跳过常用词，主要标注较难词和专业词；同一个词每篇只标首次，使用随 App 附带的离线英式 IPA 词典；音标不计入跟读进度或中文对照。全文提词器保留整篇稿件、高亮当前句并跟随朗读；识别误差、短片段和屏幕变化不会自动重写稿件，识别回退也不会把跟读进度拉回；实际识别到的已说内容固定保留，追问只改写未说部分，普通附和不触发重写。候选人朗读不会取消正在补全的回答。按 `⌃⌥A` 可手动重新生成。教练只显示文字，不播放或输出到虚拟麦克风。设置中可安装本机 Silero VAD 和 Smart Turn 语音检测；一秒首句仍是优化目标，尚未达到稳定保证。 麦克风断句合并保持在候选人通道，长时间朗读后的延迟重复文本不会被当成面试官新话而刷新稿件。候选人的高亮和滚动由本机 Gemma 直接听麦克风原声判断；先独立转写再对齐稿件，容忍误读与重复，中间列、发言记录和教练上下文统一使用这份 Gemma 转写，跟读复用它进行对齐；识别失败提示重试，不回退到 Apple。识别暂不可用时保留稿件和位置，可点重试。 漏读上一句结尾后，若原声转写包含稿件中唯一且连续的明确词组，跟读会重新定位到当前朗读位置，不再一直停在上一句。 每次面试官发言后，DeepSeek 在同一次请求里结合历史对话、实际已说内容、现有稿件与未读部分判断是否仍能回答：有效就原样保留，只有出现未覆盖的要求才重写剩余稿件。审查期间、失败或结果过期时均保留原稿，不按关键词决定是否更新。有效时只返回保留状态；无效时在同一响应中流式返回新稿，不再增加本机审查或第二次生成调用。 要求简化、复述或再举例时，审查同时判断未读开头能否直接满足最新表达要求，不能仅因后文相关就保留。点击刷新回答或按 `⌃⌥A` 会跳过审查，结合已有对话重新回答当前问题及相关追问，允许重述已说内容；普通附和仍保留稿件。
+### Live subtitles and language detection
 
-实时纪要的对话记录中，AI 回复默认折叠，点击展开可查看全文与中文对照；“正在说”的发言在双语或只看译文模式下同步显示实时翻译。选择“只看原文”会暂停翻译，可在窗口的语言选项中切回双语。
+Cicada detects the spoken language within seconds and translates it into your system language; press `⌃⌥S` to switch display modes. The subtitle bar only appears when someone speaks and turns see-through under your pointer so it never blocks buttons. On macOS 26 with Apple silicon, Cicada also re-listens on device to refine each line 15 to 30 seconds later, fixing typos and missed words.
 
-候选人麦克风可跟随系统输入（包括 AirPods）或手动选择，连接与断开后重新选择可用设备；耳机播放的面试官声音仍从系统音频 Tap 采集。窗口内容显著变化或 OCR 检出代码变化时产生关键帧，没有文字的图片也会送入模型。每次回答生成最多附最近 3 张压缩图和有界原文上下文，不再重复处理面试官原声；电脑音频继续用于语音识别和判停；完整会议原文仍保存在本地记录。完成与中断的建议单独存为 AI 行，不当作候选人说过的话。完整句子可选本机中文对照；转写、生成、打断和延迟指标写入本机会议记录。
+### In-person and hybrid meetings
 
-中文对照在完整英文句生成后开始本机翻译，完成即显示；单句失败会重试，不再停止整场会议的中文对照。
+Click **Turn on mic** to listen to people in the meeting room. Hybrid meetings use the exact same button: computer audio is marked **Online** and microphone audio is marked **In room**, combined in a single record (on macOS 14 and 15, turning on the mic listens only to the room). On speakers, Cicada automatically deduplicates audio so nothing is recorded twice; with headphones on, both sides can talk at once and both are kept. Windows and Linux follow the same rules. On the Mac, the small arrow beside the button picks which microphone to use (an iPhone or a conference mic, say) without changing the system default.
 
-### 实时字幕与语言识别
+### Simultaneous interpreting
 
-对方开口几秒钟就能在本地自动认出语言并翻成你的系统语言，按 `⌃⌥S` 可以在纪要窗口、字幕条和不显示之间切换。字幕条只在有人说话时出现，鼠标划过时自动变透明，不会挡住底下的按钮。
-
-### 线下会议
-
-在会议室里开会时，点菜单栏面板或纪要窗口里的“打开麦克风”，知了就用 Mac 的麦克风听桌边的人说话，字幕、纪要和会议记录跟线上会议一样；电脑里的声音照常在听，电脑没声音时就只记桌边的人。同声传译念译文的时候麦克风暂时不听，不会把译文再记成别人的话。每次启动麦克风都是关着的。
-
-有人在会议室、有人在线上时也是这一个按钮：线上的人从电脑声音听，桌边的人从麦克风听，两边各认各的语言，记在同一份会议记录里（macOS 14 和 15 上打开麦克风改为只听桌边）。扬声器放出来的线上声音会被麦克风再听到一遍，知了会测出扬声器的声音有没有传到麦克风：传到了，线上有人说话的那一会儿桌边先不听；戴耳机或用会议麦克风时不用避让，两边同时说话也都能记下；电脑在放音乐时也不避让。最后还会比一遍文字，跟电脑声音里刚说过的话几乎一样的那句不再记第二遍。
-
-这样的会议里，每句话都标着是“现场”还是“线上”。外接麦克风中途被拔掉，知了改用剩下的麦克风并说一声；麦克风开着却一直没有声音，会先重开一次，还不行就在纪要窗口提示换一个。Windows 和 Linux 上也是同一个“打开麦克风”和同样的规则。
-
-### 同声传译
-
-按住键盘右边的 `⌥` 键说话，对方在会议软件里就能直接听到翻译后的语音，打开同声传译时知了会自动把系统麦克风切到一键安装的虚拟驱动 BlackHole 2ch。填了 Ling API key 后可以用自然人声或用 8 到 30 秒录音克隆你自己的声音，不填也能用 Mac 自带语音。
-
-Mac 上会议麦克风和按键说话共用音频资源协调：设备变化触发的重复重启会合并，普通录音期间不会反复创建回声消除单元，硬件启停在后台执行。
+Hold the right `⌥` key and speak so the other side hears your translated voice in the meeting app. Turning on interpreting automatically switches the system microphone to BlackHole 2ch, a virtual driver you can download and install with one click. With a Ling API key you can use natural voices or clone your own voice from an 8 to 30 second sample; without a key, it uses built-in macOS voices.
 
 <p align="center">
-  <img src="docs/interpreting.png" width="640" alt="同声传译设置页，包含按住右 Option 键说话、目标语言、Ming 声音试听与本机声音选择">
+  <img src="docs/interpreting.png" width="640" alt="Interpreting settings showing the right Option talk key, target language, Ming voice previews, and macOS voices">
 </p>
 
-### 会议记录
+### Meeting records
 
-每场会议的双语文字记录、纪要和原始录音都保存在本机，会后在会议记录里就能回放录音，点一句的时间就从那里放，正在放的那句会亮起；还能按声音区分对方不同的说话人并在有 Ling key 时填上名字，认错了在实时纪要窗口里就能改名、合并或把某段话改给别人。会议软件挂断或 10 分钟没人说话时会自动结束并截掉空白，会后随时可以补生成纪要，或导出成 Markdown、Word 和 SRT 字幕。已有的录音或视频也能拖进会议记录窗口（或用“文件 › 导入录音或视频…”），在本机比实时快得多地转成一场双语记录，点时间就从那一句开始播放原文件。当时没听出是哪种语言的会议也会留下录音，选好语言就能重新转写。目前记录里的你只包含按住说话键说的话，会上直接开口的部分见[路线图](#路线图)。
+Bilingual transcripts, notes, and raw audio recordings are saved on your computer. Click any line to play the recording from that point. The on-device voiceprint model automatically separates different speakers (and fills in their names when a Ling key is set), and you can rename or merge them anytime if it gets someone wrong.
+
+After a meeting, you can generate notes retroactively, export to Markdown, Word, or SRT subtitles, or turn local audio or video files into bilingual records via **File › Import Recording or Video…**. **Share…** turns the notes (and, if you like, the full bilingual transcript) into a link with an expiry and an optional password, copied with one click; before uploading, it automatically blocks keys, unpublished company information, and other sensitive content. Right now "you" in the record only covers what you say while holding the talk key; capturing what you say directly in the meeting is on the [roadmap](#roadmap).
 
 <p align="center">
-  <img src="docs/records.png" width="640" alt="会议记录窗口，显示识别出的说话人名字和逐句英中双语文字记录">
+  <img src="docs/records.png" width="640" alt="Meeting records window showing identified speakers and a line-by-line English and Chinese transcript">
 </p>
 
-## 隐私与权限
+### Interview Coach and screen notes (Mac)
 
-在 Apple 芯片的 Mac 上，声音采集、语言识别、语音识别（Apple SpeechAnalyzer，macOS 14.4–15 上是 SFSpeechRecognizer 的本机模式）和会议录音全部在本机完成。会离开电脑的只有识别出来的文字（发去做翻译和生成纪要），以及填了 Ling API key 并按住说话键用同声传译时你说的那几句语音；语音模型下载太慢时如果你点了“先用 Ling 听”，模型装好之前的会议声音也会交给 Ling 识别；在“设置 › AI 服务”里把语音识别改成自建服务时，会议声音会发到你那台机器。不填 API key 时，实时字幕、翻译（走 Google 或退回 Apple 本机翻译，本机翻译只在 macOS 26 上有）、会议记录和同声传译都能正常用。实时纪要、一步语音翻译和声音克隆需要你自己的 Ling（蚂蚁集团的大模型服务）API key（配置方法见[下文](#配置-ling-api-key)），开一小时会大约花 0.15 到 1 元人民币，Ling 每月赠送 10 元额度，约够 10 到 50 小时会议。
+Assistant also adds full British IPA to numbers such as `2000`, `10%` and `0.1%`. Decimal digits are read individually; IPA is excluded from read-along speech, translation and reading progress.
 
-Intel 版 Mac 以及 Windows、Linux 和 Android 版在云端识别：说话的声音分段发给 Ling 的 Ming（Windows、Linux、Android 也可换成 OpenRouter、ZenMux 等服务），所以必须填 AI 服务的 key；录音和会议记录同样只存在本机。
+Cicada stays in the Dock while running, with an orange dot while recording. Right-click to start or stop recording, open Live Notes, Meetings, or Settings. Turn off “Show in Dock” in Settings for menu-bar-only use when other windows are closed.
 
-下面说的是 Mac 版。知了只在用到某项功能时才请求对应的权限，拒绝后其他功能照常可用。
+On Mac, Interview Coach controls start collapsed. Click the Interview Coach heading to show the interview stage, read-along, status and microphone controls, leaving more room for answers.
 
-| 权限 | 用来做什么 | 什么时候问 | 不给的话 |
-|---|---|---|---|
-| 录制系统声音（屏幕与系统录音） | 听 Mac 正在播放的声音来出字幕，不录屏幕，也不听知了自己的声音 | 新手引导第一步，或第一次开始听 | 字幕和纪要都用不了 |
-| 麦克风 | 按住说话键时录你说的话做同声传译；点了“打开麦克风”时听屋里的人 | 打开同声传译或第一次打开麦克风时 | 不能说话翻译，也不能听会议室 |
-| 输入监控 | 只用来判断右 `⌥` 是否被单独按下（只监听、不拦截、不记录别的按键） | 第一次用右 `⌥` 说话时 | 在设置里改成 `⌃`/`⌘` 组合键，就不需要这个权限 |
-| 管理员密码 | 安装虚拟麦克风 BlackHole 2ch，并重启系统音频服务 | 在引导或设置里点“安装”时，只问一次 | 不能让对方听到翻译，其余照常 |
+On Mac, Interview Coach keeps its material in one folder: Markdown files for your profile, job target, past companies, projects, prepared answers and target company, sent whole to the AI instead of retrieved in pieces. Answers draw on that material first and expand naturally with general knowledge.
 
-- **联网与虚拟麦克风**。只有翻译（`translate.googleapis.com`）、填了 key 后的 Ling / Ming（`api.ant-ling.com`）或你选的其他 AI 服务、下载 BlackHole 驱动和每天去 GitHub 检查一次新版本会联网。BlackHole 从官方下载已经过苹果公证的安装包，安装前会核对代码里写死的 SHA-256。
-- **没有统计和自建服务器**。应用没有统计、没有埋点，也没有我们自己的服务器，诊断功能只把耗时和次数记在本机会议文件夹里。
-- **本机数据位置**。会议记录、录音和纪要存在 `~/Library/Application Support/LiveSubs`。Ling key 和你录的声音样本只对当前系统账户可读，不进 Time Machine 备份，也不写进日志和导出文件。
-- **共享屏幕看不到纪要窗口**。屏幕共享、录屏和截图都拍不到它，要录演示时可以打开“共享屏幕时让对方看到”。
+On Mac, Interview Coach improves Chinese and English career-move, pay and handover follow-ups, retrieving relevant background and answering with supplied facts instead of missing-record boilerplate.
 
-## 用到的模型
+Mac Assistant includes ActAI follow-up references: SKU improvements use confirmed facts; unverified rehearsal ideas are not presented as personal experience.
 
-不填 Ling key 时全部由 Apple 本机模型加 Google 翻译完成，填了 key 后由 Ling 和 Ming 模型负责并支持失败自动退回。正在说的半句话一直用 Google 翻译；用自己的服务（“其他（兼容 OpenAI）”）时，可以在“设置 › AI 服务”打开“语音和文字只发给你的服务”，语音和文字就都不经过 Google。
+On Mac, Interview Coach grounds team size, changing responsibilities and reporting lines in the supplied background. Missing historical organisation details are not estimates; team follow-ups focus on the current question.
 
-| 功能 | 填了 Ling key | 不填 key / 退回 |
+Use the speaker button beside the Assistant read-along speed control to adjust volume from 0–100%. Changes apply during playback and are remembered; the original default is 55%.
+
+On Mac, Interview Coach uses the approved HR-round English introduction (a four-paragraph standard version and a 45-second short version) when the interviewer asks for an opening introduction. A request for a short version uses the short one; follow-ups receive answers to the current question.
+
+On Mac, Live Notes defaults to three quarters of the current display’s usable height. Resize its edges to keep your preferred size.
+
+On Mac, speech model download progress updates on the main actor to prevent the interface from freezing when recording starts.
+
+In the Mac Assistant, choose General, HR, CTO, or CEO interview emphasis. Answers use conversational English, relevant engineering detail and reasonable estimates, with length guided by the question.
+
+On Mac, enable “Read along” in Interview Coach for local Kokoro-82M speech, warmed before playback. Open Cicada’s Assistant floating answer and its standalone Apple Watch app, hold the Watch touchpad to resume, and release to pause at the same audio position. No candidate microphone is required. Off by default; output is restricted to the current system headphones, including AirPods, and never targets the meeting virtual microphone. Headphone disconnection stops playback. First use downloads an isolated runtime and model; answer synthesis stays local. Actual Watch/AirPods stopping latency still needs hands-on validation. Tap once to select and play the next sentence, or twice for the previous sentence; playback pauses after that sentence. Turn the Digital Crown to select a sentence without playing it. Hold to play and release to pause; release and press again to retry after a playback failure. Slide directly to move the floating window. Holding and releasing after a hold never move it. The receiver is integrated into Cicada; no WatchControl helper or Accessibility permission is needed. See the [Apple Watch module](watch/README.md) for personal development pairing and builds. Follow reading is on by default: the current sentence scrolls smoothly near the top with space above it, leaving upcoming text visible. Selecting the first sentence returns to the beginning.
+
+Read along fills each word from the actual audio position, with fixed text and vertical following. Click a word to seek; choose 0.75×, 1× or 1.25×. Releasing pauses both audio and color.
+
+On Mac, click the device name beside the interview coach’s microphone switch to open Settings › Interpreting. “Cicada listens through” selects one shared input for candidate speech and hold-to-talk.
+
+On Mac, resize Settings by dragging its edges; the window size is remembered. Choose 简体中文, English, or Follow System in Settings › General › App language, then reopen the app to apply.
+
+The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
+
+On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting.
+
+Chinese translations use smaller text in Assistant (50% of the English size, 11–18 pt) and even smaller text in Floating Answer (10–14 pt, 12 pt by default) to save space.
+
+Each new meeting offers an optional screen selector at the top of Live Notes. Choose a window or display without changing the audio source, or continue without one. You can change it or stop reading during the meeting. Ending the meeting stops capture and clears the selection; the next meeting starts without a screen.
+
+In Settings › AI Service › Interview Coach, click Open Folder and keep six Markdown files in any editor: `00_profile.md`, `01_job_target.md`, `02_companies_past.md`, `03_projects.md`, `04_talk_tracks.md` (prepared answers, including your self-introduction) and `05_target_company.md` (company and job description). They are reread whole each time listening starts. DeepSeek Flash generates answers and checks whether the existing script is still sufficient, using a DeepSeek key. Local `mlx-community/gemma-4-E4B-it-qat-4bit` handles candidate microphone transcription and reading progress. Computer sound belongs to the interviewer; the enabled microphone belongs to the candidate. For answer generation, DeepSeek receives original-language Apple interviewer transcripts and Gemma candidate transcripts, and compressed screen keyframes when Screen Reading is enabled. Translated text is excluded. Original transcripts, retrieved background and selected screen images are sent to DeepSeek; microphone reading audio stays local. Translation and meeting-notes services are configured separately. Automatic answers coalesce the latest transcript until the interviewer endpoint; punctuation and casing revisions do not restart generation. Manual requests still start immediately.
+
+The coach writes a complete, directly speakable English answer in B1–B2 English, with short sentences and the conclusion first. An offline British IPA dictionary adds lighter support for a Chinese final-year high-school student: familiar words stay plain, difficult and technical words are annotated only on their first occurrence in each answer; reading progress and Chinese glosses ignore the IPA. The full teleprompter keeps the script in place, highlights the current sentence and follows your reading. Recognition errors, short fragments and screen changes do not rewrite the script, and ASR revisions do not move reading progress backward. Confirmed speech stays fixed; follow-ups rewrite only the remaining script, while acknowledgements and reading do not cancel completion. Press `⌃⌥A` to regenerate. The coach displays text only and never plays it through the virtual microphone. Settings can install local Silero VAD and Smart Turn detection. A usable opening within one second remains an optimization target, not a guarantee. Microphone sentence merges stay on the candidate channel, and delayed copies after long reading do not trigger a new answer. Local Gemma listens to candidate microphone audio to drive highlighting and scrolling: independent transcription is aligned to the script with tolerance for mispronunciations and repetitions. The transcript column, saved speech and coach context share this Gemma transcript, which is reused for reading alignment. Recognition failures show Retry and never fall back to Apple. Recognition failure preserves the script and position, with Retry available. After a skipped sentence ending, a unique consecutive phrase in the independently transcribed audio can recover the reading position instead of leaving the highlight on the previous sentence. After each interviewer turn, DeepSeek reviews the conversation, actual speech, current script and unread remainder. A valid answer stays unchanged; only an unmet requirement triggers a replacement of the remaining script. Reviews preserve the script while pending, on failure or when superseded; keywords do not decide whether to rewrite. A single response returns only a keep decision or streams the replacement after its decision line, with no local review or second generation call. Requests to simplify, repeat or give another example are checked against the immediate unread opening and the requested form, not just related facts later in the script. Refresh Answer or `⌃⌥A` bypasses review and answers the current question and related follow-ups afresh using the conversation, allowing earlier speech to be restated. Ordinary acknowledgements preserve the script.
+
+In the Live Notes transcript, AI replies start collapsed; expand a reply to read the full text and Chinese gloss. In-progress speech shows live translation in Bilingual or Translation Only mode. Original Only pauses translation; switch back to Bilingual in the window’s language options to resume.
+
+Choose the candidate microphone explicitly or follow the system input, including AirPods, with fallback after disconnection. Interviewer sound is captured through the system audio tap even with headphones. Significant screen changes and code changes detected through OCR produce keyframes; images need no readable text to qualify. Each answer request includes up to three compressed frames and bounded original transcript context. Interviewer audio is used for speech recognition and turn detection, without being sent again for answer generation. Full transcripts remain in local meeting records. Suggestions are stored separately as AI rows, never as spoken evidence; optional Chinese glosses of the next suggestion use on-device translation.
+
+Chinese glosses begin translating on device as complete English sentences arrive and appear when ready. A failed sentence is retried without disabling glosses for the meeting.
+
+On Mac, the meeting microphone and push-to-talk coordinate audio resources: repeated device-change restarts are merged, echo cancellation is not rebuilt during plain recording, and hardware starts and stops run in the background.
+
+When recording your own voice, choose the Mac microphone, AirPods, or an external microphone in the recording dialog. Recording captures the original microphone audio and avoids conflicts with the idle interpreting echo canceller. Missing sound or a disconnected microphone prompts you to record again.
+
+## Privacy & Permissions
+
+**Apple silicon Macs**: Audio capture, language detection, speech recognition, and meeting recordings all stay on your computer. The only data that leaves your Mac is the recognized text (sent for translation and meeting notes) and the short voice clips you speak while holding the talk key with a Ling key configured (if a speech model downloads slowly and you click **Use Ling for Now**, or if you switch speech recognition to a self-hosted service in **Settings › AI Service**, meeting audio is also sent to that service). Without an API key, live subtitles, translation, meeting records, and interpreting all work for free. Live notes, one-step voice translation, and voice cloning require your own Ling (Ant Group's LLM service) API key; an hour of meetings costs roughly ¥0.15 to ¥1 RMB, and Ling provides ¥10 of free credit every month, enough for 10 to 50 hours.
+
+**Intel Macs, Windows, Linux, Android**: Speech recognition runs in the cloud. Spoken audio is sent in segments to Ling's Ming or your chosen service (OpenRouter, ZenMux, etc.), so an AI service key is required. Recordings and meeting records still stay only on your device.
+
+The Mac app only asks for a permission when you use the corresponding feature, and everything else works normally if you decline:
+
+| Permission | What it's for | Without it |
 |---|---|---|
-| 语音识别、语言识别 | Apple `SpeechAnalyzer` / `SpeechTranscriber`（本机）；macOS 14.4–15 是 `SFSpeechRecognizer`（本机，要打开听写） | 同左 |
-| 整句翻译 | Ling `Ling-3.1-flash`（可在“设置 › AI 服务”改为 `Ling-3.0-flash`） | Google 翻译 → Apple `Translation`（本机，仅 macOS 26） |
-| 正在说的半句话的翻译 | Google 翻译（不占 Ling 的频率额度；用自己的服务时可以关掉） | 无：只显示原文，说完一句换成整句翻译；连不上时暂停一分钟再试 |
-| 实时纪要、会后完整版 | Ling `Ling-3.1-flash`（同上设置） | 不可用 |
-| 检查 key 是否有效 | Ling `Ling-3.0-tiny`（只用一个 token） | — |
-| 同声传译：听懂并翻译你说的话 | Ming `Ming-3.0-audio-flash`，一步完成 | Apple 本机识别，再走上面的翻译链 |
-| 同声传译：对方听到的声音、声音克隆 | Ming `Ming-3.0-tts-0.5B` | Mac 自带语音（`AVSpeechSynthesizer`），不能克隆 |
-| 说话人识别（默认打开） | WeSpeaker ResNet34-LM 声纹模型，随 app 附带，本机运行（Core ML） | 同左 |
+| System audio recording (Screen & System Audio Recording) | Hears system audio for subtitles; never records the screen | Subtitles and notes won't work |
+| Microphone | Hold-to-talk interpreting; **Turn on mic** for meeting rooms | Can't speak to translate or listen to the room |
+| Input Monitoring | Detects whether right `⌥` is pressed (doesn't block or log other keys) | Switch to a `⌃`/`⌘` shortcut in Settings to skip this permission |
+| Administrator password | Installs the BlackHole 2ch virtual microphone (asked once) | The other side can't hear interpreting; everything else works |
+
+- **Transparent networking**: Cicada only connects to the internet for translation (`translate.googleapis.com`), your configured AI service (such as `api.ant-ling.com`), downloading the Apple-notarized BlackHole driver (verified against SHA-256), and checking GitHub once a day for updates. There is no analytics, no tracking, and no server of our own.
+- **Local storage**: Records and recordings live in `~/Library/Application Support/LiveSubs`. Your key and voice sample are readable only by your current system account and excluded from Time Machine and logs.
+- **Hidden from screen capture**: On Mac, screen sharing, screen recordings, and screenshots cannot capture the notes window; you can manually turn on **Show in screen sharing** when recording a demo.
+
+## Models
+
+The table below shows the setup on Apple silicon Macs. When using a self-hosted service (**Other (OpenAI-compatible)**), you can turn on **Send audio and text only to your service** in **Settings › AI Service** to bypass Google completely.
+
+| Feature | With a Ling key | Without a key / fallback |
+|---|---|---|
+| Speech recognition and language detection | Apple `SpeechAnalyzer` / `SpeechTranscriber` (on device); macOS 14.4–15 uses `SFSpeechRecognizer` (on device, needs Dictation) | Same |
+| Translating finished sentences | Ling `Ling-3.1-flash` (can be changed to `Ling-3.0-flash` in Settings › AI Service) | Google Translate → Apple `Translation` (on device, macOS 26 only) |
+| Translating the sentence still being spoken | Google Translate | Shows original text until replaced by the full-sentence translation |
+| Live notes and post-meeting full version | Ling `Ling-3.1-flash` | Not available |
+| Checking if the key works | Ling `Ling-3.0-tiny` (1 token) | — |
+| Interpreting: hearing and translating | Ming `Ming-3.0-audio-flash` (one step) | Apple on-device recognition + translation chain above |
+| Interpreting: voice output and voice cloning | Ming `Ming-3.0-tts-0.5B` | Built-in Mac voices (`AVSpeechSynthesizer`), no cloning |
+| Speaker identification | WeSpeaker ResNet34-LM (bundled, runs on device via Core ML) | Same |
 | Assistant (Mac) | DeepSeek Flash · local Gemma reading · Silero VAD / Smart Turn | — |
 
-## 配置 Ling API key
+## Setting up a Ling API key
 
-1. 打开 [Ling 开放平台](https://chat.ant-ling.com/platform/api)，注册或登录。
-2. 点创建令牌，复制以 `sk-` 开头的那串 key。
-3. 在知了里打开设置里的 AI 服务，粘贴后点保存并检查，也可以直接粘贴到纪要窗口顶部的提示框里。知了会发一个只用一个 token 的请求确认 key 可用。
-4. 同一页面可以选模型（默认 `Ling-3.1-flash`），每种语言用哪个 Ming 声音在同声传译设置里选。想移除 key，在同一页面点移除即可。
+1. Sign up and log in on the [Ling open platform](https://chat.ant-ling.com/platform/api), create a token, and copy the key starting with `sk-`.
+2. Open **Settings › AI Service** in Cicada (or the banner at the top of the notes window), paste the key, and save.
 
-**注册不了 Ling？**可以在“设置 › AI 服务”右上角换成 OpenRouter、ZenMux、OpenAI，或填任何 OpenAI 兼容服务的地址（比如本机跑的模型）。实时纪要和整句翻译都能用，模型已经按效果和价格选好，也可以自己换；OpenRouter 和 ZenMux 还能用 Gemini 的自然人声做同传。一步语音翻译和声音克隆只有 Ling 有，其他服务下，Apple 芯片的 Mac 同传先在本机识别再翻译（Intel 版听和说都要 Ling）。每个服务的 key 各存一份，切换时不用重填。自己部署的模型（Ollama、vLLM、SGLang 等）按功能分开填：翻译和纪要、同传声音、语音识别各自可以接不同的机器，局域网里的地址也能用 http；检查时会真翻一句，模型先思考或太慢都会直说（Qwen3 这类模型知了会请它别思考）。Mac 的语音识别可以改交给你的 Qwen3-ASR、Whisper 等（默认仍在本机，连不上时自动换回）；Windows、Linux、Android 上“听对方”的模型也可以填单独的地址。Windows、Linux、Android 版也能换：在引导里点“用不了 Ling？”或在设置 › AI 服务里选，听对方也交给这家服务，字幕比 Ling 晚 1–2 秒。连不上或 key、模型有问题时，设置里会一步步说清坏在哪、怎么修：是没开代理、代理软件没接管系统代理，还是开了代理也不通（知了不会自己改代理，说明见网站的[设置页](https://cicada.indaloop.app/start/#proxy)）；用 OpenRouter 时余额快用完会提前提醒。
+**Can't sign up for Ling?** At the top right of **Settings › AI Service** (or by clicking **Can't use Ling?** during onboarding), you can switch to OpenRouter, ZenMux, OpenAI, or any OpenAI-compatible service (including local or LAN services like Ollama, vLLM, SGLang, Qwen3-ASR, and Whisper). Live notes and full-sentence translation work with all of them, and OpenRouter and ZenMux can also use natural Gemini voices for interpreting; one-step voice translation and voice cloning are supported only by Ling. When Windows, Linux, or Android switches to another service, listening to the other side also goes through that service, so subtitles run 1–2 seconds behind Ling. If a connection fails, Settings tells you directly whether it's a key, model, or proxy issue (see the [setup page](https://cicada.indaloop.app/en/start/#proxy) for proxy details).
 
-## 系统要求与安装
+## Requirements & Installation
+
+Installers are on the [Releases page](https://github.com/wquguru/cicada/releases/latest) and [the website](https://cicada.indaloop.app), and you can verify SHA-256 checksums against `checksums.txt` in Releases. If you run into questions, reach out to the author [@wquguru](https://x.com/wquguru) on X.
 
 ### Mac
 
-需要 macOS 14.4 或更新版本（支持 Apple 芯片与 Intel）。Apple 芯片 Mac 在 macOS 26 上用新的本机语音识别，更准；14.4–15 上用系统较早的识别，要在系统设置 › 键盘里打开“听写”，并把要听的语言加进听写语言；Intel 版 Mac 则通过云端 Ming 模型识别语音，需要配置 Ling key。界面有中文、英文、日文和韩文，默认跟随系统语言，也可以在系统设置的语言与地区里单独给知了指定。
+Requires macOS 14.4+ (Apple silicon and Intel). On Apple silicon with macOS 14.4–15, first go to **System Settings › Keyboard** to turn on **Dictation** and add the languages you want heard; macOS 26 uses the new on-device model directly without needing Dictation; Intel Macs use cloud-based Ming recognition and require a Ling key.
 
-从 [Releases 页面](https://github.com/wquguru/cicada/releases/latest) 或 [官网](https://cicada.indaloop.app) 下载 `Cicada-<版本>-macOS-AppleSilicon.dmg`（Apple 芯片）或 `Cicada-<版本>-macOS-Intel.dmg`（Intel），打开后把知了拖进应用程序文件夹。应用目前是本地签名，还没有苹果公证（见[路线图](#路线图)），第一次打开被拦下时，去系统设置的隐私与安全性里点仍要打开。下载页同时提供 `checksums.txt`，可以用 `shasum -a 256 Cicada-*.dmg` 核对。有疑问可以去 X 找作者 [@wquguru](https://x.com/wquguru)。
-
-打开后跟着首次引导开一个权限、听一段双人示例会议直接看字幕效果、接上 Ling key（也可以先跳过），要用同声传译时再装虚拟麦克风。之后有新版本时菜单栏图标会出现橙点，点一下就能更新，权限不会丢。
+Download `Cicada-<version>-macOS-AppleSilicon.dmg` or `Cicada-<version>-macOS-Intel.dmg` and drag Cicada into Applications (verify with `shasum -a 256 Cicada-*.dmg`). The app is not notarized by Apple yet, so if the first launch is blocked, go to **System Settings › Privacy & Security** and click **Open Anyway**. Follow the onboarding guide to grant permissions and try the sample meeting.
 
 <p align="center">
-  <img src="docs/onboarding.png" width="640" alt="首次引导第二步，播放双人示例会议并实时显示双语字幕">
+  <img src="docs/onboarding.png" width="640" alt="Onboarding step 2 playing a two-person sample meeting with live bilingual subtitles">
 </p>
 
 ### Windows
 
-需要 Windows 10 2004 或更新版本。下载 Windows 安装包（大多数电脑选 x64，骁龙笔记本选 ARM64），双击就装好，不用管理员权限；安装程序还没有代码签名，SmartScreen 拦下时点更多信息 › 仍要运行。打开就是主窗口，列着还差哪几步：接上 Ling key、放一段测试声音、看示例会议；同声传译要装免费的 VB-Cable 虚拟麦克风，引导会带你装。新版本在知了里提示，点一下就升级。
+Requires Windows 10 2004+ (x64 or Snapdragon ARM64). Download the installer and double-click to install without admin rights. If SmartScreen blocks it, click **More info › Run anyway**. When you use interpreting, the guide walks you through installing the free VB-Cable virtual microphone.
 
 ### Linux
 
-需要 Ubuntu 22.04 或 24.04 桌面版（x86_64 或 arm64）。下载 `Cicada-<版本>-Linux.tar.gz`，在终端里运行 `tar xzf Cicada-<版本>-Linux.tar.gz && cicada-linux/install.sh`，知了会出现在应用菜单里。同声传译会自己建一个“知了 麦克风”，不用装驱动。Linux 没法让窗口避开屏幕共享，纪要窗会一直标着“共享屏幕时此窗口可见”。会议录音要用 AAC 编码器，Ubuntu 默认没有：装了第三方媒体格式（比如 `ubuntu-restricted-extras`）后，“设置 › 通用 › 保存会议录音”才能打开，录音可以在会议记录里回放，点一句的时间就从那里放；没装时这个开关是灰的，其他功能照常。
+Requires Ubuntu 22.04 or 24.04 desktop (x86_64 or arm64). Download `Cicada-<version>-Linux.tar.gz` and run `tar xzf Cicada-<version>-Linux.tar.gz && cicada-linux/install.sh` in a terminal. Interpreting automatically creates a "Cicada Microphone" with no driver to install. Linux windows cannot hide from screen sharing, so the notes window indicates that it is visible when sharing your screen. To enable **Settings › General › Save meeting audio**, first install system third-party media formats (such as `ubuntu-restricted-extras`) to provide an AAC encoder. Turning on **Settings › Word list › Fix misheard words live** sends one extra text request per sentence.
 
 ### Android
 
-需要 Android 10 或更新版本。在手机上下载 `Cicada-<版本>-Android.apk` 打开安装，按提示允许安装未知应用；第一次打开悬浮字幕时，Android 15 起要先在应用信息里允许受限制的设置。微信通话和会议 app 的声音系统不让录，这时开外放、改选“面对面”。
+Requires Android 10+. Download and install `Cicada-<version>-Android.apk`; on Android 15 and later, allow restricted settings in App info the first time you turn on floating subtitles. It also includes on-device voiceprints to separate speakers and fixes misheard words live while listening. Call and meeting apps block internal audio capture on Android—just put the call on speaker and switch to **In person**.
 
-每个平台的安装包都能用 Releases 页面里的 `checksums.txt` 核对 SHA-256。
+## Roadmap
 
-## 路线图
+In rough order of priority; feel free to open an Issue for what you'd like to see. See [docs/ROADMAP.md](docs/ROADMAP.md) for details.
 
-按先后排，想要哪一项欢迎在 Issues 里说。
+- **Record my own speech**: Continuously listen to the microphone with echo cancellation during meetings so what you say directly is also included in records and notes.
+- **Code signing and notarization**: Official signing and notarization for Mac and Windows installers to eliminate security prompts and move AI keys back to the system keychain.
+- **Speaker recognition**: Remember frequent coworkers' voices on device and recognize them automatically in future meetings.
+- **Notes without a key**: Generate meeting notes on supported Macs using Apple's on-device models.
+- **Android on app stores**: No more manual APK installs.
+- **iPhone and iPad**: Starting with listening to meeting rooms, face-to-face interpreting, and meeting records.
 
-- **记录我的发言**，开会时持续听麦克风并做回声消除，把你直接开口说的话也记进文字记录和纪要。
-- **正式签名与公证**，首次打开不再需要点仍要打开，AI key 也能放回系统钥匙串；Windows 安装程序也加上代码签名。
-- **声纹识别**，在现有的说话人识别基础上，在本机记住常一起开会的人的声音，下次开会也能自动认出。
-- **不用 key 也有纪要**，在支持的 Mac 上用 Apple 本机模型整理纪要。
-- **Android 上架应用商店**，不用再从浏览器装 APK。
-- **iPhone 和 iPad**，系统不允许采集其他 app 的声音，所以先做听会议室、面对面互译和会议记录。
+## Uninstall
 
-每项的细节和取舍见 [docs/ROADMAP.zh-CN.md](docs/ROADMAP.zh-CN.md)。
-
-## 卸载
-
-退出知了，去应用程序文件夹里把它拖进废纸篓即可。会议记录和录音都在 `~/Library/Application Support/LiveSubs` 文件夹里，不需要的话可以手动删掉。想清除软件设置可以运行：
+Quit Cicada and drag it from the Applications folder to the Trash. Meeting records and recordings are in `~/Library/Application Support/LiveSubs` and can be deleted manually if no longer needed. To clear settings, run:
 
 ```bash
 defaults delete com.wquguru.cicada
 ```
 
-## 开发
+## Development
 
-Mac 版从源码构建只需要安装 Xcode Command Line Tools（`xcode-select --install`），项目没有任何第三方依赖。在 macOS 27 上如果编译时报 `SwiftUIMacros` 缺失，说明这一版 Command Line Tools 不带 SwiftUI 的宏插件，安装完整的 Xcode 并运行 `sudo xcode-select -s /Applications/Xcode.app` 即可。Windows、Linux、Android 的构建方法见 [windows/README.md](windows/README.md)、[linux/README.md](linux/README.md)、[android/README.md](android/README.md)。
+The Mac app only requires Xcode Command Line Tools (`xcode-select --install`) and has no third-party dependencies. On macOS 27, if `SwiftUIMacros` is reported missing, install full Xcode and run `sudo xcode-select -s /Applications/Xcode.app`. For building on other platforms, see [windows/README.md](windows/README.md), [linux/README.md](linux/README.md), and [android/README.md](android/README.md).
 
 ```bash
-scripts/build.sh            # 编译开发版 → build/Cicada.app（名为 Cicada Dev，可与正式版同时运行）
+scripts/build.sh            # dev build → build/Cicada.app ("Cicada Dev", runs alongside the release app)
 open build/Cicada.app
-scripts/package.sh          # 打包正式版 DMG、zip 和 SHA-256 校验值
+scripts/package.sh          # package release DMG, zip, and SHA-256 checksums
 ```
 
-代码架构等说明写在 [AGENTS.md](AGENTS.md) 里。官网源码放在 `site/` 目录，由 `scripts/site.py` 生成。历次更新记录见 [CHANGELOG.md](CHANGELOG.md) 或官网的[更新日志页](https://cicada.indaloop.app/changelog/)。
+See [AGENTS.md](AGENTS.md) for code architecture. The website source is in `site/` (generated by `scripts/site.py`), and release history is in [CHANGELOG.md](CHANGELOG.md) or on the [website changelog](https://cicada.indaloop.app/changelog/).
 
-## 开源协议
+## License
 
-本项目采用 [Apache-2.0](LICENSE) 协议开源。同声传译用到的虚拟麦克风驱动 BlackHole 2ch 采用 GPL 协议，知了安装包里不打包它，在你点安装时直接从它的官方发布地址下载。随 app 附带的声纹模型是 [WeSpeaker](https://github.com/wenet-e2e/wespeaker) 在 VoxCeleb 上训练的 ResNet34-LM，采用 CC BY 4.0 协议，由 `scripts/convert-voiceprint.py` 转成 Core ML。
-
-录制自己的声音时，可在弹窗中选择 Mac、AirPods 或外接麦克风，直接录制原声。录音期间避免与闲置的同传回声消除单元冲突；未收到清晰声音或设备断开时会提示重录。
+This project is licensed under [Apache-2.0](LICENSE). The BlackHole 2ch virtual microphone driver is licensed under the GPL; it is not bundled in the installer and is downloaded from its official URL when you click install. The bundled voiceprint model is [WeSpeaker](https://github.com/wenet-e2e/wespeaker)'s ResNet34-LM trained on VoxCeleb (CC BY 4.0), converted to Core ML by `scripts/convert-voiceprint.py`.

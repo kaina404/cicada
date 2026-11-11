@@ -51,8 +51,15 @@ public sealed class AppSettings
     [JsonPropertyName("recordAudio")] public bool RecordAudio { get; set; } = true;
     /// 说话人识别: tell the other side's voices apart (on by default, as on the Mac).
     [JsonPropertyName("speakerVoices")] public bool SpeakerVoices { get; set; } = true;
-    /// 同声传译: hold right Ctrl to speak into the meeting in its language.
+    /// 会中改正听错的词 (the Mac's key): finished sentences carry the word list to the AI service,
+    /// which points out misheard words (Correction). On by default; does nothing without a service.
+    [JsonPropertyName("fixMisheard")] public bool FixMisheard { get; set; } = true;
+    /// 没见过的名字和专称先问我: a new name is asked about once instead of left as heard.
+    [JsonPropertyName("askNames")] public bool AskNames { get; set; } = true;
+    /// 同声传译: hold the talk key to speak into the meeting in its language.
     [JsonPropertyName("speak")] public bool Speak { get; set; }
+    /// The talk key, a TalkKey name ("rcontrol", "f13"…): not every keyboard has right Ctrl.
+    [JsonPropertyName("talkKey")] public string TalkKey { get; set; } = Cicada.TalkKey.Default;
     /// 我说的语言: "system" or a source code.
     [JsonPropertyName("speakFrom")] public string SpeakFrom { get; set; } = "system";
     /// 对方听到的语言: "room" (what the other side speaks) or a target code.
@@ -70,6 +77,9 @@ public sealed class AppSettings
     [JsonPropertyName("updateLastChecked")] public DateTimeOffset? UpdateLastChecked { get; set; }
     /// The version the update notification was last shown for: one per version.
     [JsonPropertyName("updateNotified")] public string? UpdateNotified { get; set; }
+    /// The startup notification that VB-Cable holds the speaker was shown (CableDefaults.ShouldNotify);
+    /// cleared when a real speaker is back.
+    [JsonPropertyName("cableSpeakerNotified")] public bool CableSpeakerNotified { get; set; }
 
     [JsonIgnore] public string TargetCode => Target == "system" ? Languages.FromSystem(CultureInfo.CurrentUICulture.Name) : Target;
     /// The AI service in use, its address and models (what LingClient calls with).

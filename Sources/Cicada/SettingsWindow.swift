@@ -3,12 +3,13 @@ import Carbon.HIToolbox
 import SwiftUI
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case overlay, language, speak, screen, records, ai, diagnostics
+    case overlay, language, words, speak, screen, records, ai, diagnostics
     var id: String { rawValue }
     var title: String {
         switch self {
         case .overlay: L("显示")
         case .language: L("语言")
+        case .words: L("词表")
         case .speak: L("同声传译")
         case .screen: L("屏幕识别")
         case .records: L("通用")
@@ -20,6 +21,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         switch self {
         case .overlay: "captions.bubble"
         case .language: "globe"
+        case .words: "character.book.closed"
         case .speak: "mic"
         case .screen: "rectangle.dashed.badge.record"
         case .records: "gearshape"
@@ -447,6 +449,7 @@ struct SettingsView: View {
             case .speak: speak
             case .overlay: overlay
             case .language: LanguageSettings(model: model, settings: settings)
+            case .words: WordListSettings(model: model, settings: settings, vocabulary: model.vocabulary, ling: model.ling)
             case .screen: ScreenSettings(settings: settings)
             case .records: records
             case .ai: AISettingsView(model: model, ling: model.ling, settings: settings)
@@ -595,7 +598,7 @@ struct SettingsView: View {
             HStack(spacing: 12) {
                 HealthMark(ok: ok, on: on)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(!ok ? L("对方听不到你") : on ? L("对方听得到你") : L("同声传译没打开"))
+                    Text(!ok ? L("线上的人听不到你") : on ? L("线上的人听得到你") : L("同声传译没打开"))
                         .font(.system(size: 13, weight: .semibold)).foregroundStyle(ok ? Palette.ink : Palette.accentInk)
                     Text(latencyLine).font(.system(size: 11)).foregroundStyle(Palette.tertiary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -672,9 +675,10 @@ struct SettingsView: View {
                     settings.speakMic = $0
                 }
             }
-            SettingsRow(title: L("译文送到"), divider: false) {
+            // Only virtual mics: the translation is for the people online, never the speakers.
+            SettingsRow(title: L("译文送到"), detail: L("只给线上的人听，不从扬声器放"), divider: false) {
                 PillMenu(value: outputName,
-                         options: [("", L("虚拟麦克风（自动）"))] + model.outputs.map { ($0.uid, $0.name) }) {
+                         options: [("", L("虚拟麦克风（自动）"))] + model.outputs.filter(\.isVirtualMic).map { ($0.uid, $0.name) }) {
                     settings.speakOutput = $0
                     model.applySystemMic()
                 }
@@ -684,7 +688,7 @@ struct SettingsView: View {
 
     private var outputName: String {
         if settings.speakOutput.isEmpty { return L("虚拟麦克风（自动）") }
-        return model.outputs.first { $0.uid == settings.speakOutput }?.name ?? L("虚拟麦克风（自动）")
+        return model.outputs.first { $0.uid == settings.speakOutput && $0.isVirtualMic }?.name ?? L("虚拟麦克风（自动）")
     }
 
     private var overlay: some View {

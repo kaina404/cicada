@@ -24,6 +24,8 @@ struct NotesContentView: View {
     /// Lines heard since `coveredUntil` that the notes don't cover yet (shown under the last topic).
     var behind = 0
     var onJump: (Double) -> Void = { _ in }
+    /// 改正听错的词's part of 人名和术语 (the words fixed, the ones waiting), from the notes window.
+    var fixTerms: AnyView? = nil
 
     var body: some View {
         if document {
@@ -83,10 +85,11 @@ struct NotesContentView: View {
                 }
             }
 
-            if !notes.terms.isEmpty {
+            if !notes.terms.isEmpty || fixTerms != nil {
                 VStack(alignment: .leading, spacing: 10) {
                     title(L("人名和术语"))
-                    TermChips(terms: notes.terms, showHeard: true)
+                    if let fixTerms { fixTerms }
+                    if !notes.terms.isEmpty { TermChips(terms: notes.terms, showHeard: true) }
                 }
             }
         }
@@ -118,7 +121,7 @@ struct NotesContentView: View {
                         .alignmentGuide(.firstTextBaseline) { $0[.bottom] + 4 }
                         .frame(width: 13)
                 }
-                Text(item.text + (item.owner.map { "（\($0)）" } ?? ""))
+                Text(item.withOwner)
                     .font(.system(size: 14)).lineSpacing(2)
                     .foregroundStyle(item.support == 0 ? Palette.tertiary : Palette.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -196,7 +199,7 @@ private struct DocumentNotesView: View {
     /// jumps to the lines behind it. One with little support stays grey.
     private func conclusion(_ item: NoteItem, index: Int, todo: Bool) -> some View {
         let weak = item.support == 0
-        let text = item.text + (item.owner.map { "（\($0)）" } ?? "")
+        let text = item.withOwner
         return HStack(alignment: .firstTextBaseline, spacing: 8) {
             Group {
                 if todo { Image(systemName: "circle").font(.system(size: 11)) } else { Text("\(index)").font(.system(size: 12).monospacedDigit()) }
@@ -533,11 +536,20 @@ struct TranscriptListView<Partial: View>: View, Equatable {
     var marked: Int?
     /// 电脑和会议室 heard both: each paragraph says 现场 or 线上 (RecordList.heardBoth).
     var places = false
+    /// Lines the meeting record's own recognizer is still settling: their words may change.
+    var settling: Set<String> = []
+    /// Lines whose voice is still being heard (`AppModel.voicePending`).
+    var voicePending: Set<String> = []
     var onAssign: ((Set<String>, Int) -> Void)?
+    /// 改回 on a fixed word: the line goes back to what was heard.
+    var onRevert: ((String, LineFix) -> Void)?
+    /// Debug renders: every fixed paragraph shows its words as if pointed at.
+    var revealFixes = false
     @ViewBuilder var partial: Partial
 
     @State private var assigning: String?
     @State private var expandedAI: Set<String> = []
+    @State private var hovered: String?
 
     @State private var following = true
     @State private var seenCount = 0
@@ -547,7 +559,8 @@ struct TranscriptListView<Partial: View>: View, Equatable {
         a.lines == b.lines && a.topics == b.topics && a.terms == b.terms && a.currentMatch == b.currentMatch
             && a.showAIGloss == b.showAIGloss && a.bilingual == b.bilingual && a.live == b.live && a.partialShown == b.partialShown
             && a.jumpTo == b.jumpTo && a.speakers == b.speakers && a.startedAt == b.startedAt && a.voices == b.voices && a.marked == b.marked
-            && a.identifying == b.identifying && a.places == b.places
+            && a.identifying == b.identifying && a.places == b.places && a.settling == b.settling
+            && a.voicePending == b.voicePending
     }
 
     private var searching: Bool { !terms.isEmpty }
@@ -707,7 +720,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     Image(systemName: "arrow.up").font(.system(size: 12, weight: .bold))
                     Text("\(lines.count - seenCount) 句新内容").font(.system(size: 13, weight: .semibold))
                     if let last = lines.last {
-                        Text(last.src).font(.system(size: 13)).foregroundStyle(Color(white: 0.74)).lineLimit(1)
+                        Text(last.shown).font(.system(size: 13)).foregroundStyle(Color(white: 0.74)).lineLimit(1)
                     }
                 }
                 .foregroundStyle(.white)
@@ -725,11 +738,15 @@ struct TranscriptListView<Partial: View>: View, Equatable {
     }
 
     private func matches(_ l: TranscriptLine) -> Bool {
-        terms.contains { l.src.localizedCaseInsensitiveContains($0) || (l.dst ?? "").localizedCaseInsensitiveContains($0) }
+        terms.contains { l.shown.localizedCaseInsensitiveContains($0) || (l.dst ?? "").localizedCaseInsensitiveContains($0) }
     }
 
     private func highlighted(_ text: String, current: Bool) -> AttributedString {
-        var a = AttributedString(text)
+        highlighted(AttributedString(text), current: current)
+    }
+
+    private func highlighted(_ base: AttributedString, current: Bool) -> AttributedString {
+        var a = base
         for term in terms where !term.isEmpty {
             var from = a.startIndex
             while from < a.endIndex, let r = a[from...].range(of: term, options: .caseInsensitive) {
@@ -746,8 +763,9 @@ struct TranscriptListView<Partial: View>: View, Equatable {
         let isMatch = ls.contains { $0.id == currentMatch }
         let latest = live && ls.last?.id == lines.last?.id
         let dim = searching && !ls.contains(where: matches)
-        let src = TranscriptParagraphs.join(ls.map(\.src))
-        let dst = TranscriptParagraphs.join(ls.compactMap { $0.dst != $0.src ? $0.dst : nil })
+        let src = TranscriptParagraphs.joinFixed(ls)
+        let dst = TranscriptParagraphs.join(ls.compactMap { $0.dst != $0.src && $0.dst != $0.shown ? $0.dst : nil })
+        let fixed = ls.flatMap { l in (l.fixes ?? []).filter(\.applied).map { (l.id, $0) } }
         return HStack(alignment: .top, spacing: 12) {
             Text(NotesEngine.clock(l.t)).font(.system(size: 12, weight: isMatch ? .semibold : .regular).monospacedDigit())
                 .foregroundStyle(latest || isMatch ? Palette.accentInk : Palette.tertiary)
@@ -755,7 +773,7 @@ struct TranscriptListView<Partial: View>: View, Equatable {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     if !label {
-                    } else if l.speaker == "me" { Text("你").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.accentInk) }
+                    } else if l.speaker == "me" { MeTag() }
                     else if l.isScreen { Text("屏幕").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.secondary) }
                     else if l.isAI {
                         Button {
@@ -785,6 +803,11 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                     else if let n = speakers[l.id] { SpeakerTag(number: n) }
                     else if !speakers.isEmpty { UnknownSpeakerTag() }
                     if places, label, l.speaker == "them" { PlaceTag(line: l) }
+                    if live, ls.contains(where: { settling.contains($0.id) }) {
+                        Spacer(minLength: 4)
+                        Text("校准中").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                            .help(L("文字稍后会再校准一次，字幕不受影响"))
+                    }
                 }
                 if !l.isAI || expandedAI.contains(l.id) {
                     Text(highlighted(src, current: isMatch)).font(.system(size: 14)).lineSpacing(2).textSelection(.enabled)
@@ -792,6 +815,12 @@ struct TranscriptListView<Partial: View>: View, Equatable {
                 if bilingual, !dst.isEmpty, !l.isAI || (showAIGloss && expandedAI.contains(l.id)) {
                     Text(highlighted(dst, current: isMatch)).font(.system(size: 13)).foregroundStyle(Palette.secondary)
                         .lineSpacing(2).textSelection(.enabled)
+                }
+                // 改正听错的词: pointing at the paragraph shows what each fixed word was heard as.
+                // The line being said is shown open too: hover in the notes panel, which never takes
+                // focus, is not to be counted on.
+                if hovered == l.id || revealFixes || latest, !fixed.isEmpty, let onRevert {
+                    FixedWords(fixes: fixed, onRevert: onRevert).padding(.top, 2)
                 }
                 if assigning == l.id, let onAssign {
                     LineSpeakerPicker(voices: voices, current: l.voice.flatMap { voices[$0] != nil ? $0 : nil },
@@ -811,6 +840,9 @@ struct TranscriptListView<Partial: View>: View, Equatable {
             : marked != nil && ls.contains(where: { $0.voice == marked }) ? SpeakerColor.ink(voices[marked!] ?? 1).opacity(0.07)
             : Color.clear))
         .opacity(dim ? 0.5 : 1)
+        .onHover { inside in
+            if inside { hovered = l.id } else if hovered == l.id { hovered = nil }
+        }
     }
 
 }
@@ -830,20 +862,71 @@ extension TranscriptListView {
 
 /// The notes window's transcript reads as paragraphs: one person's lines within 30 seconds of the
 /// paragraph's first are one block, one time, instead of a row and a rule for every fragment.
+/// A fast speaker fills 30 seconds with a wall of text (issue #20): a paragraph that has reached
+/// `full` takes no more lines.
 enum TranscriptParagraphs {
     static let span: Double = 30
+    /// Two or three sentences: Chinese or Japanese characters, or words.
+    static let full = (cjk: 80, words: 40)
 
-    static func group(_ lines: [TranscriptLine], _ speakers: [String: Int]) -> [[TranscriptLine]] {
+    static func isFull(_ lines: [TranscriptLine]) -> Bool {
+        let text = lines.map(\.src).joined(separator: " ")
+        let cjk = text.unicodeScalars.contains { $0.properties.isIdeographic || (0x3040...0x30FF).contains($0.value) }
+        return cjk ? text.filter(\.isLetter).count >= full.cjk : text.split(whereSeparator: \.isWhitespace).count >= full.words
+    }
+
+    static func group(_ lines: [TranscriptLine], _ speakers: [String: Int], pending: Set<String> = []) -> [[TranscriptLine]] {
         var out: [[TranscriptLine]] = []
         var key: String?
+        // Before any number is on show (two voices with five lines each), a question and its answer
+        // would read as one block: a known voice that differs from the paragraph's starts a new one.
+        // Short lines' voices are left out, as for numbers: they are too often wrong. A line with no
+        // voice was like none heard so far (or too short to start one): next to a known voice that is
+        // more often someone else ("Great." / "Let's lock that in" after the answer), so it counts as
+        // a voice of its own (`noVoice`), which the paragraphs' voices then hold. One still being
+        // heard (`pending`) stays put meanwhile rather than jump out and back.
+        var voice: Int?
+        let noVoice = -1
         for l in lines {
             let k = (l.speaker == "me" ? "me" : l.isScreen ? "screen" : l.isAI ? "ai" : speakers[l.id].map { "n\($0)" } ?? "?") + (l.via ?? "")
-            if k == key, let first = out.last?.first, l.t - first.t <= span {
+            let heard = l.voice.map { SpeakerLabels.substantive(l.src) ? $0 : nil } ?? (pending.contains(l.id) ? nil : noVoice)
+            let v = speakers.isEmpty && l.speaker == "them" ? heard : nil
+            if k == key, let p = out.last, let first = p.first, l.t - first.t <= span, !isFull(p),
+               voice == nil || v == nil || v == voice {
                 out[out.count - 1].append(l)
+                voice = voice ?? v
             } else {
                 out.append([l])
+                voice = v
             }
             key = k
+        }
+        return out
+    }
+
+    /// The lines as shown, each fixed word with a dotted underline.
+    static func joinFixed(_ lines: [TranscriptLine]) -> AttributedString {
+        var out = AttributedString()
+        var plain = ""
+        for l in lines {
+            let (text, marks) = Correction.apply(l.fixes ?? [], to: l.src)
+            let p = text.trimmingCharacters(in: .whitespaces)
+            guard !p.isEmpty else { continue }
+            if let last = plain.unicodeScalars.last, !(last.properties.isIdeographic || "。！？，、；：”）".unicodeScalars.contains(last)) {
+                out += AttributedString(" ")
+                plain += " "
+            }
+            var a = AttributedString(text)
+            for m in marks {
+                guard let lo = AttributedString.Index(m.lowerBound, within: a), let hi = AttributedString.Index(m.upperBound, within: a) else { continue }
+                a[lo..<hi].underlineStyle = Text.LineStyle(pattern: .dot, color: Palette.tertiary)
+            }
+            // Words waiting for the user (这样改对吗？) get a pale wash, as heard.
+            for f in l.fixes ?? [] where f.ask == true {
+                if let r = a.range(of: f.from) { a[r].backgroundColor = Palette.accentPale }
+            }
+            out += a
+            plain += text
         }
         return out
     }
@@ -1367,5 +1450,153 @@ struct MeetingEndingStrip: View {
         .padding(compact ? 12 : 14)
         .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentPale))
         .onReceive(tick) { now = $0 }
+    }
+}
+
+
+/// Under a paragraph being pointed at: each fixed word, what it was heard as, and 改回.
+struct FixedWords: View {
+    let fixes: [(line: String, fix: LineFix)]
+    let onRevert: (String, LineFix) -> Void
+
+    var body: some View {
+        FlowLayout(spacing: 6) {
+            ForEach(Array(fixes.enumerated()), id: \.offset) { _, item in
+                let c = Correction.label(item.fix)
+                HStack(spacing: 6) {
+                    (Text("听成").foregroundStyle(Palette.tertiary) + Text(" " + c.from) + Text(" → ").foregroundStyle(Palette.tertiary) + Text(c.to))
+                        .font(.system(size: 11))
+                    Button(L("改回")) { onRevert(item.line, item.fix) }
+                        .buttonStyle(.plain).font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.link)
+                }
+                .padding(.horizontal, 8).padding(.vertical, 3)
+                .background(RoundedRectangle(cornerRadius: 6).fill(Palette.fill))
+            }
+        }
+    }
+}
+
+/// 这样改对吗？: a name the Mac couldn't check by sound, asked about once. Clicks only: the notes
+/// window never takes focus. 对 fixes every line waiting on it and adds it to the word list.
+struct FixConfirmCard: View {
+    let line: TranscriptLine
+    let fix: LineFix
+    let count: Int
+    let onAnswer: (Bool) -> Void
+    /// ×: 稍后再看, asked again after the meeting.
+    var onLater: (() -> Void)? = nil
+
+    var body: some View {
+        let c = Correction.label(fix)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("这样改对吗？").font(.system(size: 13, weight: .semibold))
+                Text("确认后整场一起改，以后也这样改").font(.system(size: 12)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                Spacer(minLength: 4)
+                if count > 1 { Text("1 / \(count)").font(.system(size: 12).monospacedDigit()).foregroundStyle(Palette.tertiary) }
+            }
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
+                    (Text(c.from) + Text(" → ").foregroundStyle(Palette.tertiary) + Text(c.to).bold()).font(.system(size: 14))
+                    Text("\(NotesEngine.clock(line.t)) · \(line.src)").font(.system(size: 11)).foregroundStyle(Palette.tertiary).lineLimit(1)
+                }
+                Spacer(minLength: 4)
+                Button { onAnswer(true) } label: {
+                    Text("对").font(.system(size: 13, weight: .medium)).foregroundStyle(.white)
+                        .padding(.horizontal, 14).frame(height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.ink))
+                }.buttonStyle(.plain)
+                Button { onAnswer(false) } label: {
+                    Text("不对").font(.system(size: 13)).foregroundStyle(Palette.secondary)
+                        .padding(.horizontal, 14).frame(height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.fill))
+                }.buttonStyle(.plain)
+                if let onLater {
+                    Button(action: onLater) {
+                        Image(systemName: "xmark").font(.system(size: 11, weight: .semibold)).foregroundStyle(Palette.tertiary)
+                            .frame(width: 26, height: 28).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain).help(L("稍后再看")).accessibilityLabel(L("稍后再看"))
+                }
+            }
+        }
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.white))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.black.opacity(0.08), lineWidth: 1))
+        .shadow(color: .black.opacity(0.08), radius: 10, y: 4)
+    }
+}
+
+/// 人名和术语, the fixing part: each word fixed in this meeting with what it was heard as and how
+/// often (a click shows those lines), and the names still waiting, with ✓ and ×.
+struct FixTermsView: View {
+    @ObservedObject var fixes: LiveFixes
+    let session: Session
+    let onShow: (String) -> Void
+
+    var body: some View {
+        let words = Self.fixedWords(session)
+        let waiting = fixes.pending(in: session.id)
+        VStack(alignment: .leading, spacing: 8) {
+            if !words.isEmpty {
+                FlowLayout(spacing: 6) {
+                    ForEach(words, id: \.word) { w in
+                        Button { onShow(w.word) } label: {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(w.word).font(.system(size: 12)).bold().foregroundStyle(Palette.ink)
+                                Text("听成 \(w.heard.prefix(2).joined(separator: "、")) · 改了 \(w.count) 处")
+                                    .font(.system(size: 11)).foregroundStyle(Palette.link)
+                            }
+                            .padding(.horizontal, 9).padding(.vertical, 5)
+                            .background(RoundedRectangle(cornerRadius: 7).fill(Palette.fill))
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            if !waiting.isEmpty {
+                Text("等你确认，还没改").font(.system(size: 12)).foregroundStyle(Palette.tertiary).padding(.top, 2)
+                ForEach(Array(waiting.enumerated()), id: \.offset) { _, w in
+                    let c = Correction.label(w.fix)
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(c.to).font(.system(size: 13)).bold()
+                            Text("听成 \(c.from)").font(.system(size: 11)).foregroundStyle(Palette.tertiary)
+                        }
+                        Spacer(minLength: 4)
+                        Button { fixes.answer(w.fix, yes: true, in: session.id) } label: {
+                            Image(systemName: "checkmark").font(.system(size: 12, weight: .semibold)).foregroundStyle(.white)
+                                .frame(width: 28, height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.ink))
+                        }
+                        .buttonStyle(.plain).accessibilityLabel(L("对"))
+                        Button { fixes.answer(w.fix, yes: false, in: session.id) } label: {
+                            Image(systemName: "xmark").font(.system(size: 12, weight: .semibold)).foregroundStyle(Palette.secondary)
+                                .frame(width: 28, height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Palette.fill))
+                        }
+                        .buttonStyle(.plain).accessibilityLabel(L("不对"))
+                    }
+                    .padding(.leading, 10).padding(.trailing, 6).padding(.vertical, 5)
+                    .overlay(RoundedRectangle(cornerRadius: 9).strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [3, 3])).foregroundStyle(Color(white: 0.8)))
+                }
+            }
+        }
+    }
+
+    /// The words fixed in a meeting, most fixed first: what each was heard as, and how often.
+    static func fixedWords(_ s: Session) -> [(word: String, heard: [String], count: Int)] {
+        var out: [String: (heard: [String], count: Int)] = [:]
+        for l in s.lines {
+            for f in l.fixes ?? [] where f.applied {
+                let c = Correction.label(f)
+                let word = c.to.trimmingCharacters(in: .whitespaces)
+                var e = out[word] ?? ([], 0)
+                if !e.heard.contains(c.from) { e.heard.append(c.from) }
+                e.count += 1
+                out[word] = e
+            }
+        }
+        // Ties by word: a Dictionary's order differs with each instance, and this runs on every
+        // redraw (the window ticks each second), so the chips would swap places.
+        return out.map { ($0.key, $0.value.heard, $0.value.count) }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.word < $1.word }
     }
 }

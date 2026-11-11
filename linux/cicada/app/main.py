@@ -78,10 +78,24 @@ class Controller:
         self.translator = Translator(self.ling)
         self.translator.google_off = self.settings.google_off
         self.listen = ListenEngine(self.ling, self.translator, self.store, self.notes, self.settings)
+        # 改正听错的词: the word list beside the records, and the fixes the translation brings back.
+        from ..core import vocabulary
+        from ..core.live_fixes import LiveFixes
+        self.vocabulary = vocabulary.Vocabulary(vocabulary.default_path())
+        self.fixes = LiveFixes(self.store, self.vocabulary, self.settings)
+        self.fixes.on_change = self.changed
+        self.vocabulary.on_change = self.changed
+        self.listen.fixes = self.fixes
+        self.translator.fix_context = self.fixes.context
+        self.translator.on_fixes = self.fixes.received
         # 同声传译: my microphone → the AI service → 知了 麦克风. The listen side's loudness feeds its echo check.
         from ..core.speak import SpeakEngine
-        from .room import EchoCanceller, Player, VirtualMic
+        from .room import TALK_MIC, TALK_SINK, EchoCanceller, Player, VirtualMic
         self.room = VirtualMic()
+        # The talk key's microphone with the meeting's voices taken out, made with 知了 麦克风 (as the
+        # Mac makes its voice unit ahead): what I say while they talk goes out instead of being dropped.
+        self.talk_echo = EchoCanceller(TALK_SINK, TALK_MIC, "talk-sink", agc_off=True)
+        self._talk_echo_lock = threading.Lock()
         # 电脑和会议室: the online voices taken out of the room mic (module-echo-cancel).
         self.echo = EchoCanceller()
         # Debug (roomEcho on): the room mic through the canceller. Off by default, as on the Mac: there
@@ -109,6 +123,7 @@ class Controller:
         self.store.on_words(self._words)
         self.ling.on_change(self.changed)
         self.notes_window = None
+        self.share_dialog = None  # 分享… (share_dialog.py), one at a time
         self.records_window = None
         self.settings_window = None
         self.onboarding = None
@@ -202,8 +217,13 @@ class Controller:
                 pass
         self.tray = tray.make(self, icon)
         def prepare():
-            (self.room.create if self.settings.speakEnabled else self.room.leftovers)()
+            self.talk_echo.remove()  # left by a run that crashed: the speakers are the default output again
             self.echo.remove()  # left by a run that crashed during 电脑和会议室
+            if self.settings.speakEnabled:
+                if self.room.create():
+                    self._make_talk_echo()
+            else:
+                self.room.leftovers()
             if speak:  # `cicada --speak` before Cicada was running: speak once 知了 麦克风 is there
                 GLib.idle_add(lambda: self.toggle_speaking() and False)
         threading.Thread(target=prepare, daemon=True).start()
@@ -230,6 +250,7 @@ class Controller:
             self.show_records()  # where 已更新到 … is said, once
             self.records_window.toasts.show(reopened)
         self.updates.start()
+        self.keep_in_dock()
 
     def changed(self) -> None:
         """Engine threads call this: one coalesced refresh on the main loop."""
@@ -251,6 +272,7 @@ class Controller:
                 self.tray.update()
             if self.settings_window is not None:
                 self.settings_window.refresh_version()
+                self.settings_window.word_list.refresh()
             self.check_problem()
             return False
         GLib.idle_add(run)
@@ -265,17 +287,61 @@ class Controller:
         self.notes_window.refresh()
         self.notes_window.show_all()
 
-    def show_records(self) -> None:
-        from . import media
-        media.rescan()  # a recording plays once the formats are installed, no restart
+    def _records(self):
         if self.records_window is None:
             from .records_window import RecordsWindow
             self.records_window = RecordsWindow(self)
             self.application.add_window(self.records_window)
-        self.records_window.fill()
-        self.records_window.show_all()
+        return self.records_window
+
+    def show_records(self) -> None:
+        from . import media
+        media.rescan()  # a recording plays once the formats are installed, no restart
+        w = self._records()
+        if w.get_visible() and w.iconified:
+            # Minimized (keep_in_dock), Mutter won't bring it back for a request without a user's
+            # event time (the tray, a second launch): shown afresh instead, as when it was hidden.
+            w.hide()
+        w.fill()
+        w.set_focus_on_map(True)
+        w.deiconify()  # unmapped, this only clears GTK's "map it minimized" (keep_in_dock's iconify)
+        w.show_all()
         self.records_window.present()
         self.records_window.set_focus(None)  # not the search box: its placeholder would vanish
+
+    @property
+    def records_open(self) -> bool:
+        """On screen: not hidden, nor minimized to keep the dock icon (a dialog over it would be too)."""
+        w = self.records_window
+        return w is not None and w.get_visible() and not w.iconified
+
+    def keep_in_dock(self) -> None:
+        """在 Dock 中显示 (the Mac's showInDock): GNOME's dock lists an app only while it has a window
+        there, and the notes window, a notification that never takes focus, has none. So while the
+        setting is on the records window stays, minimized, and clicking the dock icon brings it back.
+        Mapped minimized and never presented: the meeting app keeps the focus."""
+        w = self.records_window
+        if not self.settings.showInDock or (w is not None and w.get_visible()):
+            return
+        w = self._records()
+        w.fill()
+        w.parked = True
+        w.set_focus_on_map(False)
+        w.iconify()  # before it's mapped: it starts minimized (WM_HINTS IconicState)
+        w.show_all()
+        w.set_focus(None)  # back from the dock, not in the search box: its placeholder would vanish
+        Log.d("dock: records window kept minimized")
+
+    def set_show_in_dock(self, on: bool) -> None:
+        """设置 › 在 Dock 中显示. Off: as before it existed, the records window only while it's open."""
+        self.settings.showInDock = on
+        self.settings.save()
+        w = self.records_window
+        if on:
+            self.keep_in_dock()
+        elif w is not None and w.parked:
+            w.hide()
+        Log.d("dock: %s" % ("on" if on else "off"))
 
     def show_settings(self, ai: bool = False, general: bool = False) -> None:
         """设置; `ai`: at AI 服务 (its first section), where every AI problem is fixed; `general`: at 通用
@@ -339,13 +405,13 @@ class Controller:
         self.onboarding = Onboarding(self, at)
         self.application.add_window(self.onboarding)
         # Over the records window, so closing it leaves a window to click, not an empty screen.
-        if self.records_window is not None and self.records_window.get_visible():
+        if self.records_open:
             self.onboarding.set_transient_for(self.records_window)
             self.onboarding.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
 
         def closed(*_):
             self.onboarding = None
-            if self.tray is None and (self.records_window is None or not self.records_window.get_visible()):
+            if self.tray is None and not self.records_open:
                 self.show_records()
             self.changed()
         self.onboarding.connect("destroy", closed)
@@ -660,11 +726,16 @@ class Controller:
             return
 
         source.on_ended = self._source_ended(kind)
+        # A new meeting's notes window starts without the last meeting's interpreted sentence.
+        if not self.speak.active:
+            self.speak.last = None
+            self.speak.problem = None
         self.auto_ended = False
         self.ending = None
         self.end_watch = meeting_end.MeetingEndWatch(self.end_config(), time.time())
         self.notices.start()
         room = self._room_side_source() if kind == "both" else None
+        self.fixes.meeting_started()
         self.listen.start(source, kind, mic=kind == "room")
         if room is not None:
             self.listen.start_room(*room)
@@ -687,7 +758,7 @@ class Controller:
             title, body = LF("连不上 %@", name), ling.message()
             hint = r.proxy_line(name, ling.service_host)
             fix = L("重新检查并开始")
-        dialog = Gtk.Dialog(transient_for=self.records_window if self.records_window and self.records_window.get_visible() else None,
+        dialog = Gtk.Dialog(transient_for=self.records_window if self.records_open else None,
                             modal=True)
         dialog.set_decorated(False)
         dialog.set_resizable(False)
@@ -823,15 +894,31 @@ class Controller:
     def set_speak_enabled(self, on: bool) -> bool:
         """Turning it on makes 知了 麦克风 (and the default input); off removes it. False if the sound
         server wouldn't make the device."""
-        if on and not self.room.on and not self.room.create():
-            return False
+        if on and not self.room.on:
+            if not self.room.create():
+                return False
+            self._make_talk_echo()
         if not on:
             self.speak.cancel()
+            self.talk_echo.remove()
             self.room.remove()
         self.settings.speakEnabled = on
         self.settings.save()
         self.changed()
         return True
+
+    def _make_talk_echo(self) -> None:
+        """The talk key's echo canceller, in front of the output that is the default now. Not while
+        电脑和会议室's debug canceller is (two in a row fight over the default output)."""
+        real = self.room.real_mic
+        if not real or self.echo.on:
+            return
+        with self._talk_echo_lock:  # a press can ask again while the last one is still being made
+            if self.talk_echo.ready(real):
+                return
+            self.talk_echo.remove()
+            made = self.talk_echo.create(real) is not None
+        Log.d("speak: echo canceller %s" % ("ready" if made else "unavailable, the plain mic"))
 
     def toggle_speaking(self) -> None:
         if self.speak.active:
@@ -850,8 +937,19 @@ class Controller:
                 self.speak.problem = L("没能建好知了麦克风")
                 self.changed()
                 return
-        # Me, from the microphone that was the default before 知了 麦克风 took its place.
-        mic = SystemAudio(self.room.real_mic or "@DEFAULT_SOURCE@")
+        # Me, from the microphone that was the default before 知了 麦克风 took its place: through the
+        # echo canceller made for it while the meeting still plays through that, else the plain mic
+        # (said over the meeting is dropped then) and the canceller is made again for the next time.
+        real = self.room.real_mic
+        cancelled = bool(real) and self.talk_echo.ready(real)
+        why = ""
+        if not cancelled:
+            why = ("no real microphone known" if not real else "no canceller" if not self.talk_echo.on
+                   else "the canceller was made for another microphone" if self.talk_echo.mic != real
+                   else "the canceller isn't the default output")
+            if real:
+                threading.Thread(target=self._make_talk_echo, daemon=True).start()
+        mic = SystemAudio(self.talk_echo.source if cancelled else real or "@DEFAULT_SOURCE@")
 
         def ended(reason):
             if reason:
@@ -859,7 +957,7 @@ class Controller:
                 self.speak.problem = L("没有可用的麦克风")
                 GLib.idle_add(lambda: self.speak.stop() or False)
         mic.on_ended = ended
-        self.speak.start(mic)
+        self.speak.start(mic, cancelled, why)
         self.show_notes()
 
     def stop_listening(self, ended_at=None, auto: bool = False) -> None:
@@ -975,6 +1073,7 @@ class Controller:
 
         def run():
             self.speak.cancel()
+            self.talk_echo.remove()  # the speakers are the default output again
             if self.room.on:
                 self.room.remove()  # the real microphone is the default again
             if self.echo.on:

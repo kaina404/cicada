@@ -44,6 +44,8 @@ sealed class MainWindow : Window
     string? selected;
     string tab = "notes";
     double? jumpTo;
+    /// A line to show, marked for a moment (the fix banner's 听成 … → …？).
+    string? jumpLine;
     string? shownKey;
     bool refreshQueued;
     readonly ContentControl pill = new() { VerticalAlignment = VerticalAlignment.Top, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 8, 0, 0) };
@@ -136,7 +138,7 @@ sealed class MainWindow : Window
         q.Length == 0
         || SessionStore.DisplayTitle(s).Contains(q, StringComparison.OrdinalIgnoreCase)
         || (s.Notes?.Summary.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
-        || s.Lines.Any(l => l.Src.Contains(q, StringComparison.OrdinalIgnoreCase) || (l.Dst?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
+        || s.Lines.Any(l => l.Shown.Contains(q, StringComparison.OrdinalIgnoreCase) || (l.Dst?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false));
 
     void Fill()
     {
@@ -167,7 +169,7 @@ sealed class MainWindow : Window
         if (selected is null || shown.All(s => s.Id != selected)) selected = shown[0].Id;
         foreach (var child in list.Children.OfType<Button>()) Paint(child);
         // Store changes come in a burst while a meeting runs; redraw the open page only if it changed.
-        if (PageKey() == shownKey) return;
+        if (PageKey() == shownKey) { ShowToast(); return; }
         ShowDetail();
     }
 
@@ -258,7 +260,7 @@ sealed class MainWindow : Window
             (ling.Config.IsLing ? L("接上 Ling") : LF("接上 %@", ling.Config.Name), broken ?? (key ? L("key 已加密存在这台电脑上") : L("识别、翻译和纪要都靠它，约 1 分钟")), key),
             (L("听一下电脑里的声音"), L("放一段测试声音，看音量条动起来"), audio),
             (L("看看效果"), L("一段 9 秒的英文会议，字幕和纪要一句句出来"), sample),
-            (L("同声传译"), LF("按住%@说话，对方听到翻译后的声音", PushToTalk.Label), false),
+            (L("同声传译"), LF("按住%@说话，线上的人听到翻译后的声音", PushToTalk.Label), false),
         ];
         var list = new StackPanel();
         for (int i = 0; i < steps.Length; i++)
@@ -388,7 +390,7 @@ sealed class MainWindow : Window
 
     /// What the open page shows; a store change that leaves it the same doesn't redraw it.
     string? PageKey() => selected is not null && app.Store.Get(selected) is { } cur
-        ? $"{selected}|{tab}|{SessionStore.DisplayTitle(cur)}|{cur.Lines.Count}|{cur.Notes?.Covered}|{cur.Notes?.Final}|{app.Listen.Listening}|{app.Notes.GeneratingId == selected}|{cur.HasAudio}|{Recording.Playable(cur)}|{app.Settings.RecordAudio}"
+        ? $"{selected}|{tab}|{SessionStore.DisplayTitle(cur)}|{cur.Lines.Count}|{cur.Notes?.Covered}|{cur.Notes?.Final}|{app.Listen.Listening}|{app.Notes.GeneratingId == selected}|{cur.HasAudio}|{Recording.Playable(cur)}|{app.Settings.RecordAudio}|{FixKey(cur)}|{cur.Lines.Sum(l => l.Dst?.Length ?? 0)}"
         : null;
 
     void ShowDetail()
@@ -471,7 +473,23 @@ sealed class MainWindow : Window
             pinned.Visibility = below < 0 ? Visibility.Visible : Visibility.Collapsed;
         };
         if (pendingJump is { } jump) { pendingJump = null; jump(scroll); }
-        detail.Content = new Grid { Children = { scroll, pinned } };
+        // The last fix decision with 撤销, along the bottom of the page.
+        toastHost.Margin = new Thickness(0, 0, 0, 18);
+        toastHost.VerticalAlignment = VerticalAlignment.Bottom; toastHost.HorizontalAlignment = HorizontalAlignment.Center;
+        if (toastHost.Parent is Grid old) old.Children.Remove(toastHost);
+        detail.Content = new Grid { Children = { scroll, pinned, toastHost } };
+        ShowToast();
+    }
+
+    readonly ContentControl toastHost = new();
+    string? toastKey;
+
+    void ShowToast()
+    {
+        var key = app.Fixes.Toast is { } t ? $"{t.Id}|{app.Fixes.CanUndo}" : null;
+        if (key == toastKey && toastHost.Content is not null == (key is not null)) return;
+        toastKey = key;
+        toastHost.Content = FixViews.Toast(app.Fixes);
     }
 
     /// 生成纪要 or 复制纪要, 导出… and ···, beside the tabs (and again in the pinned bar).
@@ -498,6 +516,10 @@ sealed class MainWindow : Window
             tools.Children.Add(copy);
         }
         tools.Children.Add(Spaced(Small(Ui.Button(L("导出…"), () => Export(s), Ui.Kind.Standard, height: 32)), 8));
+        // Not while the meeting is still going, nor with nothing in it.
+        var share = Small(Ui.Button(L("分享…"), () => app.ShareSheet(s), Ui.Kind.Standard, height: 32));
+        share.IsEnabled = !live && (s.Lines.Count > 0 || hasNotes);
+        tools.Children.Add(Spaced(share, 8));
         Button? more = null;
         more = Ui.Button("···", () =>
         {
@@ -547,7 +569,7 @@ sealed class MainWindow : Window
                     DockPanel.SetDock(at, Dock.Right);
                     row.Children.Add(at);
                 }
-                row.Children.Add(Ui.Text(item.Text + (item.Owner is { Length: > 0 } o ? $"（{o}）" : ""), 15, item.Support == 0 ? Palette.Tertiary : Palette.Ink));
+                row.Children.Add(Ui.Text(item.WithOwner, 15, item.Support == 0 ? Palette.Tertiary : Palette.Ink));
                 block.Children.Add(row);
             }
             article.Children.Add(new Border { Background = Palette.Mica, CornerRadius = new CornerRadius(16), Padding = new Thickness(26, 22, 26, 22), Child = block, Margin = new Thickness(0, 0, 0, 32) });
@@ -603,17 +625,54 @@ sealed class MainWindow : Window
         return article;
     }
 
+    // 改这句…: the line being rewritten and what the editor opens with.
+    string? editingLine;
+    string editingStart = "";
+
+    void EditLine(TranscriptLine l, string start)
+    {
+        editingLine = l.Id; editingStart = start; tab = "transcript"; jumpLine = l.Id;
+        ShowDetail();
+    }
+
+    void EditDone() { editingLine = null; ShowDetail(); }
+
+    /// Debug: 改这句… on line `line` of record `id`, as from its menu.
+    public void DebugEdit(string id, string line)
+    {
+        selected = id;
+        if (app.Store.Get(id)?.Lines.FirstOrDefault(l => l.Id == line) is { } l) EditLine(l, l.Shown);
+    }
+
+    /// A fix count and state per record, so a decision redraws the page.
+    static string FixKey(Session s) => string.Join(",", s.Lines.Where(l => l.Fixes is not null).Select(l => string.Join("", l.Fixes!.Select(f => $"{f.From}>{f.To}{(f.Ask == true ? "?" : "")}{(f.Off == true ? "x" : "")}{(f.User == true ? "u" : "")};"))));
+
     FrameworkElement Transcript(Session s)
     {
         var body = new StackPanel();
         FrameworkElement? target = null;
         rows.Clear(); lit = -1;
         Action<double>? play = player is not null ? PlayFrom : null;
-        // The line nearest the topic's time (older notes may hold a time no line has).
-        var nearest = jumpTo is { } t0 && s.Lines.Count > 0 ? s.Lines.MinBy(l => Math.Abs(l.T - t0)) : null;
+        // 改正听错的词: over a finished meeting, the fixes waiting for the user and how many were made.
+        var live = app.Listen.Listening && app.Listen.SessionId == s.Id;
+        if (!live && FixViews.Banner(s, app.Fixes, id => { jumpLine = id; ShowDetail(); }, EditLine) is { } banner)
+        {
+            banner.Margin = new Thickness(0, 0, 0, 14);
+            body.Children.Add(banner);
+        }
+        // The line nearest the topic's time (older notes may hold a time no line has), or the one asked for.
+        var nearest = jumpLine is { } jl ? s.Lines.FirstOrDefault(l => l.Id == jl)
+            : jumpTo is { } t0 && s.Lines.Count > 0 ? s.Lines.MinBy(l => Math.Abs(l.T - t0)) : null;
         foreach (var (l, who, ink, place) in NotesWindow.Speakers(s.Lines, app.Settings.SpeakerVoices))
         {
-            var line = NotesWindow.TranscriptRow(l, who, ink, place, play);
+            var editor = editingLine == l.Id ? new FixViews.Editor(l, s.Id, app.Fixes, editingStart, EditDone) : null;
+            var line = NotesWindow.TranscriptRow(l, who, ink, place, play, revert: f => app.Fixes.Revert(f, l.Id, s.Id),
+                edit: () => EditLine(l, l.Shown), editor: editor);
+            var menu = new ContextMenu { FontFamily = Palette.Font };
+            var item = new MenuItem { Header = L("改这句…") };
+            item.Click += (_, _) => EditLine(l, l.Shown);
+            menu.Items.Add(item);
+            line.ContextMenu = menu;
             if (ReferenceEquals(l, nearest)) target = line;
             if (play is not null && line is Panel row0 && FindTime(row0) is { } time) rows.Add((l.T, row0, time));
             body.Children.Add(line);
@@ -637,7 +696,7 @@ sealed class MainWindow : Window
             fade.Tick += (_, _) => { row.Background = Brushes.Transparent; fade.Stop(); };
             fade.Start();
         }
-        jumpTo = null;
+        jumpTo = null; jumpLine = null;
         if (player is not null) Dispatcher.BeginInvoke(UpdatePlayer, DispatcherPriority.Loaded);
         return body;
     }

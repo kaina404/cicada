@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import cicada.Json
+import cicada.SilentAudioSource
 import cicada.Strings
 import cicada.Log
 import cicada.Session
@@ -16,12 +17,16 @@ import java.util.concurrent.TimeUnit
 /// Android counterpart of the Mac's tools/lsctl and the Windows pipe. One command per broadcast,
 /// one JSON line back as the broadcast's result (never meeting text or the key).
 ///   state | start [playback|mic] | stop | feed <wav in files/> | sample | view notes|subtitles
-///   capture on|off | overlay show|hide | show main|live|records|settings|onboarding|record [id] | overlay collapse|expand | key reload
+///   capture on|off | overlay show|hide | show main|live|records|settings|words|onboarding|record [id] | overlay collapse|expand | key reload
 ///   hear|say <wav in files/> (面对面: the other side / me holding 我说) | tts <lang> <text>
 ///   import <session.json in files/> | importfile <audio or video in files/> | face | onboarded on|off | target <code> | ui <lang> | clip <text>
 ///   provider ling|openrouter|zenmux|custom | ai-model hear|text|voice <id> ("" back to the recommended) | show ai
 ///   key import <file in files/> (sealed as the current service's key, the plain file deleted) | voice-try (设置's 试一句)
 ///   ai-check (重新检查) | ai-check-sim <reason|lowBalance|off> (every check ends that way; the state's ai.check has the steps)
+///   改正听错的词: fixes on|off · asknames on|off · silent (a meeting with no audio) · heard <text> · vocab add|remove|state
+///   fixstate · fixanswer yes|no · fixrevert <line> · fixlater · fixundo · fixedit <line>=<text>[|one][|keep0] · pinyin <text>
+///   分享…: share <id>[,full][,pw] · unshare <id> · shares · shareSheet <id> (no id: closes it) · delete <id>
+///   shareserver [url] (a local Worker; none: cicada.indaloop.app) · clipboard
 class DebugReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (!BuildConfig.DEBUG) return
@@ -122,12 +127,90 @@ class DebugReceiver : BroadcastReceiver() {
                 "job" -> app.background.execute { app.updates.checkInBackground() }
                 "notify" -> app.updates.available?.let { app.updates.notifyAbout(it) }
             }
+            // 改正听错的词 (the Mac's fixes / askNames / silentListen / heard / vocab* / fix* commands).
+            "fixes" -> { app.settings.fixMisheard = arg != "off"; app.saveSettings() }
+            "asknames" -> { app.settings.askNames = arg != "off"; app.saveSettings() }
+            // A meeting with no audio at all, its lines given by `heard <text>` (translated and fixed
+            // by the AI service in use, as a heard line is).
+            "silent" -> if (!app.listen.listening) { app.listen.start(SilentAudioSource(), "file"); app.openLive() }
+            "heard" -> app.listen.debugHeard(arg)
+            // vocab add Morpho=莫拉、莫法|巡检 · vocab remove <word> · vocab state
+            "vocab" -> {
+                val (sub, rest) = arg.split(Regex("\\s+"), 2).let { it[0] to it.getOrElse(1) { "" } }
+                when (sub) {
+                    "add" -> { val r = app.vocabulary.importText(rest.replace("|", "\n")); return mapOf("added" to r.added, "updated" to r.updated, "skipped" to r.skipped) }
+                    "remove" -> app.vocabulary.remove(rest)
+                }
+                return mapOf("terms" to app.vocabulary.terms.size, "heard" to app.vocabulary.terms.sumOf { it.heard.size }, "fixes" to app.vocabulary.terms.sumOf { it.fixes })
+            }
+            "fixstate" -> return fixState(app, arg.ifEmpty { null })
+            "fixanswer" -> {   // fixanswer yes|no [session]
+                val id = sessionOf(app, arg.substringAfter(' ', ""))
+                val f = app.fixes.asking(id)?.fix ?: app.fixes.pending(id).firstOrNull()?.fix ?: return mapOf("error" to "nothing waiting")
+                app.fixes.answer(f, arg.substringBefore(' ') == "yes", id)
+            }
+            "fixrevert" -> {   // fixrevert <line> [session]: the line's first applied fix
+                val id = sessionOf(app, arg.substringAfter(' ', ""))
+                val l = app.store.line(id, arg.substringBefore(' ')) ?: return mapOf("error" to "no line")
+                val f = l.fixes?.firstOrNull { it.applied } ?: return mapOf("error" to "no fix")
+                app.fixes.revert(f, l.id, id)
+            }
+            "fixlater" -> { val id = sessionOf(app, arg); app.fixes.asking(id)?.let { app.fixes.later(it.fix, id) } }
+            "fixundo" -> app.fixes.undo()
+            "fixedit" -> {   // fixedit <line>=<new text>[|one][|keep0] [, session]
+                val (head, sid) = if (arg.contains(",") && !arg.substringAfterLast(",").contains("=")) arg.substringBeforeLast(",") to arg.substringAfterLast(",").trim() else arg to ""
+                val line = head.substringBefore("=")
+                val opts = head.substringAfter("=").split("|")
+                val n = app.fixes.edit(line, sessionOf(app, sid), opts[0], everywhere = "one" !in opts, keep = "keep0" !in opts)
+                return mapOf("changed" to n)
+            }
+            "pinyin" -> return mapOf("pinyin" to arg.map { Pinyin.of(it) })
             "import" -> {
                 val s = Session.read(File(app.filesDir, arg).readText()) ?: return mapOf("error" to "unreadable")
                 app.store.import(s)
             }
+            "delete" -> app.store.delete(arg)
+            // 分享… (the Mac's share: / unshare: / shareSheet:): `share <id>[,full][,pw]` shares as the
+            // sheet would and logs the link; `unshare <id>` turns it off; `shares` lists them (never the token).
+            "share" -> {
+                val p = arg.split(",").map { it.trim() }
+                val s = app.store.get(p[0])?.let { Session.from(it.toJson()) } ?: return mapOf("error" to "no such record")
+                val o = cicada.ShareClient.Options(
+                    scope = if ("full" in p || s.notes?.isEmpty != false) cicada.ShareScope.Full else cicada.ShareScope.Notes,
+                    password = if ("pw" in p) cicada.SharePassword.make() else null)
+                app.background.execute {
+                    when (val out = app.share.share(s, o)) {
+                        is cicada.ShareClient.Outcome.Shared -> Log.d("debug: share ${out.record.url}${out.record.password?.let { " password $it" } ?: ""}")
+                        is cicada.ShareClient.Outcome.Blocked -> Log.d("debug: share blocked lines ${cicada.ShareHit.recordLines(out.hits, out.kept).sorted()}${if (out.hits.any { it.part == "notes" }) " notes" else ""}")
+                        is cicada.ShareClient.Outcome.Failed -> Log.d("debug: share failed ${out.code}")
+                    }
+                }
+                return mapOf("sharing" to s.id)
+            }
+            "unshare" -> {
+                val r = cicada.ShareStore.read(arg) ?: return mapOf("error" to "$arg not shared")
+                app.background.execute { Log.d("debug: share revoked ${app.share.revoke(r, arg)}") }
+                return mapOf("unsharing" to arg)
+            }
+            // `shareserver http://127.0.0.1:8790` (after adb reverse) points 分享… at a local Worker (wrangler dev), with its
+            // own device file so the real one stays registered; no argument goes back to cicada.indaloop.app.
+            "shareserver" -> {
+                app.share.base = arg.ifEmpty { "https://cicada.indaloop.app" }.trimEnd('/')
+                app.share.deviceFile = if (arg.isEmpty()) null else File(cicada.Paths.root, "share-device-local.json")
+                return mapOf("shareserver" to app.share.base)
+            }
+            // What is on the clipboard (the app must be in front to read it).
+            "clipboard" -> return mapOf("clipboard" to app.getSystemService(android.content.ClipboardManager::class.java)
+                .primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString())
+            "shares" -> return mapOf("shares" to cicada.ShareStore.all().mapValues { (_, r) ->
+                mapOf("id" to r.id, "url" to r.url, "scope" to r.scope, "password" to r.password, "expiresAt" to cicada.Iso8601.write(r.expiresAt))
+            })
+            "shareSheet" -> if (arg.isEmpty()) ShareSheet.open?.let { it.dismiss() } else
+                app.startActivity(Intent(app, RecordActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    .putExtra("id", arg).putExtra("share", true))
             "show" -> when (arg.substringBefore(' ')) {
                 "settings" -> open(SettingsActivity::class.java)
+                "words" -> open(WordListActivity::class.java)
                 "ai" -> open(AiServiceActivity::class.java)
                 "onboarding" -> open(OnboardingActivity::class.java)
                 "record" -> open(RecordActivity::class.java, arg.substringAfter(' ', "").ifEmpty { app.store.all().firstOrNull { it.id != app.listen.sessionId || !app.listen.listening }?.id })
@@ -141,6 +224,24 @@ class DebugReceiver : BroadcastReceiver() {
     }
 
     companion object {
+        /// The meeting a fix command is for: the one named, else the live one, else the newest.
+        fun sessionOf(app: CicadaApp, arg: String): String =
+            arg.trim().ifEmpty { null } ?: app.store.liveId ?: app.store.all().firstOrNull()?.id ?: ""
+
+        /// A meeting's fixes in numbers (never its words): lines fixed, applied, waiting, said no to.
+        fun fixState(app: CicadaApp, arg: String?): Map<String, Any?> {
+            val id = sessionOf(app, arg ?: "")
+            val lines = app.store.lines(id)
+            val all = lines.flatMap { it.fixes ?: emptyList() }
+            return mapOf("session" to id, "on" to app.settings.fixMisheard, "askNames" to app.settings.askNames,
+                          "lines" to lines.size, "fixedLines" to lines.count { it.fixes != null },
+                          "fixedIds" to lines.filter { l -> l.fixes?.any { it.applied } == true }.map { it.id },
+                          "applied" to all.count { it.applied }, "asked" to all.count { it.ask == true }, "off" to all.count { it.off == true },
+                          "user" to all.count { it.user == true }, "pending" to app.fixes.pending(id).size,
+                          "asking" to app.fixes.asking(id)?.of, "toast" to (app.fixes.toastNow() != null), "canUndo" to app.fixes.canUndo,
+                          "translated" to lines.count { it.dst != null }, "terms" to app.vocabulary.terms.size)
+        }
+
         /// The AI service in use and what its last check found (never the key itself).
         fun ai(app: CicadaApp): Map<String, Any?> {
             val l = app.ling

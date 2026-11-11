@@ -189,6 +189,8 @@ final class Diagnostics: ObservableObject {
     /// The uses shown, in this order; test scores and file imports only count in the totals.
     static let roles = ["translate", "heard-me", "voice", "notes", "speakers"]
 
+    // Every list below is grouped through a Dictionary, whose order changes with each instance;
+    // the page redraws every 2 s, so ties are broken by name or rows would swap.
     var uses: [Use] {
         Dictionary(grouping: calls.filter { Self.roles.contains($0.role) }) { "\($0.role)|\($0.provider)|\($0.model)" }
             .values.compactMap { xs -> Use? in
@@ -202,11 +204,11 @@ final class Diagnostics: ObservableObject {
                            latency: Self.stat(c.role == "voice" ? ok.compactMap(\.firstAudio) : ok.map(\.seconds)),
                            tokens: xs.reduce(0) { $0 + $1.promptTokens + $1.completionTokens },
                            chars: xs.reduce(0) { $0 + $1.chars },
-                           reasons: reasons.sorted { $0.value > $1.value }.map { ($0.key, $0.value) })
+                           reasons: reasons.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.map { ($0.key, $0.value) })
             }
             .sorted { a, b in
                 let (i, j) = (Self.roles.firstIndex(of: a.role) ?? 99, Self.roles.firstIndex(of: b.role) ?? 99)
-                return i != j ? i < j : a.n > b.n
+                return i != j ? i < j : a.n != b.n ? a.n > b.n : (a.provider, a.model) < (b.provider, b.model)
             }
     }
 
@@ -214,7 +216,7 @@ final class Diagnostics: ObservableObject {
     var retreats: [(String, Int)] {
         let services = Set(AIProvider.all.map(\.id.rawValue))
         let xs = sentences.filter { s in s.fallbacks.contains { services.contains(String($0.split(separator: ":").first ?? "")) } }
-        return Dictionary(grouping: xs, by: \.via).map { ($0.key, $0.value.count) }.sorted { $0.1 > $1.1 }
+        return Dictionary(grouping: xs, by: \.via).map { ($0.key, $0.value.count) }.sorted { ($0.1, $1.0) > ($1.1, $0.0) }
     }
     var voiceChars: Int { calls.filter { $0.role == "voice" }.reduce(0) { $0 + $1.chars } }
 
@@ -222,7 +224,7 @@ final class Diagnostics: ObservableObject {
     var viaCounts: [(String, Int, Double)] {
         Dictionary(grouping: sentences, by: \.via).map { via, xs in
             (via, xs.count, Self.stat(xs.map(\.translate))?.p50 ?? 0)
-        }.sorted { $0.1 > $1.1 }
+        }.sorted { ($0.1, $1.0) > ($1.1, $0.0) }
     }
 
     /// Why the AI service (or Google) was passed over: hijacked, rateLimited, timeout…
@@ -230,7 +232,7 @@ final class Diagnostics: ObservableObject {
         var counts: [String: Int] = [:]
         for s in sentences { for f in s.fallbacks { counts[f, default: 0] += 1 } }
         for c in calls where c.outcome == "rateLimited" && c.role == "notes" { counts["notes:rateLimited", default: 0] += 1 }
-        return counts.sorted { $0.value > $1.value }.map { ($0.key, $0.value) }
+        return counts.sorted { ($0.value, $1.key) > ($1.value, $0.key) }.map { ($0.key, $0.value) }
     }
 
     /// Requests started in the last 10 s, per second (a Ling account allows about 2).

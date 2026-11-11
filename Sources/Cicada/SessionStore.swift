@@ -24,6 +24,8 @@ struct TranscriptLine: Codable, Identifiable, Equatable {
     var isScreen: Bool { speaker == "screen" }
     var isAI: Bool { speaker == "ai" }
     var isSpoken: Bool { !isScreen && !isAI }
+    /// Words the AI service fixed (`Correction`); `src` stays what was heard. Absent when none.
+    var fixes: [LineFix]? = nil
 }
 
 /// A name Ling found for a voice, and the line it is based on ("00:06 “Sure, Emma…”").
@@ -84,7 +86,7 @@ struct Session: Codable, Identifiable, Equatable {
 }
 
 /// One folder per meeting under ~/Library/Application Support/LiveSubs/Sessions/<id>/:
-/// session.json, system.m4a (what you heard) and mic.m4a (what you said).
+/// session.json, system.m4a (what you heard, the room mic folded in) and mic.m4a (what you said).
 @MainActor
 final class SessionStore: ObservableObject {
     @Published private(set) var sessions: [Session] = []
@@ -124,6 +126,10 @@ final class SessionStore: ObservableObject {
     #endif
     func systemAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("system.m4a") }
     func micAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("mic.m4a") }
+    /// 电脑和会议室: the room mic, beside system.m4a on the meeting's clock until the meeting ends,
+    /// then folded into it (`finishAudio`), so a record still has one recording.
+    func roomAudioURL(_ id: String) -> URL { folder(id).appendingPathComponent("room.m4a") }
+    private func audioURLs(_ id: String) -> [URL] { [systemAudioURL(id), micAudioURL(id), roomAudioURL(id)] }
 
     private func load() {
         let dirs = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
@@ -169,7 +175,7 @@ final class SessionStore: ObservableObject {
         let now = Date()
         sessions[i].endedAt = at.map { min(now, max(sessions[i].startedAt, $0)) } ?? now
         liveID = nil
-        sessions[i].hasAudio = [systemAudioURL(id), micAudioURL(id)].contains {
+        sessions[i].hasAudio = audioURLs(id).contains {
             FileManager.default.fileExists(atPath: $0.path) || FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path)
         }
         if sessions[i].lines.isEmpty {
@@ -180,8 +186,9 @@ final class SessionStore: ObservableObject {
                 return
             }
             // Only the recording: it plays, and is transcribed again, like an imported file.
-            let system = systemAudioURL(id)
-            let heard = [system, AudioFileWriter.partial(system)].contains { FileManager.default.fileExists(atPath: $0.path) }
+            let system = systemAudioURL(id), room = roomAudioURL(id)
+            let heard = [system, AudioFileWriter.partial(system), room, AudioFileWriter.partial(room)]
+                .contains { FileManager.default.fileExists(atPath: $0.path) }
             sessions[i].sourcePath = (heard ? system : micAudioURL(id)).path
         }
         saveNow(id)
@@ -189,15 +196,29 @@ final class SessionStore: ObservableObject {
     }
 
     private func hasPartialAudio(_ id: String) -> Bool {
-        [systemAudioURL(id), micAudioURL(id)].contains { FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path) }
+        audioURLs(id).contains { FileManager.default.fileExists(atPath: AudioFileWriter.partial($0).path) }
     }
 
     /// Turns the meeting's recordings into .m4a files (call after the recorders are closed).
     func finishAudio(_ id: String, until: Double? = nil) {
-        let urls = [systemAudioURL(id), micAudioURL(id)]
+        let urls = audioURLs(id), system = systemAudioURL(id), room = roomAudioURL(id)
         Task.detached(priority: .utility) {
             for u in urls { await AudioFileWriter.finish(u, until: until) }
+            Self.foldRoom(room, into: system)
             await self.markAudioFinished(id)
+        }
+    }
+
+    /// One recording per meeting, both sides in it: the room mic goes into system.m4a (or becomes
+    /// it, when the Mac played nothing). Waits while system.aac is left over from a cut rewrap:
+    /// the next launch finishes it and folds again.
+    nonisolated private static func foldRoom(_ room: URL, into system: URL) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: room.path), !fm.fileExists(atPath: AudioFileWriter.partial(system).path) else { return }
+        if !fm.fileExists(atPath: system.path) {
+            try? fm.moveItem(at: room, to: system)
+        } else if AudioFileWriter.mix(room, into: system) {
+            try? fm.removeItem(at: room)
         }
     }
 
@@ -240,6 +261,14 @@ final class SessionStore: ObservableObject {
     func setSource(lineID: String, _ text: String) {
         guard let id = liveID, let i = index(id),
               let j = sessions[i].lines.firstIndex(where: { $0.id == lineID }) else { return }
+        sessions[i].lines[j].src = text
+        scheduleSave(id)
+    }
+
+    /// The record's own recognizer's words for a line (`RecordRefiner`), which may land after the
+    /// meeting ended.
+    func setSource(in id: String, lineID: String, _ text: String) {
+        guard let i = index(id), let j = sessions[i].lines.firstIndex(where: { $0.id == lineID }) else { return }
         sessions[i].lines[j].src = text
         scheduleSave(id)
     }
@@ -362,6 +391,24 @@ final class SessionStore: ObservableObject {
         scheduleSave(id)
     }
 
+    /// A line's fixes (`Correction`): what the AI service proposed and the user decided.
+    func setFixes(in id: String, lineID: String, _ fixes: [LineFix]) {
+        guard let i = index(id), let j = sessions[i].lines.firstIndex(where: { $0.id == lineID }) else { return }
+        guard sessions[i].lines[j].fixes ?? [] != fixes else { return }
+        sessions[i].lines[j].fixes = fixes.isEmpty ? nil : fixes
+        scheduleSave(id)
+    }
+
+    /// The line a reply was for, by its text as heard: the newest such line in the live meeting,
+    /// else in a file being imported. Older meetings never: "好的。" is in all of them.
+    func lineHeard(as text: String) -> (session: String, line: TranscriptLine)? {
+        let ids = ([liveID].compactMap { $0 }) + sessions.filter { $0.importing == true }.map(\.id)
+        for id in ids {
+            if let s = session(id), let l = s.lines.last(where: { $0.src == text }) { return (id, l) }
+        }
+        return nil
+    }
+
     func setTranslation(in id: String, lineID: String, _ text: String) {
         guard let i = index(id), let j = sessions[i].lines.firstIndex(where: { $0.id == lineID }) else { return }
         sessions[i].lines[j].dst = text
@@ -439,7 +486,7 @@ enum TranscriptExport {
     nonisolated(unsafe) static var voices = false
 
     static func speakerName(_ line: TranscriptLine, _ numbers: [String: Int] = [:], _ names: [Int: String] = [:]) -> String {
-        if line.speaker == "me" { return L("你") }
+        if line.speaker == "me" { return L("你 · 同传") }
         if line.isScreen { return L("屏幕") }
         if line.isAI { return L("AI") }
         if let n = numbers[line.id] { return SpeakerLabels.label(n, names) }
@@ -469,7 +516,7 @@ enum TranscriptExport {
         }
         if !n.conclusions.isEmpty { out += "### \(L("结论"))\n\n" + n.conclusions.map { "- \($0.text)\n" }.joined() + "\n" }
         if !n.todos.isEmpty {
-            out += "### \(L("待办"))\n\n" + n.todos.map { "- [ ] \($0.text)" + ($0.owner.map { "（\($0)）" } ?? "") + "\n" }.joined() + "\n"
+            out += "### \(L("待办"))\n\n" + n.todos.map { "- [ ] \($0.withOwner)\n" }.joined() + "\n"
         }
         if !n.terms.isEmpty {
             out += "### \(L("人名和术语"))\n\n" + n.terms.map { "- **\($0.name)** \($0.note)\n" }.joined() + "\n"
@@ -485,8 +532,8 @@ enum TranscriptExport {
         for l in s.lines {
             // An imported file has no "other side" to name.
             let who = s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""
-            out += "**[\(clock(l.t))]\(who)**  \n\(l.src)\n"
-            if let d = l.dst, d != l.src { out += "> \(d)\n" }
+            out += "**[\(clock(l.t))]\(who)**  \n\(l.shown)\n"
+            if let d = l.dst, d != l.shown { out += "> \(d)\n" }
             out += "\n"
         }
         return out
@@ -503,8 +550,10 @@ enum TranscriptExport {
         for (i, l) in lines.enumerated() {
             let next = i + 1 < lines.count ? lines[i + 1].t : l.t + 4
             let end = max(l.t + 1, min(next, l.t + 8))
-            out += "\(i + 1)\n\(ts(l.t)) --> \(ts(end))\n\(l.src)\n"
-            if let d = l.dst, d != l.src { out += "\(d)\n" }
+            // Your own lines (the talk key) say so, as the record does.
+            let tag = l.speaker == "me" ? "[\(L("同传"))] " : ""
+            out += "\(i + 1)\n\(ts(l.t)) --> \(ts(end))\n\(tag)\(l.shown)\n"
+            if let d = l.dst, d != l.shown { out += "\(d)\n" }
             out += "\n"
         }
         return out
@@ -544,15 +593,15 @@ enum TranscriptExport {
             }
             if !n.todos.isEmpty {
                 add(L("待办"), size: 12, weight: .semibold, after: 3)
-                for t in n.todos { add("☐ \(t.text)" + (t.owner.map { "（\($0)）" } ?? ""), size: 11, after: 2) }
+                for t in n.todos { add("☐ \(t.withOwner)", size: 11, after: 2) }
             }
             add(L("文字记录"), size: 15, weight: .bold, after: 6)
         }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
             add("[\(clock(l.t))]" + (s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""), size: 9, weight: .semibold, color: .darkGray, after: 2)
-            add(l.src, size: 11, after: 2)
-            if let d = l.dst, d != l.src { add(d, size: 11, color: NSColor(calibratedWhite: 0.3, alpha: 1), after: 10) }
+            add(l.shown, size: 11, after: 2)
+            if let d = l.dst, d != l.shown { add(d, size: 11, color: NSColor(calibratedWhite: 0.3, alpha: 1), after: 10) }
         }
         return try doc.data(from: NSRange(location: 0, length: doc.length),
                             documentAttributes: [.documentType: NSAttributedString.DocumentType.officeOpenXML])

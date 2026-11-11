@@ -73,7 +73,7 @@ import Testing
         let l = line(3, 1)
         #expect(TranscriptExport.speakerName(l, ["l3": 2]) == L("说话人 2"))
         #expect(TranscriptExport.speakerName(l) == L("对方"))
-        #expect(TranscriptExport.speakerName(line(4, nil, me: true), ["l4": 1]) == L("你"))
+        #expect(TranscriptExport.speakerName(line(4, nil, me: true), ["l4": 1]) == L("你 · 同传"))
     }
 
     private func named(_ voiceNames: [String: String]?) -> Session {
@@ -141,6 +141,8 @@ import Testing
         #expect(r.found.keys.sorted() == [0] && r.found[0]?.name == "Amos Hochstein")
         #expect(r.found[0]?.evidence.hasPrefix("00:11 “Okay, Amos") == true)
         #expect(r.refuted == [1: "Christina Raffini"])
+        // Asked again without JSON mode, the same reply may come in a fence.
+        #expect(SpeakerNameGuess.read("```json\n" + reply + "\n```", s).found[0]?.name == "Amos Hochstein")
         // Said by the speaker themselves; "L12, L13" reads as L12; no evidence, or one out of range, is no name.
         #expect(SpeakerNameGuess.parse(#"{"speakers": [{"speaker": 2, "name": "Anchor", "evidence": "L12, L14"}]}"#, s)[1]?.name == "Anchor")
         #expect(SpeakerNameGuess.parse(#"{"speakers": [{"speaker": 2, "name": "Anchor"}]}"#, s).isEmpty)
