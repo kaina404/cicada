@@ -55,7 +55,7 @@
 
 > After KKday, I took September off. I travelled a bit and spent time with my grandmother back home. She raised me, so that time mattered to me.
 >
-> I started looking again after the October holiday. That was about a month ago. So far I've talked to four companies, in finance, securities and e-commerce, and a few are at the offer stage.
+> I started looking again after the October holiday. That was about a month ago. So far I've talked to four companies, in finance, securities and e-commerce, and some offers are still under discussion.
 >
 > But ActAI is the one I'm most interested in, because it's an AI-first product, not a traditional app with AI added on.
 
