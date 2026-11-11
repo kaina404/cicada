@@ -191,6 +191,15 @@ enum CoachPrompt {
     Do not expand it back into the original long answer. Never invent missing evidence.
     """
 
+    static let screenOnlySystem = """
+    No interviewer request has been supplied. The user explicitly asks to analyse the shared
+    window. Describe the visible content of the LATEST screen keyframe briefly in English.
+    If it visibly contains an interview question or coding task, answer that visible task instead.
+    Use only visible evidence; if the content is unclear, say what cannot be read.
+    Do not infer a request for a self-introduction from the candidate's knowledge or browser tabs.
+    Do not output a prepared talk track or personal history unrelated to the visible content.
+    """
+
     /// The user reads aloud with high-school English, so hard words and long clauses cost them the
     /// sentence. Technical terms stay in technical answers: paraphrasing them sounds less expert.
     static let plainEnglish = """
@@ -222,7 +231,9 @@ enum CoachPrompt {
     }
 
     static func request(turns: [CoachTurn], background: String, frames: [CoachFrame], audio: CoachAudioBuffer?, committed: String = "", refresh: Bool = false, stage: InterviewStage = .general) -> [[String: Any]] {
+        let screenOnly = !frames.isEmpty && !turns.contains { $0.role == "interviewer" && !CoachScript.words($0.text).isEmpty }
         let rules = stage.instruction + "\n\n" + InterviewIntroduction.instruction + (refresh ? "\n\n" + refreshSystem : "")
+            + (screenOnly ? "\n\n" + screenOnlySystem : "")
         let instructions = Self.instructions(background: background, rules: rules)
         // Keep the latest interviewer turn even when a long candidate answer fills the tail.
         var kept: [CoachTurn] = []
@@ -253,6 +264,10 @@ enum CoachPrompt {
         if refresh {
             content.removeLast()
             content.append(["type": "text", "text": "Explicit manual refresh. Reconsider the supplied conversation and answer all parts of the current request afresh. Earlier actual speech is context, not a reason to omit an answer. Start with the latest follow-up and obey its length and format. If it asks for one simple sentence, output only that single sentence; do not expand into the original long answer. Otherwise cover all still-relevant requested parts. " + personalFactsReminder])
+        }
+        if screenOnly {
+            content.removeLast()
+            content.append(["type": "text", "text": "Explicit screen analysis. Describe the latest visible page, or answer the task shown in it. No interviewer question was provided; do not invent one or start a self-introduction."])
         }
         return [["role": "system", "content": instructions], ["role": "user", "content": content]]
     }

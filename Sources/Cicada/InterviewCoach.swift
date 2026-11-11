@@ -189,9 +189,10 @@ final class InterviewCoach: ObservableObject {
     func picture(_ frame: CoachFrame) {
         guard state != .idle, state != .setup else { return }
         frames.append(frame); frames = Array(frames.suffix(3))
-        // Screen work coalesces behind active text generation, rather than starving it.
+        // A selected page is context, not an interviewer request. OCR alone must not
+        // start an answer before anyone asks; explicit screen-only analysis uses ask().
         if script.pending.isEmpty, current == nil,
-           !turns.isEmpty || !drafts.isEmpty || !frame.ocr.isEmpty {
+           lastInterviewerAt.isFinite {
             dirty = true; due = max(clock + 0.3, lastInterviewerAt + 0.65)
         }
     }
@@ -319,6 +320,8 @@ final class InterviewCoach: ObservableObject {
 
     private func generate(speculate: Bool, refresh: Bool = false) {
         let evidence = evidence
+        // Background reloads can also schedule work before the first question.
+        guard refresh || lastInterviewerAt.isFinite else { dirty = false; return }
         guard !evidence.isEmpty || !frames.isEmpty else { dirty = false; return }
         dirty = false; publishedCurrentAnswer = false
         onWillGenerate?()

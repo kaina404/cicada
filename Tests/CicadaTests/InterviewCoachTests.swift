@@ -3,6 +3,70 @@ import Testing
 @testable import Cicada
 
 struct InterviewCoachTests {
+    init() async {
+        // Generation awaits this shared dictionary; yield-count polling must not race its cold load.
+        await CoachPronunciation.prepare()
+    }
+
+    @Test @MainActor func sharedPageWaitsForARequestButExplicitScreenAnalysisWorks() async throws {
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream { $0.yield("The page discusses AI's impact on society."); $0.finish() }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "Prepared self-introduction", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        let frame = CoachFrame(jpeg: Data([1, 2, 3]), seconds: 1,
+                               ocr: "Shaping AI's Impact on Billions of Lives")
+        engine.picture(frame); engine.tick(now: 2)
+        for _ in 0..<100 { await Task.yield() }
+        #expect(requests.isEmpty)
+        #expect(engine.frameCount == 1)
+        // Candidate speech and a knowledge reload still do not supply an interviewer request.
+        engine.speech("I am ready.", role: "candidate", now: 3)
+        engine.observe(lines: [line("m", "me", "I am ready.", t: 3)], now: 3)
+        engine.picture(frame)
+        engine.start(background: "Updated prepared self-introduction", available: true, prepare: { true })
+        engine.tick(now: 5)
+        for _ in 0..<100 { await Task.yield() }
+        #expect(requests.isEmpty)
+        #expect(engine.generationCount == 0)
+        #expect(engine.script.pending.isEmpty)
+        engine.ask()
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        try #require(requests.count == 1)
+        let system = try #require(requests[0][0]["content"] as? String)
+        #expect(system.contains(CoachPrompt.screenOnlySystem))
+        let parts = try #require(requests[0][1]["content"] as? [[String: Any]])
+        #expect(parts.contains { $0["type"] as? String == "image_url" })
+        #expect((parts.last?["text"] as? String)?.contains("Explicit screen analysis") == true)
+        #expect(engine.script.pending.contains("impact on society"))
+    }
+
+    @Test @MainActor func interviewerRequestStillUsesTheSelectedPage() async throws {
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream { $0.yield("The heading is Shaping AI's Impact on Billions of Lives."); $0.finish() }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "Prepared self-introduction", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.picture(CoachFrame(jpeg: Data([1]), seconds: 0, ocr: "Shaping AI's Impact on Billions of Lives"))
+        engine.speech("What is the heading on this page?", role: "interviewer", now: 1)
+        engine.tick(now: 3)
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        try #require(requests.count == 1)
+        let system = try #require(requests[0][0]["content"] as? String)
+        #expect(!system.contains(CoachPrompt.screenOnlySystem))
+        let data = try JSONSerialization.data(withJSONObject: requests[0])
+        let request = String(decoding: data, as: UTF8.self)
+        #expect(request.contains("What is the heading on this page?"))
+        #expect(request.contains("image_url"))
+        #expect(engine.generationCount == 1)
+    }
+
     @Test func handoverBoilerplateNeverAppearsEvenDuringStreaming() {
         let fact = "I handed everything over cleanly."
         for invalid in [

@@ -7,6 +7,14 @@
     "image": null,
     "items": [
       {
+        "kind": "fixed",
+        "platforms": [
+          "mac"
+        ],
+        "title": "选择共享窗口不再自动开始自我介绍。",
+        "text": "面试官尚未发言时只更新画面上下文；主动刷新回答可分析当前画面，避免把网页内容误当成开场提问。"
+      },
+      {
         "kind": "improved",
         "platforms": ["mac"],
         "title": "面试教练换到下一句时，平滑地滚到顶部。",

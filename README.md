@@ -80,6 +80,8 @@ After a meeting, you can generate notes retroactively, export to Markdown, Word,
 
 ### Interview Coach and screen notes (Mac)
 
+Selecting a shared window before the interviewer speaks only updates screen context; it does not start a self-introduction. Refresh Answer can analyse the current screen directly when no interviewer request exists.
+
 Assistant also adds full British IPA to numbers such as `2000`, `10%` and `0.1%`. Decimal digits are read individually; IPA is excluded from read-along speech, translation and reading progress.
 
 Cicada stays in the Dock while running, with an orange dot while recording. Right-click to start or stop recording, open Live Notes, Meetings, or Settings. Turn off “Show in Dock” in Settings for menu-bar-only use when other windows are closed.
