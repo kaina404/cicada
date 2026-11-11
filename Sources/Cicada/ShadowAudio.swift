@@ -159,10 +159,19 @@ extension AudioDevices {
         return ["airpods", "headphone", "headset", "earbud", "耳机", "耳機"].contains { name.contains($0) }
     }
 
+    /// Only a physical output can be a headset. A virtual device (BlackHole, another app's) or an
+    /// aggregate / multi-output device may carry the sound into a meeting even when a headset is one
+    /// of its parts, so read-along never plays there.
+    static func shadowTransportAllowed(_ transport: UInt32) -> Bool {
+        [kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE,
+         kAudioDeviceTransportTypeBuiltIn, kAudioDeviceTransportTypeUSB].contains(transport)
+    }
+
     /// Recognizable Bluetooth headsets and hardware headphone terminals/jacks. No speaker fallback.
     static func shadowHeadphones() -> OutputDevice? {
         guard let device = defaultOutput, !device.isVirtualMic else { return nil }
         let transport = transport(device.id)
+        guard shadowTransportAllowed(transport) else { return nil }
         if transport == kAudioDeviceTransportTypeBluetooth || transport == kAudioDeviceTransportTypeBluetoothLE,
            shadowHeadsetName(device.name) { return device }
         var streamsAddress = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyStreams,

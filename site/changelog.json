@@ -8,6 +8,12 @@
     "items": [
       {
         "kind": "fixed",
+        "platforms": ["mac"],
+        "title": "陪读只从耳机播放，不会进入会议。",
+        "text": "系统输出是虚拟设备（如 BlackHole）或多输出设备时，陪读不再播放，避免回答声音经虚拟麦克风传进会议。"
+      },
+      {
+        "kind": "fixed",
         "platforms": [
           "mac"
         ],

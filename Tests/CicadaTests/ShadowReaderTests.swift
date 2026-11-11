@@ -7,6 +7,13 @@ struct ShadowPlanTests {
     @Test func bluetoothTransportDoesNotImplyHeadphones() {
         #expect(AudioDevices.shadowHeadsetName("Xiaohui’s AirPods Pro"))
         #expect(!AudioDevices.shadowHeadsetName("Living Room Speaker"))
+        // Never into a virtual mic or a multi-output device that may feed the meeting.
+        #expect(AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeBluetooth))
+        #expect(AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeBuiltIn))
+        #expect(!AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeVirtual))
+        #expect(!AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeAggregate))
+        #expect(!AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeAutoAggregate))
+        #expect(!AudioDevices.shadowTransportAllowed(kAudioDeviceTransportTypeAirPlay))
     }
     @Test func sentenceNavigationIgnoresDecimalsAndDoesNotSplitLongSentences() {
         var plan = ShadowPlan()
