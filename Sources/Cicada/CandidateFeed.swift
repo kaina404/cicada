@@ -19,6 +19,9 @@ struct CandidateFeed: View {
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
     @State private var scrollAnswerID: String?
+    @State private var scrolledSentence: Int?
+    @State private var rowTops: [Int: CGFloat] = [:]
+    @State private var scroller = ReadingScroller()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil, expanded: Bool = false,
@@ -97,7 +100,6 @@ struct CandidateFeed: View {
                 }
             }
             GeometryReader { viewport in
-                ScrollViewReader { proxy in
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 14) {
                             ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
@@ -111,6 +113,7 @@ struct CandidateFeed: View {
                                         Text(sentence).font(.system(size: fontSize))
                                             .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
                                             .frame(maxWidth: .infinity, alignment: .leading)
+                                            .animation(reduceMotion ? nil : ReadingTransition.animation, value: engine.script.currentSentence)
                                     }
                                     if settings.askGloss, let text = gloss.translations[sentence] {
                                         // Keep the gloss compact even when the floating English script is enlarged.
@@ -120,7 +123,11 @@ struct CandidateFeed: View {
                                 .padding(8)
                                 .background(index == followedSentence ? Palette.accent.opacity(0.09) : .clear,
                                             in: RoundedRectangle(cornerRadius: 7))
-                                .id(index)
+                                .animation(ReadingTransition.animation, value: index == followedSentence)
+                                .background(GeometryReader { row in
+                                    Color.clear.preference(key: ReadingRowTops.self,
+                                        value: [index: row.frame(in: .named(Self.readingSpace)).minY])
+                                })
                             }
                             if !engine.script.committed.isEmpty {
                                 Text("已经说出").font(.system(size: 11)).foregroundStyle(Palette.secondary)
@@ -129,27 +136,30 @@ struct CandidateFeed: View {
                             }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .coordinateSpace(name: Self.readingSpace)
+                        .background(ScrollViewFinder(scroller: scroller))
                         // Leave enough scroll range to place even the last sentence at the top.
                         .padding(.bottom, max(0, viewport.size.height - 24))
                     }
                     // Keep a fixed margin above the current sentence, even at large font sizes.
                     .padding(.top, 24)
+                    .onPreferenceChange(ReadingRowTops.self) { rowTops = $0 }
                     .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
                         sentence: followedSentence, sentenceCount: engine.script.sentences.count,
                         translations: gloss.translations, size: viewport.size, fontSize: fontSize,
-                        follows: followsReading)) {
+                        follows: followsReading, target: rowTops[followedSentence])) {
                         guard followsReading else { return }
                         // Coalesce sentence, gloss and layout updates before scrolling. A layout
                         // correction must retarget the same animation rather than snap to its end.
                         do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
                         guard !Task.isCancelled else { return }
+                        guard let target = rowTops[followedSentence] else { return }
                         let newAnswer = scrollAnswerID != engine.script.answerID
-                        scrollAnswerID = engine.script.answerID
-                        withAnimation(reduceMotion || newAnswer ? nil : .smooth(duration: 0.28, extraBounce: 0)) {
-                            proxy.scrollTo(followedSentence, anchor: .top)
-                        }
+                        let handoff = scrolledSentence != followedSentence
+                        scrollAnswerID = engine.script.answerID; scrolledSentence = followedSentence
+                        // Slow and eased at both ends: a sudden jump makes the reader lose their place.
+                        scroller.scroll(to: target, restart: handoff, animated: !(reduceMotion || newAnswer))
                     }
-                }
             }.frame(height: expanded ? nil : compactHeight)
                 .frame(maxHeight: expanded ? .infinity : compactHeight)
                 .task(id: settings.askGloss) {
@@ -160,6 +170,7 @@ struct CandidateFeed: View {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
     }
+    private static let readingSpace = "readingContent"
     private func firstWord(in sentence: Int) -> Int {
         engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
     }
@@ -257,4 +268,5 @@ private struct ReadingScrollRequest: Equatable {
     var size: CGSize
     var fontSize: CGFloat
     var follows: Bool
+    var target: CGFloat?
 }

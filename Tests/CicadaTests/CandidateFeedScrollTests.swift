@@ -55,7 +55,7 @@ struct CandidateFeedScrollTests {
         try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         func descendants(_ view: NSView) -> [NSView] { [view] + view.subviews.flatMap(descendants) }
         func check(_ index: Int, name: String) async throws -> CGFloat {
-            try await Task.sleep(for: .milliseconds(400))
+            try await Task.sleep(for: .milliseconds(Int(ReadingTransition.duration * 1000) + 300))
             host.layoutSubtreeIfNeeded()
             let views = descendants(host)
             let scroll = try #require(views.compactMap { $0 as? NSScrollView }.first)
@@ -90,6 +90,9 @@ struct CandidateFeedScrollTests {
         print("SCROLL_TRAJECTORY distance=\(distance) max_step=\(steps.max() ?? 0) samples=\(samples)")
         let middle = try await check(3, name: "middle")
         #expect(middle > initial + 30)
+        // SwiftUI's own scrollTo lands in ~0.2 s, which reads as a jump; the handoff must still be under way.
+        #expect((samples.last ?? 0) < initial + (middle - initial) * 0.8,
+                "The handoff scroll should take most of a second, not snap: \(samples.last ?? 0) of \(middle)")
         // Rapid Crown navigation must land on the latest selection, without queued scrolls.
         reader.selectSentence(offset: 1)
         try await Task.sleep(for: .milliseconds(60))
