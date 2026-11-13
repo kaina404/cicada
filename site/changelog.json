@@ -7,6 +7,12 @@
     "image": null,
     "items": [
       {
+        "kind": "new",
+        "platforms": ["mac"],
+        "title": "面试教练可开启快速跟读。",
+        "text": "本机英文识别逐词跟随朗读，口音不准或听错词也能对上，只移动显示和滚动；默认关闭。"
+      },
+      {
         "kind": "improved",
         "platforms": ["mac"],
         "title": "悬浮回答从窗口顶部显示。",
