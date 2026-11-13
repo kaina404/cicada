@@ -19,7 +19,9 @@
 
 - 标准版（默认，约 2 分钟，九段，以 “Thank you.” 结尾）：Good morning 开场、十年软件开发（主要 Android）+ 三年 AI 产品从开发到上线 → KKday（亚洲旅游平台）Android 主要功能与提速，例子是修好切换商品选项的卡顿（不带数字）→ 同时任 AI 行程规划项目技术负责人（技术方案、Agent 架构、核心后端；上线后每天约 30 万次行程规划请求）→ Kezhi Technology（AI 教育创业公司）唯一 Android、和团队四周上线第一版、从那时开始亲手做 AI 功能 → 德邦证券 Android、平安六年 Android → 为什么是 ActAI（把 AI 带进日常沟通，AI 帮用户办事、用户保持掌控）→ Cabinet AI（何时让 AI 自己动手、何时先问用户）→ 带 Android 与 AI 经验做让人信任、每天爱用的产品。
 - 自我介绍不放具体场景例子，“周五开会”留给 Why ActAI，避免重复。选项卡顿的 1 秒 → 300ms 只在追问时给。
-- 短版（约 45 秒）：面试官要简短版或限时一分钟以内时使用，取自标准版原句；一句话版（“describe yourself in one sentence”）同样按标准版首段改写。
+- 短版（约 45 秒）：面试官要简短版或限时一分钟以内时使用，取自标准版原句。
+- 一句话介绍自己 / 最大的优点（2026-11-13 用户定稿，取代原“按标准版首段改写”）：不说“我是 Android 工程师”或年限，岗位和简历 HR 已知。两种备选只说一种：默认 **Empathetic**（站在用户角度，关注让产品用起来舒服的细节；追问例子 = 页面等两秒时的柔和骨架屏 + 和后端一起缩短延迟，按“我会”讲，不带 KKday 数字）；问主动性、ownership 时用 **Proactive**（在意自己做的产品，主动让它对用户更好；追问例子 = 聊天约出游要离开去查天气 → 跨 App AI 助手的想法）。先只说一句，HR 问 “Can you give me an example?” 才讲例子。英文原文只在 `04_talk_tracks.md` 的「Describe yourself in one sentence…」一节。
+- 缺口：跨 App 助手目前只是想法，证明 Proactive 还缺“已经做了什么”。在用户补充前，被追问只能指向正在业余做的 Cabinet，不得声称做过聊天查天气功能。dev 实测见 [评测](evaluations/actai-hr-self-describe-2026-11-13.md)。
 
 已从开场删去：AI 数据基座四类数据（偏后端、未核对）、德邦 SDK 加载与缓存细节、FlutterDouBan（Flutter 不是 Kotlin，留到问个人项目时讲）、RAG / Compose / 缓存层等技术词。
 

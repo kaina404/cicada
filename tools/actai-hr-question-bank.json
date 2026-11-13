@@ -904,5 +904,63 @@
    "four weeks",
    "300,000"
   ]
+ },
+ {
+  "id": "S01",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "How would you describe yourself in one sentence?",
+  "must_any": [
+   "empathetic",
+   "proactive"
+  ]
+ },
+ {
+  "id": "S02",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "Can you give me an example?",
+  "must_any": [
+   "skeleton",
+   "trip"
+  ]
+ },
+ {
+  "id": "S03",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "What would you say is your single biggest strength?",
+  "must_any": [
+   "empathetic",
+   "proactive"
+  ]
+ },
+ {
+  "id": "S04",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "Can you give me an example?",
+  "must_any": [
+   "skeleton",
+   "trip"
+  ]
+ },
+ {
+  "id": "S05",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "Do you take initiative? How would you describe yourself in one word?",
+  "must_any": [
+   "proactive"
+  ]
+ },
+ {
+  "id": "S06",
+  "group": "一句话自我描述",
+  "source": "用户定稿 2026-11-13",
+  "question": "Can you give me an example?",
+  "must_any": [
+   "trip"
+  ]
  }
 ]
