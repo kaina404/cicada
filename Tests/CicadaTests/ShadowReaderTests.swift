@@ -153,6 +153,25 @@ struct ShadowReaderTests {
         #expect(reader.plan.cursor == 0 && !audio.playing)
         reader.stop()
     }
+    @Test func fastFollowMovesPositionSilentlyAndHoldPlaysFromThere() async {
+        let audio = Driver(), env = Environment(), pcm = clip()
+        let reader = ShadowReader(audio: audio, synthesize: { _ in pcm }, headphones: { env.device },
+                                  now: { env.clock }, automatic: false)
+        reader.update(enabled: true, script: script("First sentence here. Second sentence. Third sentence."), finished: true)
+        await settle(reader)
+        let loads = audio.loads
+        reader.follow(to: 1); reader.follow(to: 2)
+        #expect(reader.playback.currentWord == 2 && !audio.playing)
+        #expect(reader.plan.cursor == 0 && audio.loads == loads, "Continuous reading does not restart synthesis per word")
+        env.clock += ShadowReader.followSettle; reader.tick(); await settle(reader)
+        #expect(reader.plan.cursor == 2 && !audio.playing, "A pause prepares the voice there, still silent")
+        reader.follow(to: 5)
+        reader.setHeld(true); await settle(reader)
+        #expect(reader.plan.cursor == 5 && audio.playing, "The watch plays from the followed position")
+        reader.follow(to: 1)
+        #expect(reader.playback.currentWord != 1, "While held the voice leads, not fast follow")
+        reader.stop()
+    }
     @Test func switchingSentencesNeverPlaysWithoutHold() async {
         let audio = Driver(), env = Environment(), pcm = clip()
         let reader = ShadowReader(audio: audio, synthesize: { _ in pcm }, headphones: { env.device },

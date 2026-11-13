@@ -20,7 +20,6 @@ struct CandidateFeed: View {
     @State private var controlsExpanded = false
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
-    @State private var shadowStatus = ShadowReader.Status.off
     @State private var scrollAnswerID: String?
     @State private var scrolledSentence: Int?
     @State private var rowTops: [Int: CGFloat] = [:]
@@ -57,7 +56,11 @@ struct CandidateFeed: View {
                                         ShadowLyricsText(text: sentence, fontSize: fontSize,
                                             active: index == followedSentence, firstWord: firstWord(in: index),
                                             playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
-                                            seek: { shadowReader.seek(to: $0) })
+                                            seek: { word in
+                                                shadowReader.seek(to: word)
+                                                // A tap places read-along; fast follow drops its own position.
+                                                if settings.fastReadingFollow { fast.move(to: word) }
+                                            })
                                     } else if fastActive, index == followedSentence {
                                         Text(fastFollowed(sentence, index: index)).font(.system(size: fontSize))
                                             .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
@@ -122,9 +125,6 @@ struct CandidateFeed: View {
                 }
             if controlsAtBottom { controls }
         }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
-        .onReceive(shadowReader.map { $0.$status.eraseToAnyPublisher() } ?? Just(ShadowReader.Status.off).eraseToAnyPublisher()) {
-            shadowStatus = $0
-        }
         .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
@@ -169,8 +169,16 @@ struct CandidateFeed: View {
                     .help("本机英文识别逐词跟随，口音不准时仍由 Gemma 校正")
                 if settings.fastReadingFollow, fast.status == .unavailable {
                     Text("需要 macOS 26 的本机英文识别").foregroundStyle(Palette.tertiary)
-                } else if settings.fastReadingFollow, settings.shadowReading {
-                    Text("陪读播放时跟随语音，松开后跟随你").foregroundStyle(Palette.tertiary)
+                } else if settings.fastReadingFollow {
+                    Picker("提前", selection: $settings.fastReadingLead) {
+                        Text("不提前").tag(0.0)
+                        ForEach([1.0, 2.0, 3.0], id: \.self) { Text("\(Int($0)) 秒").tag($0) }
+                    }
+                    .pickerStyle(.menu).fixedSize()
+                    .help("识别有延迟，光标按你的语速往前多走这几秒，不越过当前句")
+                    if settings.shadowReading {
+                        Text("跟读移动陪读位置，手表控制播放").foregroundStyle(Palette.tertiary)
+                    }
                 }
             }.font(.system(size: 11))
             Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
@@ -210,11 +218,10 @@ struct CandidateFeed: View {
     private func firstWord(in sentence: Int) -> Int {
         engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
     }
-    /// Fast follow only drives display and scroll. While read-along is playing its voice leads;
-    /// once the hold is released the candidate's own reading leads again.
+    /// Fast follow draws its own cursor only without read-along. With read-along there is one
+    /// position: fast follow moves it silently (`AppModel.followShadow`) and the watch plays it.
     private var fastActive: Bool {
-        settings.fastReadingFollow && fast.answerID == engine.script.answerID
-            && !(settings.shadowReading && shadowStatus == .guiding)
+        settings.fastReadingFollow && !settings.shadowReading && fast.answerID == engine.script.answerID
     }
     /// The further of Gemma's confirmed progress and the fast on-device draft.
     private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }

@@ -63,4 +63,37 @@ struct FastReadingAlignTests {
         follow.update(enabled: false, script: coach)
         #expect(follow.word == nil && follow.status == .off)
     }
+
+    @Test func leadRunsAheadAtReadingPaceButStopsAtTheSentenceEnd() {
+        let follow = FastReadingFollow()
+        var clock = 0.0
+        follow.now = { clock }
+        var coach = CoachScript()
+        coach.replacePending("I would use Kotlin coroutines with Jetpack Compose. Then I cache the first screen.", since: [])
+        follow.update(enabled: true, script: coach, lead: 2)
+        follow.hear("I would", final: false)
+        #expect(follow.heard == 2 && follow.word == 7, "2 s at a default 2.5 words a second")
+        clock = 2; follow.hear("I would use Kotlin coroutines with", final: false)
+        #expect(follow.heard == 6 && follow.word == 8, "Never past Compose, the end of the sentence")
+        clock = 4; follow.hear("with jet pack compose", final: true)
+        #expect(follow.heard == 8 && follow.word == 8, "A finished sentence gets no lead into the next")
+        follow.update(enabled: false, script: coach)
+    }
+
+    @Test func watchPositionReplacesFastFollowPosition() {
+        let follow = FastReadingFollow()
+        var coach = CoachScript()
+        coach.replacePending("I would use Kotlin coroutines with Jetpack Compose. Then I cache the first screen.", since: [])
+        follow.update(enabled: true, script: coach)
+        follow.hear("I would use Kotlin coroutines", final: true)
+        #expect(follow.word == 5)
+        follow.move(to: 8)
+        #expect(follow.word == 8 && follow.heard == 8)
+        // Old speech no longer aligns; reading on from the new place does.
+        follow.hear("then I cache the", final: false)
+        #expect(follow.word == 12)
+        follow.move(to: 2)
+        #expect(follow.word == 2, "The watch may move back too")
+        follow.update(enabled: false, script: coach)
+    }
 }

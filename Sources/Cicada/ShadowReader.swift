@@ -28,6 +28,7 @@ final class ShadowReader: ObservableObject {
 
     func seek(to word: Int) {
         guard enabled, word >= 0, word < plan.words.count else { return }
+        following = nil
         if let target = playback.words.first(where: { $0.range.contains(word) }), clip != nil {
             audio.seek(seconds: target.timing.start)
         } else {
@@ -37,6 +38,17 @@ final class ShadowReader: ObservableObject {
             playback = ShadowPlayback(answerID: plan.answerID, anchorWord: word)
             tick()
         }
+    }
+    /// Fast follow moves the read-along position without sound; only a hold plays. Loaded audio seeks
+    /// in place; otherwise the position shows at once and synthesis restarts from it once the reader
+    /// pauses, or on the next press, so continuous reading does not restart Kokoro on every word.
+    func follow(to word: Int) {
+        guard enabled, !held, word >= 0, word < plan.words.count, word != playback.currentWord else { return }
+        if clip != nil, let target = playback.words.first(where: { $0.range.contains(word) }) {
+            following = nil; audio.seek(seconds: target.timing.start); return
+        }
+        following = (word, now())
+        playback = ShadowPlayback(answerID: plan.answerID, anchorWord: word)
     }
     /// Selection is independent of microphone evidence. Selecting always pauses and cancels stale work;
     /// only a hold plays, so switching sentences (tap, double tap, crown) never starts the voice.
@@ -94,6 +106,8 @@ final class ShadowReader: ObservableObject {
     private var clip: (id: UUID, end: Int)?
     private var prepared: (start: Int, end: Int, clip: ShadowClip)?
     private var failed = false
+    private var following: (word: Int, at: Double)?
+    static let followSettle = 1.0
     private let automatic: Bool
     static let holdLease = 0.5
 
@@ -141,6 +155,7 @@ final class ShadowReader: ObservableObject {
         guard !needsRelease else { return }
         guard headphones() != nil else { needsRelease = true; held = false; tick(); return }
         retryPlayback()
+        if let following { seek(to: following.word) }
         held = true; lastHold = now(); tick()
     }
 
@@ -153,6 +168,7 @@ final class ShadowReader: ObservableObject {
 
     func tick() {
         guard enabled else { return }
+        if let following, !held, now() - following.at >= Self.followSettle { seek(to: following.word); return }
         if held, now() - lastHold >= Self.holdLease { held = false; needsRelease = true }
         guard let current = headphones() else {
             if held || device != nil { needsRelease = true }
@@ -215,7 +231,7 @@ final class ShadowReader: ObservableObject {
     }
 
     private func resetPlayback() {
-        revision = UUID(); work?.cancel(); work = nil; cancelSynthesis()
+        revision = UUID(); work?.cancel(); work = nil; cancelSynthesis(); following = nil
         audio.stop(); clip = nil; prepared = nil; device = nil; playback = ShadowPlayback()
     }
 

@@ -1515,4 +1515,7 @@
 "快速跟读" = "Fast follow";
 "本机英文识别逐词跟随，口音不准时仍由 Gemma 校正" = "Follows word by word with on-device English recognition; Gemma still corrects it when your accent trips it up";
 "需要 macOS 26 的本机英文识别" = "Needs on-device English recognition on macOS 26";
-"陪读播放时跟随语音，松开后跟随你" = "Follows the voice while it plays, then you once you let go";
+"跟读移动陪读位置，手表控制播放" = "Moves Read along to where you read; the watch plays it";
+"提前" = "Lead";
+"不提前" = "No lead";
+"识别有延迟，光标按你的语速往前多走这几秒，不越过当前句" = "Recognition lags, so the cursor runs this many seconds ahead at your pace, never past the sentence";
