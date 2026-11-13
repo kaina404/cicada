@@ -219,6 +219,10 @@ enum CoachPrompt {
     three-day trip", "ask me first", "the first version", "plan my life for me".
     """
 
+    /// Last so it is read: with the whole interview in view, DeepSeek still retold the same example
+    /// in every answer whose talk track contained it (one SKU story twice in 15 questions).
+    static let storyReminder = "Before writing, check the candidate's earlier answers in this interview: an example, project story or figure already told in full is not told again; point back in one short clause or use a different example from <knowledge>, never a new invented one."
+
     /// Repeated last: under a leading question DeepSeek otherwise moved work between employers
     /// (a side project's build tooling to KKday) and stacks between platforms (Kotlin Flow in an iOS app).
     static let personalFactsReminder = "Hard facts (employers, project and tool ownership, dates, team sizes, reporting lines, salaries, reasons for leaving, figures) come only from <knowledge>, each kept with its own employer and platform; natural stories and details may be added around them. Use simple high-school English in short sentences."
@@ -230,27 +234,31 @@ enum CoachPrompt {
         return system + "\n\n<knowledge>\n" + (knowledge.isEmpty ? "(none given)" : knowledge) + "\n</knowledge>\n\n" + rules
     }
 
+    /// About an hour of interview (English speech runs ~1,000 characters a minute).
+    static let speechLimit = 60000
+
     static func request(turns: [CoachTurn], background: String, frames: [CoachFrame], audio: CoachAudioBuffer?, committed: String = "", refresh: Bool = false, stage: InterviewStage = .general) -> [[String: Any]] {
         let screenOnly = !frames.isEmpty && !turns.contains { $0.role == "interviewer" && !CoachScript.words($0.text).isEmpty }
         let rules = stage.instruction + "\n\n" + InterviewIntroduction.instruction + (refresh ? "\n\n" + refreshSystem : "")
             + (screenOnly ? "\n\n" + screenOnlySystem : "")
         let instructions = Self.instructions(background: background, rules: rules)
+        // The whole interview, never trimmed at the front: with only the last ~17,000 characters a
+        // story told half an hour earlier fell out and was told again, and the sliding cut changed
+        // the speech prefix on every request, so DeepSeek's context cache missed it. Past
+        // `speechLimit` whole oldest turns go. The knowledge is sent whole and never trims speech.
+        var kept = turns.map { turn in var turn = turn; turn.text = String(turn.text.suffix(6000)); return turn }
+        var total = kept.reduce(0) { $0 + $1.text.count }
+        while total > speechLimit, kept.count > 1 { total -= kept.removeFirst().text.count }
         // Keep the latest interviewer turn even when a long candidate answer fills the tail.
-        var kept: [CoachTurn] = []
-        // Rule additions consume the speech budget; the knowledge is sent whole and never trims speech.
-        var budget = max(0, 24000 - (system + rules).utf8.count - 1000)
-        for turn in turns.reversed() {
-            guard budget > 0 else { break }
-            var turn = turn
-            turn.text = String(turn.text.suffix(min(6000, budget)))
-            budget -= turn.text.count
-            kept.insert(turn, at: 0)
-        }
         if let question = turns.last(where: { $0.role == "interviewer" }), !kept.contains(where: { $0.id == question.id }) {
             var question = question; question.text = String(question.text.prefix(3000)); kept.insert(question, at: 0)
         }
         let log = (try? JSONEncoder().encode(kept)).flatMap { String(data: $0, encoding: .utf8) } ?? "[]"
         var content: [[String: Any]] = [["type": "text", "text": "Actual speech (JSON; seconds from meeting start):\n" + log]]
+        // Its own part, so the review, refresh and screen tasks that replace the last part keep it.
+        if let ledger = CoachStory.ledger(background: background, turns: turns) {
+            content.append(["type": "text", "text": ledger])
+        }
         for frame in frames.suffix(3) {
             content.append(["type": "text", "text": String(format: "Screen keyframe at %.1f seconds:", frame.seconds)])
             if !frame.ocr.isEmpty { content.append(["type": "text", "text": "Screen OCR (reference): " + String(frame.ocr.prefix(4000))]) }
@@ -260,7 +268,7 @@ enum CoachPrompt {
             content.append(["type": "text", "text": String(format: "Original system audio, interviewer, %.1f–%.1f seconds (not the candidate):", audio.start, audio.end)])
             content.append(["type": "input_audio", "input_audio": ["data": audio.wav.base64EncodedString(), "format": "wav"]])
         }
-        content.append(["type": "text", "text": "Immutable committed user speech (reference only):\n" + String(committed.suffix(8000)) + "\nWrite the COMPLETE remaining English answer now. Start with a useful spoken sentence, with no labels. " + personalFactsReminder])
+        content.append(["type": "text", "text": "Immutable committed user speech (reference only):\n" + String(committed.suffix(8000)) + "\nWrite the COMPLETE remaining English answer now. Start with a useful spoken sentence, with no labels. " + storyReminder + " " + personalFactsReminder])
         if refresh {
             content.removeLast()
             content.append(["type": "text", "text": "Explicit manual refresh. Reconsider the supplied conversation and answer all parts of the current request afresh. Earlier actual speech is context, not a reason to omit an answer. Start with the latest follow-up and obey its length and format. If it asks for one simple sentence, output only that single sentence; do not expand into the original long answer. Otherwise cover all still-relevant requested parts. " + personalFactsReminder])

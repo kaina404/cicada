@@ -121,7 +121,7 @@ struct InterviewCoachTests {
         let turns = [CoachTurn(id: "q", seconds: 0, role: "interviewer", text: "Explain durable offline sending.")]
             + (1...50).map { CoachTurn(id: "m\($0)", seconds: Double($0), role: "candidate", text: String(repeating: "x", count: 5000)) }
         let data = try JSONSerialization.data(withJSONObject: CoachPrompt.request(turns: turns, background: "", frames: [], audio: nil))
-        #expect(data.count < 26000)
+        #expect(data.count < CoachPrompt.speechLimit + 12000)
         #expect(String(data: data, encoding: .utf8)?.contains("Explain durable offline sending.") == true)
     }
     @Test func audioBufferKeepsGapsAndStaysBounded() {
