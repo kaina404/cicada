@@ -15,6 +15,7 @@ struct CandidateFeed: View {
     var onFloat: (() -> Void)?
     var fontSize: CGFloat = 20
     var glossFontSize: CGFloat?
+    private let controlsAtBottom: Bool
     @State private var controlsExpanded = false
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
@@ -26,84 +27,28 @@ struct CandidateFeed: View {
 
     init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil, expanded: Bool = false,
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
-         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil) {
+         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil,
+         controlsAtBottom: Bool = false) {
         self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.shadowReader = shadowReader
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
         self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
         self.glossFontSize = glossFontSize
+        self.controlsAtBottom = controlsAtBottom
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Button { controlsExpanded.toggle() } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: controlsExpanded ? "chevron.down" : "chevron.right")
-                        Text("面试教练")
-                    }.font(.system(size: 11, weight: .semibold)).contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityValue(Text(controlsExpanded ? "收起" : "展开"))
-                Spacer()
-                if let onFloat {
-                    Button(action: onFloat) {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
-                    }.buttonStyle(.plain).help("放大悬浮回答").accessibilityLabel(Text("放大悬浮回答"))
-                }
-                Button("跟随朗读") { followsReading.toggle() }
-                    .buttonStyle(.plain).foregroundStyle(followsReading ? Palette.accent : Palette.secondary)
-                if engine.state == .failed || engine.readingFailed {
-                    Button("重试") { engine.retry() }.buttonStyle(.plain)
-                }
-            }
-            if controlsExpanded {
-                Picker("面试阶段", selection: $settings.interviewStage) {
-                    ForEach(InterviewStage.allCases) { stage in
-                        Text(verbatim: stage.title).tag(stage)
-                    }
-                }
-                .pickerStyle(.segmented).font(.system(size: 12))
-                HStack(spacing: 8) {
-                    Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
-                    if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
-                }.font(.system(size: 11))
-                Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
-                if CoachDeepSeekTest.enabled {
-                    Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
-                         (engine.firstLatency.map { String(format: " · TTFT %.2fs", $0) } ?? ""))
-                        .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
-                }
-                if !microphoneName.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            if let onMicrophoneSettings {
-                                Button(action: onMicrophoneSettings) {
-                                    Label {
-                                        Text(verbatim: microphoneName).lineLimit(1).truncationMode(.middle)
-                                    } icon: { Image(systemName: "mic") }
-                                }
-                                .help("选择候选人麦克风")
-                                .accessibilityLabel(Text("选择候选人麦克风"))
-                            } else {
-                                Text(verbatim: microphoneName).lineLimit(2)
-                            }
-                            if let onMic {
-                                Button(micOn ? L("关闭麦克风") : L("打开麦克风"), action: onMic)
-                                    .fixedSize()
-                            }
-                        }
-                        if !micOn { Text("尚未听取候选人回答") }
-                    }
-                    .font(.system(size: 11))
-
-                }
-            }
+            if !controlsAtBottom { controls }
             GeometryReader { viewport in
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 14) {
                             ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
                                 VStack(alignment: .leading, spacing: 5) {
+                                    if settings.askGloss, let text = gloss.translations[sentence] {
+                                        // Keep the gloss compact even when the floating English script is enlarged.
+                                        Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
+                                    }
                                     if settings.shadowReading, let shadowReader {
                                         ShadowLyricsText(text: sentence, fontSize: fontSize,
                                             active: index == followedSentence, firstWord: firstWord(in: index),
@@ -114,10 +59,6 @@ struct CandidateFeed: View {
                                             .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .animation(reduceMotion ? nil : ReadingTransition.animation, value: engine.script.currentSentence)
-                                    }
-                                    if settings.askGloss, let text = gloss.translations[sentence] {
-                                        // Keep the gloss compact even when the floating English script is enlarged.
-                                        Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
                                     }
                                 }
                                 .padding(8)
@@ -139,10 +80,9 @@ struct CandidateFeed: View {
                         .coordinateSpace(name: Self.readingSpace)
                         .background(ScrollViewFinder(scroller: scroller))
                         // Leave enough scroll range to place even the last sentence at the top.
-                        .padding(.bottom, max(0, viewport.size.height - 24))
+                        .padding(.bottom, max(0, viewport.size.height - readingTopInset))
                     }
-                    // Keep a fixed margin above the current sentence, even at large font sizes.
-                    .padding(.top, 24)
+                    .padding(.top, readingTopInset)
                     .onPreferenceChange(ReadingRowTops.self) { rowTops = $0 }
                     .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
                         sentence: followedSentence, sentenceCount: engine.script.sentences.count,
@@ -165,11 +105,80 @@ struct CandidateFeed: View {
                 .task(id: settings.askGloss) {
                     if settings.askGloss { gloss.enqueue(engine.script.sentences) }
                 }
+            if controlsAtBottom { controls }
         }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
         .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
     }
+    private var readingTopInset: CGFloat { controlsAtBottom ? 0 : 24 }
+
+    @ViewBuilder private var controls: some View {
+        HStack {
+            Button { controlsExpanded.toggle() } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: controlsExpanded ? "chevron.down" : "chevron.right")
+                    Text("面试教练")
+                }.font(.system(size: 11, weight: .semibold)).contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(Text(controlsExpanded ? "收起" : "展开"))
+            Spacer()
+            if let onFloat {
+                Button(action: onFloat) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                }.buttonStyle(.plain).help("放大悬浮回答").accessibilityLabel(Text("放大悬浮回答"))
+            }
+            Button("跟随朗读") { followsReading.toggle() }
+                .buttonStyle(.plain).foregroundStyle(followsReading ? Palette.accent : Palette.secondary)
+            if engine.state == .failed || engine.readingFailed {
+                Button("重试") { engine.retry() }.buttonStyle(.plain)
+            }
+        }
+        if controlsExpanded {
+            Picker("面试阶段", selection: $settings.interviewStage) {
+                ForEach(InterviewStage.allCases) { stage in
+                    Text(verbatim: stage.title).tag(stage)
+                }
+            }
+            .pickerStyle(.segmented).font(.system(size: 12))
+            HStack(spacing: 8) {
+                Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
+                if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
+            }.font(.system(size: 11))
+            Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+            if CoachDeepSeekTest.enabled {
+                Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
+                     (engine.firstLatency.map { String(format: " · TTFT %.2fs", $0) } ?? ""))
+                    .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+            }
+            if !microphoneName.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        if let onMicrophoneSettings {
+                            Button(action: onMicrophoneSettings) {
+                                Label {
+                                    Text(verbatim: microphoneName).lineLimit(1).truncationMode(.middle)
+                                } icon: { Image(systemName: "mic") }
+                            }
+                            .help("选择候选人麦克风")
+                            .accessibilityLabel(Text("选择候选人麦克风"))
+                        } else {
+                            Text(verbatim: microphoneName).lineLimit(2)
+                        }
+                        if let onMic {
+                            Button(micOn ? L("关闭麦克风") : L("打开麦克风"), action: onMic)
+                                .fixedSize()
+                        }
+                    }
+                    if !micOn { Text("尚未听取候选人回答") }
+                }
+                .font(.system(size: 11))
+
+            }
+        }
+    }
+
     private static let readingSpace = "readingContent"
     private func firstWord(in sentence: Int) -> Int {
         engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }

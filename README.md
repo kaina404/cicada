@@ -116,9 +116,9 @@ On Mac, resize Settings by dragging its edges; the window size is remembered. Ch
 
 The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
 
-On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting.
+On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and use the bottom controls to adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting. With Follow Reading on, the current sentence scrolls to the top.
 
-Chinese translations use smaller text in Assistant (50% of the English size, 11–18 pt) and even smaller text in Floating Answer (10–14 pt, 12 pt by default) to save space.
+Each Assistant sentence shows its small Chinese translation first, immediately followed by the corresponding English sentence. Chinese translations use smaller text in Assistant (50% of the English size, 11–18 pt) and even smaller text in Floating Answer (10–14 pt, 12 pt by default) to save space.
 
 Each new meeting offers an optional screen selector at the top of Live Notes. Choose a window or display without changing the audio source, or continue without one. You can change it or stop reading during the meeting. Ending the meeting stops capture and clears the selection; the next meeting starts without a screen.
 

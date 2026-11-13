@@ -7,12 +7,26 @@
     "image": null,
     "items": [
       {
+        "kind": "improved",
+        "platforms": ["mac"],
+        "title": "悬浮回答从窗口顶部显示。",
+        "text": "字号和背景不透明度改在底部调节，跟随朗读时当前句滚到窗口顶部。"
+      },
+      {
         "kind": "fixed",
         "platforms": [
           "mac"
         ],
         "title": "选择共享窗口不再自动开始自我介绍。",
         "text": "面试官尚未发言时只更新画面上下文；主动刷新回答可分析当前画面，避免把网页内容误当成开场提问。"
+      },
+      {
+        "kind": "improved",
+        "platforms": [
+          "mac"
+        ],
+        "title": "Assistant 先显示中文，再显示对应英文。",
+        "text": "每句小字中文放在对应英文上方，主窗口与悬浮回答保持一致，方便先理解再朗读。"
       },
       {
         "kind": "improved",

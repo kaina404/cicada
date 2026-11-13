@@ -2129,6 +2129,9 @@ final class AppModel: ObservableObject {
                 settings.assistantOpacity = AssistantAppearance.opacity(values[1])
             }
         case "assistantFloatState": assistantWindow.logState()
+        case "assistantFloatMove":
+            let v = arg.split(separator: ",").compactMap { Double($0) }
+            if v.count == 2 { assistantWindow.remoteWindow?.setFrameOrigin(NSPoint(x: v[0], y: v[1])) }
         case "watchState": debugLog("watch: \(watchControl?.status ?? "unavailable")")
         case "assistantRender":
             // ImageRenderer cannot lay out the interactive scroll view and native controls reliably.

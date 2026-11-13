@@ -115,7 +115,7 @@ swift tools/qwen-realtime-probe.swift AndroidEngineerMockInterview.mp4 --workspa
 
 - Dock：`dock:<on|off>` 设置是否常驻 Dock；`dockRender:<png>` 导出当前图标；`notesFrame` 可查看当前激活策略。
 
-- 助手浮层：`assistantFloat[:off]` 显示或收起实时回答浮层；`assistantFloatStyle:<字号>,<背景不透明度>`（16–96，0–1）调节并保存外观；`assistantFloatState` 输出可见性、外观、位置、焦点及屏幕共享状态。使用独立 `CICADA_DEBUG_CHANNEL` 实例进行界面自查，避免打断正在录制的开发版。
+- 助手浮层：`assistantFloat[:off]` 显示或收起实时回答浮层；`assistantFloatStyle:<字号>,<背景不透明度>`（16–96，0–1）调节并保存外观；`assistantFloatState` 输出可见性、外观、位置、焦点及屏幕共享状态；`assistantFloatMove:<x>,<y>` 移动浮层，停留 2.5 秒后按底下屏幕亮度切换明暗（需已有录屏权限）。使用独立 `CICADA_DEBUG_CHANNEL` 实例进行界面自查，避免打断正在录制的开发版。
 
 ## 耳机陪读（Mac）
 
