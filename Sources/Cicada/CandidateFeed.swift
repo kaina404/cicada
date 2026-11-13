@@ -5,6 +5,7 @@ struct CandidateFeed: View {
     @ObservedObject var engine: InterviewCoach
     @ObservedObject var settings: AppSettings
     @ObservedObject private var gloss: AskGloss
+    @ObservedObject private var fast: FastReadingFollow
     var shadowReader: ShadowReader?
     var expanded = false
     var compactHeight: CGFloat = 250
@@ -22,6 +23,8 @@ struct CandidateFeed: View {
     @State private var scrollAnswerID: String?
     @State private var scrolledSentence: Int?
     @State private var rowTops: [Int: CGFloat] = [:]
+    @State private var fastFrame: CGRect?
+    @State private var scrolledLine = 0
     @State private var scroller = ReadingScroller()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -29,7 +32,7 @@ struct CandidateFeed: View {
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
          onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil,
          controlsAtBottom: Bool = false) {
-        self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.shadowReader = shadowReader
+        self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.fast = engine.fastFollow; self.shadowReader = shadowReader
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
         self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
@@ -54,9 +57,16 @@ struct CandidateFeed: View {
                                             active: index == followedSentence, firstWord: firstWord(in: index),
                                             playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
                                             seek: { shadowReader.seek(to: $0) })
+                                    } else if fastActive, index == followedSentence {
+                                        Text(fastFollowed(sentence, index: index)).font(.system(size: fontSize))
+                                            .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(GeometryReader { text in
+                                                Color.clear.preference(key: FastFollowFrame.self,
+                                                    value: text.frame(in: .named(Self.readingSpace)))
+                                            })
                                     } else {
                                         Text(sentence).font(.system(size: fontSize))
-                                            .foregroundStyle(index < engine.script.currentSentence ? Palette.secondary : Palette.ink).textSelection(.enabled)
+                                            .foregroundStyle(index < (fastActive ? followedSentence : engine.script.currentSentence) ? Palette.secondary : Palette.ink).textSelection(.enabled)
                                             .frame(maxWidth: .infinity, alignment: .leading)
                                             .animation(reduceMotion ? nil : ReadingTransition.animation, value: engine.script.currentSentence)
                                     }
@@ -84,10 +94,11 @@ struct CandidateFeed: View {
                     }
                     .padding(.top, readingTopInset)
                     .onPreferenceChange(ReadingRowTops.self) { rowTops = $0 }
+                    .onPreferenceChange(FastFollowFrame.self) { fastFrame = $0 }
                     .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
                         sentence: followedSentence, sentenceCount: engine.script.sentences.count,
                         translations: gloss.translations, size: viewport.size, fontSize: fontSize,
-                        follows: followsReading, target: rowTops[followedSentence])) {
+                        follows: followsReading, target: rowTops[followedSentence], line: followedLine)) {
                         guard followsReading else { return }
                         // Coalesce sentence, gloss and layout updates before scrolling. A layout
                         // correction must retarget the same animation rather than snap to its end.
@@ -95,10 +106,13 @@ struct CandidateFeed: View {
                         guard !Task.isCancelled else { return }
                         guard let target = rowTops[followedSentence] else { return }
                         let newAnswer = scrollAnswerID != engine.script.answerID
-                        let handoff = scrolledSentence != followedSentence
+                        let handoff = scrolledSentence != followedSentence || scrolledLine != followedLine
                         scrollAnswerID = engine.script.answerID; scrolledSentence = followedSentence
+                        scrolledLine = followedLine
+                        // Fast follow keeps the line being read, plus one line before it, at the top.
+                        let lineTarget = followedLine > 1 ? fastFrame.map { $0.minY + CGFloat(followedLine - 1) * fontSize * 1.2 } : nil
                         // Slow and eased at both ends: a sudden jump makes the reader lose their place.
-                        scroller.scroll(to: target, restart: handoff, animated: !(reduceMotion || newAnswer))
+                        scroller.scroll(to: lineTarget ?? target, restart: handoff, animated: !(reduceMotion || newAnswer))
                     }
             }.frame(height: expanded ? nil : compactHeight)
                 .frame(maxHeight: expanded ? .infinity : compactHeight)
@@ -146,6 +160,15 @@ struct CandidateFeed: View {
                 Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
                 if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
             }.font(.system(size: 11))
+            HStack(spacing: 8) {
+                Toggle("快速跟读", isOn: $settings.fastReadingFollow).toggleStyle(.checkbox).fixedSize()
+                    .help("本机英文识别逐词跟随，口音不准时仍由 Gemma 校正")
+                if settings.fastReadingFollow, fast.status == .unavailable {
+                    Text("需要 macOS 26 的本机英文识别").foregroundStyle(Palette.tertiary)
+                } else if settings.fastReadingFollow, settings.shadowReading {
+                    Text("陪读时按播放位置跟随").foregroundStyle(Palette.tertiary)
+                }
+            }.font(.system(size: 11))
             Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
             if CoachDeepSeekTest.enabled {
                 Text(verbatim: "DeepSeek V4.1 Flash · " + L("文本和截图发送云端") +
@@ -183,7 +206,44 @@ struct CandidateFeed: View {
     private func firstWord(in sentence: Int) -> Int {
         engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
     }
+    /// Fast follow only drives display and scroll, and only while read-along (which follows its own voice) is off.
+    private var fastActive: Bool {
+        settings.fastReadingFollow && !settings.shadowReading && fast.answerID == engine.script.answerID
+    }
+    /// The further of Gemma's confirmed progress and the fast on-device draft.
+    private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }
+    private var followedLine: Int {
+        let sentences = engine.script.sentences
+        guard fastActive, let height = fastFrame?.height, fontSize > 0, followedSentence < sentences.count else { return 0 }
+        let count = CoachScript.words(sentences[followedSentence]).count
+        guard count > 0 else { return 0 }
+        // Words spread evenly over the wrapped lines: close enough to pick the line being read.
+        let lines = max(1, Int((height / (fontSize * 1.2)).rounded()))
+        let progress = Double(fastWord - firstWord(in: followedSentence)) / Double(count)
+        return min(lines - 1, Int(min(1, max(0, progress)) * Double(lines)))
+    }
+    /// Words already heard are grey; the latest heard word carries the live accent.
+    private func fastFollowed(_ sentence: String, index: Int) -> AttributedString {
+        var text = AttributedString(sentence)
+        text.foregroundColor = Palette.ink
+        let ranges = ShadowPlayback.displayRanges(sentence)
+        let read = min(ranges.count, max(0, fastWord - firstWord(in: index)))
+        guard read > 0 else { return text }
+        for (n, range) in ranges.prefix(read).enumerated() {
+            guard let r = Range(range, in: sentence), let a = Range(r, in: text) else { continue }
+            text[a].foregroundColor = n == read - 1 ? Palette.accent : Palette.secondary
+        }
+        return text
+    }
     private var followedSentence: Int {
+        if fastActive {
+            var end = 0
+            for (index, sentence) in engine.script.sentences.enumerated() {
+                end += CoachScript.words(sentence).count
+                if fastWord < end { return index }
+            }
+            return max(0, engine.script.sentences.count - 1)
+        }
         guard settings.shadowReading else { return engine.script.currentSentence }
         guard playback.answerID == engine.script.answerID else { return 0 }
         let word = playback.currentWord ?? playback.words.first?.range.lowerBound ?? 0
@@ -278,4 +338,5 @@ private struct ReadingScrollRequest: Equatable {
     var fontSize: CGFloat
     var follows: Bool
     var target: CGFloat?
+    var line = 0
 }

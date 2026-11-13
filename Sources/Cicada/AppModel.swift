@@ -1270,6 +1270,7 @@ final class AppModel: ObservableObject {
         } else if candidate.state != .idle { candidate.stop() }
         shadowReader.update(enabled: enabled && settings.shadowReading,
                             script: candidate.script, finished: candidate.current == nil)
+        candidate.fastFollow.update(enabled: enabled && settings.fastReadingFollow, script: candidate.script)
         let micEngine = settings.listensToRoom ? listen : roomListen
         if enabled, candidateMicEngine !== micEngine {
             candidateMicEngine?.router.setOnRealtimePCM(nil)
@@ -1281,6 +1282,7 @@ final class AppModel: ObservableObject {
                 Task { @MainActor [weak self] in
                     guard let self, self.store.liveID == sessionID, self.coachEnabled else { return }
                     self.candidate.appendCandidateAudio(pcm, voiced: voiced, now: self.coachTime)
+                    if self.settings.fastReadingFollow { self.candidate.fastFollow.append(samples) }
                 }
             }
         } else if !enabled {
@@ -2155,6 +2157,26 @@ final class AppModel: ObservableObject {
             }
         case "assistantState":
             debugLog("coach: state=\(candidate.state.rawValue) response_id=\(candidate.responseID ?? "none") first_ms=\(Int((candidate.firstLatency ?? -1) * 1000)) sentence_ms=\(Int((candidate.firstSentenceLatency ?? -1) * 1000)) committed=\(candidate.script.committed.count) pending_words=\(CoachScript.words(candidate.script.pending).count) acoustic=\(candidate.acousticReady) generations=\(candidate.generationCount) reviews=\(candidate.reviewCount) frames=\(candidate.frameCount) paragraphs=\(candidate.paragraphs.count) mic=\(coachMicName) candidate_asr=\((settings.listensToRoom ? listen : roomListen).gemmaCandidate ? "gemma" : Recognition.name) candidate_asr_failed=\(candidateASRFailed) reading=gemma cursor=\(candidate.script.cursor) sentence=\(candidate.script.currentSentence) reading_failed=\(candidate.readingFailed)")
+        case "fastFollowState":
+            let fast = candidate.fastFollow
+            debugLog("fast follow: setting=\(settings.fastReadingFollow) status=\(fast.status.rawValue) word=\(fast.word.map(String.init) ?? "none") gemma_cursor=\(candidate.script.cursor) answer_match=\(fast.answerID == candidate.script.answerID)")
+        case "fastFollowFile":
+            // Feeds a recording to the fast follow recognizer at real-time pace, as the microphone would.
+            Task { [weak self] in
+                guard let samples = await Task.detached(operation: { Voiceprints.samples(of: URL(fileURLWithPath: arg)) }).value,
+                      !samples.isEmpty else { debugLog("fast follow: cannot read \(arg)"); return }
+                debugLog("fast follow: feeding \(String(format: "%.1f", Double(samples.count) / 16000)) s")
+                for start in stride(from: 0, to: samples.count, by: 1600) {
+                    guard let self else { return }
+                    self.candidate.fastFollow.append(Array(samples[start..<min(samples.count, start + 1600)]))
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                debugLog("fast follow: file done")
+            }
+        case "fastFollowHear":
+            // Text-only check of the accent-tolerant alignment, without a microphone: `final|text` or `text`.
+            let final = arg.hasPrefix("final|")
+            candidate.fastFollow.hear(final ? String(arg.dropFirst(6)) : arg, final: final)
         case "assistantRead":
             // File-only Gemma ASR exercises candidate display, records and shared reading evidence.
             guard let sessionID = store.liveID else { break }

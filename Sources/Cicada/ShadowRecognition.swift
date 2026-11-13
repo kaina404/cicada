@@ -1,10 +1,13 @@
 @preconcurrency import AVFoundation
 import Foundation
 
-/// Optional fast, local-only drafts for private playback. Gemma still owns records and coach progress.
+/// Optional fast, local-only drafts for display-only reading follow (`FastReadingFollow`).
+/// Gemma still owns records and coach progress.
 @MainActor
 final class ShadowRecognition {
-    var onText: ((String) -> Void)?
+    var onText: ((String, Bool) -> Void)?
+    /// False when the on-device English model is missing or this Mac cannot run it.
+    var onReady: ((Bool) -> Void)?
     private var task: Task<Void, Never>?
     private var stream: RecognitionStream?
     private let feeder = ShadowRecognitionFeed()
@@ -15,20 +18,24 @@ final class ShadowRecognition {
         guard !attempted else { return }
         attempted = true
         // Never take over the legacy recognizer or silently route candidate audio to a service.
-        guard #available(macOS 26, *), !Recognition.cloudOnly, !Recognition.legacy, Recognition.host == nil else { return }
+        guard #available(macOS 26, *), !Recognition.cloudOnly, !Recognition.legacy, Recognition.host == nil else { onReady?(false); return }
         let token = token
         task = Task { [weak self] in
-            guard case .installed = await Recognition.status("en-US") else { return }
+            guard case .installed = await Recognition.status("en-US") else { self?.onReady?(false); return }
             do {
                 let stream = try await Recognition.start("en-US", drafts: true)
                 guard let self, self.token == token, !Task.isCancelled else { await stream.cancel(); return }
                 self.stream = stream
+                self.onReady?(true)
                 for try await piece in stream.results {
                     guard self.token == token, !Task.isCancelled else { break }
-                    self.onText?(piece.text)
+                    self.onText?(piece.text, piece.isFinal)
                 }
                 await stream.cancel()
-            } catch { /* Model-based progress remains available when fast drafts are unavailable. */ }
+            } catch {
+                // Model-based progress remains available when fast drafts are unavailable.
+                if self?.token == token { self?.onReady?(false) }
+            }
         }
     }
     func append(_ samples: [Float]) {

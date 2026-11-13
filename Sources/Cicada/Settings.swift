@@ -66,6 +66,8 @@ final class AppSettings: ObservableObject {
     @Published var askGloss: Bool { didSet { save() } }
     @Published var shadowVolume: Double { didSet { save() } }
     @Published var shadowReading: Bool { didSet { save() } }
+    /// 快速跟读: display-only word follow from on-device drafts (`FastReadingFollow`). Off by default.
+    @Published var fastReadingFollow: Bool { didSet { save() } }
     @Published var assistantFontSize: Double { didSet { save() } }
     @Published var assistantOpacity: Double { didSet { save() } }
     @Published var interviewStage: InterviewStage { didSet { save() } }
@@ -283,6 +285,7 @@ final class AppSettings: ObservableObject {
         askGloss = defaults.object(forKey: "askGloss") as? Bool ?? true
         shadowVolume = ShadowVolume.clamped(defaults.object(forKey: "shadowVolume") as? Double ?? ShadowVolume.initial)
         shadowReading = defaults.bool(forKey: "shadowReading")
+        fastReadingFollow = defaults.bool(forKey: "fastReadingFollow")
         assistantFontSize = AssistantAppearance.fontSize(defaults.object(forKey: "assistantFontSize") as? Double ?? 32)
         assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
         interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
@@ -357,6 +360,7 @@ final class AppSettings: ObservableObject {
         defaults.set(askGloss, forKey: "askGloss")
         defaults.set(ShadowVolume.clamped(shadowVolume), forKey: "shadowVolume")
         defaults.set(shadowReading, forKey: "shadowReading")
+        defaults.set(fastReadingFollow, forKey: "fastReadingFollow")
         defaults.set(assistantFontSize, forKey: "assistantFontSize")
         defaults.set(assistantOpacity, forKey: "assistantOpacity")
         defaults.set(interviewStage.rawValue, forKey: "interviewStage")

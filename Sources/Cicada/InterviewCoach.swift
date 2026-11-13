@@ -18,6 +18,8 @@ final class InterviewCoach: ObservableObject {
     @Published private(set) var firstLatency: Double?
     @Published private(set) var firstSentenceLatency: Double?
     let gloss = AskGloss()
+    /// Display-only; the coach itself never reads or writes it (see `FastReadingFollow`).
+    let fastFollow = FastReadingFollow()
     let acoustic = CoachAudioWorker()
     let reading: CoachReading
     @Published private(set) var acousticReady = false

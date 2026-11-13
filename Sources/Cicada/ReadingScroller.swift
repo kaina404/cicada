@@ -76,3 +76,9 @@ struct ReadingRowTops: PreferenceKey {
         value.merge(nextValue()) { $1 }
     }
 }
+
+/// The frame of the sentence fast follow is reading, so the line being read can be kept near the top.
+struct FastFollowFrame: PreferenceKey {
+    static let defaultValue: CGRect? = nil
+    static func reduce(value: inout CGRect?, nextValue: () -> CGRect?) { value = nextValue() ?? value }
+}
