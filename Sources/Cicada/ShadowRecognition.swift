@@ -8,6 +8,8 @@ final class ShadowRecognition {
     var onText: ((String, Bool) -> Void)?
     /// False when the on-device English model is missing or this Mac cannot run it.
     var onReady: ((Bool) -> Void)?
+    /// A running stream finished or failed; the owner may start a new one.
+    var onEnded: ((String) -> Void)?
     private var task: Task<Void, Never>?
     private var stream: RecognitionStream?
     private let feeder = ShadowRecognitionFeed()
@@ -22,19 +24,22 @@ final class ShadowRecognition {
         let token = token
         task = Task { [weak self] in
             guard case .installed = await Recognition.status("en-US") else { self?.onReady?(false); return }
+            var ready = false
             do {
                 let stream = try await Recognition.start("en-US", drafts: true)
                 guard let self, self.token == token, !Task.isCancelled else { await stream.cancel(); return }
                 self.stream = stream
-                self.onReady?(true)
+                self.onReady?(true); ready = true
                 for try await piece in stream.results {
                     guard self.token == token, !Task.isCancelled else { break }
                     self.onText?(piece.text, piece.isFinal)
                 }
                 await stream.cancel()
+                if self.token == token, !Task.isCancelled { self.onEnded?("finished") }
             } catch {
                 // Model-based progress remains available when fast drafts are unavailable.
-                if self?.token == token { self?.onReady?(false) }
+                guard self?.token == token else { return }
+                if ready { self?.onEnded?("\(error)") } else { self?.onReady?(false) }
             }
         }
     }

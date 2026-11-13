@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
     private var candidateTimer: Timer?
     private var manualAssistant = false
     private weak var candidateMicEngine: ListenEngine?
+    private var candidateMicSession: String?
     private var candidateAudioAttached = false
     private var screenUsesRealtime = false
     private var candidateBackground = Knowledge.read()
@@ -220,7 +221,9 @@ final class AppModel: ObservableObject {
     /// (`followShadow`); the watch alone plays, and whatever it does replaces fast follow's position.
     private func holdShadow(_ pressed: Bool) {
         let released = !pressed && shadowReader.isHeld
+        if pressed, !shadowReader.isHeld { debugLog("shadow: hold at word \(shadowReader.playback.currentWord ?? shadowReader.plan.cursor)") }
         shadowReader.setHeld(pressed)
+        if released { debugLog("shadow: released at word \(shadowReader.playback.currentWord ?? shadowReader.plan.cursor)") }
         if released { handShadowToFastFollow() }
     }
     private func selectShadowSentence(_ offset: Int) {
@@ -1302,10 +1305,13 @@ final class AppModel: ObservableObject {
         candidate.fastFollow.update(enabled: enabled && settings.fastReadingFollow, script: candidate.script,
                                     lead: settings.fastReadingLead)
         let micEngine = settings.listensToRoom ? listen : roomListen
-        if enabled, candidateMicEngine !== micEngine {
+        // The handler belongs to one meeting: a new meeting on the same engine must attach again,
+        // or every sample fails the session check and the candidate is never heard.
+        if enabled, candidateMicEngine !== micEngine || candidateMicSession != store.liveID {
             candidateMicEngine?.router.setOnRealtimePCM(nil)
             candidateMicEngine = micEngine
             let sessionID = store.liveID
+            candidateMicSession = sessionID
             micEngine.router.setOnRealtimePCM { [weak self] samples in
                 let pcm = RealtimeMedia.pcm(samples)
                 let voiced = samples.reduce(Float(0)) { $0 + $1 * $1 } / Float(max(1, samples.count)) > 0.000025
@@ -1316,7 +1322,7 @@ final class AppModel: ObservableObject {
                 }
             }
         } else if !enabled {
-            candidateMicEngine?.router.setOnRealtimePCM(nil); candidateMicEngine = nil
+            candidateMicEngine?.router.setOnRealtimePCM(nil); candidateMicEngine = nil; candidateMicSession = nil
         }
         let attach = enabled && canAsk && !settings.listensToRoom
         if attach != candidateAudioAttached {
@@ -2189,7 +2195,7 @@ final class AppModel: ObservableObject {
             debugLog("coach: state=\(candidate.state.rawValue) response_id=\(candidate.responseID ?? "none") first_ms=\(Int((candidate.firstLatency ?? -1) * 1000)) sentence_ms=\(Int((candidate.firstSentenceLatency ?? -1) * 1000)) committed=\(candidate.script.committed.count) pending_words=\(CoachScript.words(candidate.script.pending).count) acoustic=\(candidate.acousticReady) generations=\(candidate.generationCount) reviews=\(candidate.reviewCount) frames=\(candidate.frameCount) paragraphs=\(candidate.paragraphs.count) mic=\(coachMicName) candidate_asr=\((settings.listensToRoom ? listen : roomListen).gemmaCandidate ? "gemma" : Recognition.name) candidate_asr_failed=\(candidateASRFailed) reading=gemma cursor=\(candidate.script.cursor) sentence=\(candidate.script.currentSentence) reading_failed=\(candidate.readingFailed)")
         case "fastFollowState":
             let fast = candidate.fastFollow
-            debugLog("fast follow: setting=\(settings.fastReadingFollow) status=\(fast.status.rawValue) word=\(fast.word.map(String.init) ?? "none") heard_word=\(fast.heard.map(String.init) ?? "none") lead=\(settings.fastReadingLead) shadow_word=\(shadowReader.playback.currentWord.map(String.init) ?? "none") shadow_status=\(shadowReader.status.rawValue) gemma_cursor=\(candidate.script.cursor) answer_match=\(fast.answerID == candidate.script.answerID) text=\(candidate.script.pending.replacingOccurrences(of: "\n", with: " "))")
+            debugLog("fast follow: setting=\(settings.fastReadingFollow) status=\(fast.status.rawValue) word=\(fast.word.map(String.init) ?? "none") heard_word=\(fast.heard.map(String.init) ?? "none") mic_s=\(Int(fast.heardSeconds)) results=\(fast.results) lead=\(settings.fastReadingLead) shadow_word=\(shadowReader.playback.currentWord.map(String.init) ?? "none") shadow_status=\(shadowReader.status.rawValue) gemma_cursor=\(candidate.script.cursor) answer_match=\(fast.answerID == candidate.script.answerID) text=\(candidate.script.pending.replacingOccurrences(of: "\n", with: " "))")
         case "fastFollowFile":
             // Feeds a recording to the fast follow recognizer at real-time pace, as the microphone would.
             Task { [weak self] in

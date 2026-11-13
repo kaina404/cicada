@@ -61,6 +61,10 @@ struct CandidateFeed: View {
                                                 // A tap places read-along; fast follow drops its own position.
                                                 if settings.fastReadingFollow { fast.move(to: word) }
                                             })
+                                            .background(GeometryReader { text in
+                                                Color.clear.preference(key: FastFollowFrame.self,
+                                                    value: index == followedSentence ? text.frame(in: .named(Self.readingSpace)) : nil)
+                                            })
                                     } else if fastActive, index == followedSentence {
                                         Text(fastFollowed(sentence, index: index)).font(.system(size: fontSize))
                                             .textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
@@ -113,7 +117,7 @@ struct CandidateFeed: View {
                         let handoff = scrolledSentence != followedSentence || scrolledLine != followedLine
                         scrollAnswerID = engine.script.answerID; scrolledSentence = followedSentence
                         scrolledLine = followedLine
-                        // Fast follow keeps the line being read, plus one line before it, at the top.
+                        // A long sentence keeps the line being read, plus one line before it, at the top.
                         let lineTarget = followedLine > 1 ? fastFrame.map { $0.minY + CGFloat(followedLine - 1) * fontSize * 1.2 } : nil
                         // Slow and eased at both ends: a sudden jump makes the reader lose their place.
                         scroller.scroll(to: lineTarget ?? target, restart: handoff, animated: !(reduceMotion || newAnswer))
@@ -225,14 +229,21 @@ struct CandidateFeed: View {
     }
     /// The further of Gemma's confirmed progress and the fast on-device draft.
     private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }
+    /// The word being read: read-along's position (its voice, or fast follow moving it silently),
+    /// else fast follow's own cursor; nil when only sentences are followed.
+    private var lineWord: Int? {
+        if fastActive { return fastWord }
+        guard settings.shadowReading, playback.answerID == engine.script.answerID else { return nil }
+        return playback.currentWord
+    }
     private var followedLine: Int {
         let sentences = engine.script.sentences
-        guard fastActive, let height = fastFrame?.height, fontSize > 0, followedSentence < sentences.count else { return 0 }
+        guard let word = lineWord, let height = fastFrame?.height, fontSize > 0, followedSentence < sentences.count else { return 0 }
         let count = CoachScript.words(sentences[followedSentence]).count
         guard count > 0 else { return 0 }
         // Words spread evenly over the wrapped lines: close enough to pick the line being read.
         let lines = max(1, Int((height / (fontSize * 1.2)).rounded()))
-        let progress = Double(fastWord - firstWord(in: followedSentence)) / Double(count)
+        let progress = Double(word - firstWord(in: followedSentence)) / Double(count)
         return min(lines - 1, Int(min(1, max(0, progress)) * Double(lines)))
     }
     /// Words already heard are grey; the latest heard word carries the live accent.
@@ -315,9 +326,9 @@ private struct ShadowStatus: View {
         HStack {
             Text(reader.label).foregroundStyle(Palette.tertiary).fixedSize(horizontal: false, vertical: true)
             Picker("播放速度", selection: Binding(get: { reader.rate }, set: { reader.setRate($0) })) {
-                Text(verbatim: "0.75×").tag(Float(0.75))
-                Text(verbatim: "1×").tag(Float(1))
-                Text(verbatim: "1.25×").tag(Float(1.25))
+                ForEach(ShadowReader.rates, id: \.self) { rate in
+                    Text(verbatim: "\(rate.formatted())×").tag(rate)
+                }
             }.labelsHidden().frame(width: 78).accessibilityLabel(Text("播放速度"))
             Button { volumeShown.toggle() } label: {
                 Image(systemName: settings.shadowVolume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")

@@ -94,6 +94,14 @@ struct FastReadingAlignTests {
         #expect(follow.word == 12)
         follow.move(to: 2)
         #expect(follow.word == 2, "The watch may move back too")
+        // Recognition of the speech before the move arrives late; it must not pull the cursor back
+        // ahead, and reading on from the new place still follows.
+        follow.hear("then I cache the first", final: false)
+        #expect(follow.word == 2)
+        follow.hear("then I cache the first screen", final: true)
+        #expect(follow.word == 2)
+        follow.hear("use Kotlin coroutines", final: false)
+        #expect(follow.word == 5)
         follow.update(enabled: false, script: coach)
     }
 }
