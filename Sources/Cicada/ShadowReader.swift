@@ -86,6 +86,8 @@ final class ShadowReader: ObservableObject {
     private var enabled = false
     private var warmed = false
     private var held = false
+    /// A live hold whose lease has not lapsed; a new press starts when this is false.
+    var isHeld: Bool { held }
     private var needsRelease = false
     private var lastHold = -Double.infinity
     private var device: OutputDevice?

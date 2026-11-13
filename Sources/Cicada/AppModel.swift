@@ -214,13 +214,25 @@ final class AppModel: ObservableObject {
     private var refinedLines: Set<String> = []
 
     func startWatchControl() { watchControl?.start() }
+
+    /// A hold renews every few hundred ms; only a new press may move read-along. If fast follow heard
+    /// the candidate read past the voice, the voice resumes where they are instead of replaying.
+    private func holdShadow(_ pressed: Bool) {
+        let fast = candidate.fastFollow
+        if pressed, !shadowReader.isHeld, settings.fastReadingFollow, fast.answerID == candidate.script.answerID,
+           let word = fast.word, word > (shadowReader.playback.currentWord ?? shadowReader.plan.cursor) {
+            debugLog("fast follow: read-along resumes at word \(word)")
+            shadowReader.seek(to: word)
+        }
+        shadowReader.setHeld(pressed)
+    }
     func stopWatchControl() { watchControl?.stop() }
 
     init() {
         watchControl = CicadaWatchReceiver(
             pairingURL: Bundle.main.url(forResource: "LocalPairing", withExtension: "json"),
             window: { [weak self] in self?.assistantWindow.remoteWindow },
-            setHeld: { [weak self] in self?.shadowReader.setHeld($0) },
+            setHeld: { [weak self] in self?.holdShadow($0) },
             selectSentence: { [weak self] in self?.shadowReader.selectSentence(offset: $0) },
             log: { debugLog($0) })
         shadowVolumeSetting = settings.$shadowVolume.sink { [weak self] in self?.shadowReader.setVolume($0) }
@@ -2116,7 +2128,7 @@ final class AppModel: ObservableObject {
         case "shadowReading": settings.shadowReading = arg == "on"; tickCandidate()
         case "shadowVolume": if let value = Double(arg) { settings.shadowVolume = ShadowVolume.clamped(value) }
         case "shadowSentence": if let offset = Int(arg) { shadowReader.selectSentence(offset: offset) }
-        case "shadowHold": shadowReader.setHeld(arg == "on")
+        case "shadowHold": holdShadow(arg == "on")
         case "shadowState": debugLog("shadow: status=\(shadowReader.status.rawValue) volume=\(settings.shadowVolume) cursor=\(shadowReader.plan.cursor) words=\(shadowReader.plan.words.count)")
         case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
         case "assistantReconnect": candidate.retry()

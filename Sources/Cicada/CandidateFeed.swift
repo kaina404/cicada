@@ -20,6 +20,7 @@ struct CandidateFeed: View {
     @State private var controlsExpanded = false
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
+    @State private var shadowStatus = ShadowReader.Status.off
     @State private var scrollAnswerID: String?
     @State private var scrolledSentence: Int?
     @State private var rowTops: [Int: CGFloat] = [:]
@@ -52,7 +53,7 @@ struct CandidateFeed: View {
                                         // Keep the gloss compact even when the floating English script is enlarged.
                                         Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
                                     }
-                                    if settings.shadowReading, let shadowReader {
+                                    if settings.shadowReading, !fastActive, let shadowReader {
                                         ShadowLyricsText(text: sentence, fontSize: fontSize,
                                             active: index == followedSentence, firstWord: firstWord(in: index),
                                             playback: playback.answerID == engine.script.answerID ? playback : ShadowPlayback(),
@@ -121,6 +122,9 @@ struct CandidateFeed: View {
                 }
             if controlsAtBottom { controls }
         }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
+        .onReceive(shadowReader.map { $0.$status.eraseToAnyPublisher() } ?? Just(ShadowReader.Status.off).eraseToAnyPublisher()) {
+            shadowStatus = $0
+        }
         .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
@@ -166,7 +170,7 @@ struct CandidateFeed: View {
                 if settings.fastReadingFollow, fast.status == .unavailable {
                     Text("需要 macOS 26 的本机英文识别").foregroundStyle(Palette.tertiary)
                 } else if settings.fastReadingFollow, settings.shadowReading {
-                    Text("陪读时按播放位置跟随").foregroundStyle(Palette.tertiary)
+                    Text("陪读播放时跟随语音，松开后跟随你").foregroundStyle(Palette.tertiary)
                 }
             }.font(.system(size: 11))
             Text(status).font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
@@ -206,9 +210,11 @@ struct CandidateFeed: View {
     private func firstWord(in sentence: Int) -> Int {
         engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
     }
-    /// Fast follow only drives display and scroll, and only while read-along (which follows its own voice) is off.
+    /// Fast follow only drives display and scroll. While read-along is playing its voice leads;
+    /// once the hold is released the candidate's own reading leads again.
     private var fastActive: Bool {
-        settings.fastReadingFollow && !settings.shadowReading && fast.answerID == engine.script.answerID
+        settings.fastReadingFollow && fast.answerID == engine.script.answerID
+            && !(settings.shadowReading && shadowStatus == .guiding)
     }
     /// The further of Gemma's confirmed progress and the fast on-device draft.
     private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }
