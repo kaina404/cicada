@@ -153,26 +153,20 @@ struct ShadowReaderTests {
         #expect(reader.plan.cursor == 0 && !audio.playing)
         reader.stop()
     }
-    @Test func tapsPlaySelectedSentenceWithoutHoldAndStopAtItsEnd() async {
+    @Test func switchingSentencesNeverPlaysWithoutHold() async {
         let audio = Driver(), env = Environment(), pcm = clip()
         let reader = ShadowReader(audio: audio, synthesize: { _ in pcm }, headphones: { env.device },
                                   now: { env.clock }, automatic: false)
         reader.update(enabled: true, script: script("First sentence. Second sentence. Third sentence."), finished: true)
         await settle(reader)
-        reader.playSentence(offset: 1); await settle(reader)
-        #expect(audio.playing && reader.playback.anchorWord == 2)
-        env.clock = 2; reader.tick()
-        #expect(audio.playing, "Tap playback does not require hold heartbeats")
-        audio.state.ended = true; reader.tick(); await settle(reader)
-        #expect(!audio.playing, "A tap plays only one sentence")
-        reader.playSentence(offset: -1); await settle(reader)
-        #expect(audio.playing && reader.playback.anchorWord == 2)
-        reader.setHeld(false)
-        #expect(!audio.playing)
-        reader.playSentence(offset: -1); await settle(reader)
-        #expect(audio.playing && reader.playback.anchorWord == 0)
-        env.device = nil; reader.tick()
-        #expect(!audio.playing && reader.status == .headphones)
+        reader.selectSentence(offset: 1); await settle(reader)
+        #expect(!audio.playing && reader.playback.anchorWord == 2 && reader.status == .waiting)
+        reader.setHeld(true); await settle(reader)
+        #expect(audio.playing && reader.playback.anchorWord == 2, "Only a hold plays the selected sentence")
+        reader.selectSentence(offset: 1); await settle(reader)
+        #expect(!audio.playing && reader.playback.anchorWord == 4, "Switching while holding pauses until a new hold")
+        reader.selectSentence(offset: -1); await settle(reader)
+        #expect(!audio.playing && reader.playback.anchorWord == 2)
         reader.stop()
     }
 
@@ -195,8 +189,8 @@ struct ShadowReaderTests {
         reader.setHeld(false); reader.setHeld(true); await settle(reader)
         #expect(audio.playing && reader.status == .guiding)
         audio.state.failed = true; reader.tick()
-        reader.playSentence(offset: -1); await settle(reader)
-        #expect(audio.playing, "Tap can recover a failed player too")
+        reader.selectSentence(offset: -1); await settle(reader)
+        #expect(!audio.playing, "Switching sentences never plays, even to recover")
         reader.stop()
     }
 
@@ -207,7 +201,7 @@ struct ShadowReaderTests {
         reader.update(enabled: true, script: script("First sentence. Second sentence."), finished: true)
         await settle(reader)
         audio.delayedLoad = true
-        reader.playSentence(offset: 1); await settle(reader)
+        reader.selectSentence(offset: 1); reader.setHeld(true); await settle(reader)
         audio.state = ShadowAudioState(clipID: UUID(), failed: true)
         reader.tick()
         #expect(reader.status == .preparing, "Ignore a stale error while the selected clip loads")
@@ -331,14 +325,18 @@ struct ShadowReaderTests {
         let paused = reader.playback.seconds
         try await Task.sleep(for: .milliseconds(250))
         #expect(abs(reader.playback.seconds - paused) < 0.08)
-        reader.playSentence(offset: 1)
+        reader.selectSentence(offset: 1)
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(reader.status != .guiding, "Switching sentences alone stays silent")
         for _ in 0..<200 {
+            reader.setHeld(true)
             if reader.status == .guiding, reader.playback.seconds > 0.2 { break }
             try await Task.sleep(for: .milliseconds(50))
         }
         #expect(reader.status == .guiding && reader.playback.anchorWord == 4 && reader.playback.seconds > 0.2)
-        reader.playSentence(offset: -1)
+        reader.selectSentence(offset: -1)
         for _ in 0..<200 {
+            reader.setHeld(true)
             if reader.status == .guiding, reader.playback.seconds > 0.2 { break }
             try await Task.sleep(for: .milliseconds(50))
         }

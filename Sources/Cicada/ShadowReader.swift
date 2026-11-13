@@ -38,7 +38,8 @@ final class ShadowReader: ObservableObject {
             tick()
         }
     }
-    /// Selection is independent of microphone evidence. Selecting always pauses and cancels stale work.
+    /// Selection is independent of microphone evidence. Selecting always pauses and cancels stale work;
+    /// only a hold plays, so switching sentences (tap, double tap, crown) never starts the voice.
     func selectSentence(offset: Int) {
         guard enabled, offset != 0,
               let word = plan.sentenceStart(at: playback.currentWord ?? plan.cursor, offset: offset) else { return }
@@ -47,16 +48,6 @@ final class ShadowReader: ObservableObject {
         resetPlayback(); device = output
         plan.seek(to: word)
         playback = ShadowPlayback(answerID: plan.answerID, anchorWord: word)
-        tick()
-    }
-
-    /// A tap plays only the selected sentence; crown selection remains paused.
-    func playSentence(offset: Int) {
-        selectSentence(offset: offset)
-        guard enabled, !plan.words.isEmpty, headphones() != nil else { return }
-        retryPlayback()
-        tick()
-        sentencePlaying = true
         tick()
     }
 
@@ -95,7 +86,6 @@ final class ShadowReader: ObservableObject {
     private var enabled = false
     private var warmed = false
     private var held = false
-    private var sentencePlaying = false
     private var needsRelease = false
     private var lastHold = -Double.infinity
     private var device: OutputDevice?
@@ -141,7 +131,6 @@ final class ShadowReader: ObservableObject {
     func setHeld(_ pressed: Bool) {
         guard enabled else { return }
         if !pressed {
-            sentencePlaying = false
             held = false; needsRelease = false; lastHold = -.infinity
             audio.control(playing: false, rate: rate)
             tick(); return
@@ -150,7 +139,6 @@ final class ShadowReader: ObservableObject {
         guard !needsRelease else { return }
         guard headphones() != nil else { needsRelease = true; held = false; tick(); return }
         retryPlayback()
-        sentencePlaying = false
         held = true; lastHold = now(); tick()
     }
 
@@ -182,14 +170,11 @@ final class ShadowReader: ObservableObject {
             if state.failed { debugLog("shadow: audio driver failed"); markFailed(); return }
             if playback.seconds != state.seconds { playback.seconds = state.seconds }
             if state.ended {
-                let single = sentencePlaying
-                sentencePlaying = false
                 plan.advance(to: playing.end); clip = nil
-                if single { held = false }
                 audio.control(playing: false, rate: rate)
             } else {
-                audio.control(playing: held || sentencePlaying, rate: rate)
-                status = held || sentencePlaying ? .guiding : .waiting
+                audio.control(playing: held, rate: rate)
+                status = held ? .guiding : .waiting
                 if prepared == nil, work == nil { prepare(from: playing.end) }
                 return
             }
@@ -200,11 +185,11 @@ final class ShadowReader: ObservableObject {
                 ShadowPlayback.align(ready.clip.words, to: plan.words, startingAt: ready.start))
             audio.load(ready.clip, device: current)
             // Loading schedules PCM without starting it. A release during synthesis stays paused.
-            status = held || sentencePlaying ? .preparing : .waiting
+            status = held ? .preparing : .waiting
             return
         }
         if work == nil { prepare(from: plan.cursor) }
-        status = plan.cursor == plan.words.count && !plan.words.isEmpty ? .ended : (held || sentencePlaying ? .preparing : .waiting)
+        status = plan.cursor == plan.words.count && !plan.words.isEmpty ? .ended : (held ? .preparing : .waiting)
     }
 
     private func prepare(from start: Int) {
@@ -228,7 +213,6 @@ final class ShadowReader: ObservableObject {
     }
 
     private func resetPlayback() {
-        sentencePlaying = false
         revision = UUID(); work?.cancel(); work = nil; cancelSynthesis()
         audio.stop(); clip = nil; prepared = nil; device = nil; playback = ShadowPlayback()
     }

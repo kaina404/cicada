@@ -222,7 +222,6 @@ final class AppModel: ObservableObject {
             window: { [weak self] in self?.assistantWindow.remoteWindow },
             setHeld: { [weak self] in self?.shadowReader.setHeld($0) },
             selectSentence: { [weak self] in self?.shadowReader.selectSentence(offset: $0) },
-            playSentence: { [weak self] in self?.shadowReader.playSentence(offset: $0) },
             log: { debugLog($0) })
         shadowVolumeSetting = settings.$shadowVolume.sink { [weak self] in self?.shadowReader.setVolume($0) }
         candidate.reading.usesTranscripts = true
