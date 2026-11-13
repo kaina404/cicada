@@ -179,7 +179,7 @@
 
 ### 16. 没有 QA 和发布工程师，你愿意自己负责测试和发布吗？
 
-> Yes. Testing and releases have always been part of my job. At Kezhi, I was the only Android engineer, so besides building features, I also handled testing and releases, and the team shipped the first version in four weeks. I'm happy to own a feature all the way to launch and keep an eye on how it does afterwards.
+> Yes. Testing and releases have always been part of my job. At Kezhi, I was the only Android engineer, so besides building features, I also handled testing and releases. I built the whole Android app from zero to launch in four weeks. I'm happy to own a feature all the way to launch and keep an eye on how it does afterwards.
 
 ### 17. 面试或招聘过工程师吗？
 
@@ -234,3 +234,25 @@ RAG（可之）：
 > Then we give that content to the AI to help it answer. It's like an open-book exam: find the right material first, then explain the answer. That way, the answers stay accurate and match what the students are actually learning.
 
 练习：念到脱稿；每句一口气说完；忘词时说 "In short…" 再用一句话收尾。
+
+## 六、针对 HR 两条顾虑（2026-11-12）
+
+HR 挂上一位候选人的两条理由是 Head（不了解产品）和 Hustle（WLB 只谈休息）。产品部分见 [A1 product notes](actai-a1-product-notes.md)：一页英文笔记 + 1 分钟口述版。没有公开 App 可试用，只能说 "from the job posts"。
+
+### 24. How do you think about work-life balance?
+
+结构：先承认会冲刺，再举实例，最后讲怎么保持节奏。不以休息或家庭开头；孩子的话题只有被问到时才用已有的 son 回答。
+
+> I'm fine with intense sprints. That's part of building something new. At KKday, I was the technical lead of the AI trip planning project. Launches were tight, and the goals changed as we learned. I shipped fast, and when something broke, I fixed it fast. At Kezhi, I was the only Android engineer. I built the whole Android app myself, from zero to launch, in four weeks. Back then, AI coding tools weren't good enough, so I wrote and worked out almost all of it myself. I also keep good habits: a clear plan every morning and a short update every evening. That helps me keep a high pace for a long time, not just for one week.
+
+追问 —— 周末加班怎么看？
+
+> When the product needs it, I'm there.
+
+待本人确认：KKday 的 “Launches were tight, and the goals changed as we learned” 是按行为题规则补出来的讲法，资料里没有记录。如果和实际不符，就删掉这句，只用可之的例子。
+
+可之事实（2026-11-12 用户确认）：本人是唯一的 Android 工程师，四周内独立把整个 Android App 从 0 做到上线；当时（2023 年底）AI 编程工具还不够好，代码和设计基本都是自己手写、自己想清楚的。后端、Web、iOS 不是本人做的，不要说成整个产品都是一个人做的。
+
+模糊决策和快速转向不再另写，直接用知识库里已有的回答：
+- 模糊情况下做决定：「Tell me about a decision you made with incomplete information」（KKday 后端未完成时先和 App 团队约定日卡片格式）、「a project you owned from an unclear problem」（AI 行程）。
+- 快速转向：「priorities changed suddenly」（checkout bug 当天重排，当天说明哪些事要往后推）、「founder changed direction」。
