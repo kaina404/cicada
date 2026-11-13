@@ -962,5 +962,14 @@
   "must_any": [
    "trip"
   ]
+ },
+ {
+  "id": "S07",
+  "group": "一句话自我描述",
+  "source": "用户确认 2026-11-13",
+  "question": "Interesting. Have you actually done anything about it?",
+  "must_any": [
+   "Cabinet"
+  ]
  }
 ]

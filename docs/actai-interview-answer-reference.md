@@ -21,7 +21,7 @@
 - 自我介绍不放具体场景例子，“周五开会”留给 Why ActAI，避免重复。选项卡顿的 1 秒 → 300ms 只在追问时给。
 - 短版（约 45 秒）：面试官要简短版或限时一分钟以内时使用，取自标准版原句。
 - 一句话介绍自己 / 最大的优点（2026-11-13 用户定稿，取代原“按标准版首段改写”）：不说“我是 Android 工程师”或年限，岗位和简历 HR 已知。两种备选只说一种：默认 **Empathetic**（站在用户角度，关注让产品用起来舒服的细节；追问例子 = 页面等两秒时的柔和骨架屏 + 和后端一起缩短延迟，按“我会”讲，不带 KKday 数字）；问主动性、ownership 时用 **Proactive**（在意自己做的产品，主动让它对用户更好；追问例子 = 聊天约出游要离开去查天气 → 跨 App AI 助手的想法）。先只说一句，HR 问 “Can you give me an example?” 才讲例子。英文原文只在 `04_talk_tracks.md` 的「Describe yourself in one sentence…」一节。
-- 缺口：跨 App 助手目前只是想法，证明 Proactive 还缺“已经做了什么”。在用户补充前，被追问只能指向正在业余做的 Cabinet，不得声称做过聊天查天气功能。dev 实测见 [评测](evaluations/actai-hr-self-describe-2026-11-13.md)。
+- Proactive 再追问“你做了什么”（2026-11-13 用户确认）：在 Cabinet 里做。已做：回复从长文本改为流式交互卡片（可操作的天气卡、地点卡、第几天行程）。正在做、不得说已完成：浮窗助手，在任何 App 上方顺口问天气、路程，不用切回对应 App；以及保存正在看的内容（如推特上的 AI 文章），之后把相关内容一起存成个人知识库。事实也记在 `03_projects.md` 的 Cabinet 一节。dev 实测见 [评测](evaluations/actai-hr-self-describe-2026-11-13.md) 与 [追问评测](evaluations/actai-hr-proactive-cabinet-2026-11-13.md)。
 
 已从开场删去：AI 数据基座四类数据（偏后端、未核对）、德邦 SDK 加载与缓存细节、FlutterDouBan（Flutter 不是 Kotlin，留到问个人项目时讲）、RAG / Compose / 缓存层等技术词。
 

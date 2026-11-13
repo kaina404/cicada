@@ -1,0 +1,34 @@
+# ActAI HR 问题 Assistant 验证
+
+共 5 题：通过 5，提醒 0，失败 0。
+
+## ✅ S01 · 一句话自我描述 · 用户定稿 2026-11-13
+
+**Q:** How would you describe yourself in one sentence?
+
+**A:** I'd describe myself as empathetic, because I put myself in the user's shoes and pay attention to the details that make a product comfortable to use.
+
+## ✅ S02 · 一句话自我描述 · 用户定稿 2026-11-13
+
+**Q:** Can you give me an example?
+
+**A:** For example, when a page takes a couple of seconds to load, I think about how that wait feels to the user. I'd suggest a skeleton screen with a gentle animation, so they can see that the content is loading. I'd also work with the backend engineer to understand the delay and reduce it. I care about both how quickly the page loads and how comfortable it feels to use.
+
+## ✅ S05 · 一句话自我描述 · 用户定稿 2026-11-13
+
+**Q:** Do you take initiative? How would you describe yourself in one word?
+
+**A:** I'd describe myself as proactive, because I care about the products I build and take the initiative to make them better for users.
+
+## ✅ S06 · 一句话自我描述 · 用户定稿 2026-11-13
+
+**Q:** Can you give me an example?
+
+**A:** One idea I'm interested in is an AI assistant that can help across different apps. For example, when friends are planning a trip in a chat, they may need to leave the conversation to check the weather. I started thinking about how an assistant could help them get that information and plan the trip with fewer interruptions. That's the kind of everyday problem I'd like to turn into a useful product.
+
+## ✅ S07 · 一句话自我描述 · 用户确认 2026-11-13
+
+**Q:** Interesting. Have you actually done anything about it?
+
+**A:** Yes, I'm building it in my own app, Cabinet. First, I changed how the assistant replies. Instead of long blocks of text, it streams interactive cards. For a trip, it shows a weather card you can act on, a location card, and the plan for each day. That makes it much faster to read and use. Now I'm working on a floating window, so the assistant is there in any app. For example, when I'm chatting with a colleague about where to go, I can just ask, "What's the weather there in two days?" or "How long does it take to get there from here?" I get the answer without leaving the chat. It can also save what I'm reading. If I see a useful AI article on Twitter, I ask it to save it. Later, when I find related content somewhere else, it saves that too. Over time, that becomes my own knowledge base. The floating window is still in progress.
+
