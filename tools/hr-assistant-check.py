@@ -69,6 +69,7 @@ def check(item, answer, refs):
     problems += [f"出现禁用说法「{w}」" for w in FORBIDDEN if w in low]
     if item.get("must_any") and not any(m.lower() in low for m in item["must_any"]):
         problems.append("缺少要点：" + " / ".join(item["must_any"]))
+    problems += [f"出现本题禁用说法「{w}」" for w in item.get("must_none", []) if w.lower() in low]
     if "[fill in" in low:
         problems.append("资料不足，留了 [fill in]")
     tags = item.get("tags", [])

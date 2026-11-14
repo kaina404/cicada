@@ -107,6 +107,10 @@
   "must_any": [
    "range",
    "base"
+  ],
+  "must_none": [
+   "BOSS",
+   "you posted"
   ]
  },
  {
