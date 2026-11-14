@@ -1,0 +1,38 @@
+[
+ {
+  "id": "B12",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What are your salary expectations?",
+  "must_any": [
+   "range",
+   "base"
+  ],
+  "must_none": [
+   "BOSS",
+   "you posted"
+  ],
+  "answer": "Before I give a number, could you share the range you have for this role and level?",
+  "first_sentence_s": 0.9149800539016724,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "B13",
+  "group": "基准10题",
+  "source": "10题⑩",
+  "question": "What is your current or previous compensation?",
+  "must_any": [
+   "budget",
+   "420K"
+  ],
+  "answer": "Sure. At KKday, my total was about 420K to 440K a year, before tax. That's 26K a month for 13 months, plus a three to four month bonus. Before that, at Kezhi, it was 30K a month for 13 months. But this is a different role in a different market, so the range for this role is a better guide. Could you share the range you have for it?",
+  "first_sentence_s": 0.7830359935760498,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ }
+]
