@@ -258,6 +258,8 @@ enum CoachPronunciation {
         result.merge(overrides) { _, override in override }
         return result
     }()
+    // Spelled-out abbreviations said in salary talk; the all-caps word skip would otherwise leave them bare.
+    private static let acronyms: [String: String] = ["RMB": "ˌɑːr em ˈbiː"]
     static var lexiconCount: Int { british.count }
     static func prepare() async {
         _ = await Task.detached(priority: .userInitiated) { lexiconCount }.value
@@ -287,7 +289,9 @@ enum CoachPronunciation {
 
     private static func numberIPA(_ token: String) -> String? {
         let percent = token.hasSuffix("%") || token.hasSuffix("％")
-        var number = percent ? String(token.dropLast()).trimmingCharacters(in: .whitespaces) : token
+        // Pay is said as "fifty K", so 50K keeps the K rather than becoming "fifty thousand".
+        let thousands = token.hasSuffix("K") || token.hasSuffix("k")
+        var number = percent || thousands ? String(token.dropLast()).trimmingCharacters(in: .whitespaces) : token
         var sign = ""
         if number.hasPrefix("-") || number.hasPrefix("−") { sign = "ˈmaɪnəs "; number.removeFirst() }
         else if number.hasPrefix("+") { sign = "plʌs "; number.removeFirst() }
@@ -299,13 +303,13 @@ enum CoachPronunciation {
             : cardinalIPA(whole)
         let fraction = parts.count == 2
             ? " pɔɪnt " + parts[1].compactMap { $0.wholeNumberValue.map { digitsIPA[$0] } }.joined(separator: " ") : ""
-        return sign + integer + fraction + (percent ? " pəˈsent" : "")
+        return sign + integer + fraction + (percent ? " pəˈsent" : "") + (thousands ? " keɪ" : "")
     }
 
     static func annotate(_ text: String, finished: Bool = false) -> String {
         let text = spokenText(text)
         // Consume code, links and identifiers whole so their constituent words cannot be annotated.
-        let pattern = #"```[\s\S]*?(?:```|$)|`[^`\n]*(?:`|$)|https?://\S+|/[A-Za-z0-9_./-]+|[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*|(?<![\w.])[+−-]?(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?(?:[ \t]*[%％])?(?![\w]|\.[0-9])"#
+        let pattern = #"```[\s\S]*?(?:```|$)|`[^`\n]*(?:`|$)|https?://\S+|/[A-Za-z0-9_./-]+|[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*|(?<![\w.])[+−-]?(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?(?:[ \t]*[%％]|[Kk])?(?![\w]|\.[0-9])"#
         guard let expression = try? NSRegularExpression(pattern: pattern) else { return text }
         var result = ""; var end = text.startIndex
         var annotated = Set<String>()
@@ -323,6 +327,8 @@ enum CoachPronunciation {
                word != word.uppercased(), let ipa = british[key] {
                 result += " /" + ipa + "/"
                 annotated.insert(key)
+            } else if finished || range.upperBound < text.endIndex, let ipa = acronyms[word] {
+                result += " /" + ipa + "/"
             }
             end = range.upperBound
         }
@@ -333,11 +339,11 @@ enum CoachPronunciation {
         var text = text
         // Some valid IPA uses only ASCII (e.g. /psst/); strip it only when it matches
         // the preceding word's dictionary entry, so paths such as /api/v1 survive.
-        if let expression = try? NSRegularExpression(pattern: #"([A-Za-z]+|[+−-]?[0-9][0-9,.]*(?:[ \t]*[%％])?)(\s+)/([^/\r\n]+)/"#) {
+        if let expression = try? NSRegularExpression(pattern: #"([A-Za-z]+|[+−-]?[0-9][0-9,.]*(?:[ \t]*[%％]|[Kk])?)(\s+)/([^/\r\n]+)/"#) {
             for match in expression.matches(in: text, range: NSRange(text.startIndex..., in: text)).reversed() {
                 guard let word = Range(match.range(at: 1), in: text),
                       let phonetic = Range(match.range(at: 3), in: text),
-                      (british[String(text[word]).lowercased()] ?? numberIPA(String(text[word]))) == String(text[phonetic]),
+                      (british[String(text[word]).lowercased()] ?? acronyms[String(text[word])] ?? numberIPA(String(text[word]))) == String(text[phonetic]),
                       let annotation = Range(NSRange(location: match.range(at: 3).location - 1,
                                                      length: match.range(at: 3).length + 2), in: text) else { continue }
                 text.removeSubrange(annotation)

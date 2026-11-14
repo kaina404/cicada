@@ -7,6 +7,12 @@
     "image": null,
     "items": [
       {
+        "kind": "improved",
+        "platforms": ["mac"],
+        "title": "面试教练给薪资数字标上音标。",
+        "text": "750K、40K 这类带 K 的数字和 RMB 也会在后面显示国际音标，读作 seven hundred and fifty K；音标不算进跟读。"
+      },
+      {
         "kind": "new",
         "platforms": ["mac"],
         "title": "面试教练可开启快速跟读。",

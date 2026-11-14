@@ -134,6 +134,16 @@ struct CoachScriptTests {
         #expect(CoachPronunciation.annotate(code, finished: true) == code)
     }
 
+    @Test func salaryFiguresGetReadingAidsWithKAndCurrency() {
+        let answer = "I'm targeting about RMB 750K to 850K a year, or 50K a month for 15 months."
+        let annotated = CoachPronunciation.annotate(answer, finished: true)
+        #expect(annotated == "I'm targeting /tˈɑːɡɪtɪŋ/ about RMB /ˌɑːr em ˈbiː/ 750K /ˈsevən ˈhʌndrəd ænd ˈfɪfti keɪ/ to 850K /eɪt ˈhʌndrəd ænd ˈfɪfti keɪ/ a year, or 50K /ˈfɪfti keɪ/ a month for 15 /ˌfɪfˈtiːn/ months.")
+        #expect(CoachScript.words(annotated) == CoachScript.words(answer))
+        #expect(!CoachPronunciation.spokenText(annotated).contains("/"))
+        #expect(CoachPronunciation.annotate("RMB 40K") == "RMB /ˌɑːr em ˈbiː/ 40K")
+        #expect(CoachPronunciation.annotate("4Kb 10ms", finished: true) == "4Kb 10ms")
+    }
+
     @Test func pronunciationFilteringHandlesStreamingWithoutRemovingCodeOrURLs() {
         #expect(CoachScript.words("Consider scalability /ˌskeɪlə") == ["consider", "scalability"])
         #expect(CoachPronunciation.spokenText("a cache /kæʃ/ and a queue /kjuː/.") == "a cache  and a queue .")
