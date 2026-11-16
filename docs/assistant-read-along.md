@@ -10,7 +10,7 @@
 
 ## 本机 Kokoro
 
-`ShadowSynthesizer` 使用 `KokoroWorker`，不使用 macOS 系统 TTS，也不静默回退。开启陪读时异步加载并合成 Ready（不播放），复用模型与 G2P。每个片段为完整一句（不按 40 词截断），速率 0.95，音色 af_heart。CPU 推理最多四个线程，避免抢占 Gemma 的 GPU；实际合成速度记录于验证结果。
+`ShadowSynthesizer` 使用 `KokoroWorker`，不使用 macOS 系统 TTS，也不静默回退。开启陪读时异步加载并合成 Ready（不播放），复用模型与 G2P。每个片段为完整一句（不按 40 词截断），速率 0.8，音色 af_heart。CPU 推理最多四个线程，避免抢占 Gemma 的 GPU；实际合成速度记录于验证结果。
 
 `Resources/coach/kokoro_worker.py` 由已有 `~/.cicada-mlx/bin/python` 启动，首次启用在后台准备隔离的 `~/.cicada-kokoro` venv。固定 Kokoro 0.9.4、PyTorch 2.8.0 和 en_core_web_sm 3.8.0。模型 `hexgrad/Kokoro-82M` 固定 revision `f3ff3571791e39611d31c381e3a41a3af07b4987755`；模型和 af_heart 音色缓存在 Hugging Face 标准缓存。首次安装需网络，之后已有缓存可离线加载。模型与运行环境不随 App 打包；Kokoro 模型及代码为 Apache-2.0，PyTorch 为 BSD，英文模型为 MIT。
 

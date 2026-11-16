@@ -11,7 +11,7 @@
 
 2026-11-12 针对 Head / Hustle 的产品一页纸见 [A1 product notes](actai-a1-product-notes.md)。
 
-2026-11-10 自我介绍与追问更新见 [回答参考](actai-interview-answer-reference.md)：新确认事实优先；德邦崩溃率数字已删除；第 2–5 题方案仍待核对。
+2026-11-10 自我介绍与追问更新见 [回答参考](actai-interview-answer-reference.md)：新确认事实优先；德邦崩溃率按 2026-11-11 决定保留、仅在稳定性问题时使用；第 2–5 题方案仍待核对。
 
 ## 可以使用的个人证据
 
@@ -25,7 +25,7 @@
 | Ping An Haoxue，2018.05–2021.08 | 手机/平板共用课堂 SDK、共享仓库、网络/图片/导航/bridge、Flutter、低端平板体验 | SDK 边界、兼容发布、调用方迁移、定位性能问题 |
 | Ping An Securities，2015.09–2018.05 | 行情图、自选股、SQLite、RecyclerView、分页、MVP、OkHttp 与崩溃分析 | 缓存一致性、列表性能、真实问题定位 |
 | FlutterDouBan | 独立开源；AppBar、滚动联动、公共网络/UI、live/mock 切换；简历记录 2026.10 的 9000+ stars、约 1900 forks | 动手深度和具体取舍；开源热度不等于活跃用户、收入或 Google Play 发布 |
-| CabinetAI 个人项目 | Secretary 协调五类专用 Agent；RAG 引用、Mem0、设备修改审批、SSE/重试/幂等 | 用户补充：后端生产运行，iOS 准备 TestFlight、未公开；无真实用户数据，混合请求等完整闭环未验证。详见 [产品知识](actai-cabinet-product-knowledge.md) |
+| CabinetAI 个人项目 | Secretary 协调五类专用 Agent；RAG 引用、Mem0、设备修改审批、SSE/重试/幂等 | 用户确认：本人独立开发（App、后端、网站），主要用于学习，不以上市场为目标；后端生产运行，iOS 在 TestFlight 内测；无真实用户数据。详见 [产品知识](actai-cabinet-product-knowledge.md) |
 
 简历写的是 10 年软件工程经验，不应将它扩大成 17 年，或未经核实说成全部为纯 Android 年限。简历还列有巢湖学院计算机本科与证券从业资格。
 
@@ -111,8 +111,9 @@ Assistant 事实约束：德邦没有提供绩效评级；不能把 KKday 的前
 ## KKday 被裁与可之离开（2026-11-11 用户补充）
 
 - KKday：业务线收缩；留下来的一部分人是之前工作时间比较久的人。仍不得补写裁员比例、留任人数或个人绩效原因；Tour 前 30% 为已确认事实。
-- 可之：团队解散时本人主动离开，不是被裁。原因：已经没有实际业务，公司前景迷茫，很多人都走了。不得写成公司裁员，也不得补写挽留、转岗或补偿。
-- 因此最近三段是「两次裁员（KKday、德邦）+ 一次团队解散后主动离开（可之）」。被问“三次都被裁”时先温和纠正前提。
+- 可之（2026-11-14 用户更正）：高层动荡、部门解散、所有业务线停摆，本人被动离开，不是主动选择；以下旧说法“主动离开”作废。旧记录：团队解散时本人主动离开，不是被裁。原因：已经没有实际业务，公司前景迷茫，很多人都走了。不得写成公司裁员，也不得补写挽留、转岗或补偿。
+- 因此最近三段都不是本人选择：「两次裁员（KKday、德邦）+ 可之部门解散后被动离开」。被问“三次都被裁”时不争辩，按可之实情说明。
+- KKday 工作内容（2026-11-14 用户更正）：Android 与 AI 产品都有研发，没有明确的界限和时间划分，不说“一半时间”。KKday 部分时间远程办公是事实（每年 15 天远程）。
 - 可之离开补充：后端、前端和核心算法岗位的人都已离开，只剩自己无法支撑；公司业务主要与政府/公立学校合作，回款和盈利困难；用户描述公司“基本处于破产边缘”（面试中不直接说此措辞）。
 - KKday 被裁获得 4 个月补偿；面试中不主动提，被问只答已按标准拿到补偿。
 - 对 ActAI 的风险底线：若一年后转向或收缩，主要看核心人员是否还在；核心人员在就没有必要离开。
@@ -128,8 +129,8 @@ Assistant 事实约束：德邦没有提供绩效评级；不能把 KKday 的前
 - 更正：可之的 Android 与 RAG 是并行进行，不是“先 Android 后转 RAG”；Android 从职业开始一直在做；AI 是边学边应用。可之、德邦时期以写代码为主。KKday 为内推进入。
 - KKday 绩效：主管打分，依据历史工作表现和同事评价。本人在 KKday 约一年半，是逐步进步、相互适应的过程；不评价排在前面的同事。
 - CabinetAI：已接近可上线，处于内测，可通过 iOS TestFlight 下载，用户较少；无收入信息。加入 ActAI 后不再维护。
-- CabinetAI Android 版：业余时间已写完，尚未联调完毕；Google Play 配置未完成，未上线、无下载渠道。底层基础框架由本人编写，简单页面借助 AI 编程工具辅助。iOS 版在 TestFlight 内测（iOS 代码作者未确认，不说是本人写的）。
-- KKday Android 页面已全部用 Compose 重构（本人引入 Compose；本人在重构中所占份额未确认），代码为 Kotlin。CabinetAI Android：Kotlin + Compose。KKday SKU 页约 1s → 300ms 的优化由本人亲自完成（测量方式与业务影响未确认）。
+- CabinetAI Android 版：业余时间已写完，尚未联调完毕；Google Play 配置未完成，未上线、无下载渠道。底层基础框架由本人编写，简单页面借助 AI 编程工具辅助。iOS 版在 TestFlight 内测（2026-11-14 用户确认：iOS 也由本人开发）。
+- KKday Android 页面已全部用 Compose 重构（本人引入 Compose；本人在重构中所占份额未确认），代码为 Kotlin。CabinetAI Android：Kotlin + Compose。KKday SKU 页约 1s → 300ms 的优化由本人亲自完成（测量方式不展开，不提业务影响）。
 - 平安好学：本人负责把课堂整体抽成 SDK，音视频能力本身不是本人开发。CabinetAI：iOS 与 Android 都有语音输入，基于 ElevenLabs 的 STT（语音转文字）。
 - KKday 业务面向全球，Android App 发布在 Google Play；本人参与该 App 开发（不说本人亲自负责发版）。
 - 常用 AI 产品：Codex、Claude、ChatGPT、Grok，也用过 “Muse”（名称待确认，可能是 Manus）。看法：Codex 更适合架构设计和产品需求调研；Claude 更适合深层编码、底层框架搭建和原理分析。最烦：上下文不够大、会丢失；要在不同项目之间切换。理想：只有一个入口，给目标即可，它根据历史经验自己决定步骤，减少人工介入。
@@ -171,7 +172,7 @@ Assistant 事实约束：德邦没有提供绩效评级；不能把 KKday 的前
 ### “你在公司做了什么贡献”（2026-11-12 用户补充）
 
 - 可用作回答的事实：在 KKday 提出并推动上面的统一协作方式。之前状态：文档分散在不同地方，要一个个去问，信息会遗漏。
-- 已确认：先在本人所在团队使用，之后推广到了其他团队（2026-11-12 用户确认）。推广方式：KKday 每两周有技术分享会，本人在分享会上介绍了这套做法；本人也经常在分享会上分享技术、产品、设计等方面的内容（2026-11-12 用户补充）。未确认：分享会是否由本人组织、本人分享的次数、推广到哪些或几个团队；不补写。
+- 已确认：先在本人所在团队使用，之后推广到了其他团队（2026-11-12 用户确认）。推广方式：KKday 的技术分享会由本人组织、约每月一次（2026-11-14 用户更正），本人在分享会上介绍了这套做法；本人也经常在分享会上分享技术、产品、设计等方面的内容（2026-11-12 用户补充）。未确认：本人分享的次数、推广到哪些或几个团队（有时一个、有时两个，不说数字）；不补写。
 - 未确认、不得补写：推行用了多久、联调问题或返工减少了多少、是否有人统计过。HR 追问效果时，用定性变化回答，说明没有专门统计。
 - 措辞：不说“收益巨大”“我改变了整个团队”，说“改动很简单，但效果很明显”；把功劳落在“提出并推动”，团队一起执行。
 - 可以和技术贡献（Compose 重构、SKU 页约 1s → 300ms）搭配：先讲一个技术贡献，再讲这个流程贡献，体现不只写代码。
@@ -180,10 +181,10 @@ Assistant 事实约束：德邦没有提供绩效评级；不能把 KKday 的前
 
 > 除了 Android 本身的开发，我想讲一个看起来简单、但我觉得收益很大的贡献。我刚加入 KKday 的时候，一个需求的资料是分散的：需求在一个地方，设计稿在另一个地方，后端接口又要单独去问。做一个功能经常要一个个找人确认，难免漏掉信息，到联调或测试时才发现两边理解不一样。
 > 所以我提出了一个“大一统”的做法：每个项目一个 Slack 频道，PM、设计和各端负责人都在里面；每个项目一份统一的 Confluence 文档，需求、设计、Android、iOS、后端方案和 QA 用例都在里面，任何变更都先改文档、再在频道通知。
-> 这个改动本身不复杂，但效果很明显：大家不用再到处问，新人接手也能直接看文档，Android 和 iOS 按同一份内容在做。后来我在公司每两周一次的技术分享会上介绍了这套做法，其他团队也用了起来。我也经常在分享会上讲技术、产品和设计方面的内容。它让我意识到，提效不一定靠复杂的技术，有时候把信息放到一个地方，就能省掉团队很多来回沟通。
+> 这个改动本身不复杂，但效果很明显：大家不用再到处问，新人接手也能直接看文档，Android 和 iOS 按同一份内容在做。后来我在自己组织的、每月一次的技术分享会上介绍了这套做法，其他团队也用了起来。我也经常在分享会上讲技术、产品和设计方面的内容。它让我意识到，提效不一定靠复杂的技术，有时候把信息放到一个地方，就能省掉团队很多来回沟通。
 
 #### English version (~1 min)
 
 > Besides the Android work itself, I'd like to mention a contribution that sounds simple but made a real difference. When I joined KKday, the information for a feature was scattered: requirements in one place, designs in another, and for the backend API you had to go and ask someone. You often had to chase people one by one, things got missed, and we only found mismatches during integration or testing.
 > So I proposed bringing everything together: one Slack channel per project, with the PM, design and each platform's owner, and one Confluence page per project with the requirements, designs, Android, iOS and backend plans, and QA test cases. Any change was written in the doc first, then announced in the channel.
-> The change itself wasn't complicated, but the effect was clear: people stopped chasing information, new teammates could just read the doc, and Android and iOS were building from the same source. Later I presented it at our biweekly tech sharing session, and other teams adopted it too. I often shared there on technical, product and design topics as well. It taught me that improving efficiency doesn't always need clever technology; sometimes putting the information in one place saves the whole team a lot of back-and-forth.
+> The change itself wasn't complicated, but the effect was clear: people stopped chasing information, new teammates could just read the doc, and Android and iOS were building from the same source. Later I presented it at the monthly tech sharing session I organized, and other teams adopted it too. I often shared there on technical, product and design topics as well. It taught me that improving efficiency doesn't always need clever technology; sometimes putting the information in one place saves the whole team a lot of back-and-forth.

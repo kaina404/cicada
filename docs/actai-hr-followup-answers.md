@@ -4,7 +4,7 @@
 
 ## 使用原则
 
-- 最近三段是**两次裁员（KKday、德邦）+ 一次团队解散后主动离开（可之）**。HR 说“三次被裁”时先温和纠正。
+- 最近三段都不是本人选择：**两次裁员（KKday、德邦）+ 可之高层动荡、部门解散、所有业务线停摆后被动离开**（2026-11-14 用户更正，此前“主动离开”作废）。HR 说“三次被裁”时不争辩，按可之实情说明。
 - 同一场面试里 SKU（1s → 300ms）只在 D1 完整讲一次，其他题换例子。
 - HR 层面只到职责、理由、用户价值和态度；测量口径、技术细节留给技术面。
 - 不说：可之“快破产”、补偿金额（只说四个月工资）、在谈 offer 的公司名、Cicada、iOS 代码是本人写的。
@@ -13,17 +13,17 @@
 
 ### 1. 为什么最近三段都结束了（被裁的是你？）
 
-> Just to be precise, two of them were layoffs, and one was my own decision.
+> None of them was my choice. Two were layoffs, and at Kezhi the whole department was dissolved.
 >
 > At KKday, the business line was shrinking. Most of the people they kept had been there longer than me. I'd joined about a year and a half earlier. My performance was in the top 30% of the Tour team, so I don't think it was about my work.
 >
 > Debon was similar. The business had struggled for two years, and our Android team went from three people to one. They kept the longest-serving engineer. Before I left, my work had shipped and I handed everything over cleanly.
 >
-> Kezhi was different. After the team was disbanded, there was no real product work left, and the company's future was unclear. Many people left, and I decided to leave too.
+> At Kezhi, senior leadership was unstable. My department was dissolved, and all business lines stopped, so my role ended too.
 
 短版：
 
-> Two were layoffs, and one was my choice. At KKday and Debon, the business was shrinking, and the company mostly kept people who'd been there longer. At KKday I was in the top 30% of my team. At Kezhi, the team was disbanded and there was no real work left, so I left.
+> None was my choice. At KKday and Debon, the business was shrinking, and the company mostly kept people who'd been there longer. At KKday I was in the top 30% of my team. At Kezhi, my department was dissolved and all business lines stopped.
 
 追问 —— 两次都按资历留人，是不是你每家都待不久？
 
@@ -31,37 +31,33 @@
 
 追问 —— 为什么不留下来帮可之翻盘？
 
-> By then, most of the team had already left: the backend engineers, the web engineers and the core algorithm people. The business depended on selling to public schools, and getting paid was slow and difficult. An Android engineer alone couldn't rebuild that. If the core team had stayed, I would have stayed too.
+> There was nothing left to stay for. My department was dissolved and all business lines stopped. Before that, the backend engineers, the web engineers and the core algorithm people had already left, and the business with public schools was slow to pay. It wasn't something one Android engineer could change.
 
 追问 —— 拿了补偿吗？
 
-> Yes, I received the standard package. *(只有被追问金额时：four months' pay.)*
+> Yes, I received the standard package. *(只有被追问金额时：four months' pay.)* 其他题（包括“为什么裁的是你”）一律不主动提补偿。
 
 ### 2. 被裁过，为什么还选创业公司？
 
-> That's a fair question. Kezhi taught me to look at two things before joining a startup: how the business is funded, and whether the core team is committed.
+2026-11-13：中文修订稿经用户确认；以下英文按该稿翻译。
+
+> I still want to join a startup. I enjoy working closely on a product, from the first idea to launch and later improvements. I like direct talks, quick decisions and trying better ways to do things.
 >
-> At Kezhi, revenue depended on public schools, and payments were slow. When the core team left, there was nothing left to build.
+> At Kezhi, I was the only Android engineer. We launched the first version in four weeks. I enjoyed building it and taking responsibility for delivery.
 >
-> From what I understand, ActAI is different on both points. It's funded by a group that has been profitable since it started, and I'd work directly with the founder and CTO.
->
-> The product also fits what I've been doing. At KKday, I worked on how an AI plan shows up on the phone while it's still being generated. In my own project, CabinetAI, people can use voice or text to record expenses, set reminders and manage tasks, and it asks before it takes important actions. ActAI is the same idea in everyday communication.
->
-> If the product changes direction, that's normal for a startup. I'd watch whether the core people are still committed. If they are, I'd stay and help with the new direction.
->
-> And honestly, the remote and hybrid setup also helps me spend more time with my son.
+> I believe in ActAI's focus on everyday communication. Chats often lead to meetings, plans and other tasks. AI can help people take the next steps and save time. I'd like to bring my Android and AI experience to the team and help build a product people use every day.
 
 ### 3. 8 月以来在做什么？
 
 > After KKday, I took September off. I travelled a bit and spent time with my grandmother back home. She raised me, so that time mattered to me.
 >
-> I started looking again after the October holiday. That was about a month ago. So far I've talked to four companies, in finance, securities and e-commerce, and some offers are still under discussion.
+> I started looking again after the October holiday. That was about a month ago. So far I've talked to four companies, in finance, securities and e-commerce, and some opportunities are still under discussion.
 >
-> But ActAI is the one I'm most interested in, because it's an AI-first product, not a traditional app with AI added on.
+> ActAI is my priority because I believe in helping users complete tasks through everyday communication, and I enjoy the direct collaboration and fast iteration of a startup.
 
 追问 —— 时间线 / 有截止日期吗？
 
-> Nothing urgent yet, but I'd expect to decide in the next few weeks. I'd be happy to move quickly if things go well here.
+> I don't have a fixed decision deadline at the moment. I'd be happy to move forward actively as we learn more about the product priorities, the role and our fit.
 
 ### 4. 职级从 Senior Architect 变成 Full-Stack Engineer
 
@@ -145,15 +141,13 @@
 
 ### 13. 怎么看 Meta AI / Gemini？用户为什么要换？
 
-> Their biggest advantage is that people don't have to switch apps. So for ActAI to win, it has to fix a problem people hit again and again, and the benefit has to be big enough to be worth installing another app.
+> Meta AI and Gemini are strong because people don't need a new app. They're already in WhatsApp and Messages. For ActAI, that means it has to solve a problem people meet again and again, well enough to be worth another app.
 >
-> From what I've seen, those assistants mostly wait for you to ask. ActAI's idea is to help before you have to ask.
+> I see a strong opportunity for ActAI in helping people finish the tasks that come out of everyday conversations. WhatsApp and Messages already have large user bases. ActAI can give people a clear reason to try it by making things like arranging a meeting or following up on a plan easier.
 >
-> In CabinetAI, I've been working on the same question: once someone says what they want, can we cut out the copying and manual steps? For example, if a voice message mentions a meeting time, some materials to prepare and a deadline, the assistant should turn that into a short list for me to confirm, and then carry on. I shouldn't have to listen again and type it all in.
+> For example, when a conversation leads to a meeting, the assistant could prepare the details, ask for confirmation when needed, and clearly show what was done. That's a product experience I find valuable, and it's close to the questions I'm exploring with Cabinet AI.
 >
-> I don't expect people to leave WhatsApp on day one. More likely, they start using ActAI for one task, find it saves them steps every day, and gradually move more conversations over.
->
-> So what matters to me isn't how many AI features there are. It's whether getting from saying it to getting it done feels natural, fast and reliable. That's where I want to bring my Android and AI experience together.
+> I believe reliable actions and clear feedback can build trust and give people a reason to keep coming back. I'd like to bring my Android and AI experience to help the team make that experience fast, natural and dependable.
 
 追问 —— 怎么判断它有效？
 
@@ -249,7 +243,7 @@ HR 挂上一位候选人的两条理由是 Head（不了解产品）和 Hustle�
 
 > When the product needs it, I'm there.
 
-待本人确认：KKday 的 “Launches were tight, and the goals changed as we learned” 是按行为题规则补出来的讲法，资料里没有记录。如果和实际不符，就删掉这句，只用可之的例子。
+已确认（2026-11-14 用户确认）：KKday 的 “Launches were tight, and the goals changed as we learned” 属实，可以使用。
 
 可之事实（2026-11-12 用户确认）：本人是唯一的 Android 工程师，四周内独立把整个 Android App 从 0 做到上线；当时（2023 年底）AI 编程工具还不够好，代码和设计基本都是自己手写、自己想清楚的。后端、Web、iOS 不是本人做的，不要说成整个产品都是一个人做的。
 

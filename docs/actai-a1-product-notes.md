@@ -37,15 +37,15 @@
 
 ---
 
-## 1 分钟口述版（Head）
+## 产品理解口述版（Head）
 
-被问 "What do you know about our product?" / "Why ActAI?" 时可用，三段依次说，每段约 20 秒：
+2026-11-13 用户确认中文修订稿；下方为英文表达。用于产品理解提问；“Why ActAI?” 使用知识库对应动机回答。约见面场景是方向举例，不是已体验的正式功能。
 
-> From what I've read, A1 is an AI-first voice and text app. It's like Cursor, but for daily talk, not code. You say what you want, and it helps get it done with very few prompts.
+> Based on your introduction, ActAI brings AI into everyday voice and text communication. It aims to understand what people need and help them take the next steps.
 >
-> I think two things will decide if people stay. First, timing. The hard part isn't the model. It's knowing when to jump in and when to stay quiet. Too many interruptions, and people turn it off. Second, the phone side. When voice and text are mixed, and the network is weak, the app has to stream the answer, recover, and show clearly what worked and what failed. That's what makes it *feel* smart, and that's the part I'd own as an Android engineer.
+> I believe in this direction. People chat every day, and many tasks start in a chat. For example, friends may agree to meet on Friday. They still need to confirm the time and add it to a calendar. I see a chance for AI to help with those steps.
 >
-> I've run into both in my own work. In CabinetAI, my AI assistant, I had to decide when it can act alone and when it must ask, and how to retry only the part that failed. At KKday, we showed the AI trip plan day by day while it was still being generated. So it's not just that I'm interested in AI. I've hit these problems myself, and I'd like to solve them at a bigger scale.
+> I worked on AI trip planning at KKday. I'm also building Cabinet. I'd like to bring this experience to ActAI and help make the Android app fast and reliable. The assistant should ask when needed and clearly show the result.
 
 追问 —— Have you used our app?
 

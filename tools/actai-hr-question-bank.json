@@ -24,8 +24,9 @@
   "source": "10题②",
   "question": "Why did you leave your last three companies?",
   "must_any": [
-   "own decision",
-   "my choice"
+   "None of them",
+   "not my choice",
+   "dissolved"
   ],
   "ref": "followup:1"
  },
@@ -156,7 +157,9 @@
   "source": "框架A2",
   "question": "Could you walk me through your career timeline and current employment status?",
   "must_any": [
-   "2026"
+   "2026",
+   "August",
+   "this year"
   ]
  },
  {
@@ -485,7 +488,7 @@
   "source": "框架M4",
   "question": "Are you in other interview processes, and what is your decision timeline?",
   "must_any": [
-   "four"
+   "discussion"
   ]
  },
  {
@@ -555,7 +558,8 @@
   "source": "今日定稿",
   "question": "Why didn't you stay and help Kezhi recover?",
   "must_any": [
-   "core team"
+   "dissolved",
+   "stopped"
   ],
   "ref": "followup:1b"
  },
@@ -575,8 +579,8 @@
   "source": "今日定稿",
   "question": "After those layoffs, why would you join an early-stage startup that may pivot or fail?",
   "must_any": [
-   "funded",
-   "core"
+   "Kezhi",
+   "communication"
   ],
   "ref": "followup:2"
  },
@@ -586,8 +590,7 @@
   "source": "今日定稿",
   "question": "What have you been doing since August?",
   "must_any": [
-   "September",
-   "four companies"
+   "September"
   ],
   "ref": "followup:3"
  },
@@ -597,7 +600,7 @@
   "source": "今日定稿",
   "question": "What's your decision timeline? Is there a deadline we should know about?",
   "must_any": [
-   "few weeks"
+   "deadline"
   ],
   "ref": "followup:3b"
  },
@@ -637,7 +640,8 @@
   "source": "今日定稿",
   "question": "You were top 30%. What would it have taken to be top 10%?",
   "must_any": [
-   "track record"
+   "feedback from colleagues",
+   "colleague"
   ],
   "ref": "followup:6"
  },
@@ -720,7 +724,10 @@
   "source": "今日定稿",
   "question": "So should an assistant just do everything on its own?",
   "must_any": [
-   "approve"
+   "approve",
+   "confirm",
+   "check first",
+   "Apply"
   ]
  },
  {
@@ -975,5 +982,94 @@
   "must_any": [
    "Cabinet"
   ]
+ },
+ {
+  "id": "CONF01",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Honestly, this sounds like a lot of companies' pitch. What makes you believe we'll win?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ]
+ },
+ {
+  "id": "CONF02",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Why are you confident ActAI can succeed?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ]
+ },
+ {
+  "id": "CONF03",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "What makes ActAI different from all the other AI startups?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ]
+ },
+ {
+  "id": "CONF04",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "WhatsApp has Meta AI, Messages has Gemini. Why would people switch to ActAI?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "chat"
+  ]
+ },
+ {
+  "id": "CONF05",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "But the big companies have more users and money. Why do you still believe in us?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ]
+ },
+ {
+  "id": "CONF06",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "你为什么看好 ActAI？这么多 AI 公司，你觉得我们的机会在哪里？",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ]
+ },
+ {
+  "id": "CONF07",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Why do you believe ActAI can become a product people use every day?"
+ },
+ {
+  "id": "CONF08",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "That sounds promising, but how would you prove that confidence with users?"
+ },
+ {
+  "id": "CONF09",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "So why are you personally excited to help us make this work? Please keep it brief."
  }
 ]

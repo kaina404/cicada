@@ -13,7 +13,7 @@ LSCTL = os.path.join(ROOT, "tools", "lsctl")
 SESSIONS = os.path.expanduser("~/Library/Application Support/LiveSubs Dev/Sessions")
 # Hard facts that must never appear: another candidate's résumé, retired claims, private project names.
 FORBIDDEN = ["shopee", "okx", "singapore", "17 years", "16 years", "huawei", "sony", "faraday", "bisoft", "sgd",
-             "120,000", "bankrupt", "not my choice", "didn't choose to leave", "all three were company",
+             "120,000", "bankrupt", "own decision", "decided to leave", "chose to leave", "half my time",
              "later moved", "cicada", "i wrote the ios", "three layoffs"]
 SKU = re.compile(r"300 ?(ms|milliseconds)", re.I)
 CRASH = re.compile(r"crash rate|one tenth|0\.1%", re.I)
@@ -35,6 +35,8 @@ def references():
 def new_meeting():
     """Start a meeting and return its journal; waits for the new session folder so the first question isn't read from the last one."""
     before = set(glob.glob(SESSIONS + "/*/"))
+    # Injected text isn't speech: without this the silence auto-end closes the meeting after ~11 minutes.
+    lsctl("endTimes:86400,60,60")
     lsctl("stop"); time.sleep(2); lsctl("start:user"); lsctl("assistant:on")
     for _ in range(20):
         time.sleep(0.5)
@@ -62,7 +64,8 @@ def ask(question, path):
     return re.sub(r" /[^/]+/", "", answer).strip(), first
 
 
-def check(item, answer, refs):
+def check(item, answer, refs, sku_told=False):
+    """sku_told: the SKU numbers were already said earlier in this meeting (they may be told once per interview)."""
     low, problems = answer.lower(), []
     if not answer:
         problems.append("没有回答")
@@ -74,7 +77,9 @@ def check(item, answer, refs):
         problems.append("资料不足，留了 [fill in]")
     tags = item.get("tags", [])
     warnings = []
-    if SKU.search(answer) and "sku" not in tags:
+    if SKU.search(answer) and sku_told:
+        problems.append("同一场第二次讲 SKU 例子")
+    elif SKU.search(answer) and "sku" not in tags:
         warnings.append("SKU 例子串到了这题")
     if CRASH.search(answer) and "crash" not in tags:
         warnings.append("主动提了崩溃率")
@@ -98,10 +103,11 @@ def main():
         bank = [b for b in bank if b["id"] in keep]
     refs, results = references(), []
     for i in range(0, len(bank), args.batch):
-        path = new_meeting()
+        path, sku_told = new_meeting(), False
         for item in bank[i:i + args.batch]:
             answer, first = ask(item["question"], path)
-            problems, warnings, ratio, ref = check(item, answer, refs)
+            problems, warnings, ratio, ref = check(item, answer, refs, sku_told)
+            sku_told = sku_told or bool(SKU.search(answer))
             if answer:
                 lsctl("meSaid:" + answer); time.sleep(4)
             results.append({**item, "answer": answer, "first_sentence_s": first, "problems": problems,

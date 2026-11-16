@@ -6,7 +6,7 @@
 
 ## 一、已确认的经历事实
 
-- 德邦证券：加快组件 SDK 加载；图片资源异步加载并缓存；异常及时上报。自我介绍已删除「崩溃率降低 90%」，Assistant 不再引用该数字或「降至十分之一」的等价说法。
+- 德邦证券：加快组件 SDK 加载；图片资源异步加载并缓存；异常及时上报。德邦崩溃率（2026-11-11 用户决定保留）：约 1% → 0.1%（Bugly 按每次启动统计），只在被问崩溃、稳定性或可靠性时使用，不主动提。
 - 可之科技：负责新 App Android 架构；做了 RAG 知识库问答系统，后来将这套经验带到 KKday。
 - KKday AI：5 人 AI 团队技术负责人；设计 Agent、开发核心后端。个性化 AI 基座使用历史搜索偏好、当前位置、历史购买记录、商品折扣；行程与搜索推荐都基于它。
 - KKday Android：本人编写核心代码，推动 Compose 落地；网络、本地、图片缓存及骨架屏改善加载体验。SKU 本地计算重构使「点击选项 → UI 渲染完毕」约 1 秒降至 300ms，耗时减少约 70%。
@@ -31,9 +31,8 @@
 
 - 慢因：日期 × 方案 × 票种 × 加购多维耦合；每次点击在主线程全量重算可选状态、价格；重复 JSON 解析。
 - 改动：配置解耦拍平；预建「组合 → 价格 / 库存」索引，点击查表；计算转到 Dispatchers.Default，StateFlow 推 UI；内存缓存计算结果。
-- 测量：点击事件时间戳到渲染完成帧，使用 Choreographer / FrameMetrics / JankStats；线下 Trace + Perfetto，线上埋点看分位数。
 - 结果：约 1 秒 → 300ms。
-- 未确认：剩余 300ms 的构成（网络校验 / 渲染 / 图片等），以及结果属于 P50 还是 P90。不得补造。
+- 测量方式不展开（2026-11-14 用户决定）：不说测量工具、分位数或剩余 300ms 构成。
 - 英文：Every time a user tapped a SKU option, the app recalculated all combinations on the main thread. I built an index once and moved the work to a background thread. The time from tap to the UI finishing rendering dropped from about one second to 300 milliseconds.
 
 ### 2. AI 数据基座（参考答案，需按实际情况核对）
@@ -67,7 +66,6 @@
 
 ## 四、待办（尚未完成）
 
-- [ ] 补充剩余 300ms 构成及统计分位数。
 - [ ] 按实际做法核对第 2–5 题，删掉没做过的内容。
 - [ ] 简历同步 Compose、多级缓存、SKU 1s → 300ms、AI 基座，删除德邦「崩溃率降 90%」。本次未修改简历文件。
 - [ ] 继续 HR 第 1 题：离职原因及 2026.08 后在做什么；目前未知。
@@ -79,3 +77,140 @@
 - 功能或技术效果合适且公司允许时，可以将相应做法结合到公司产品，目标是提升产品质量和用户体验。这是学习与验证方法，不代表已经完成某次公司落地或取得业务指标。
 - 普通“CabinetAI 是什么”先简述产品，再说明学习目的。不主动展开 Android 进度、规划时间或承诺停做项目；只有明确追问时才回答对应话题。
 - 生效资料：LiveSubs Dev/knowledge 的 00_profile.md、03_projects.md、04_talk_tracks.md；修改后通过 assistantBackgroundReload 重读。
+
+
+## 为什么看好 ActAI／竞争与成功信心（2026-11-13 用户确认）
+
+User-approved direction (2026-11-13), superseding the older cautious answer. Use this track for equivalent questions: why ActAI can win, why you believe in ActAI, what makes ActAI different, why this is more than another AI pitch, or confidence despite larger competitors. Match the question's language. Lead with a positive product judgment, connect it to everyday communication and useful completed tasks, explain reliability/confirmation/clear results as a route to trust, and close with my Android and AI contribution. Be confident without promising success. Do not lead with uncertainty, funding/runway, or doubt about users changing habits. Do not invent shipped ActAI features, internal architecture, competitor limitations, or business metrics. If the same topic repeats, answer the specific follow-up briefly in the same positive direction rather than repeating the whole track.
+
+> I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day.
+>
+> From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out.
+>
+> That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.
+
+我看好 ActAI，是因为你们选择从日常沟通切入。聊天会带出很多实际需要处理的事情，比如安排会议、跟进计划。帮助用户完成这些事情，就能给他们每天使用这个产品的理由。
+
+在 KKday 做 AI 产品，以及开发 Cabinet AI 的经历，让我认识到，信任来自细节：做事是否可靠、需要时能否先询问，以及能否清楚地告诉用户结果。我相信，把这些细节做好，能够帮助 ActAI 做出自己的竞争力。
+
+这也是我想加入的原因。我希望把自己的 Android 和 AI 经验带进来，和团队一起把愿景做成用户信任、每天都愿意使用的产品。
+
+竞争问题应保留大平台已有用户基础的事实，但积极解释 ActAI 如何通过完成具体任务、可靠行动和清楚反馈赢得持续使用；不要断言竞争产品只能被动回答。开发版实际生效源为 `LiveSubs Dev/knowledge/04_talk_tracks.md`，修改后重载并实际验证。
+
+验证追问时保持同一积极方向：从安排会议等高频任务入手，观察完成任务是否更省力、需要多少人工纠正，以及用户是否回来继续使用。持续验证作为行动计划，不以不确定性开场。
+
+回归题库：`tools/actai-confidence-question-bank.json`（6 种中英文同义问法 + 3 道连续追问），也收录至 HR 总题库。关键词仅辅助检查，验收以实际输出的语义、积极程度和事实边界为准。
+
+
+## 主要优势（2026-11-14 用户确认合并版）
+
+适用：主要优势（复数）及其与 ActAI Android 岗位的匹配。取代旧的跨端排障、低端平板、学习能力三点版。SKU 数字允许用于此题，同场完整案例只讲一次；后续成就或动力题简短回指或换已确认案例。单一最大优点题维持原独立口径。
+
+### 中文
+
+我觉得有两点。
+
+第一，我比较善于把用户体验上的问题，变成具体的技术改进。在 KKday，用户切换日期、方案或票种时，每次都要等大约一秒才能看到更新。我调整了计算方式，把响应时间降到了约三百毫秒。我很在意这种用户每次操作都能感受到的细节。
+
+第二，我会主动解决影响团队协作的问题。KKday 当时的需求、设计和接口资料比较分散，我提出每个项目统一一个 Slack 频道和一份 Confluence 文档，并推动团队使用。后来，我在技术分享会上介绍了这套做法，其他团队也采用了。
+
+我希望把这两点带到 ActAI：把 AI 在手机上的体验做好，同时主动和产品、AI、后端同事配合，帮助团队更顺畅地交付。
+
+### English
+
+I'd say two things.
+
+First, I'm good at turning user experience problems into practical improvements. At KKday, when users changed a date, package or ticket type, they had to wait about one second for the screen to update. I changed how the app handled the calculations and brought that down to about 300 milliseconds. I care about details that users can feel every time they use the app.
+
+Second, I take the initiative to improve teamwork. At KKday, requirements, designs and API details were spread across different places. I proposed one Slack channel and one Confluence page for each project, and helped the team adopt this approach. Later, I shared it at a tech sharing session, and other teams adopted it too.
+
+I'd bring both strengths to ActAI: making AI work well on a phone, and working closely with product, AI and backend colleagues to help the team deliver more smoothly.
+
+
+## Work-life balance（用户确认精简英文版）
+
+适用：WLB、创业公司工作节奏。保留可之为 AI 创业公司的定位；不添加加班时长、固定晨晚汇报习惯或未确认的历史冲刺事件。同场可之四周上线已展开时仅简短回指。
+
+I'm comfortable with a fast pace and extra effort around important releases, including evenings or weekends when needed.
+
+At Kezhi, an AI startup, I was the only Android engineer, and we launched the first version in four weeks. So I understand the pace of a small team.
+
+When priorities change, I'd confirm what matters most, adjust my tasks, and raise risks early so the team can keep moving.
+
+I also value family time and rest, and I plan around my responsibilities. I want to contribute over the long term, stay focused, and deliver work the team can rely on.
+
+同步状态：项目参考资料已保存；开发版 `LiveSubs Dev/knowledge/04_talk_tracks.md` 受目录写入权限限制，尚未同步。本轮未跑批。前一节主要优势同样尚未同步至开发版。
+
+
+## AI 行程项目：个人职责与共同决策（用户确认版本一）
+
+适用：本次模拟第 8 题，个人贡献、决策边界和跨端协作。技术方案由本人主导，跨端数据格式共同确认；不得扩写为产品范围、上线时间或重试上限由本人最终拍板。
+
+### 中文
+
+在这个五人项目里，我是技术负责人，主要负责整体技术方案、Agent 架构和核心后端开发，同时也参与 Android 开发。
+
+技术方案由我主导，但涉及前后端配合的部分，需要和相关同事一起确定。比如行程卡、商品卡和地图点的数据怎样返回，我会和 App 团队共同确认，让后端生成的内容能在手机上正确展示。
+
+协作上，我们把需求、设计和各端技术方案放在同一份文档里，有变更也记录进去，再通过项目频道沟通。我的主要贡献，是把 AI 的生成逻辑和 App 的展示需求连接起来，并完成核心部分的开发。
+
+### English
+
+I was the technical lead in a team of five. I led the technical design, designed the agents, and built the main parts of the backend. I also worked on Android.
+
+For work across the app and backend, we made decisions together. For example, I worked with the app team to agree on the data for trip cards, product cards and map locations. This helped us make sure the app could display the AI results correctly.
+
+We kept the requirements, designs and technical plans in one shared document. We recorded changes there and discussed them in the project channel.
+
+My main contribution was connecting the AI side with what the app needed, and building the core parts myself.
+
+同步状态：项目参考资料已保存；开发版实际知识库受目录写入权限限制，尚未同步。未跑批测试。
+
+
+## 案例：Why are you interested in this role?（2026-11-16 短句版）
+
+问题：Why are you interested in this role? / What interests you about this position?
+中文：你为什么对这个岗位感兴趣？
+
+### 后续面试回答的表达要求（用户明确要求）
+
+用简单、自然的口语短句。一句只表达一个主要意思。避免连续从句和多个 and 串联。长句应拆成完整短句，不只是换行。优先使用中国大陆高二水平能顺口表达的词汇，必要的技术词可以保留。此要求适用于后续面试回答；不擅自重写已有明确锁定的自我介绍。
+
+### English
+
+I'm interested in this role because it brings Android and AI together.
+That's the direction I want to grow in.
+
+I like ActAI's idea of helping people get everyday tasks done.
+They don't need to write complex prompts.
+I'm exploring the same idea through my own assistant app, Cabinet.
+It's something I enjoy working on.
+
+At KKday and Kezhi, my main focus was Android development.
+I also helped build and launch AI products.
+I'd like to bring that experience to this role.
+I want to help build an app people can trust and use every day.
+
+### 中文
+
+我对这个岗位感兴趣，因为它把 Android 和 AI 结合起来了。
+这也是我想继续发展的方向。
+
+我喜欢 ActAI 帮助人们完成日常任务的想法。
+用户不需要编写复杂的提示词。
+我也在通过自己的助手应用 Cabinet 探索同样的方向。
+这本身就是我喜欢做的事情。
+
+在 KKday 和可之，我主要做 Android 开发。
+我也参与了 AI 产品的开发和上线。
+我希望把这些经验带到这个岗位。
+我想帮助团队做出一个用户信任、每天都会使用的应用。
+
+### 使用边界与参考
+
+- 顺序：岗位兴趣 → 主动实践 Cabinet → 相关经验与贡献。不要只复述简历。
+- 不必重复十年经验、三年 AI、五人团队等开场信息。
+- Cabinet 用 exploring，不暗示所有设想均已上线。
+- 回答岗位兴趣，不主动延伸到加班或薪资。
+- 参考：https://www.indeed.com/career-advice/interviewing/interview-question-why-are-you-interested-in-this-position
+- 保存状态：已保存至项目参考案例；开发版实际知识库位于当前可写范围外，尚未同步，不能声称已生效。未跑批。

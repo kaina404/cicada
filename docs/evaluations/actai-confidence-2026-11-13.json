@@ -1,0 +1,110 @@
+[
+ {
+  "id": "CONF01",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Honestly, this sounds like a lot of companies' pitch. What makes you believe we'll win?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 1.0205559730529785,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF02",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Why are you confident ActAI can succeed?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 0.897570013999939,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF03",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "What makes ActAI different from all the other AI startups?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 0.6249759197235107,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF04",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "WhatsApp has Meta AI, Messages has Gemini. Why would people switch to ActAI?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you start with everyday communication. Chats lead to real tasks, like setting up a meeting or following up on a plan. Helping people finish those tasks gives them a reason to use the app every day. From my AI work at KKday and my own Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out, and I'd bring my Android and AI experience to help the team build that.",
+  "first_sentence_s": 1.0779739618301392,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF05",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "But the big companies have more users and money. Why do you still believe in us?",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 0.7990291118621826,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF06",
+  "group": "ActAI信心与竞争",
+  "source": "2026-11-13 用户确认方向",
+  "question": "你为什么看好 ActAI？这么多 AI 公司，你觉得我们的机会在哪里？",
+  "must_any": [
+   "communication",
+   "conversation",
+   "沟通",
+   "聊天"
+  ],
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 0.8348970413208008,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ }
+]

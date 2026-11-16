@@ -1,0 +1,38 @@
+[
+ {
+  "id": "CONF07",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "Why do you believe ActAI can become a product people use every day?",
+  "answer": "I see a strong opportunity for ActAI because you're starting with everyday communication. Chats lead to real tasks, like setting up meetings and following up on plans. Helping people finish those tasks can give them a reason to use the app every day. From building AI products at KKday and working on Cabinet AI, I've learned that trust comes from the details: acting reliably, asking when needed, and clearly showing the result. I believe getting those details right can help ActAI stand out. That's why I want to join. I'd bring my Android and AI experience to help the team turn that vision into a product people trust and enjoy using every day.",
+  "first_sentence_s": 0.5306999683380127,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF08",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "That sounds promising, but how would you prove that confidence with users?",
+  "answer": "I'd start with one task people do often, like arranging a meeting. I'd check three things: whether they finish it with less effort, how often they have to correct the assistant, and whether they come back and use it again the next week. If people keep correcting it, the extra steps cost more time than they save. So I'd watch that first, then build on what users actually find useful.",
+  "first_sentence_s": 0.8354289531707764,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ },
+ {
+  "id": "CONF09",
+  "group": "ActAI连续追问",
+  "source": "2026-11-13 用户确认方向",
+  "question": "So why are you personally excited to help us make this work? Please keep it brief.",
+  "answer": "I'm excited because this is the problem I've been working on myself. At KKday I built an AI trip planner that handled about 300,000 plans a day, and in my own app, Cabinet AI, I work on the same question every day: when the assistant should act, and when it should ask first. ActAI starts from everyday communication, which is where people really need that help. So I'd bring my Android and AI experience to a product I'd genuinely use and care about.",
+  "first_sentence_s": 0.8930619955062866,
+  "problems": [],
+  "warnings": [],
+  "similarity": null,
+  "reference": null
+ }
+]
