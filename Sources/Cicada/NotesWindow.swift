@@ -247,6 +247,9 @@ struct NotesWindowView: View {
     let commands: AnyPublisher<NotesWindowController.Command, Never>
     let setWidth: (CGFloat, CGFloat?) -> Void
 
+    @AppStorage("notesSummaryVisible") private var summaryVisible = true
+    @AppStorage("notesTranscriptVisible") private var transcriptVisible = true
+    @AppStorage("notesCoachVisible") private var coachVisible = true
     @State private var tab = "notes"
     @State private var query = ""
     @State private var jumpTo: Double?
@@ -276,6 +279,14 @@ struct NotesWindowView: View {
     private var heard: Int { session?.lines.count ?? 0 }
     private let tick = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
+    private func interviewCoach(compactHeight: CGFloat? = nil) -> some View {
+        CandidateFeed(engine: model.candidate, settings: settings, shadowReader: model.shadowReader,
+                      expanded: compactHeight == nil, compactHeight: compactHeight ?? 250,
+                      microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
+                      onMicrophoneSettings: { model.openSettings(.speak) },
+                      onFloat: { model.assistantWindow.show() })
+    }
+
     var body: some View {
         GeometryReader { geo in
             Group {
@@ -288,12 +299,8 @@ struct NotesWindowView: View {
                         banner.padding(.horizontal, 24).padding(.bottom, 4)
                         if live { liveAsks.padding(.horizontal, 24).padding(.bottom, 4) }
                         if live { ScreenStrip(screen: model.screen).padding(.horizontal, 24).padding(.bottom, 8) }
-                        if live && geo.size.width < 760 {
-                            CandidateFeed(engine: model.candidate, settings: settings, shadowReader: model.shadowReader,
-                                        compactHeight: min(250, max(120, geo.size.height * 0.3)),
-                                        microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
-                                        onMicrophoneSettings: { model.openSettings(.speak) },
-                                        onFloat: { model.assistantWindow.show() })
+                        if live && coachVisible && geo.size.width < 760 {
+                            interviewCoach(compactHeight: min(250, max(120, geo.size.height * 0.3)))
                         }
                         // 这样改对吗？ above both tabs: the window opens on 纪要, where a card in the
                         // transcript would never be seen.
@@ -303,25 +310,27 @@ struct NotesWindowView: View {
                         Rectangle().fill(MainWindowView.hairline).frame(height: 1)
                         if geo.size.width >= 760 {
                             HStack(alignment: .top, spacing: 0) {
-                                notesPane.frame(maxWidth: .infinity)
-                                Divider()
-                                transcript.padding(.horizontal, 20).padding(.top, 12).frame(maxWidth: .infinity)
-                                if live {
-                                    Divider()
-                                    CandidateFeed(engine: model.candidate, settings: settings, shadowReader: model.shadowReader, expanded: true,
-                                                  microphoneName: model.coachMicName, micOn: model.micOn, onMic: { model.setMic(!model.micOn) },
-                                        onMicrophoneSettings: { model.openSettings(.speak) },
-                                        onFloat: { model.assistantWindow.show() })
+                                if summaryVisible { notesPane.frame(maxWidth: .infinity) }
+                                if transcriptVisible {
+                                    if summaryVisible { Divider() }
+                                    transcript.padding(.horizontal, 20).padding(.top, 12).frame(maxWidth: .infinity)
+                                }
+                                if live && coachVisible {
+                                    if summaryVisible || transcriptVisible { Divider() }
+                                    interviewCoach()
                                         .padding(.top, 12).frame(maxWidth: .infinity)
                                 }
                             }
-                        } else if tab == "notes" {
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else if summaryVisible && (tab == "notes" || !transcriptVisible) {
                             notesPane
-                        } else {
+                        } else if transcriptVisible {
                             transcript.padding(.horizontal, 24).padding(.top, 12)
+                        } else {
+                            Spacer(minLength: 0)
                         }
                         // The transcript shows what is being said in place; the caption is for the notes tab.
-                        if geo.size.width < 760 && tab == "notes" { caption }
+                        if geo.size.width < 760 && summaryVisible && (tab == "notes" || !transcriptVisible) { caption }
                     }
                     // The title bar is transparent: start the header beside its buttons, not below a blank band.
                     .ignoresSafeArea(.container, edges: .top)
@@ -353,6 +362,7 @@ struct NotesWindowView: View {
             setWidth(320, 420)
         case .search:
             if card { setWidth(460, 760) }
+            transcriptVisible = true
             tab = "transcript"
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { searchFocused = true }
         case .layout(.card):
@@ -406,9 +416,7 @@ struct NotesWindowView: View {
                         }
                         .buttonStyle(.plain).help("结束这场会议").padding(.trailing, 4)
                     }
-                    iconButton(wide ? "rectangle.split.2x1.fill" : "rectangle.split.2x1", help: wide ? L("收窄") : L("纪要和原话并排")) {
-                        setWidth(wide ? 460 : 1200, nil)
-                    }
+                    columnVisibilityButtons
                     iconButton("minus", help: L("收成小卡")) { collapse() }
                 }
                 // State lives here, not in buttons beside 结束: the meeting's languages as a text link
@@ -435,7 +443,7 @@ struct NotesWindowView: View {
                     capturableBadge
                 }
             }
-            if !wide {
+            if !wide && summaryVisible && transcriptVisible {
                 HStack(spacing: 0) {
                     segment(L("纪要"), "notes")
                     segment(engine.notes.isEmpty && heard > 0 ? L("文字记录 · \(heard)") : L("文字记录"), "transcript")
@@ -443,11 +451,42 @@ struct NotesWindowView: View {
                 .padding(4)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Palette.fill))
             }
-            if wide || tab == "transcript" {
+            if transcriptVisible && (wide || tab == "transcript" || !summaryVisible) {
                 searchField
             }
         }
         .padding(.horizontal, 24).padding(.top, 34).padding(.bottom, 12)
+    }
+
+    private var columnVisibilityButtons: some View {
+        HStack(spacing: 2) {
+            columnButton(L("纪要"), visible: $summaryVisible)
+            columnButton(L("文字记录"), visible: $transcriptVisible)
+            columnButton(L("面试教练"), visible: $coachVisible, available: live)
+        }
+        .padding(3)
+        .background(RoundedRectangle(cornerRadius: 7).fill(Palette.fill))
+    }
+
+    private func columnButton(_ title: String, visible: Binding<Bool>, available: Bool = true) -> some View {
+        let on = visible.wrappedValue && available
+        return Button {
+            visible.wrappedValue.toggle()
+            // Opening another column from the compact view exposes it immediately.
+            if visible.wrappedValue && width < 760 { setWidth(1200, nil) }
+        } label: {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(on ? Palette.accent : Palette.tertiary.opacity(0.25))
+                .frame(width: 10, height: 20)
+                .frame(width: 20, height: 28)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!available)
+        .help(title)
+        .accessibilityLabel(title)
+        .accessibilityValue(on ? Text("显示") : Text("隐藏"))
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     /// 共享屏幕时让对方看到, always here so it can be turned back on: an orange lamp while shared
