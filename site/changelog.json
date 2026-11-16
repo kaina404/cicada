@@ -7,20 +7,116 @@
     "image": null,
     "items": [
       {
+        "kind": "fixed",
+        "platforms": ["mac"],
+        "title": "面试回答不再显示内部判断信息。",
+        "text": "通过明确的正文协议隔离内部信息，流式生成、翻译和朗读只接收正文；正文里的代码与 JSON 保留，协议错误时提示失败。"
+      },
+      {
         "kind": "improved",
         "platforms": ["mac"],
+        "title": "加强语音识别的音频隔离和本地诊断。",
+        "text": "识别器分别持有音频副本并检查格式与长度；本地轮转日志记录启停、音频状态和错误码，便于排查意外退出，不记录音频和转写内容。"
+      },
+      {
+        "kind": "fixed",
+        "platforms": ["mac"],
+        "title": "面试问题丢词时保留识别上下文。",
+        "text": "同一句问题的识别修订可互相参照，避免残缺片段直接把弱点问题变成项目介绍；题意不清时简短确认。"
+      },
+      {
+        "kind": "improved",
+        "platforms": [
+          "mac"
+        ],
+        "title": "手机网页看稿保持固定缩放。",
+        "text": "禁用双指缩放和双击放大，避免误触放大遥控页面。"
+      },
+      {
+        "kind": "improved",
+        "platforms": [
+          "mac"
+        ],
+        "title": "网页看稿不再误移悬浮窗。",
+        "text": "取消网页稿件区域滑动移动 Mac 悬浮窗的操作，保留切句、按住播放和重新生成答案。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
+        "title": "手机遥控支持重新生成当前答案。",
+        "text": "网页和 iPhone 遥控端新增「重新生成」按钮。自动回答未及时更新时，可取消旧请求，使用最新问题立即重新请求答案。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
+        "title": "手机扫码即可遥控悬浮回答。",
+        "text": "同一 Wi-Fi 下用系统相机扫码打开网页，无需安装 App。支持逐词高亮、切句、按住播放和查看已开启共享的 Mac 主屏幕。"
+      },
+      {
+        "kind": "improved",
+        "platforms": [
+          "mac"
+        ],
+        "title": "实时纪要可独立显示或隐藏三列。",
+        "text": "「结束」右侧的三个竖块分别控制纪要、文字记录和面试教练，点亮显示、置灰隐藏，记住显示选择。"
+      },
+      {
+        "kind": "improved",
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练给薪资数字标上音标。",
         "text": "750K、40K 这类带 K 的数字和 RMB 也会在后面显示国际音标，读作 seven hundred and fifty K；音标不算进跟读。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
+        "title": "悬浮回答可穿透稿件区的点击。",
+        "text": "勾选底部的「稿件点击穿透」，可以点击或滚动稿件后面的 App，底部控件仍可操作。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
+        "title": "锁定悬浮回答的大小。",
+        "text": "点一下浮窗底部的锁图标，固定当前宽度和高度，浮窗仍可移动。再点一下可恢复缩放。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
+        "title": "悬浮回答可连接 iPhone。",
+        "text": "同一 Wi-Fi 下扫码配对一次，重开 App 会自动尝试重连。手机横屏看稿，逐词高亮并滚动跟随播放。右侧从上到下是上一句、按住播放、下一句。松手暂停，声音从 Mac 耳机输出。在稿件上滑动可移动 Mac 浮窗。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
+        "title": "在 iPhone 上查看 Mac 主屏幕。",
+        "text": "从悬浮回答的手机菜单开启共享，同一 Wi-Fi 下可查看实时画面。隐藏浮窗后停止共享。"
+      },
+      {
+        "kind": "new",
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练可开启快速跟读。",
         "text": "本机英文识别逐词跟随朗读，口音不准或听错词也能对上，光标默认提前 2 秒抵消识别延迟；开启陪读时只移动陪读位置，声音仍由手表播放；默认关闭。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "悬浮回答从窗口顶部显示。",
         "text": "字号和背景不透明度改在底部调节，跟随朗读时当前句滚到窗口顶部。"
       },
@@ -42,13 +138,17 @@
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练换到下一句时，平滑地滚到顶部。",
         "text": "上一句的高亮慢慢褪去，下一句慢慢亮起，同时整段在约一秒内缓缓上移，停住后再开始读，不会一下子跳上去找不到位置。手动滚动时立即停止跟随动画。"
       },
       {
         "kind": "fixed",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "陪读只从耳机播放，不会进入会议。",
         "text": "系统输出是虚拟设备（如 BlackHole）或多输出设备时，陪读不再播放，避免回答声音经虚拟麦克风传进会议。"
       },
@@ -261,145 +361,193 @@
     "items": [
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "跟读时当前句靠近列表顶部。",
         "text": "默认跟随朗读，当前句平滑滚动到顶部下方并留出间距，翻译及布局更新不再打断动画，后续未读内容更容易预看；选回第一句时回到列表开头。浮窗恢复原有移动边界。"
       },
       {
         "kind": "fixed",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "长按陪读时浮窗保持原位。",
         "text": "手表长按只控制音频播放，长按后滑动和松手不会移动悬浮回答；重新落指直接滑动仍可移动。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练设置默认收起。",
         "text": "点击面试教练标题即可展开或收起面试阶段、陪读、状态和麦克风设置，为回答内容留出更多空间。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 的英文回答更容易念。",
         "text": "按高中英语水平写：常用词、短句、不用复杂从句，技术题保留技术词；一般 HR 题控制在 60 到 100 词，追问 25 到 50 词。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 回答行为题更自然。",
         "text": "可以用常识补出合理的例子和细节；公司、时间、人数、薪资和数字仍只按资料回答，项目、工具和技术栈不会张冠李戴。"
       },
       {
         "kind": "fixed",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 的请求卡住时会自动重发。",
         "text": "DeepSeek 发出后 6 秒还没返回第一个字就取消并重发，最多三次；不再出现开场问题等了几十秒都没有回答。"
       },
       {
         "kind": "fixed",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试中连续提问时，Assistant 不再沿用上一题的回答。",
         "text": "复核时明确对照面试官最新的问题，被识别拆成几行的同一个问题合并判断；长面试后半段的新问题也会及时换上新回答。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试资料统一放在一个文件夹。",
         "text": "简历、求职需求、历史公司、项目、预制回答和目标公司各写一份 Markdown，在面试教练设置里打开文件夹维护；每次整份交给 AI，回答优先依据资料，可用常识自然展开。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试追问更直接地使用已知背景。",
         "text": "改进中英文离职、薪资和交接资料检索，区分固定薪资与奖金，避免缺失资料的套话与跨公司补写。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 补充面试追问参考。",
         "text": "SKU 提速使用最新确认事实，删除旧崩溃率数字；未核对的技术方案和评估方法不会当作本人经历。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 数字和百分比补全音标。",
         "text": "2000、10%、0.1% 等数字显示完整英式读音，小数部分逐位标注；音标不计入耳返、翻译和阅读进度。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试团队追问按背景事实作答。",
         "text": "区分历史团队事实与假设估算，缺失的人数、岗位分配和汇报关系不再用典型配置补齐；团队追问优先回答当前问题。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Assistant 陪读音量可调。",
         "text": "播放速度旁的喇叭按钮可调节 0–100% 音量，播放中立即生效并记住设置；原默认 55% 可提高到 100%。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "修复手表陪读无声与切句后不播放。",
         "text": "单击选中并播放下一句，双击选中并播放上一句，一句结束后暂停；播放失败后松手重新长按可重试，避免一次异常后持续无声。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "Apple Watch 直接控制悬浮回答。",
         "text": "独立手表模块已迁入 Cicada，Mac 内置接收端；滑动移动浮窗、点击或表冠切句、长按陪读。无需单独运行 WatchControl 或授予辅助功能权限。当前提供本机开发配对，真实手表与耳机操作待人工验收。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "手表按句选择助手陪读音频。",
         "text": "锁定 Assistant 悬浮回答后，单击下一句、双击上一句，Digital Crown 上下快速切句；长按播放，松手暂停，再按从暂停处继续。音频仅送耳机，不接会议虚拟麦克风。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "助手陪读随音频逐词填色。",
         "text": "文字固定、自然换行，当前句垂直跟随；点击单词跳播，可选 0.75×、1×、1.25×，暂停时高亮同步停止。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试开场使用预设自我介绍。",
         "text": "面试官要求自我介绍时使用用户确认的五段英文稿；明确要求简短版时压缩，后续追问按当前问题回答。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "实时纪要浮窗默认缩小为屏幕可用高度的 3/4。",
         "text": "首次更新时缩小旧的过高窗口；之后仍可手动调整并记住尺寸。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "陪读使用本机 Kokoro，支持手表按住播放。",
         "text": "提前预热并缓存英文回答语音；WatchControl 锁定助手窗口后长按续播、松开暂停，不再依赖麦克风或自动追赶。仅输出耳机，断连即停；实际手表与 AirPods 延迟待真人验收。"
       },
       {
         "kind": "improved",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "助手和悬浮回答的中文翻译更紧凑。",
         "text": "Assistant 中文字号调整为英文的 50%（11–18 pt）；悬浮回答的中文进一步缩小至 10–14 pt，默认 12 pt，减少占用空间。"
       },
       {
         "kind": "fix",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "修复开始记录时可能卡死。",
         "text": "下载语音模型时，进度回调改为在主线程更新界面，避免与界面刷新互相等待。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练可选择 HR、CTO 和 CEO 阶段。",
         "text": "在 Assistant 中选择回答侧重点，结合项目背景补充工程细节与合理估算，英文回答更口语化，长度随问题调整。"
       },
       {
         "kind": "new",
-        "platforms": ["mac"],
+        "platforms": [
+          "mac"
+        ],
         "title": "面试教练新增可选耳机陪读。",
         "text": "在助手或设置勾选“陪读”，本机语音通过当前耳机引导英文跟读；停顿时暂停，跳词后根据识别位置追上。默认关闭，不向会议虚拟麦克风输出；耳机断开时停止。"
       },

@@ -48,6 +48,8 @@ Installers are available on [the download page](https://cicada.indaloop.app/en/d
 
 ### Live notes and bilingual transcript
 
+The three vertical buttons beside End independently show or hide notes, transcript, and interview coach, and remember your choices.
+
 As the meeting runs, the notes window organizes a summary, topics and key points, conclusions, to-dos, a fishbone diagram, and a glossary of names and terms. Click any conclusion or to-do to jump straight back to the original lines. Pressing `⌘F` searches both the canonical spelling and misrecognized variants.
 
 With an AI service connected, misheard names and terms are fixed on the spot: sound-alike typos are corrected right away, while unfamiliar names are asked about once and fixed automatically once you confirm. You can paste your usual spellings into **Word list** in Settings. After the meeting, select **Edit line…** to batch-fix the same misheard word across the whole session, with full undo support.
@@ -80,6 +82,10 @@ After a meeting, you can generate notes retroactively, export to Markdown, Word,
 
 ### Interview Coach and screen notes (Mac)
 
+The Mac interview coach uses an explicit answer boundary before displaying, translating or reading generated text. Code and JSON inside the answer are preserved; malformed responses show an error instead of exposing internal metadata.
+
+Interview Coach retains earlier recognition versions of the same question, so a later fragment can be checked against the fuller wording. Ambiguous questions prompt a brief clarification.
+
 Selecting a shared window before the interviewer speaks only updates screen context; it does not start a self-introduction. Refresh Answer can analyse the current screen directly when no interviewer request exists.
 
 Assistant also adds full British IPA to numbers such as `2000`, `10%` and `0.1%`. Decimal digits are read individually; IPA is excluded from read-along speech, translation and reading progress.
@@ -108,6 +114,8 @@ In the Mac Assistant, choose General, HR, CTO, or CEO interview emphasis. Answer
 
 On Mac, enable “Read along” in Interview Coach for local Kokoro-82M speech, warmed before playback. Open Cicada’s Assistant floating answer and its standalone Apple Watch app, hold the Watch touchpad to resume, and release to pause at the same audio position. No candidate microphone is required. Off by default; output is restricted to the current system headphones, including AirPods, and never targets the meeting virtual microphone. Headphone disconnection stops playback. First use downloads an isolated runtime and model; answer synthesis stays local. Actual Watch/AirPods stopping latency still needs hands-on validation. Tap once to select and play the next sentence, or twice for the previous sentence; playback pauses after that sentence. Turn the Digital Crown to select a sentence without playing it. Hold to play and release to pause; release and press again to retry after a playback failure. Slide directly to move the floating window. Holding and releasing after a hold never move it. The receiver is integrated into Cicada; no WatchControl helper or Accessibility permission is needed. See the [Apple Watch module](watch/README.md) for personal development pairing and builds. Follow reading is on by default: the current sentence scrolls smoothly near the top with space above it, leaving upcoming text visible. Selecting the first sentence returns to the beginning.
 
+On the same Wi-Fi, click the phone icon in Mac Floating Answer and scan the pairing code with your phone’s system camera. The [LAN control page](docs/remote-web.md) shows the script with word highlighting and automatic scrolling, switches sentences and plays through Mac headphones while held. You can also view the Mac main display after enabling sharing from the Mac phone menu. No phone app is required. Keep the page open to reconnect automatically; after refreshing or closing it, scan again. For long sessions, adjust your phone’s auto-lock setting. On the web or native iPhone remote, tap **Regenerate** if automatic answering stalls; Mac cancels the old request and answers the latest question again. The phone web page disables pinch and double-tap zoom.
+
 Read along fills each word from the actual audio position, with fixed text and vertical following. Click a word to seek; choose 0.75×, 1× or 1.25×. Releasing pauses both audio and color.
 
 On Mac, click the device name beside the interview coach’s microphone switch to open Settings › Interpreting. “Cicada listens through” selects one shared input for candidate speech and hold-to-talk.
@@ -117,6 +125,10 @@ On Mac, resize Settings by dragging its edges; the window size is remembered. Ch
 The Mac app follows the light or dark appearance of macOS without restarting, including meeting records, live notes, Assistant, the menu bar panel, settings and onboarding.
 
 On Mac, click the expand button in Interview Coach to float the live answer above other windows. Drag or resize it and use the bottom controls to adjust text size (16–96) and background opacity (0–100%); these preferences are saved. The overlay shares the script and reading position and follows the screen-sharing visibility setting. With Follow Reading on, the current sentence scrolls to the top. Turn on Fast follow in Interview Coach to follow your reading word by word with on-device English recognition (macOS 26): it tolerates accents and misheard words, only moves the display and scroll, and Gemma still corrects reading progress. It is off by default. Recognition lags speech, so the cursor runs ahead at your pace (2 seconds by default, never past the sentence). With Read along on there is one reading position: Fast follow moves it silently, only the watch plays the voice, and whatever the watch does replaces Fast follow's position.
+
+Click the lock icon at the bottom to keep the current width and height while moving the window. Click it again to resize.
+
+Turn on “Click through script” at the bottom of Floating Answer to click or scroll in the app behind the script. The bottom controls still work; drag the Floating Answer label to move the window. The setting is saved and is off by default.
 
 Each Assistant sentence shows its small Chinese translation first, immediately followed by the corresponding English sentence. Chinese translations use smaller text in Assistant (50% of the English size, 11–18 pt) and even smaller text in Floating Answer (10–14 pt, 12 pt by default) to save space.
 
@@ -153,6 +165,7 @@ The Mac app only asks for a permission when you use the corresponding feature, a
 
 - **Transparent networking**: Cicada only connects to the internet for translation (`translate.googleapis.com`), your configured AI service (such as `api.ant-ling.com`), downloading the Apple-notarized BlackHole driver (verified against SHA-256), and checking GitHub once a day for updates. There is no analytics, no tracking, and no server of our own.
 - **Local storage**: Records and recordings live in `~/Library/Application Support/LiveSubs`. Your key and voice sample are readable only by your current system account and excluded from Time Machine and logs.
+- **Recognition diagnostics (Mac)**: Technical events and error codes stay in `~/Library/Logs/LiveSubs/Recognition` (`LiveSubs Dev` for dev builds), with up to three 1 MB logs. These logs contain no audio, transcripts or keys.
 - **Hidden from screen capture**: On Mac, screen sharing, screen recordings, and screenshots cannot capture the notes window; you can manually turn on **Show in screen sharing** when recording a demo.
 
 ## Models
