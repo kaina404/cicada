@@ -8,11 +8,158 @@ struct InterviewCoachTests {
         await CoachPronunciation.prepare()
     }
 
+    @Test @MainActor func unframedMetadataNeverReachesTheScript() async throws {
+        let engine = InterviewCoach { _, _ in
+            AsyncThrowingStream {
+                $0.yield(#"{"decision":"answer","topic":"weakness","confidence":0.95}"#)
+                $0.yield("\nOne thing I'm working on is scope.")
+                $0.finish()
+            }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("q", "them", "What is one weakness you are currently working on?")], now: 0)
+        engine.ask()
+        for _ in 0..<1000 where engine.state != .failed { await Task.yield() }
+        #expect(engine.state == .failed)
+        #expect(engine.script.pending.isEmpty)
+        #expect(engine.paragraphs.isEmpty)
+        #expect(engine.gloss.translations.isEmpty)
+    }
+
+    @Test @MainActor func framedCodeKeepsFieldsThatLookLikeMetadata() async throws {
+        let body = "```json\n{\"decision\":\"answer\",\"topic\":\"weakness\",\"confidence\":0.95}\n```"
+        let engine = InterviewCoach { _, _ in
+            AsyncThrowingStream {
+                $0.yield("<<<CICADA_")
+                $0.yield("ANSWER>>>\n" + body)
+                $0.finish()
+            }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("q", "them", "Write a JSON object with decision, topic and confidence fields.")], now: 0)
+        engine.ask()
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        #expect(engine.state == .ready)
+        #expect(engine.script.pending == body)
+        #expect(engine.paragraphs.last?.output.next == body)
+        #expect(!engine.script.pending.contains(CoachAnswerResponse.marker))
+    }
+
+    @Test func recognitionKeepsDeletionsAndCorrectionsWithoutStreamingPrefixes() {
+        var recognition = CoachRecognition()
+        recognition.append("What's one weakness")
+        recognition.append("What's one weakness you're currently working on?")
+        recognition.append("you're currently working on?")
+        #expect(recognition.versions.count == 2)
+        #expect(recognition.alternatives(to: "you're currently working on?") ==
+                ["What's one weakness you're currently working on?"])
+        recognition.append("Actually, don't discuss weakness. Tell me about your current project.")
+        #expect(recognition.versions.last?.contains("don't discuss weakness") == true)
+        for index in 0..<20 { recognition.append("A different recognition number \(index)") }
+        #expect(recognition.versions.count == 4)
+        #expect(recognition.versions.contains { $0.contains("don't discuss weakness") })
+    }
+
+    @Test @MainActor func degradedWeaknessRevisionSurvivesFinalAndReview() async throws {
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream {
+                if requests.count == 1 { $0.yield(CoachAnswerResponse.marker + "\nMy strength is being proactive.") }
+                else {
+                    $0.yield("{\"action\":\"replace\",\"reason\":\"The question asks for a weakness.\"}\nOne weakness is expanding the scope too early.")
+                }
+                $0.finish()
+            }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("strength", "them", "What is your main strength?")], now: 0)
+        engine.tick(now: 2)
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        let complete = "Thanks, I hear that as being proactive and user centered. What's one weakness you're currently working on?"
+        let degraded = "Thanks, I hear that as being proactive and user centered you'… you're currently working on?"
+        engine.speech(complete, role: "interviewer", now: 10)
+        engine.speech(degraded, role: "interviewer", now: 11)
+        engine.finalized(role: "interviewer")
+        engine.observe(lines: [line("strength", "them", "What is your main strength?"),
+                               line("weakness", "them", degraded, t: 10)], now: 11)
+        engine.tick(now: 14)
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        try #require(requests.count == 2)
+        let parts = try #require(requests[1][1]["content"] as? [[String: Any]])
+        let referenceText = try #require(parts.last?["text"] as? String)
+        #expect(referenceText.contains("recognitionAlternatives"))
+        #expect(referenceText.contains("one weakness"))
+        #expect(engine.script.pending.contains("One weakness"))
+        // A separate finalized question must not inherit the weakness alternatives.
+        engine.speech("What project are you building?", role: "interviewer", now: 20)
+        engine.finalized(role: "interviewer")
+        engine.observe(lines: [line("project", "them", "What project are you building?", t: 20)], now: 21)
+        engine.tick(now: 24)
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        try #require(requests.count == 3)
+        let projectParts = try #require(requests[2][1]["content"] as? [[String: Any]])
+        let projectEvidence = projectParts.first?["text"] as? String ?? ""
+        #expect(!projectEvidence.contains("one weakness"))
+    }
+
+    @Test @MainActor func delayedFinalDoesNotConsumeTheNextUtterancesDraft() async throws {
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream { $0.yield(CoachAnswerResponse.marker + "\nCould you repeat that question?"); $0.finish() }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.speech("What is one weakness?", role: "interviewer", now: 0)
+        engine.speech("one weakness?", role: "interviewer", now: 0.2)
+        engine.finalized(role: "interviewer", text: "one weakness?")
+        engine.speech("What is your current project?", role: "interviewer", now: 1)
+        engine.observe(lines: [line("q", "them", "one weakness?")], now: 1.2)
+        engine.finalized(role: "interviewer", text: "What is your current project?")
+        engine.observe(lines: [line("q", "them", "one weakness?"),
+                               line("next", "them", "What is your current project?", t: 1)], now: 2)
+        engine.ask()
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        let parts = try #require(requests.first?[1]["content"] as? [[String: Any]])
+        let raw = try #require(parts.first?["text"] as? String)
+        let json = String(raw.dropFirst("Actual speech (JSON; seconds from meeting start):\n".count))
+        let evidence = try JSONDecoder().decode([CoachTurn].self, from: Data(json.utf8))
+        #expect(evidence.first?.recognitionAlternatives == ["What is one weakness?"])
+        #expect(evidence.last?.recognitionAlternatives == nil)
+    }
+
+    @Test @MainActor func degradedDraftIsPreservedForInitialGeneration() async throws {
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream { $0.yield(CoachAnswerResponse.marker + "\nCould you clarify which area you mean?"); $0.finish() }
+        }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        defer { engine.endMeeting() }
+        engine.speech("What is one failure you learned from?", role: "interviewer", now: 0)
+        engine.speech("you learned from?", role: "interviewer", now: 0.5)
+        engine.tick(now: 3)
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        try #require(requests.count == 1)
+        let parts = try #require(requests[0][1]["content"] as? [[String: Any]])
+        #expect((parts.first?["text"] as? String ?? "").contains("one failure"))
+        #expect((requests[0][0]["content"] as? String ?? "").contains(CoachPrompt.recognitionRules))
+    }
+
     @Test @MainActor func sharedPageWaitsForARequestButExplicitScreenAnalysisWorks() async throws {
         var requests: [[[String: Any]]] = []
         let engine = InterviewCoach { messages, _ in
             requests.append(messages)
-            return AsyncThrowingStream { $0.yield("The page discusses AI's impact on society."); $0.finish() }
+            return AsyncThrowingStream { $0.yield(CoachAnswerResponse.marker + "\nThe page discusses AI's impact on society."); $0.finish() }
         }
         engine.gloss.enabled = false
         engine.start(background: "Prepared self-introduction", available: true, prepare: { true })
@@ -48,7 +195,7 @@ struct InterviewCoachTests {
         var requests: [[[String: Any]]] = []
         let engine = InterviewCoach { messages, _ in
             requests.append(messages)
-            return AsyncThrowingStream { $0.yield("The heading is Shaping AI's Impact on Billions of Lives."); $0.finish() }
+            return AsyncThrowingStream { $0.yield(CoachAnswerResponse.marker + "\nThe heading is Shaping AI's Impact on Billions of Lives."); $0.finish() }
         }
         engine.gloss.enabled = false
         engine.start(background: "Prepared self-introduction", available: true, prepare: { true })
@@ -138,17 +285,22 @@ struct InterviewCoachTests {
         var policy = CoachKeyframePolicy()
         let blank = [UInt8](repeating: 0, count: 128 * 72)
         let changed1 = policy.accept(fingerprint: blank, text: "", at: 0)
-        #expect(changed1)
+        #expect(changed1 == .changed)
         let changed2 = policy.accept(fingerprint: blank, text: "", at: 3)
-        #expect(!changed2)
+        #expect(changed2 == nil)
         let changed3 = policy.accept(fingerprint: blank, text: "fun send() = saveToRoom()", at: 4)
-        #expect(changed3)
-        let changed4 = policy.accept(fingerprint: blank, text: "fun send() = saveToRoom()", at: 8)
-        #expect(!changed4)
+        #expect(changed3 == .changed)
+        let changed4 = policy.accept(fingerprint: blank, text: "fun send() = saveToRoom()", at: 7)
+        #expect(changed4 == nil)
         let changed5 = policy.accept(fingerprint: [UInt8](repeating: 220, count: blank.count), text: "", at: 9)
-        #expect(changed5)
+        #expect(changed5 == .changed)
         let changed6 = policy.accept(fingerprint: blank, text: "", at: 9.5)
-        #expect(!changed6)
+        #expect(changed6 == nil)
+        // A static screen is re-captured after 4 s (≤5 s with the capture tick), but never sooner.
+        let still = [UInt8](repeating: 220, count: blank.count)
+        #expect(policy.accept(fingerprint: still, text: "", at: 12.9) == nil)
+        #expect(policy.accept(fingerprint: still, text: "", at: 13) == .refresh)
+        #expect(policy.accept(fingerprint: still, text: "", at: 15) == nil)
     }
     @Test func airpodsAreAValidCandidateMicButVirtualInputsAreNot() {
         let inputs = [RoomMicPlan.Input(uid: "mac", builtIn: true), .init(uid: "pods", bluetooth: true), .init(uid: "virtual", virtual: true)]
@@ -189,7 +341,7 @@ struct InterviewCoachTests {
         engine.observe(lines: [question], now: 0); engine.tick(now: 2)
         for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
         try #require(streams.count == 1)
-        streams[0].yield("I save messages in Room. A worker resumes sending after a restart.")
+        streams[0].yield(CoachAnswerResponse.marker + "\nI save messages in Room. A worker resumes sending after a restart.")
         streams[0].finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         engine.reading.onProgress?(engine.script.answerID, 5, "I save messages in Room")
@@ -229,7 +381,7 @@ struct InterviewCoachTests {
         engine.tick(now: 2)
         for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
         try #require(streams.count == 1)
-        streams[0].yield("I save the queue in Room.")
+        streams[0].yield(CoachAnswerResponse.marker + "\nI save the queue in Room.")
         for _ in 0..<1000 where engine.script.pending.isEmpty { await Task.yield() }
         let response = engine.responseID
         engine.speech("OK, all right, continue", role: "interviewer", now: 3)
@@ -268,7 +420,7 @@ struct InterviewCoachTests {
         defer { engine.endMeeting(); streams.forEach { $0.finish() } }
         engine.speech("Explain offline sending on Android.", role: "interviewer", now: 0); engine.tick(now: 2)
         for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
-        streams.first?.yield("I save messages in Room."); streams.first?.finish()
+        streams.first?.yield(CoachAnswerResponse.marker + "\nI save messages in Room."); streams.first?.finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         let original = engine.script
         engine.speech("Assume storage is prohibited.", role: "interviewer", now: 3); engine.tick(now: 5)
@@ -304,7 +456,7 @@ struct InterviewCoachTests {
         let q = line("q", "them", "Explain reliable offline sending on Android.")
         engine.observe(lines: [q], now: 0); engine.tick(now: 2)
         for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
-        streams.first?.yield("I save each message in Room."); streams.first?.finish()
+        streams.first?.yield(CoachAnswerResponse.marker + "\nI save each message in Room."); streams.first?.finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         let id = engine.script.answerID
         let follow = line("f", "them", "How does the server avoid duplicates?", t: 3)
@@ -324,7 +476,7 @@ struct InterviewCoachTests {
         for _ in 0..<1000 where streams.count < 4 { await Task.yield() }
         try #require(streams.count == 4)
         streams[2].yield(#"{"action":"replace","reason":"STALE"}"#); streams[2].finish()
-        streams[3].yield("I use a stable client ID."); streams[3].finish()
+        streams[3].yield(CoachAnswerResponse.marker + "\nI use a stable client ID."); streams[3].finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         #expect(engine.generationCount == 2)
         #expect(engine.script.spokenText == "The server deduplicates by stable client ID.")
@@ -343,7 +495,7 @@ struct InterviewCoachTests {
         try #require(streams.count == 1)
         let generated = "I believe my background in building complex, scalable applications, especially with AI integration, makes me a strong fit for this role. I have ten years of experience."
         let answer = CoachPronunciation.annotate(generated, finished: true)
-        streams[0].yield(generated); streams[0].finish()
+        streams[0].yield(CoachAnswerResponse.marker + "\n" + generated); streams[0].finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         try #require(engine.script.pending == answer)
         // Actual ASR fragments from the reported reading session.
@@ -422,7 +574,7 @@ struct InterviewCoachTests {
         for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
         try #require(streams.count == 1)
         let answer = "I'm doing well, thank you for asking. I'm very excited about this opportunity. I have a strong background in mobile development."
-        streams[0].yield(answer); streams[0].finish()
+        streams[0].yield(CoachAnswerResponse.marker + "\n" + answer); streams[0].finish()
         for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         let answerID = engine.script.answerID
         let pending = engine.script.pending
@@ -457,7 +609,7 @@ struct InterviewCoachTests {
         var audioRequests = 0
         let engine = InterviewCoach(stream: { _, _ in
             AsyncThrowingStream { stream in
-                stream.yield("I store each message in Room. Then I retry it safely.")
+                stream.yield(CoachAnswerResponse.marker + "\nI store each message in Room. Then I retry it safely.")
                 stream.finish()
             }
         }, readingInfer: { _ in
@@ -498,7 +650,7 @@ struct InterviewCoachTests {
         engine.tick(now: 0.7)
         for _ in 0..<100 where continuation == nil { await Task.yield() }
         try #require(continuation != nil)
-        continuation?.yield("I make Room the source of truth. I queue messages before sending.")
+        continuation?.yield(CoachAnswerResponse.marker + "\nI make Room the source of truth. I queue messages before sending.")
         for _ in 0..<100 where engine.script.pending.isEmpty { await Task.yield() }
         #expect(CoachScript.words(engine.script.pending).joined(separator: " ").contains("source of truth"))
         #expect(engine.firstSentenceLatency != nil)
@@ -537,7 +689,7 @@ struct InterviewCoachTests {
         engine.tick(now: end + 2)
         for _ in 0..<100 { await Task.yield() }
         #expect(engine.generationCount == 1)
-        streams[0].yield("I persist each message before sending.")
+        streams[0].yield(CoachAnswerResponse.marker + "\nI persist each message before sending.")
         for _ in 0..<1000 where engine.script.pending.isEmpty { await Task.yield() }
         #expect(engine.script.pending.contains("persist"))
         engine.speech("What happens if the process dies?", role: "interviewer", now: end + 3)
@@ -601,13 +753,48 @@ struct InterviewCoachTests {
             #expect(text.contains("I persist messages in Room."))
             #expect(text.contains("Could you give one simple example?"))
             #expect(!text.contains("unread_remainder"))
-            streams[index].yield("An offline message stays in Room until a worker can send it.")
+            streams[index].yield(CoachAnswerResponse.marker + "\nAn offline message stays in Room until a worker can send it.")
             streams[index].finish()
             for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
         }
         #expect(engine.generationCount == 2)
         #expect(engine.reviewCount == 0)
         #expect(engine.script.spokenText == "I persist messages in Room.")
+    }
+
+    @Test @MainActor func fallbackRefreshReplacesStalledGenerationWithLatestQuestion() async throws {
+        var streams: [AsyncThrowingStream<String, Error>.Continuation] = []
+        var requests: [[[String: Any]]] = []
+        let engine = InterviewCoach { messages, _ in
+            requests.append(messages)
+            return AsyncThrowingStream { streams.append($0) }
+        }
+        engine.gloss.enabled = false
+        #expect(!engine.ask())
+        engine.start(background: "Synthetic ActAI Android practice", available: true, prepare: { true })
+        defer { engine.endMeeting(); streams.forEach { $0.finish() } }
+        #expect(!engine.canRefreshAnswer)
+        #expect(!engine.ask())
+        engine.speech("How do you store messages offline?", role: "interviewer", now: 1)
+        #expect(engine.ask())
+        for _ in 0..<2000 where streams.isEmpty { await Task.yield() }
+        try #require(streams.count == 1)
+        // Leave the old stream hanging and supply the newest partial question.
+        engine.speech("How do you avoid duplicate retries?", role: "interviewer", now: 4)
+        #expect(engine.canRefreshAnswer)
+        #expect(engine.ask())
+        for _ in 0..<2000 where streams.count < 2 { await Task.yield() }
+        try #require(streams.count == 2)
+        let text = String(decoding: try JSONSerialization.data(withJSONObject: requests[1]), as: UTF8.self)
+        #expect(text.contains("How do you avoid duplicate retries?"))
+        #expect(text.contains("Explicit manual refresh"))
+        streams[0].yield("STALE_RESPONSE_MUST_NOT_APPEAR")
+        streams[0].finish()
+        streams[1].yield(CoachAnswerResponse.marker + "\nI use an idempotency key for each message.")
+        streams[1].finish()
+        for _ in 0..<2000 where engine.state != .ready { await Task.yield() }
+        #expect(!engine.script.pending.contains("STALE_RESPONSE"))
+        #expect(engine.script.pending.contains("idempotency key"))
     }
 
 }

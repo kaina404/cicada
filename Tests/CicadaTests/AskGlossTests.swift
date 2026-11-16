@@ -84,7 +84,7 @@ struct AskGlossLocalTests {
         engine.tick(now: 1)
         for _ in 0..<100 where continuation == nil { try await Task.sleep(for: .milliseconds(10)) }
         let stream = try #require(continuation)
-        stream.yield("I would save the message first. Then")
+        stream.yield(CoachAnswerResponse.marker + "\nI would save the message first. Then")
         for _ in 0..<1000 where engine.gloss.translations.isEmpty {
             try await Task.sleep(for: .milliseconds(10))
         }

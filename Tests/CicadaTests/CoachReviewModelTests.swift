@@ -100,6 +100,7 @@ struct CoachReviewModelTests {
         for try await piece in LingClient().streamCoachTest(CoachPrompt.request(turns: turns,
             background: "Synthetic ActAI Android practice", frames: [], audio: nil,
             committed: "Room saves messages locally first.", refresh: true)) { answer += piece }
+        answer = try #require(try CoachAnswerResponse.parse(answer, finished: true))
         #expect(CoachScript.sentences(answer).count == 1)
         #expect(CoachScript.words(answer).count <= 45)
         try Data(answer.utf8).write(to: URL(fileURLWithPath: "/tmp/cicada-manual-refresh-answer.txt"))

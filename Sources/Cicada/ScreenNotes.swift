@@ -171,18 +171,19 @@ final class ScreenWatch: ObservableObject {
             previous = sig
             if onKeyframe != nil {
                 let accepted = keyframes
-                let result = await Task.detached(priority: .utility) { () -> (CoachKeyframePolicy, Data?, String) in
+                let result = await Task.detached(priority: .utility) { () -> (CoachKeyframePolicy, Data?, String, CoachKeyframePolicy.Kind?) in
                     var policy = accepted
                     let ocr = Self.recognizeText(image)
                     let fingerprint = Self.coachSignature(image)
-                    let changed = policy.accept(fingerprint: fingerprint, text: ocr, at: at.timeIntervalSinceReferenceDate)
-                    return (policy, changed ? RealtimeMedia.jpeg(image) : nil, ocr)
+                    let kind = policy.accept(fingerprint: fingerprint, text: ocr, at: at.timeIntervalSinceReferenceDate)
+                    return (policy, kind == nil ? nil : RealtimeMedia.jpeg(image), ocr, kind)
                 }.value
                 guard !Task.isCancelled, generation == runID, revision == targetRevision else { continue }
                 keyframes = result.0
                 if let jpeg = result.1 {
-                    onKeyframe?(CoachFrame(jpeg: jpeg, seconds: max(0, at.timeIntervalSince(startedAt)), ocr: result.2))
-                    debugLog("coach: screen keyframe bytes=\(jpeg.count)")
+                    let refresh = result.3 == .refresh
+                    onKeyframe?(CoachFrame(jpeg: jpeg, seconds: max(0, at.timeIntervalSince(startedAt)), ocr: result.2, refresh: refresh))
+                    debugLog("coach: screen keyframe bytes=\(jpeg.count)\(refresh ? " refresh" : "")")
                 }
             }
             let trigger = policy.next(now: at.timeIntervalSinceReferenceDate, difference: retryRead ? 1 : difference, steady: steady,

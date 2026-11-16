@@ -16,8 +16,7 @@ struct CandidateFeed: View {
     var onFloat: (() -> Void)?
     var fontSize: CGFloat = 20
     var glossFontSize: CGFloat?
-    private let controlsAtBottom: Bool
-    @State private var controlsExpanded = false
+    private let floatingFollow: Bool?
     @State private var followsReading = true
     @State private var playback = ShadowPlayback()
     @State private var scrollAnswerID: String?
@@ -31,18 +30,22 @@ struct CandidateFeed: View {
     init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil, expanded: Bool = false,
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
          onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil,
-         controlsAtBottom: Bool = false) {
+         floatingFollow: Bool? = nil) {
         self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.fast = engine.fastFollow; self.shadowReader = shadowReader
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
         self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
         self.glossFontSize = glossFontSize
-        self.controlsAtBottom = controlsAtBottom
+        self.floatingFollow = floatingFollow
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if !controlsAtBottom { controls }
+            if floatingFollow == nil {
+                CandidateFeedControls(engine: engine, settings: settings, shadowReader: shadowReader,
+                                      followsReading: $followsReading, microphoneName: microphoneName,
+                                      micOn: micOn, onMic: onMic, onMicrophoneSettings: onMicrophoneSettings, onFloat: onFloat)
+            }
             GeometryReader { viewport in
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 14) {
@@ -106,8 +109,8 @@ struct CandidateFeed: View {
                     .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
                         sentence: followedSentence, sentenceCount: engine.script.sentences.count,
                         translations: gloss.translations, size: viewport.size, fontSize: fontSize,
-                        follows: followsReading, target: rowTops[followedSentence], line: followedLine)) {
-                        guard followsReading else { return }
+                        follows: floatingFollow ?? followsReading, target: rowTops[followedSentence], line: followedLine)) {
+                        guard floatingFollow ?? followsReading else { return }
                         // Coalesce sentence, gloss and layout updates before scrolling. A layout
                         // correction must retarget the same animation rather than snap to its end.
                         do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
@@ -127,15 +130,101 @@ struct CandidateFeed: View {
                 .task(id: settings.askGloss) {
                     if settings.askGloss { gloss.enqueue(engine.script.sentences) }
                 }
-            if controlsAtBottom { controls }
         }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
         .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
     }
-    private var readingTopInset: CGFloat { controlsAtBottom ? 0 : 24 }
+    private var readingTopInset: CGFloat { floatingFollow == nil ? 24 : 0 }
 
-    @ViewBuilder private var controls: some View {
+    private static let readingSpace = "readingContent"
+    private func firstWord(in sentence: Int) -> Int {
+        engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
+    }
+    /// Fast follow draws its own cursor only without read-along. With read-along there is one
+    /// position: fast follow moves it silently (`AppModel.followShadow`) and the watch plays it.
+    private var fastActive: Bool {
+        settings.fastReadingFollow && !settings.shadowReading && fast.answerID == engine.script.answerID
+    }
+    /// The further of Gemma's confirmed progress and the fast on-device draft.
+    private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }
+    /// The word being read: read-along's position (its voice, or fast follow moving it silently),
+    /// else fast follow's own cursor; nil when only sentences are followed.
+    private var lineWord: Int? {
+        if fastActive { return fastWord }
+        guard settings.shadowReading, playback.answerID == engine.script.answerID else { return nil }
+        return playback.currentWord
+    }
+    private var followedLine: Int {
+        let sentences = engine.script.sentences
+        guard let word = lineWord, let height = fastFrame?.height, fontSize > 0, followedSentence < sentences.count else { return 0 }
+        let count = CoachScript.words(sentences[followedSentence]).count
+        guard count > 0 else { return 0 }
+        // Words spread evenly over the wrapped lines: close enough to pick the line being read.
+        let lines = max(1, Int((height / (fontSize * 1.2)).rounded()))
+        let progress = Double(word - firstWord(in: followedSentence)) / Double(count)
+        return min(lines - 1, Int(min(1, max(0, progress)) * Double(lines)))
+    }
+    /// Words already heard are grey; the latest heard word carries the live accent.
+    private func fastFollowed(_ sentence: String, index: Int) -> AttributedString {
+        var text = AttributedString(sentence)
+        text.foregroundColor = Palette.ink
+        let ranges = ShadowPlayback.displayRanges(sentence)
+        let read = min(ranges.count, max(0, fastWord - firstWord(in: index)))
+        guard read > 0 else { return text }
+        for (n, range) in ranges.prefix(read).enumerated() {
+            guard let r = Range(range, in: sentence), let a = Range(r, in: text) else { continue }
+            text[a].foregroundColor = n == read - 1 ? Palette.accent : Palette.secondary
+        }
+        return text
+    }
+    private var followedSentence: Int {
+        if fastActive {
+            var end = 0
+            for (index, sentence) in engine.script.sentences.enumerated() {
+                end += CoachScript.words(sentence).count
+                if fastWord < end { return index }
+            }
+            return max(0, engine.script.sentences.count - 1)
+        }
+        guard settings.shadowReading else { return engine.script.currentSentence }
+        guard playback.answerID == engine.script.answerID else { return 0 }
+        let word = playback.currentWord ?? playback.words.first?.range.lowerBound ?? 0
+        var end = 0
+        for (index, sentence) in engine.script.sentences.enumerated() {
+            end += CoachScript.words(sentence).count
+            if word < end { return index }
+        }
+        return max(0, engine.script.sentences.count - 1)
+    }
+}
+
+struct CandidateFeedControls: View {
+    @ObservedObject var engine: InterviewCoach
+    @ObservedObject var settings: AppSettings
+    var shadowReader: ShadowReader?
+    @Binding var followsReading: Bool
+    var microphoneName = ""
+    var micOn = false
+    var onMic: (() -> Void)?
+    var onMicrophoneSettings: (() -> Void)?
+    var onFloat: (() -> Void)?
+    @State private var controlsExpanded = false
+    @ObservedObject private var fast: FastReadingFollow
+
+    init(engine: InterviewCoach, settings: AppSettings, shadowReader: ShadowReader? = nil,
+         followsReading: Binding<Bool>, microphoneName: String = "", micOn: Bool = false,
+         onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil) {
+        self.engine = engine; self.settings = settings; self.shadowReader = shadowReader; self.fast = engine.fastFollow
+        self._followsReading = followsReading; self.microphoneName = microphoneName; self.micOn = micOn
+        self.onMic = onMic; self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) { rows }
+    }
+
+    @ViewBuilder private var rows: some View {
         HStack {
             Button { controlsExpanded.toggle() } label: {
                 HStack(spacing: 5) {
@@ -218,66 +307,6 @@ struct CandidateFeed: View {
         }
     }
 
-    private static let readingSpace = "readingContent"
-    private func firstWord(in sentence: Int) -> Int {
-        engine.script.sentences.prefix(sentence).reduce(0) { $0 + CoachScript.words($1).count }
-    }
-    /// Fast follow draws its own cursor only without read-along. With read-along there is one
-    /// position: fast follow moves it silently (`AppModel.followShadow`) and the watch plays it.
-    private var fastActive: Bool {
-        settings.fastReadingFollow && !settings.shadowReading && fast.answerID == engine.script.answerID
-    }
-    /// The further of Gemma's confirmed progress and the fast on-device draft.
-    private var fastWord: Int { max(engine.script.cursor, fast.word ?? 0) }
-    /// The word being read: read-along's position (its voice, or fast follow moving it silently),
-    /// else fast follow's own cursor; nil when only sentences are followed.
-    private var lineWord: Int? {
-        if fastActive { return fastWord }
-        guard settings.shadowReading, playback.answerID == engine.script.answerID else { return nil }
-        return playback.currentWord
-    }
-    private var followedLine: Int {
-        let sentences = engine.script.sentences
-        guard let word = lineWord, let height = fastFrame?.height, fontSize > 0, followedSentence < sentences.count else { return 0 }
-        let count = CoachScript.words(sentences[followedSentence]).count
-        guard count > 0 else { return 0 }
-        // Words spread evenly over the wrapped lines: close enough to pick the line being read.
-        let lines = max(1, Int((height / (fontSize * 1.2)).rounded()))
-        let progress = Double(word - firstWord(in: followedSentence)) / Double(count)
-        return min(lines - 1, Int(min(1, max(0, progress)) * Double(lines)))
-    }
-    /// Words already heard are grey; the latest heard word carries the live accent.
-    private func fastFollowed(_ sentence: String, index: Int) -> AttributedString {
-        var text = AttributedString(sentence)
-        text.foregroundColor = Palette.ink
-        let ranges = ShadowPlayback.displayRanges(sentence)
-        let read = min(ranges.count, max(0, fastWord - firstWord(in: index)))
-        guard read > 0 else { return text }
-        for (n, range) in ranges.prefix(read).enumerated() {
-            guard let r = Range(range, in: sentence), let a = Range(r, in: text) else { continue }
-            text[a].foregroundColor = n == read - 1 ? Palette.accent : Palette.secondary
-        }
-        return text
-    }
-    private var followedSentence: Int {
-        if fastActive {
-            var end = 0
-            for (index, sentence) in engine.script.sentences.enumerated() {
-                end += CoachScript.words(sentence).count
-                if fastWord < end { return index }
-            }
-            return max(0, engine.script.sentences.count - 1)
-        }
-        guard settings.shadowReading else { return engine.script.currentSentence }
-        guard playback.answerID == engine.script.answerID else { return 0 }
-        let word = playback.currentWord ?? playback.words.first?.range.lowerBound ?? 0
-        var end = 0
-        for (index, sentence) in engine.script.sentences.enumerated() {
-            end += CoachScript.words(sentence).count
-            if word < end { return index }
-        }
-        return max(0, engine.script.sentences.count - 1)
-    }
     private var status: String {
         if CoachDeepSeekTest.enabled {
             switch engine.state {

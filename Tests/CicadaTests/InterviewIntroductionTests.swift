@@ -46,7 +46,7 @@ struct InterviewIntroductionModelTests {
                                                background: Knowledge.read(), frames: [], audio: nil, stage: .cto)
             var answer = ""
             for try await piece in client.streamCoachTest(messages) { answer += piece }
-            answer = answer.trimmingCharacters(in: .whitespacesAndNewlines)
+            answer = try #require(try CoachAnswerResponse.parse(answer, finished: true))
             results.append(["question": question, "answer": answer])
             try JSONSerialization.data(withJSONObject: results, options: [.prettyPrinted, .sortedKeys])
                 .write(to: URL(fileURLWithPath: "/tmp/cicada-introduction-evaluation.json"))

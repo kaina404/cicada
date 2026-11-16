@@ -45,6 +45,7 @@ struct CoachStoryModelTests {
                 for run in 1...3 {
                     var answer = ""
                     for try await piece in client.streamCoachTest(CoachPrompt.request(turns: sent, background: knowledge, frames: [], audio: nil, stage: .general)) { answer += piece }
+                    answer = try #require(try CoachAnswerResponse.parse(answer, finished: true))
                     let sku = CoachStory.parse(background).first { $0.id == "kkday-sku" }!
                     let told = sku.isTold(in: answer)
                     if told { retold[name, default: 0] += 1 }

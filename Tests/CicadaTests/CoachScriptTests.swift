@@ -155,6 +155,32 @@ struct CoachScriptTests {
         #expect(CoachScript.words("psst /psst/.") == ["psst"])
     }
 
+    @Test func answerProtocolSeparatesFramingWithoutFilteringCode() throws {
+        let marker = CoachAnswerResponse.marker
+        for count in 0...marker.count {
+            #expect(try CoachAnswerResponse.parse(String(marker.prefix(count)), finished: false) == nil)
+        }
+        for body in ["One thing I'm working on is setting the scope earlier.",
+                     #"{"decision":"answer","topic":"weakness","confidence":0.95}"#,
+                     #"{"confidence":0.95,"message":"Keep {braces} and \"quotes\"."}"#,
+                     "```kotlin\nfun score() {\n    val confidence = 0.95\n}\n```",
+                     "```json\n{\"action\":\"replace\",\"reason\":\"business rule\"}\n```",
+                     "{ incomplete code", "Print <<<CICADA_ANSWER>>> as a literal."] {
+            for count in 1...body.count {
+                #expect(try CoachAnswerResponse.parse(marker + "\n" + String(body.prefix(count)), finished: false) ==
+                        String(body.prefix(count)).trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+            #expect(try CoachAnswerResponse.parse(marker + "\n" + body, finished: true) == body)
+        }
+        for invalid in ["", "<<<CICADA_ANS", #"{"decision":"answer","topic":"weakness","confidence":0.95}"#,
+                        #"{"decision":"answer"}"# + "\nOne thing I'm working on is scope."] {
+            #expect(throws: (any Error).self) { try CoachAnswerResponse.parse(invalid, finished: true) }
+        }
+        // Ordinary output parsing never guesses whether user-requested JSON is internal metadata.
+        let json = #"{"decision":"answer","topic":"weakness","confidence":0.95}"#
+        #expect(CoachOutput(json).next == json)
+    }
+
     @Test func reviewDecisionsAreStrictControlData() throws {
         #expect(try CoachReviewDecision.decode(#"{"action":"keep","reason":"Already covered"}"#).action == .keep)
         #expect(try CoachReviewDecision.decode(#"{"action":"replace","reason":"New constraint"}"#).action == .replace)
@@ -229,7 +255,8 @@ struct CoachScriptTests {
     }
     @Test func promptRequestsFullSpeakableAnswerAndIncludesOCRAndImmutableSpeech() throws {
         let frame = CoachFrame(jpeg: Data([1]), seconds: 2, ocr: "First token: 850 ms")
-        let messages = CoachPrompt.request(turns: [], background: "", frames: [frame], audio: nil, committed: "I use Room.")
+        let question = CoachTurn(id: "q", seconds: 1, role: "interviewer", text: "Explain this diagram.")
+        let messages = CoachPrompt.request(turns: [question], background: "", frames: [frame], audio: nil, committed: "I use Room.")
         let text = String(data: try JSONSerialization.data(withJSONObject: messages), encoding: .utf8) ?? ""
         #expect(text.contains("COMPLETE"))
         #expect(text.contains("high-school English, about 3,000 common words"))

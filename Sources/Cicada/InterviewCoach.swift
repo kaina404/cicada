@@ -36,6 +36,9 @@ final class InterviewCoach: ObservableObject {
     private var turns: [CoachTurn] = []
     private var seen: [String: String] = [:]
     private var drafts: [String: CoachTurn] = [:]
+    private var interviewerRecognition = CoachRecognition()
+    private var finalizedRecognitions: [(text: String?, recognition: CoachRecognition)] = []
+    private var turnRecognitions: [String: CoachRecognition] = [:]
     private var lastSpeech: [String: String] = [:]
     private var frames: [CoachFrame] = []
     private var lastVoicedAt = -Double.infinity
@@ -108,9 +111,19 @@ final class InterviewCoach: ObservableObject {
             // In the app this is the independent Gemma candidate transcript, shared with the record.
             return
         }
+        interviewerRecognition.append(text)
+        drafts[role]?.recognitionAlternatives = interviewerRecognition.alternatives(to: text)
         acceptInterviewer(text, now: now)
     }
-    func finalized(role: String) { drafts[role] = nil }
+    func finalized(role: String, text: String? = nil) {
+        if role == "interviewer" {
+            // Final ASR reaches SessionStore after this callback; retain its draft evidence.
+            finalizedRecognitions.append((text, interviewerRecognition))
+            finalizedRecognitions = Array(finalizedRecognitions.suffix(8))
+            interviewerRecognition = CoachRecognition()
+        }
+        drafts[role] = nil
+    }
 
     func observe(lines: [TranscriptLine], now: Double) {
         guard state != .idle, state != .setup else { return }
@@ -127,6 +140,19 @@ final class InterviewCoach: ObservableObject {
                 script.commit(id: turn.id, text: turn.text)
                 emit("committed", text: turn.text)
             } else {
+                var recognition = turnRecognitions[turn.id] ?? CoachRecognition()
+                if !wasSeen {
+                    if let index = finalizedRecognitions.firstIndex(where: { $0.text == nil || $0.text == turn.text }) {
+                        recognition = finalizedRecognitions.remove(at: index).recognition
+                    } else {
+                        // Direct-final callers do not issue finalized(). Do not consume drafts of
+                        // the next utterance when a matching final has already supplied its evidence.
+                        recognition = interviewerRecognition
+                        interviewerRecognition = CoachRecognition()
+                    }
+                }
+                recognition.append(turn.text)
+                turnRecognitions[turn.id] = recognition
                 // A final matching its draft confirms the endpoint without cancelling prepared text.
                 if lastSpeech["interviewer"] != turn.text { acceptInterviewer(turn.text, now: now) }
                 drafts["interviewer"] = nil
@@ -134,6 +160,8 @@ final class InterviewCoach: ObservableObject {
         }
         // Keep bounded speech in the request, while complete originals live in SessionStore.
         turns = Array(turns.suffix(160))
+        let retained = Set(turns.map(\.id))
+        turnRecognitions = turnRecognitions.filter { retained.contains($0.key) }
     }
 
     private func acceptInterviewer(_ text: String, now: Double) {
@@ -190,6 +218,9 @@ final class InterviewCoach: ObservableObject {
 
     func picture(_ frame: CoachFrame) {
         guard state != .idle, state != .setup else { return }
+        // A timed re-capture of the same page keeps the picture fresh without pushing out earlier pages
+        // or asking DeepSeek again: otherwise a static screen would regenerate the answer every few seconds.
+        if frame.refresh, !frames.isEmpty { frames[frames.count - 1] = frame; return }
         frames.append(frame); frames = Array(frames.suffix(3))
         // A selected page is context, not an interviewer request. OCR alone must not
         // start an answer before anyone asks; explicit screen-only analysis uses ask().
@@ -230,9 +261,14 @@ final class InterviewCoach: ObservableObject {
         if script.pending.isEmpty { generate(speculate: false) }
         else { review() }
     }
-    func ask() {
-        guard state != .idle, state != .setup else { return }
+    var canRefreshAnswer: Bool {
+        state != .idle && state != .setup && (!evidence.isEmpty || !frames.isEmpty)
+    }
+    @discardableResult
+    func ask() -> Bool {
+        guard canRefreshAnswer else { return false }
         invalidate(); endpoint = clock; dirty = true; generate(speculate: false, refresh: true)
+        return true
     }
     func retry() {
         if readingFailed { reading.retry() }
@@ -242,7 +278,11 @@ final class InterviewCoach: ObservableObject {
         else { dirty = true; due = clock; endpoint = clock }
     }
     private var evidence: [CoachTurn] {
-        (turns + drafts.values.filter { draft in
+        (turns.map { turn in
+            var turn = turn
+            turn.recognitionAlternatives = turnRecognitions[turn.id]?.alternatives(to: turn.text)
+            return turn
+        } + drafts.values.filter { draft in
             !turns.suffix(2).contains { $0.role == draft.role && $0.text == draft.text }
         }).sorted { $0.seconds < $1.seconds }
     }
@@ -351,22 +391,22 @@ final class InterviewCoach: ObservableObject {
             do {
                 for try await piece in self.stream(messages, CoachPrompt.model) {
                     guard !Task.isCancelled, self.revision == token else { return }
-                    if self.raw.isEmpty {
+                    self.raw += piece
+                    guard let answer = try CoachAnswerResponse.parse(self.raw, finished: false), !answer.isEmpty else { continue }
+                    if self.firstLatency == nil {
                         self.firstLatency = Date().timeIntervalSince(started)
                         debugLog("coach: pipeline_first_token_ms=\(Int((self.firstLatency ?? 0) * 1000)) provider=\(CoachDeepSeekTest.enabled ? "deepseek" : "local")")
                     }
-                    self.raw += piece
-                    self.current?.output = CoachOutput(self.raw)
-                    if let answer = self.current?.output.next {
-                        self.current?.output.next = self.spokenAnswer(answer, finished: false)
-                    }
+                    self.current?.output = CoachOutput(answer)
+                    self.current?.output.next = self.spokenAnswer(answer, finished: false)
                     if !self.speculative { self.publish() }
                 }
                 guard !Task.isCancelled, self.revision == token else { return }
-                guard !self.spokenAnswer(self.raw, finished: true).isEmpty else { throw URLError(.cannotParseResponse) }
+                guard let answer = try CoachAnswerResponse.parse(self.raw, finished: true),
+                      !self.spokenAnswer(answer, finished: true).isEmpty else { throw URLError(.cannotParseResponse) }
                 if self.current != nil {
-                    self.current?.output = CoachOutput(self.raw)
-                    self.current?.output.next = self.spokenAnswer(self.raw, finished: true)
+                    self.current?.output = CoachOutput(answer)
+                    self.current?.output.next = self.spokenAnswer(answer, finished: true)
                     if !self.speculative { self.publish() }
                 }
                 if self.speculative { self.finishedSpeculation = true }
@@ -427,6 +467,8 @@ final class InterviewCoach: ObservableObject {
         acoustic.stop(); acousticReady = false; acousticEndpoint = nil
         invalidate(); state = .idle; dirty = false; due = .infinity; endpoint = .infinity
         drafts = [:]; lastSpeech = [:]; frames = []; lastVoicedAt = -.infinity
+        interviewerRecognition = CoachRecognition(); finalizedRecognitions = []
+        turnRecognitions = [:]
         lastInterviewerAt = -.infinity
         lastInterviewerWords = []
     }

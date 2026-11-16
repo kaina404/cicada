@@ -50,6 +50,7 @@ struct HRCompanyHistoryModelTests {
                     if first == nil, !piece.isEmpty { first = Date().timeIntervalSince(started) }
                     answer += piece
                 }
+                answer = try #require(try CoachAnswerResponse.parse(answer, finished: true))
             } catch { failure = String(describing: error) }
             reports.append(["id": index + 1, "company": fixture.0, "topic": fixture.1,
                 "question": fixture.2, "answer": answer, "error": failure,

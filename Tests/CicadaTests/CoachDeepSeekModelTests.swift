@@ -6,6 +6,65 @@ import Testing
 /// Real cloud calls with synthetic evidence only. Never enabled by the normal test run.
 @Suite(.serialized, .enabled(if: ProcessInfo.processInfo.environment["CICADA_TEST_DEEPSEEK"] == "1"))
 struct CoachDeepSeekModelTests {
+    @Test @MainActor func framedWeaknessAnswerThroughRealProvider() async throws {
+        try #require(CoachDeepSeekTest.enabled)
+        let coach = InterviewCoach(readingInfer: { _ in "" })
+        coach.stage = .hr
+        coach.gloss.enabled = false
+        coach.start(background: "Synthetic ActAI Android interview. My weakness is expanding code scope too early. I now agree the scope before coding.", available: true, prepare: { true })
+        defer { coach.endMeeting() }
+        coach.observe(lines: [TranscriptLine(id: "q", t: 0, speaker: "them",
+            src: "What is one weakness you are currently working on?", srcLang: "en", dstLang: "")], now: 0)
+        coach.ask()
+        let deadline = Date().addingTimeInterval(60)
+        while (coach.state == .loading || coach.state == .generating), Date() < deadline {
+            #expect(!coach.script.pending.contains("CICADA_ANSWER"))
+            #expect(!coach.script.pending.contains("confidence"))
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(coach.state == .ready)
+        let answer = try #require(coach.paragraphs.last?.output.next)
+        #expect(!answer.isEmpty)
+        #expect(!answer.contains("decision"))
+        #expect(!answer.contains("0.95"))
+        try Data(answer.utf8).write(to: URL(fileURLWithPath: "/tmp/cicada-framed-weakness-answer.txt"))
+    }
+
+    @Test @MainActor func degradedRecognitionResolvesIntentWithRealProvider() async throws {
+        let cloud = LingClient()
+        let background = "Synthetic interview: the candidate's weakness is expanding code scope too early, improved by agreeing limits before implementation. Their current project is a personal assistant app named CabinetAI."
+        let cases: [(String, String, String)] = [
+            ("What's one weakness you're currently working on?", "you'… you're currently working on?", "weakness"),
+            ("What is one failure you learned from?", "you learned from?", "failure"),
+            ("What is your weakness?", "Actually, don't discuss weakness. Tell me about your current project.", "CabinetAI"),
+            ("Could you tell me about the...", "the...", "?")
+        ]
+        var reports: [[String: String]] = []
+        for (earlier, latest, expected) in cases {
+            var script = CoachScript(modelReading: true)
+            script.replacePending("My strength is being proactive.", since: [])
+            let turn = CoachTurn(id: "q", seconds: 1, role: "interviewer", text: latest,
+                                 recognitionAlternatives: [earlier])
+            let messages = CoachPrompt.reviewRequest(turns: [turn], background: background,
+                                                    frames: [], script: script, stage: .general)
+            var raw = ""
+            for try await chunk in cloud.streamCoachTest(messages) { raw += chunk }
+            reports.append(["earlier": earlier, "latest": latest, "response": raw])
+            try JSONSerialization.data(withJSONObject: reports, options: [.prettyPrinted, .sortedKeys])
+                .write(to: URL(fileURLWithPath: "/tmp/cicada-recognition-provider-results.json"))
+            let result = try #require(try CoachReviewResponse.parse(raw, finished: true))
+            #expect(result.decision.action == .replace)
+            #expect(result.answer.localizedCaseInsensitiveContains(expected))
+            if expected == "weakness" {
+                let opening = CoachScript.sentences(result.answer).first ?? ""
+                #expect(opening.localizedCaseInsensitiveContains("weakness"))
+                #expect(!opening.contains("building CabinetAI"))
+            }
+        }
+        try JSONSerialization.data(withJSONObject: reports, options: [.prettyPrinted, .sortedKeys])
+            .write(to: URL(fileURLWithPath: "/tmp/cicada-recognition-provider-results.json"))
+    }
+
     @Test @MainActor func firstVisibleTokenThroughCoach() async throws {
         try #require(CoachDeepSeekTest.enabled)
         let image = NSImage(size: NSSize(width: 1600, height: 900))

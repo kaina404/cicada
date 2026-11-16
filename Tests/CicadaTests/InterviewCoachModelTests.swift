@@ -45,7 +45,7 @@ struct InterviewCoachModelTests {
                     firstSentence = Date().timeIntervalSince(start)
                 }
             }
-            let output = CoachOutput(result)
+            let output = CoachOutput(try #require(try CoachAnswerResponse.parse(result, finished: true)))
             reports.append(["candidateAnswered": index == 1, "audioWithoutASR": index == 2, "first": first ?? -1, "firstSentence": firstSentence ?? -1, "total": Date().timeIntervalSince(start), "output": result])
             try JSONSerialization.data(withJSONObject: reports, options: [.prettyPrinted, .sortedKeys])
                 .write(to: URL(fileURLWithPath: "/tmp/cicada-interview-coach-benchmark.json"))
