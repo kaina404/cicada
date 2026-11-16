@@ -56,3 +56,9 @@ watch/CicadaWatch.xcodeproj/**/xcuserdata/
 !AssistantSentenceControl/AssistantSentenceControl.xcodeproj/project.pbxproj
 AssistantSentenceControl/AssistantSentenceControl.xcodeproj/**/xcuserdata/
 AssistantSentenceControl/AssistantSentenceControl.xcodeproj/project.xcworkspace/
+
+# Local test artifacts: Playwright logs, Python caches, recordings and generated outputs.
+.playwright-mcp/
+__pycache__/
+/*.mp4
+/outputs/
