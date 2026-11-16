@@ -10,6 +10,7 @@ final class ScreenAudioSource: NSObject, AudioSource, SCStreamOutput, SCStreamDe
     private var startup: Task<Void, Never>?
     private var run = UUID()
     private let queue = DispatchQueue(label: "cicada.screen.audio", qos: .userInitiated)
+    private var copyFailures = 0 // only touched on the sample queue
 
     func start() throws {
         let token = run
@@ -33,6 +34,8 @@ final class ScreenAudioSource: NSObject, AudioSource, SCStreamOutput, SCStreamDe
                 debugLog("coach: ScreenCaptureKit system audio started")
             } catch {
                 guard !Task.isCancelled, run == token else { return }
+                let ns = error as NSError
+                RecognitionDiagnosticLog.shared.write("capture error stage=start domain=\(ns.domain) code=\(ns.code)")
                 onFailed?()
             }
         }
@@ -45,6 +48,8 @@ final class ScreenAudioSource: NSObject, AudioSource, SCStreamOutput, SCStreamDe
     func stream(_ stream: SCStream, didStopWithError error: Error) {
         Task { @MainActor [weak self] in
             guard let self, self.stream === stream else { return }
+            let ns = error as NSError
+            RecognitionDiagnosticLog.shared.write("capture error stage=stopped domain=\(ns.domain) code=\(ns.code)")
             self.onFailed?()
         }
     }
@@ -54,7 +59,14 @@ final class ScreenAudioSource: NSObject, AudioSource, SCStreamOutput, SCStreamDe
         let format = AVAudioFormat(cmAudioFormatDescription: description)
         guard let pcm = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(CMSampleBufferGetNumSamples(buffer))) else { return }
         pcm.frameLength = pcm.frameCapacity
-        guard CMSampleBufferCopyPCMDataIntoAudioBufferList(buffer, at: 0, frameCount: Int32(pcm.frameLength), into: pcm.mutableAudioBufferList) == noErr else { return }
+        let status = CMSampleBufferCopyPCMDataIntoAudioBufferList(buffer, at: 0, frameCount: Int32(pcm.frameLength), into: pcm.mutableAudioBufferList)
+        guard status == noErr else {
+            copyFailures += 1
+            if copyFailures == 1 || copyFailures.isMultiple(of: 250) {
+                RecognitionDiagnosticLog.shared.write("capture error stage=copy status=\(status) count=\(copyFailures)")
+            }
+            return
+        }
         onAudio?(pcm)
     }
 }

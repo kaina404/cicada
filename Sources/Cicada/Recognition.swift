@@ -316,7 +316,7 @@ final class Analyzer: RecognitionStream, @unchecked Sendable {
     let format: AVAudioFormat
     let results: AsyncThrowingStream<Recognition.Piece, Error>
     private let analyzer: SpeechAnalyzer
-    private let input: AsyncStream<AnalyzerInput>.Continuation
+    private let input: RecognitionInput
     private let reader: Task<Void, Never>
 
     static func transcriber(_ locale: String, drafts: Bool = false, confidence: Bool = false) -> SpeechTranscriber {
@@ -342,15 +342,24 @@ final class Analyzer: RecognitionStream, @unchecked Sendable {
         let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [t])
             ?? AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16_000, channels: 1, interleaved: false)!
         let analyzer = SpeechAnalyzer(modules: [t])
-        try await analyzer.prepareToAnalyze(in: format)
         let (stream, input) = AsyncStream.makeStream(of: AnalyzerInput.self, bufferingPolicy: .unbounded)
-        let me = Analyzer(t, analyzer: analyzer, format: format, input: input)
-        try await analyzer.start(inputSequence: stream)
+        let diagnostics = RecognitionInput(format: format, continuation: input, role: "live")
+        let me = Analyzer(t, analyzer: analyzer, format: format, input: diagnostics)
+        do {
+            diagnostics.event("preparing")
+            try await analyzer.prepareToAnalyze(in: format)
+            try await analyzer.start(inputSequence: stream)
+            diagnostics.event("started locale=\(locale)")
+        } catch {
+            diagnostics.error("prepare/start", error)
+            await me.cancel()
+            throw error
+        }
         return me
     }
 
     private init(_ t: any SpeechModule, analyzer: SpeechAnalyzer, format: AVAudioFormat,
-                 input: AsyncStream<AnalyzerInput>.Continuation) {
+                 input: RecognitionInput) {
         self.analyzer = analyzer
         self.format = format
         self.input = input
@@ -375,28 +384,36 @@ final class Analyzer: RecognitionStream, @unchecked Sendable {
                 } else if let d = t as? DictationTranscriber {
                     for try await r in d.results { out.yield(piece(r.text, r.isFinal, r.range)) }
                 }
+                input.event("results finished")
                 out.finish()
             } catch {
+                input.error("results", error)
                 out.finish(throwing: error)
             }
         }
     }
 
-    func append(_ buffer: AVAudioPCMBuffer) { input.yield(AnalyzerInput(buffer: buffer)) }
+    func append(_ buffer: AVAudioPCMBuffer) { input.append(buffer) }
 
     func finalize(through seconds: Double) async throws {
-        try await analyzer.finalize(through: CMTime(seconds: seconds, preferredTimescale: 1000))
+        do {
+            try await analyzer.finalize(through: CMTime(seconds: seconds, preferredTimescale: 1000))
+        } catch {
+            input.error("finalize", error)
+            throw error
+        }
     }
 
     func finish() async {
-        input.finish()
-        do { try await analyzer.finalizeAndFinishThroughEndOfInput() } catch { debugLog("analyzer finish: \(error)") }
+        input.close("finish")
+        do { try await analyzer.finalizeAndFinishThroughEndOfInput() } catch { input.error("finish", error) }
         await reader.value
     }
 
     func cancel() async {
-        input.finish()
+        input.close("cancel")
         await analyzer.cancelAndFinishNow()
+        input.event("cancelled")
     }
 }
 
@@ -831,21 +848,30 @@ protocol RecordHearing: AnyObject, Sendable {
 final class RecordTrack: RecordHearing, @unchecked Sendable {
     let sentences: AsyncThrowingStream<(runs: [Recognition.Run], through: Double), Error>
     private let analyzer: SpeechAnalyzer
-    private let input: AsyncStream<AnalyzerInput>.Continuation
+    private let input: RecognitionInput
     private let reader: Task<Void, Never>
 
     static func start(_ locale: String, format: AVAudioFormat) async throws -> RecordTrack {
         let t = SpeechTranscriber(locale: Locale(identifier: locale), transcriptionOptions: [],
                                   reportingOptions: [], attributeOptions: [.audioTimeRange])
         let analyzer = SpeechAnalyzer(modules: [t])
-        try await analyzer.prepareToAnalyze(in: format)
         let (stream, input) = AsyncStream.makeStream(of: AnalyzerInput.self, bufferingPolicy: .unbounded)
-        let me = RecordTrack(t, analyzer: analyzer, input: input)
-        try await analyzer.start(inputSequence: stream)
+        let diagnostics = RecognitionInput(format: format, continuation: input, role: "record")
+        let me = RecordTrack(t, analyzer: analyzer, input: diagnostics)
+        do {
+            diagnostics.event("preparing")
+            try await analyzer.prepareToAnalyze(in: format)
+            try await analyzer.start(inputSequence: stream)
+            diagnostics.event("started locale=\(locale)")
+        } catch {
+            diagnostics.error("prepare/start", error)
+            await me.cancel()
+            throw error
+        }
         return me
     }
 
-    private init(_ t: SpeechTranscriber, analyzer: SpeechAnalyzer, input: AsyncStream<AnalyzerInput>.Continuation) {
+    private init(_ t: SpeechTranscriber, analyzer: SpeechAnalyzer, input: RecognitionInput) {
         self.analyzer = analyzer
         self.input = input
         let (sentences, out) = AsyncThrowingStream.makeStream(of: (runs: [Recognition.Run], through: Double).self)
@@ -856,8 +882,10 @@ final class RecordTrack: RecordHearing, @unchecked Sendable {
                     let runs = Self.runs(r.text, r.range)
                     if !runs.isEmpty { out.yield((runs, CMTimeGetSeconds(r.range.end))) }
                 }
+                input.event("results finished")
                 out.finish()
             } catch {
+                input.error("results", error)
                 out.finish(throwing: error)
             }
         }
@@ -880,17 +908,18 @@ final class RecordTrack: RecordHearing, @unchecked Sendable {
         return out.filter { $0.start.isFinite && $0.end.isFinite }
     }
 
-    func append(_ buffer: AVAudioPCMBuffer) { input.yield(AnalyzerInput(buffer: buffer)) }
+    func append(_ buffer: AVAudioPCMBuffer) { input.append(buffer) }
 
     func finish() async {
-        input.finish()
-        do { try await analyzer.finalizeAndFinishThroughEndOfInput() } catch { debugLog("record track finish: \(error)") }
+        input.close("finish")
+        do { try await analyzer.finalizeAndFinishThroughEndOfInput() } catch { input.error("finish", error) }
         await reader.value
     }
 
     func cancel() async {
-        input.finish()
+        input.close("cancel")
         await analyzer.cancelAndFinishNow()
+        input.event("cancelled")
     }
 }
 

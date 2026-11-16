@@ -3,6 +3,8 @@
 开发版（`scripts/build.sh`，bundle id `com.wquguru.cicada.dev`）默认就接受这些调试命令，日志在 `/tmp/livesubs-dev-debug.log`。
 正式版需要先打开调试模式：`defaults write com.wquguru.cicada debug -bool true`，然后重启 App；日志在 `/tmp/livesubs-debug.log`。
 
+语音识别的技术诊断另存 `~/Library/Logs/LiveSubs Dev/Recognition/recognition.log`（正式版为 `LiveSubs`），不依赖调试开关，重启后保留。按识别流 UUID 关联 `created/preparing/started`、每 5 秒音频帧数、缓冲区拒绝原因、错误 domain/code 和结束状态；不记录音频、原文、密钥或 error userInfo。文件达到 1 MB 后轮转，保留当前及两份旧日志，仅当前账户可读。异步写入，不在音频回调等待磁盘；硬崩溃前最后尚未写入的事件可能丢失，SIGSEGV 仍以 macOS `.ips` 报告为准。复现 2026-11-16 00:45 的崩溃后，应同时保留 `.ips` 与该目录，不能仅凭缺少结束事件断言被系统杀掉。
+
 编译：`swiftc -O lsctl.swift -o lsctl`（其他几个文件同理）。
 
 - `lsctl <命令>`：通过分布式通知 `com.wquguru.cicada.debug` 遥控 App。
@@ -21,7 +23,7 @@
   - 说话同传：`speakOn` / `speakOff` 开关，`speakAsk[:off]` 面板里第一次打开时的确认卡，`speakConfirmed:<on|off>` 是否已确认过，`speakFile:<音频>` 把文件按实时速度当作麦克风输入，`speakOut:<路径>` 把译文语音另存一份，`speakOutput:<设备名片段>` 改输出设备（留空 = 虚拟麦克风），`speakVP:<on|off>` 按键说话时用不用带回声消除的麦克风（默认开；日志 `voice mic: ready`、`speak: mic with echo cancellation`），`talkDown` / `talkUp` 用真麦克风按住、松开说话键（日志 `speak: on-device heard … Ming …`、没人说话时 `nothing said in the press`；每次按键都写 `speak: press of … s, voiced … s, quiet … dBFS, line … dBFS`，声音偏小但本机识别听出一句时 `quiet press, but the on-device recognizer heard … chars: sending`）
   - 试一句：`speakTest:sample`（Mac 读一句示例）或 `speakTest:voice`（再发 `speakTestBegin` / `speakTestEnd` 当作按住、松开），结果以 `speak test:` 写进日志；`speakTestState`、`speakTestRender:<png>`、`speakTestClose`
   - 识别引擎：`recognizer:legacy` 在 macOS 26 上改用 14 / 15 的识别（`SFSpeechRecognizer`，第一次会要“语音识别”权限），`recognizer:cloud` 像 Intel Mac 那样全部交给 Ling 听（没有 key 就听不了），`recognizer:auto` 换回；下一次开始听起生效（或启动时 `open --env CICADA_RECOGNIZER=legacy`），日志里 `transcriber started recognizer=…`；`recordTrack:off` 让会议记录不再另用一遍不切句的识别（下一次开始听起生效，对比准确度用；`open --env CICADA_RECORD_TRACK=off` 同理），`recordState` 把还在校准的句数写进日志，打开 `debug` 后日志里有 `RECORD` 和 `REFINE`
-  - 多开：两边都设 `CICADA_DEBUG_CHANNEL=x`（`open -n --env CICADA_DEBUG_CHANNEL=x build/Cicada.app`），命令只发给这一份，日志在 `/tmp/livesubs-dev-debug-x.log`
+  - 多开：两边都设 `CICADA_DEBUG_CHANNEL=x`（`open -n --env CICADA_DEBUG_CHANNEL=x build/Cicada.app`），命令只发给这一份，日志在 `/tmp/livesubs-dev-debug-x.log`；这一份的设置改动只在内存里，不写回共用的 Dev 设置，退出即还原
   - 导出：`export:<目录>`
   - 导入录音或视频：`import:<路径>[,<路径>…]`（等于拖进会议记录窗口），`importState` 把进度写进日志，`importCancel` 停止转写，`importRetry:<会议 id>[=<locale>]` 重新转写（带 locale 等于在“这场会议只留下了录音”里选了这种语言），`importNotify` 把通知权限写进日志
   - 新手引导与窗口：`onboarding:<步骤>[,skip|ask|setup]`（1–5，5 是收尾页；skip 是第 3 步点了“先不接”，ask / setup 是第 4 步的二选一 / 清单）、`samplePlay`、`speakers:<on|off>`（“说话人识别”）、`speakerGuess:<会议 id>`（马上让 Ling 认一遍名字）、`speakersRender:<会议 id>=<png>`、`voiceprintFile:<音频>=<json>`（用 app 里的声纹模型算整个文件的声纹，和参考模型对比）、`closeWindow:<main|settings|onboarding>`、`settings:<overlay|language|speak|records|ai|diagnostics>`、`about`
@@ -68,6 +70,7 @@
 - `plain-english-check.py results.json`：按提示词的简单英文规则给回答打分（句长、超过 12 词的句子、难词），对比改提示词前后。
 - `screenfile:<图片路径>` 注入关键帧；`assistantRender:<png>` 生成当前建议的被动截图；`screenNotes:on` 在当前会议打开画面选择器，`screenNotes:off` 清除选择并停止捕获。关闭、换窗口或结束会议后不沿用旧窗口图片。
 - 真实电脑声音链路：`start:user`，播放合成 ActAI 问题，检查 `coach: full answer` 的 `audio_s`。候选人使用 `mic:on`；点击教练的设备名打开同声传译设置，候选人与按住说话共用“知了听你说话用”输入；AI 服务页也跳转到此处。连接、断开与切换默认输入时应检查实际麦克风 UID，且双方角色保持不变。
+- 正文生成的原始流以 `<<<CICADA_ANSWER>>>` 开始；仅标记后的正文进入提词稿、翻译和陪读，正文中的代码和 JSON 不按字段过滤。缺失标记时请求失败；覆盖审查仍使用独立的 decision JSON 行协议。直接调用 `CoachPrompt.request` 的模型探针须通过 `CoachAnswerResponse.parse` 解包。
 - 行为与多模态入参测试：`scripts/test.sh --filter InterviewCoachTests`。
 - 本机模型探针：先用 `say -v Samantha -o /tmp/cicada-coach-question.aiff 'For this Android interview, look at the slide. How would you keep messages reliable when the app goes offline, and what is the first visible token target?'` 生成合成题，再运行 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`。测试传原声音频、指标图片和候选人原文，报告在 `/tmp/cicada-interview-coach-benchmark.json`。
 - 模型探针与文字注入不替代真人麦克风、AirPods 热切换、实际共享窗口和长时间面试验收。设计及验证记录见 `docs/interview-coach-local.md`。
