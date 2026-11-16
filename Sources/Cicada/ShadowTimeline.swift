@@ -1,4 +1,5 @@
 import Foundation
+import CicadaWatchControl
 
 struct ShadowWordTiming: Equatable, Sendable {
     var text: String
@@ -24,6 +25,15 @@ struct ShadowPlayback: Equatable {
     var currentWord: Int? { words.last(where: { $0.timing.start <= seconds })?.range.lowerBound ?? anchorWord }
     func progress(for word: Int) -> Double {
         words.first(where: { $0.range.contains(word) })?.timing.progress(at: seconds) ?? 0
+    }
+    func phoneReadingWord(in sentence: String, firstWord: Int, cursor: Int) -> FloatingAnswerState.ReadingWord? {
+        let ranges = Self.displayRanges(sentence)
+        let local = cursor - firstWord
+        guard ranges.indices.contains(local) else { return nil }
+        let aligned = words.first { $0.range.contains(cursor) }
+        let last = min(ranges.count - 1, (aligned?.range.upperBound ?? cursor + 1) - firstWord - 1)
+        let range = NSUnionRange(ranges[local], ranges[last])
+        return .init(range: range, progress: aligned?.timing.progress(at: seconds) ?? 0, fillsPrefix: aligned != nil)
     }
     static func align(_ timings: [ShadowWordTiming], to expected: [String], startingAt start: Int) -> [Word] {
         var cursor = start

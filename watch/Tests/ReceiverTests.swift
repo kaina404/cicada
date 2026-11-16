@@ -121,3 +121,91 @@ import Testing
     window.orderOut(nil); receiver.refreshTarget()
     #expect(!playing)
 }
+
+@Test @MainActor func phoneStateFollowsWindowVisibilityAndRejectsOldGestures() throws {
+    _ = NSApplication.shared
+    let window = NSPanel(contentRect: CGRect(x: 300, y: 300, width: 520, height: 300),
+                         styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+    window.isReleasedWhenClosed = false
+    window.identifier = NSUserInterfaceItemIdentifier("cicada.assistant")
+    var held = false
+    var selected = 0
+    let receiver = CicadaWatchReceiver(pairingURL: nil, window: { window }, setHeld: { held = $0 },
+        selectSentence: { selected += $0 },
+        phoneState: { FloatingAnswerState(answerID: "answer", sentences: ["First.", "Second."],
+                                         currentSentence: selected, canSelectSentence: true) })
+    defer { receiver.stop(); window.close() }
+    #expect(receiver.readPhoneState() == FloatingAnswerState())
+    window.orderFrontRegardless()
+    let initial = receiver.readPhoneState()
+    let windowID = try #require(initial.windowID)
+    #expect(initial.sentences == ["First.", "Second."])
+    #expect(receiver.receivePhone(ControlPacket(kind: .begin, sequence: 1), windowID: windowID))
+    #expect(receiver.receivePhone(ControlPacket(kind: .sentence, sequence: 2, y: 1), windowID: windowID))
+    #expect(receiver.readPhoneState().currentSentence == 1)
+    #expect(!held)
+    #expect(receiver.receivePhone(ControlPacket(kind: .hold, sequence: 3), windowID: windowID))
+    #expect(held)
+    receiver.receive(ControlPacket(kind: .begin, sequence: 1))
+    #expect(!held, "A new Watch gesture takes control")
+    receiver.receive(ControlPacket(kind: .hold, sequence: 2))
+    receiver.disconnectPhone()
+    #expect(held, "Disconnecting the iPhone leaves Watch playback alone")
+    #expect(receiver.receivePhone(ControlPacket(kind: .hold, sequence: 4), windowID: windowID))
+    #expect(held, "A delayed hold cannot take control back from the Watch")
+    #expect(receiver.receivePhone(ControlPacket(kind: .begin, sequence: 5), windowID: windowID))
+    #expect(!held)
+    #expect(receiver.receivePhone(ControlPacket(kind: .hold, sequence: 6), windowID: windowID))
+    #expect(held, "The iPhone can start a fresh gesture in the same session")
+    window.orderOut(nil)
+    receiver.windowVisibilityChanged()
+    #expect(receiver.readPhoneState() == FloatingAnswerState())
+    #expect(!held)
+    window.orderFrontRegardless()
+    #expect(receiver.readPhoneState().windowID != windowID)
+    #expect(!receiver.receivePhone(ControlPacket(kind: .hold, sequence: 7), windowID: windowID))
+    #expect(!held)
+}
+
+@Test func phonePairingRoundTripsAndRestrictsEndpoints() throws {
+    let pairing = FloatingAnswerPairing(host: "mac.local", port: 8876, token: String(repeating: "a", count: 64))
+    let link = try #require(pairing.link)
+    let decoded = try #require(FloatingAnswerPairing(link: link))
+    #expect(decoded.endpoint(FloatingAnswerPairing.statePath)?.absoluteString == "http://mac.local:8876/floating-answer")
+    #expect(decoded.token == pairing.token)
+    let outsideLAN = FloatingAnswerPairing(host: "example.com", port: 8876, token: pairing.token)
+    #expect(outsideLAN.link.flatMap(FloatingAnswerPairing.init(link:)) == nil)
+}
+
+@Test @MainActor func phonePairingSurvivesReceiverRestartAndCanBeRevoked() throws {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let file = PhonePairingFile(directory: directory)
+    func makeReceiver() -> CicadaWatchReceiver {
+        CicadaWatchReceiver(pairingURL: nil, phonePairingDirectory: directory, window: { nil },
+                            setHeld: { _ in }, selectSentence: { _ in }, phoneState: { FloatingAnswerState() })
+    }
+    let first = makeReceiver()
+    first.start()
+    defer { first.stop() }
+    #expect(!first.hasPhonePairing)
+    let firstLink = try #require(first.pairPhone())
+    #expect(file.read() == URLComponents(url: firstLink, resolvingAgainstBaseURL: false)?.fragment?.replacingOccurrences(of: "token=", with: ""))
+    let privateFile = directory.appendingPathComponent("pairing")
+    let attributes = try FileManager.default.attributesOfItem(atPath: privateFile.path)
+    #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
+    first.stop()
+
+    let restarted = makeReceiver()
+    restarted.start()
+    defer { restarted.stop() }
+    #expect(restarted.hasPhonePairing)
+    let newLink = try #require(restarted.pairPhone())
+    #expect(firstLink != newLink)
+    #expect(file.read() == URLComponents(url: newLink, resolvingAgainstBaseURL: false)?.fragment?.replacingOccurrences(of: "token=", with: ""))
+    #expect(restarted.disconnectPhone())
+    #expect(!restarted.hasPhonePairing && file.read() == nil)
+    restarted.stop()
+    restarted.start()
+    #expect(!restarted.hasPhonePairing)
+}

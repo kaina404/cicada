@@ -25,6 +25,7 @@ if [[ "${RELEASE:-}" != 1 && -f watch/App/LocalPairing.json ]]; then
   cp watch/App/LocalPairing.json "$APP/Contents/Resources/LocalPairing.json"
 fi
 cp Resources/sample/sample.m4a "$APP/Contents/Resources/"
+cp -R Resources/remote "$APP/Contents/Resources/"
 cp -R Resources/coach "$APP/Contents/Resources/"
 cp -R Resources/pronunciation "$APP/Contents/Resources/"
 # The experimental voiceprint model; the app compiles it on first use (no coremlcompiler in the CLT).

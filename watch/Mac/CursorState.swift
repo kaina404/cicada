@@ -23,6 +23,13 @@ struct CursorState {
   private var lastClickPoint = CGPoint.zero
   private var lastClickCount = 0
 
+  func acceptsBegin(_ packet: ControlPacket) -> Bool {
+    guard packet.kind == .begin, !retiredSessions.contains(packet.session) else { return false }
+    guard session == packet.session else { return true }
+    let distance = packet.sequence &- sequence
+    return distance > 0 && distance < 0x8000_0000
+  }
+
   mutating func receive(_ packet: ControlPacket, at time: TimeInterval,
                         cursor: CGPoint, screens: [CGRect], doubleClickInterval: TimeInterval = 0.5) -> [Action] {
     guard !retiredSessions.contains(packet.session) else { return [] }

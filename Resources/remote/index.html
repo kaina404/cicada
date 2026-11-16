@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#F3F4F6">
+<meta name="referrer" content="no-referrer">
+<title>Cicada Remote</title>
+<link rel="stylesheet" href="/remote.css">
+<script src="/remote.js" defer></script>
+</head>
+<body>
+<main>
+<header><strong id="title">悬浮回答</strong><span id="connection" role="status">正在连接 Mac</span><button id="refresh" type="button">重新生成</button><button id="screenToggle" type="button">Mac 屏幕</button><button id="disconnect" type="button">断开</button></header>
+<section id="message" role="status"></section>
+<section id="workspace" hidden>
+<div id="script" aria-label="回答稿件"><div id="sentences"></div></div>
+<div id="controls"><button id="previous" type="button">↑ 上一句</button><button id="hold" type="button">按住播放</button><button id="next" type="button">↓ 下一句</button></div>
+</section>
+<section id="screen" hidden><img id="preview" alt="Mac 主屏幕实时画面"><p id="screenStatus" role="status"></p></section>
+<footer><span id="refreshStatus" role="status"></span><span id="playback" role="status"></span><span id="hint">声音从 Mac 耳机输出</span></footer>
+</main>
+</body>
+</html>

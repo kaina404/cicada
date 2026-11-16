@@ -35,10 +35,14 @@ final class FloatingAnswerWindow: ControlledWindow {
 /// Moves the target window with ordered packets and display smoothing; never posts mouse events.
 @MainActor
 final class WindowController: NSObject {
+  enum InputSource { case watch, phone }
+
   private(set) var target: ControlledWindow?
   private(set) var original = CGPoint.zero
   private var unavailable = false
   private var state = CursorState()
+  private var otherState = CursorState()
+  private var source = InputSource.watch
   private var renderer = CursorRenderer(position: .zero)
   private var link: CADisplayLink?
   private var timer: Timer?
@@ -75,14 +79,23 @@ final class WindowController: NSObject {
     // A mode switch must also discard the previous mode's click count.
     state = CursorState()
     state.sensitivity = sensitivity
+    otherState = state
     renderer.synchronize(to: original)
     onFrame?(allowed ? window?.frame() : nil)
     return true
   }
 
-  func receive(_ packet: ControlPacket, screens: [CGRect], at time: TimeInterval) {
+  func receive(_ packet: ControlPacket, screens: [CGRect], at time: TimeInterval,
+               source incoming: InputSource = .watch) {
     guard allowed, let target else { return }
     guard let frame = target.frame() else { fail(); return }
+    if incoming != source {
+      guard otherState.acceptsBegin(packet) else { return }
+      cancel()
+      swap(&state, &otherState)
+      state.sensitivity = sensitivity
+      source = incoming
+    }
     if !renderer.moving { renderer.synchronize(to: frame.origin) }
     // Keep the title bar reachable while allowing large windows and multiple displays.
     let bounds = screens.map { CGRect(x: $0.minX - max(0, frame.width - 80), y: $0.minY,
@@ -91,10 +104,11 @@ final class WindowController: NSObject {
     let active = state.activeGesture
     let inputRevision = state.inputRevision
     let wasDown = state.isDown
+    let starting = state.acceptsBegin(packet)
     let actions = state.receive(packet, at: time, cursor: renderer.target, screens: bounds,
                                 doubleClickInterval: NSEvent.doubleClickInterval)
     if state.inputRevision != inputRevision, state.isDown { pendingTap?.cancel(); pendingTap = nil; onHold?(true) }
-    else if wasDown && !state.isDown || packet.kind == .begin { onHold?(false) }
+    else if wasDown && !state.isDown || starting { onHold?(false) }
     if state.inputRevision != inputRevision, packet.kind == .sentence, target.isAssistant {
       pendingTap?.cancel(); pendingTap = nil
       if packet.y == 1 || packet.y == -1 { onSentence?(Int(packet.y)) }
@@ -139,6 +153,10 @@ final class WindowController: NSObject {
     renderer.synchronize(to: target?.frame()?.origin ?? renderer.position)
     link?.isPaused = true
     if !allowed { onFrame?(nil) }
+  }
+
+  func cancelPhoneInput() {
+    if source == .phone { cancel() }
   }
 
   private func fail() {

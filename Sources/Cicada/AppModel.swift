@@ -216,6 +216,55 @@ final class AppModel: ObservableObject {
     private var refinedLines: Set<String> = []
 
     func startWatchControl() { watchControl?.start() }
+    func pairPhoneForFloatingAnswer() -> URL? { watchControl?.pairPhone() }
+    func disconnectPhoneFromFloatingAnswer() -> Bool { watchControl?.disconnectPhone() == true }
+    var hasPhonePairing: Bool { watchControl?.hasPhonePairing == true }
+    var isPhoneScreenEnabled: Bool { watchControl?.isPhoneScreenEnabled == true }
+    func setPhoneScreenEnabled(_ enabled: Bool) -> Bool {
+        if enabled { return watchControl?.startPhoneScreen() == true }
+        watchControl?.stopPhoneScreen()
+        return true
+    }
+    func floatingAnswerVisibilityChanged() { watchControl?.windowVisibilityChanged() }
+
+    private func phoneFloatingAnswerState() -> FloatingAnswerState {
+        let script = candidate.script
+        let sentences = script.sentences
+        let fast = candidate.fastFollow
+        let playback = shadowReader.playback
+        let word: Int
+        if settings.shadowReading {
+            word = playback.answerID == script.answerID
+                ? playback.currentWord ?? playback.words.first?.range.lowerBound ?? 0 : 0
+        } else if settings.fastReadingFollow, fast.answerID == script.answerID {
+            word = max(script.cursor, fast.word ?? 0)
+        } else {
+            word = script.cursor
+        }
+        var end = 0
+        let index = sentences.firstIndex {
+            end += CoachScript.words($0).count
+            return word < end
+        } ?? sentences.indices.last
+        let plan = shadowReader.plan
+        var readingWord: FloatingAnswerState.ReadingWord?
+        if let index {
+            let first = sentences[..<index].reduce(0) { $0 + CoachScript.words($1).count }
+            if settings.shadowReading, playback.answerID == script.answerID, let cursor = playback.currentWord {
+                readingWord = playback.phoneReadingWord(in: sentences[index], firstWord: first, cursor: cursor)
+            } else if !settings.shadowReading, settings.fastReadingFollow, fast.answerID == script.answerID {
+                let local = word - first - 1
+                let ranges = ShadowPlayback.displayRanges(sentences[index])
+                if ranges.indices.contains(local) {
+                    readingWord = .init(range: ranges[local], progress: 1, fillsPrefix: false)
+                }
+            }
+        }
+        return FloatingAnswerState(answerID: script.answerID, sentences: sentences, currentSentence: index,
+            canSelectSentence: settings.shadowReading && plan.answerID == script.answerID && !plan.words.isEmpty,
+            playback: settings.shadowReading ? FloatingAnswerState.Playback(rawValue: shadowReader.status.rawValue) ?? .off : .off,
+            word: readingWord, canRefreshAnswer: candidate.canRefreshAnswer)
+    }
 
     /// Read-along holds one reading position. Fast follow moves it silently while the watch is up
     /// (`followShadow`); the watch alone plays, and whatever it does replaces fast follow's position.
@@ -248,9 +297,17 @@ final class AppModel: ObservableObject {
     init() {
         watchControl = CicadaWatchReceiver(
             pairingURL: Bundle.main.url(forResource: "LocalPairing", withExtension: "json"),
+            phonePairingDirectory: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+                .appendingPathComponent(DevBuild.supportFolder).appendingPathComponent("PhonePairing"),
             window: { [weak self] in self?.assistantWindow.remoteWindow },
             setHeld: { [weak self] in self?.holdShadow($0) },
             selectSentence: { [weak self] in self?.selectShadowSentence($0) },
+            phoneState: { [weak self] in self?.phoneFloatingAnswerState() ?? FloatingAnswerState() },
+            refreshAnswer: { [weak self] in
+                guard let self, self.candidate.canRefreshAnswer else { return false }
+                self.shadowReader.stop()
+                return self.candidate.ask()
+            },
             log: { debugLog($0) })
         fastFollowWord = candidate.fastFollow.$word.removeDuplicates().sink { [weak self] word in
             Task { @MainActor [weak self] in self?.followShadow(word) }
@@ -1676,7 +1733,7 @@ final class AppModel: ObservableObject {
 
     /// A sentence from the Mac's audio: recorded, and remembered to tell the room's copy of it.
     private func heardOnline(_ seg: Segment, duration: Double) {
-        candidate.finalized(role: settings.listensToRoom ? "candidate" : "interviewer")
+        candidate.finalized(role: settings.listensToRoom ? "candidate" : "interviewer", text: seg.text)
         if roomListen.isRunning {
             let now = CFAbsoluteTimeGetCurrent()
             recentOnline.append(.init(text: seg.text, start: now - duration, end: now))

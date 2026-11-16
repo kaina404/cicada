@@ -72,6 +72,8 @@ final class AppSettings: ObservableObject {
     @Published var fastReadingLead: Double { didSet { save() } }
     @Published var assistantFontSize: Double { didSet { save() } }
     @Published var assistantOpacity: Double { didSet { save() } }
+    @Published var assistantSizeLocked: Bool { didSet { save() } }
+    @Published var assistantClickThrough: Bool { didSet { save() } }
     @Published var interviewStage: InterviewStage { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
     @Published var realtimeRegion: String { didSet { save() } }
@@ -291,6 +293,8 @@ final class AppSettings: ObservableObject {
         fastReadingLead = min(3, max(0, defaults.object(forKey: "fastReadingLead") as? Double ?? 2))
         assistantFontSize = AssistantAppearance.fontSize(defaults.object(forKey: "assistantFontSize") as? Double ?? 32)
         assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
+        assistantSizeLocked = defaults.bool(forKey: "assistantSizeLocked")
+        assistantClickThrough = defaults.bool(forKey: "assistantClickThrough")
         interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
         // Import only non-secret configuration. The key stays in AIKey's 0600 file.
@@ -344,6 +348,10 @@ final class AppSettings: ObservableObject {
     }
 
     private func save() {
+        // A channel copy shares this bundle id's defaults with the dev app in daily use: a test's
+        // `assistant:off` once switched off Interview Coach for the next real meeting. Keep test
+        // changes in memory.
+        guard DevBuild.channel == nil else { return }
         switch sourceMode {
         case .auto: defaults.set("auto", forKey: "sourceMode")
         case .fixed(let lang): defaults.set(lang.locale, forKey: "sourceMode")
@@ -367,6 +375,8 @@ final class AppSettings: ObservableObject {
         defaults.set(fastReadingLead, forKey: "fastReadingLead")
         defaults.set(assistantFontSize, forKey: "assistantFontSize")
         defaults.set(assistantOpacity, forKey: "assistantOpacity")
+        defaults.set(assistantSizeLocked, forKey: "assistantSizeLocked")
+        defaults.set(assistantClickThrough, forKey: "assistantClickThrough")
         defaults.set(interviewStage.rawValue, forKey: "interviewStage")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
         defaults.set(realtimeRegion, forKey: "realtimeRegion")
