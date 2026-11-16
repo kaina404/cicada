@@ -50,3 +50,9 @@ server/.dev.vars
 !watch/CicadaWatch.xcodeproj/
 !watch/CicadaWatch.xcodeproj/**
 watch/CicadaWatch.xcodeproj/**/xcuserdata/
+
+# The iPhone companion Xcode project is source.
+!AssistantSentenceControl/AssistantSentenceControl.xcodeproj/
+!AssistantSentenceControl/AssistantSentenceControl.xcodeproj/project.pbxproj
+AssistantSentenceControl/AssistantSentenceControl.xcodeproj/**/xcuserdata/
+AssistantSentenceControl/AssistantSentenceControl.xcodeproj/project.xcworkspace/
