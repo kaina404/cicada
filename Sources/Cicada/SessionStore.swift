@@ -50,6 +50,11 @@ struct Session: Codable, Identifiable, Equatable {
     var voiceNames: [String: String]? = nil
     /// Names Ling read from the conversation, keyed by voice id; shown until the user says otherwise.
     var voiceGuesses: [String: VoiceGuess]? = nil
+    /// A voice this meeting matched to the local voiceprint library, keyed by voice id. The name
+    /// is a snapshot: deleting the profile later must not make an old record unreadable.
+    var voiceProfiles: [String: VoiceProfileRef]? = nil
+    /// Similar matches waiting for the user to say yes. Suggestions are never shown as the name.
+    var voiceSuggestions: [String: VoiceProfileRef]? = nil
     /// An imported recording or video: its file name, where it was (played from there; never
     /// copied or deleted), and true until transcribing it finished.
     var sourceFile: String? = nil
@@ -97,6 +102,8 @@ final class SessionStore: ObservableObject {
     let root: URL
     /// Per meeting: a file being imported saves alongside the live meeting without delaying it.
     private var saveWork: [String: DispatchWorkItem] = [:]
+    /// A record was written to disk (存到文件夹 follows its changes).
+    var onSave: ((String) -> Void)?
 
     /// `root`: tests keep their meetings in a folder of their own.
     init(root: URL? = nil) {
@@ -274,7 +281,13 @@ final class SessionStore: ObservableObject {
     }
 
     func setVoice(lineID: String, _ voice: Int) {
-        guard let id = liveID, let i = index(id),
+        guard let id = liveID else { return }
+        setVoice(in: id, lineID: lineID, voice)
+    }
+
+    /// An imported file's line got its voice (`ImportVoices`).
+    func setVoice(in id: String, lineID: String, _ voice: Int) {
+        guard let i = index(id),
               let j = sessions[i].lines.firstIndex(where: { $0.id == lineID }) else { return }
         sessions[i].lines[j].voice = voice
         scheduleSave(id)
@@ -295,13 +308,16 @@ final class SessionStore: ObservableObject {
         let voices: [String: Int?]
         let names: [String: String]?
         let guesses: [String: VoiceGuess]?
+        let profiles: [String: VoiceProfileRef]?
+        let suggestions: [String: VoiceProfileRef]?
     }
 
     func voiceSnapshot(_ id: String) -> VoiceSnapshot? {
         guard let s = session(id) else { return nil }
         var voices: [String: Int?] = [:]
         for l in s.lines { voices[l.id] = .some(l.voice) }
-        return VoiceSnapshot(voices: voices, names: s.voiceNames, guesses: s.voiceGuesses)
+        return VoiceSnapshot(voices: voices, names: s.voiceNames, guesses: s.voiceGuesses,
+                             profiles: s.voiceProfiles, suggestions: s.voiceSuggestions)
     }
 
     func restore(_ id: String, _ snap: VoiceSnapshot) {
@@ -312,6 +328,8 @@ final class SessionStore: ObservableObject {
         }
         sessions[i].voiceNames = snap.names
         sessions[i].voiceGuesses = snap.guesses
+        sessions[i].voiceProfiles = snap.profiles
+        sessions[i].voiceSuggestions = snap.suggestions
         saveNow(id)
     }
 
@@ -321,6 +339,28 @@ final class SessionStore: ObservableObject {
         var names = sessions[i].voiceNames ?? [:]
         names[String(voice)] = name?.trimmingCharacters(in: .whitespacesAndNewlines)
         sessions[i].voiceNames = names.isEmpty ? nil : names
+        saveNow(id)
+    }
+
+    /// A voice was recognised by the local voiceprint library. The suggestion, if any, is spent.
+    func setVoiceProfile(_ id: String, voice: Int, ref: VoiceProfileRef?) {
+        guard let i = index(id) else { return }
+        var profiles = sessions[i].voiceProfiles ?? [:]
+        profiles[String(voice)] = ref
+        sessions[i].voiceProfiles = profiles.isEmpty ? nil : profiles
+        if var suggestions = sessions[i].voiceSuggestions {
+            suggestions[String(voice)] = nil
+            sessions[i].voiceSuggestions = suggestions.isEmpty ? nil : suggestions
+        }
+        saveNow(id)
+    }
+
+    /// A close voiceprint match waiting for the user. Never used as the displayed name by itself.
+    func setVoiceSuggestion(_ id: String, voice: Int, _ ref: VoiceProfileRef?) {
+        guard let i = index(id) else { return }
+        var suggestions = sessions[i].voiceSuggestions ?? [:]
+        suggestions[String(voice)] = ref
+        sessions[i].voiceSuggestions = suggestions.isEmpty ? nil : suggestions
         saveNow(id)
     }
 
@@ -348,6 +388,14 @@ final class SessionStore: ObservableObject {
         if var guesses = sessions[i].voiceGuesses, let moved = guesses.removeValue(forKey: String(from)) {
             if guesses[String(into)] == nil { guesses[String(into)] = moved }
             sessions[i].voiceGuesses = guesses.isEmpty ? nil : guesses
+        }
+        if var profiles = sessions[i].voiceProfiles, let moved = profiles.removeValue(forKey: String(from)) {
+            if profiles[String(into)] == nil { profiles[String(into)] = moved }
+            sessions[i].voiceProfiles = profiles.isEmpty ? nil : profiles
+        }
+        if var suggestions = sessions[i].voiceSuggestions {
+            suggestions[String(from)] = nil
+            sessions[i].voiceSuggestions = suggestions.isEmpty ? nil : suggestions
         }
         saveNow(id)
     }
@@ -381,8 +429,34 @@ final class SessionStore: ObservableObject {
         guard let i = index(id) else { return }
         sessions[i].lines = []
         sessions[i].notes = nil
+        // Voices are numbered afresh: names given to the old ones would land on other people.
+        sessions[i].voiceNames = nil
+        sessions[i].voiceGuesses = nil
+        sessions[i].voiceProfiles = nil
+        sessions[i].voiceSuggestions = nil
         sessions[i].importing = true
         saveNow(id)
+    }
+
+    /// Keep the old transcript and notes beside the recording, before a re-transcribe replaces
+    /// them. Returns the backup's URL, or nil when there is nothing to keep.
+    @discardableResult
+    func backupTranscript(_ id: String) -> URL? {
+        guard let i = index(id), !sessions[i].lines.isEmpty || sessions[i].notes != nil else { return nil }
+        saveNow(id)
+        let dir = folder(id)
+        let src = dir.appendingPathComponent("session.json")
+        guard FileManager.default.fileExists(atPath: src.path) else { return nil }
+        let stamp = ISO8601DateFormatter().string(from: Date())
+            .replacingOccurrences(of: ":", with: "-")
+        let dst = dir.appendingPathComponent("session.before-retranscribe-\(stamp).json")
+        do {
+            try FileManager.default.copyItem(at: src, to: dst)
+            return dst
+        } catch {
+            debugLog("backup transcript failed: \(error)")
+            return nil
+        }
     }
 
     func append(_ line: TranscriptLine, to id: String) {
@@ -470,6 +544,7 @@ final class SessionStore: ObservableObject {
         guard let data = try? encoder.encode(s) else { return }
         try? FileManager.default.createDirectory(at: folder(id), withIntermediateDirectories: true)
         try? data.write(to: folder(id).appendingPathComponent("session.json"), options: .atomic)
+        onSave?(id)
     }
 }
 
@@ -493,7 +568,11 @@ enum TranscriptExport {
         return numbers.isEmpty ? L("对方") : L("未识别")
     }
 
-    static func speakerNumbers(_ s: Session) -> [String: Int] { voices ? SpeakerLabels.numbers(s.lines) : [:] }
+    static func speakerNumbers(_ s: Session) -> [String: Int] { voices ? SpeakerLabels.numbers(s) : [:] }
+
+    /// Whether lines say who spoke. An imported file has no "other side" to call 对方: its lines
+    /// are named only once its voices are told apart.
+    static func saysWho(_ s: Session, _ numbers: [String: Int]) -> Bool { s.sourceFile == nil || !numbers.isEmpty }
 
     static func header(_ s: Session) -> String {
         let mins = Int(s.duration / 60)
@@ -530,8 +609,7 @@ enum TranscriptExport {
         if !notes.isEmpty { out += notes + "## \(L("文字记录"))\n\n" }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
-            // An imported file has no "other side" to name.
-            let who = s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""
+            let who = saysWho(s, numbers) || l.isAI ? " \(speakerName(l, numbers, names))" : ""
             out += "**[\(clock(l.t))]\(who)**  \n\(l.shown)\n"
             if let d = l.dst, d != l.shown { out += "> \(d)\n" }
             out += "\n"
@@ -599,7 +677,7 @@ enum TranscriptExport {
         }
         let numbers = speakerNumbers(s), names = SpeakerLabels.names(s)
         for l in s.lines {
-            add("[\(clock(l.t))]" + (s.sourceFile == nil || l.isAI ? " \(speakerName(l, numbers, names))" : ""), size: 9, weight: .semibold, color: .darkGray, after: 2)
+            add("[\(clock(l.t))]" + (saysWho(s, numbers) || l.isAI ? " \(speakerName(l, numbers, names))" : ""), size: 9, weight: .semibold, color: .darkGray, after: 2)
             add(l.shown, size: 11, after: 2)
             if let d = l.dst, d != l.shown { add(d, size: 11, color: NSColor(calibratedWhite: 0.3, alpha: 1), after: 10) }
         }

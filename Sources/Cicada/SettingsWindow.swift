@@ -515,6 +515,13 @@ struct SettingsView: View {
             }
             group(L("说话")) {
                 SettingsRow(title: L("按住说话")) { ShortcutField(model: model, role: .talk) }
+                // Hands-free runs only while listening, and pauses with the room mic on (`AppModel.handsFreeSetting`).
+                SettingsRow(title: L("不用按键"),
+                            detail: !settings.speakHandsFree ? L("开口就翻译，停顿 1 秒后说出去")
+                                : settings.hearsRoom ? L("打开麦克风时暂停") : model.running ? L("开口就翻译，停顿 1 秒后说出去") : L("开始听会议后生效")) {
+                    Toggle("不用按键", isOn: $settings.speakHandsFree)
+                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                }
                 SettingsRow(title: L("说\(settings.speakFromLang.name)，对方听到")) {
                     PillMenu(value: settings.speakTo == "room" ? L("跟随对方（\(targetName(model.speak.targetCode))）") : targetName(settings.speakTo),
                              options: [("room", L("跟随对方"))] + targetLanguages.map { ($0.code, $0.name) }) {
@@ -741,14 +748,32 @@ struct SettingsView: View {
                     Toggle("保存会议录音", isOn: $settings.recordAudio)
                         .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
                 }
+                SettingsRow(title: L("开始听时打开麦克风"), detail: L("关掉后只听电脑声音；开会时再手动打开")) {
+                    Toggle("开始听时打开麦克风", isOn: $settings.autoMicOnStart)
+                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                }
                 SettingsRow(title: L("说话人识别"), detail: L("按声音标出说话人 1、2…，只在这台 Mac 上处理")) {
                     Toggle("说话人识别", isOn: $settings.speakerVoices)
                         .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                }
+                SettingsRow(title: L("每句都显示说话人"), detail: L("连续同一个人说话时也重复标出，不再只在换人时标")) {
+                    Toggle("每句都显示说话人", isOn: $settings.speakerEveryLine)
+                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                        .disabled(!settings.speakerVoices)
+                }
+                SettingsRow(title: L("记住说话人"), detail: L("按本机声纹认出以前见过的人；不会上传声音")) {
+                    Toggle("记住说话人", isOn: $settings.speakerMemory)
+                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                }
+                SettingsRow(title: L("人员库"), detail: L("\(model.speakerProfiles.count) 个人 · 声纹和备注")) {
+                    SoftButton(L("管理")) { model.speakerLibraryShown = true }
                 }
                 SettingsRow(title: L("记录文件夹"), divider: false) {
                     SoftButton(L("打开")) { NSWorkspace.shared.open(model.store.root) }
                 }
             }
+            Text("会后存一份").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.top, 4)
+            FolderExportSettings(model: model, settings: settings, exporter: model.folderExport)
             Text("导入的文件").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.secondary).padding(.top, 4)
             SettingsCard {
                 SettingsRow(title: L("文件里说的"), detail: L("译成“翻译成”里的语言")) {
@@ -783,6 +808,9 @@ struct SettingsView: View {
                 }
             }
             AppRows(updates: model.updates, loginItem: model.loginItem, model: model)
+        }
+        .sheet(isPresented: $model.speakerLibraryShown) {
+            SpeakerLibraryView(model: model)
         }
     }
 }

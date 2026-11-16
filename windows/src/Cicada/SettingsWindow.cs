@@ -17,6 +17,9 @@ sealed partial class SettingsWindow : Window
     readonly Dictionary<string, FrameworkElement> sections = [];
     readonly PasswordBox keyBox = new();
     bool editingKey;
+    // A custom service's notes key (另一个服务), typed until 保存并检查; 更换 shows the field again.
+    readonly PasswordBox notesKeyBox = new();
+    bool editingNotesKey;
     string current = "ai";
     // AI 服务: 自己选模型 unfolded, and a model being typed by hand ("hear", "text", "voice").
     bool modelsOpen;
@@ -37,6 +40,8 @@ sealed partial class SettingsWindow : Window
         WindowStartupLocation = WindowStartupLocation.CenterScreen;
         System.Windows.Automation.AutomationProperties.SetName(keyBox, L("API key"));
         keyBox.PasswordChanged += (_, _) => KeyPlaceholder();
+        System.Windows.Automation.AutomationProperties.SetName(notesKeyBox, L("纪要") + " key");
+        notesKeyBox.PasswordChanged += (_, _) => { if (notesKeyPlaceholder is { } h) h.Visibility = notesKeyBox.Password.Length == 0 ? Visibility.Visible : Visibility.Collapsed; };
         var grid = new Grid();
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(200) });
         grid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -45,7 +50,8 @@ sealed partial class SettingsWindow : Window
         Content = Ui.Frameless(this, grid);
         scroll.ScrollChanged += (_, e) => { if (e.ViewportWidthChange != 0 && scroll.Content is FrameworkElement p) p.Width = PageWidth(); };
         app.Ling.Changed += OnLingChanged;
-        Closed += (_, _) => app.Ling.Changed -= OnLingChanged;
+        app.OwnVoice.Changed += OnLingChanged;
+        Closed += (_, _) => { app.Ling.Changed -= OnLingChanged; app.OwnVoice.Changed -= OnLingChanged; };
         // While a talk key is being chosen no key reaches any app: leaving the window ends it.
         Deactivated += (_, _) => StopChoosingKey();
         Closed += (_, _) => { if (choosingKey) app.StopChoosingTalkKey(); };
@@ -74,12 +80,13 @@ sealed partial class SettingsWindow : Window
             Card(Icons.Keyboard, L("开始或结束"), app.HotkeyRegistered ? L("在任何程序里都能按") : L("这个快捷键被别的程序占用了"), Keys(Hotkey.Label))));
         Section(page, "speak", L("同声传译"), SpeakCards().ToArray());
         Section(page, "end", L("结束会议"), EndCards());
-        Section(page, "privacy", L("隐私与启动"), Group(
+        Section(page, "privacy", L("隐私与启动"), [Group(
             Card(Icons.Eye, L("共享屏幕时让对方看到"), L("关着时，截图和屏幕共享里看不到纪要和字幕"), Ui.Switch(app.Settings.ShowInCapture, app.SetShowInCapture, L("共享屏幕时让对方看到"))),
             Card(Icons.List, L("说话人识别"), L("按声音标出说话人 1、2…，只在这台电脑上处理"), Ui.Switch(app.Settings.SpeakerVoices, v => { app.Settings.SpeakerVoices = v; Save(); }, L("说话人识别"))),
             Card(Icons.Wave, L("保存会议录音"), L("只存在这台电脑上"), Ui.Switch(app.Settings.RecordAudio, v => { app.Settings.RecordAudio = v; Save(); }, L("保存会议录音"))),
             Card(Icons.Power, L("开机时启动知了"), null, Ui.Switch(AutoStart.Enabled, v => AutoStart.Enabled = v, L("开机时启动知了"))),
-            Card(Icons.Folder, L("会议记录存放位置"), $"{Paths.Sessions} · {L("和 Mac 版格式相同")}", Ui.Button(L("打开文件夹"), () => OpenFolder(Paths.Sessions), height: 32))));
+            Card(Icons.Folder, L("会议记录存放位置"), $"{Paths.Sessions} · {L("和 Mac 版格式相同")}", Ui.Button(L("打开文件夹"), () => OpenFolder(Paths.Sessions), height: 32))),
+            .. ExportCards()]);
         // 卸载 as in Settings › Apps, with the same confirmation; only an installed copy offers it.
         FrameworkElement[] about =
         [
@@ -196,7 +203,7 @@ sealed partial class SettingsWindow : Window
         if (id == "speak") h = Ui.Spread(h, Ui.Switch(app.Settings.Speak, v => { app.Settings.Speak = v; Save(); }, L("同声传译")));
         // The service menu in the page's header, Ling first and recommended.
         if (id == "ai") h = Ui.Spread(h, Ui.Choice(AIProvider.All.Select(p => (p.Id, p.Id == "ling" ? "Ling" + L("（推荐）") : L(p.Name))), app.Settings.AiProvider,
-            v => { editingKey = false; typing = null; keyHint = null; customFields.Clear(); open = null; app.SetAIProvider(v); }, 220));
+            v => { editingKey = false; editingNotesKey = false; notesKeyBox.Clear(); typing = null; keyHint = null; customFields.Clear(); open = null; app.SetAIProvider(v); }, 220));
         h.Margin = new Thickness(0, 0, 0, 20);
         sections[id] = h;
         page.Children.Add(h);
@@ -262,9 +269,9 @@ sealed partial class SettingsWindow : Window
             : Ui.Button(L("安装"), () => _ = InstallCable(), Ui.Kind.Primary, height: 32);
         var target = app.Speak.Target;
         var config = app.Ling.Config;
-        var voices = VoiceCatalog.Options(target, config, app.WindowsVoice.Has(target))
-            .Select(v => (v.Id, v.Id == VoiceCatalog.SystemId ? L("Windows 自带") : v.Tags.Length == 0 ? v.Name : $"{v.Name} · {string.Join(" · ", v.Tags.Split(" · ").Select(L))}")).ToList();
-        var chosen = VoiceCatalog.Chosen(s, target, config, app.Ling.Speaks, app.WindowsVoice.Has(target));
+        var voices = VoiceCatalog.Options(target, config, app.WindowsVoice.Has(target), app.Speak.CloneReady)
+            .Select(v => (v.Id, v.Id == VoiceCatalog.SystemId ? L("Windows 自带") : v.Id == VoiceCatalog.CloneId ? L(v.Name) : v.Tags.Length == 0 ? v.Name : $"{v.Name} · {string.Join(" · ", v.Tags.Split(" · ").Select(L))}")).ToList();
+        var chosen = app.Speak.ChosenVoice(target);
         var voice = Ui.Row(8,
             Ui.Choice(voices, chosen, v => { s.SpeakVoices[VoiceCatalog.Key(target)] = v; previewNote = null; Save(); Render(); }, 280),
             Ui.Button(app.Previewing ? L("停止") : L("试听"), () => { if (app.Previewing) app.StopPreview(); else _ = RunPreview(); }, height: 32));
@@ -284,7 +291,8 @@ sealed partial class SettingsWindow : Window
             Card(null, L("线上的人听到的语言"), s.SpeakTo == "room" ? LF("现在是 %@", Ui.TargetName(target)) : null,
                 Ui.Choice([("room", L("对方说的语言")), .. Languages.Targets.Select(t => (t.Code, t.Name))], s.SpeakTo, v => { s.SpeakTo = v; Save(); Render(); })),
             note is null ? Card(null, LF("线上的人听到的声音（%@）", Ui.TargetName(target)), null, voice)
-                : Ui.Stack(0, Card(null, LF("线上的人听到的声音（%@）", Ui.TargetName(target)), null, voice), PreviewNoteBox(note.Value)));
+                : Ui.Stack(0, Card(null, LF("线上的人听到的声音（%@）", Ui.TargetName(target)), null, voice), PreviewNoteBox(note.Value)),
+            OwnVoiceCard(target, chosen == VoiceCatalog.CloneId));
         yield return Label(L("麦克风"));
         var mic = Card(null, L("译文送进会议"), cable ? L("在会议软件里把麦克风选成 CABLE Output") : L("需要装免费的 VB-Cable；装的时候 Windows 会请你确认"), cableControl);
         if (cable && Endpoints.SpeakerIsCable())
@@ -336,6 +344,48 @@ sealed partial class SettingsWindow : Window
         box.Children.Add(t);
         System.Windows.Automation.AutomationProperties.SetName(box, L("按下想用的键…"));
         return box;
+    }
+
+    /// 我自己的声音 (VoicePicker.swift › cloneRow), under the voice: 录制 before there is a recording;
+    /// then its length and how close it will sound, with 重录 and 删除; greyed with 去换成 Ling on a
+    /// service that can't clone. Choosing it is the voice menu's last item.
+    FrameworkElement OwnVoiceCard(string target, bool chosen)
+    {
+        var own = app.OwnVoice;
+        if (!app.Ling.Config.Provider.Clones)
+        {
+            var title = Ui.Text(L("我自己的声音"), 14, Palette.Secondary);
+            return CardWith(title, L("只有 Ling 能用你自己的声音"), Ui.Button(L("去换成 Ling"), () => Show("ai"), height: 32));
+        }
+        if (own.Exists)
+        {
+            var note = own.SavedIsSlow ? L("读得偏慢")
+                : VoiceCatalog.Key(app.Speak.MyLanguage) == VoiceCatalog.Key(target) ? L("最像你") : L("会带你的口音");
+            var buttons = Ui.Row(8,
+                Ui.Button(L("重录"), () => RecordOwnVoice(target), height: 32),
+                Ui.Button(L("删除"), () => { app.RemoveOwnVoice(); Render(); }, height: 32));
+            var title = Ui.Text(L("我自己的声音"), 14, Palette.Ink, chosen ? Palette.Strong : (FontWeight?)null);
+            return CardWith(title, LF("已录 %lld 秒 · %@", (int)Math.Round(own.Duration), note), buttons);
+        }
+        var record = Ui.Button(L("录制"), () => RecordOwnVoice(target), Ui.Kind.Primary, height: 32);
+        record.IsEnabled = app.Ling.Clones;
+        return CardWith(Ui.Text(L("我自己的声音"), 14, Palette.Ink), L("录 15 秒原声，对方听到你的音色，晚约 3 秒"), record);
+    }
+
+    /// A Card whose title is already a TextBlock (greyed or bold).
+    static FrameworkElement CardWith(TextBlock title, string description, FrameworkElement control)
+    {
+        var card = (DockPanel)Card(null, "", description, control);
+        var text = (StackPanel)card.Children[^1];
+        text.Children.RemoveAt(0);
+        text.Children.Insert(0, title);
+        return card;
+    }
+
+    void RecordOwnVoice(string target)
+    {
+        if (VoiceCloneDialog.Open(app, target, null)) previewNote = null;
+        Render();
     }
 
     // 试听's result, shown under the voice until another voice is picked or 试听 is pressed again.
@@ -541,14 +591,13 @@ sealed partial class SettingsWindow : Window
         var ling = app.Ling;
         var c = ling.Config;
         var check = ling.Health;
-        open ??= !check.Passed || check.Slow ? new HashSet<string> { "text" } : new HashSet<string>();
+        open ??= !check.Passed || check.Slow || check.NotesFailed ? new HashSet<string> { "text" } : new HashSet<string>();
         var intro = Ui.Helper(L("每样可以接不同的机器；这台电脑和局域网里的服务可以用 http。"));
         intro.Margin = new Thickness(6, -8, 0, 0);
         yield return intro;
         yield return Group(TextSection(), VoiceSection(), HearSection());
         yield return Group(OnlyRow());
-        var host = ling.ServiceHost.Length > 0 ? ling.ServiceHost : L("你填的地址");
-        var lockLine = Ui.Helper(LF("仅保存在本机当前账户下，仅发送至 %@", host));
+        var lockLine = Ui.Helper(LF("仅保存在本机当前账户下，仅发送至 %@", KeyHosts()));
         lockLine.Margin = new Thickness(6, -4, 0, 0);
         yield return lockLine;
         // What it costs depends on where it runs; what is sent where is the port's own line (it hears through the service).
@@ -574,16 +623,25 @@ sealed partial class SettingsWindow : Window
             Ui.Switch(s.AiCustomOnly, v => { s.AiCustomOnly = v; s.Save(); app.AIChanged(); Render(); }, L("语音和文字只发给你的服务")));
     }
 
-    /// Where the custom service's audio and text go: one host when text, hearing and voice share it.
-    string CustomHosts()
+    /// Where the custom service's audio and text go: one host when text, hearing, voice and notes
+    /// share it, two by name.
+    string CustomHosts() => Hosts(notes: true);
+
+    /// Where the custom service's key is sent: every use's address, the notes' only while they share it.
+    string KeyHosts() => Hosts(notes: !app.Ling.NotesHasOwnKey);
+
+    string Hosts(bool notes)
     {
         var ling = app.Ling;
         var c = ling.Config;
         var hosts = new List<string> { ling.ServiceHost, ling.HearHost };
-        if (c.HasVoices && Uri.TryCreate(c.VoiceBase, UriKind.Absolute, out var v)) hosts.Add(v.Host);
+        if (notes && c.NotesApart) hosts.Add(HostOf(c.ForNotes.Base));
+        if (c.HasVoices) hosts.Add(HostOf(c.VoiceBase));
         var set = hosts.Where(h => h.Length > 0).Distinct().ToList();
-        return set.Count == 1 ? set[0] : L("你填的地址");
+        return set.Count switch { 1 => set[0], 2 => LF("%@ 和 %@", set[0], set[1]), _ => L("你填的地址") };
     }
+
+    static string HostOf(string? url) => url is not null && Uri.TryCreate(url, UriKind.Absolute, out var u) ? u.Host : "";
 
     /// A row that opens to its fields: a state dot, the use, what it runs on, and how it's doing.
     FrameworkElement SectionHeader(string id, string title, string detail, Brush dot, string? trailing, Brush? trailingColor = null)
@@ -641,8 +699,9 @@ sealed partial class SettingsWindow : Window
 
     static string Secs(double s) => s.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
 
-    /// 翻译和纪要: the address, the text model (a menu once the service listed its models), the key,
-    /// how long a sentence took and whether the model thinks; the steps when something failed.
+    /// 翻译和纪要 (AISettings.swift › textSection): 翻译's address, key and model; then 纪要, the
+    /// same service (another model at most) or another one with its own address and key; how long
+    /// a sentence took and whether the model thinks; the steps when something failed.
     FrameworkElement TextSection()
     {
         var ling = app.Ling;
@@ -650,53 +709,177 @@ sealed partial class SettingsWindow : Window
         var s = app.Settings;
         var check = ling.Health;
         var textFailed = check.Failure is { Step: not AICheck.StepId.Hear };
-        var detail = ling.ServiceHost.Length == 0 || c.TextModel.Length == 0 ? L("填上地址和模型") : $"{ling.ServiceHost} · {c.TextModel}";
+        // Translation works, the notes' own model or server doesn't.
+        var notesDown = !textFailed && check.NotesFailed;
         var trailing = check.IsRunning ? L("正在检查…")
             : textFailed && ling.HasKey ? AICheckView.Status(check)
+            : notesDown ? L("纪要写不了")
             : check.Translate is { } sp ? LF("翻一句 %@ 秒", Secs(sp.Seconds)) : null;
         Brush dot = !ling.HasKey ? Palette.Toggle : check.IsRunning ? Palette.Live : textFailed ? Palette.Danger
-            : check.Slow || check.IsBusy ? Palette.WarnIcon : check.Passed ? Palette.Success : Palette.Toggle;
-        var header = SectionHeader("text", L("翻译和纪要"), detail, dot, trailing, check.Slow ? Palette.WarnIcon : textFailed ? Palette.Danger : null);
+            : check.Slow || check.IsBusy || check.NotesFailed ? Palette.WarnIcon : check.Passed ? Palette.Success : Palette.Toggle;
+        var header = SectionHeader("text", L("翻译和纪要"), TextDetail(), dot, trailing, textFailed || notesDown ? Palette.Danger : check.Slow ? Palette.WarnIcon : null);
         if (!open!.Contains("text")) return header;
-        FrameworkElement model;
-        if (ling.TextCatalog.Count > 0)
-        {
-            // The models the service lists: picking one saves and checks it.
-            customFields.Remove("text");
-            model = ModelMenu("text", c.TextModel, [], ling.TextCatalog);
-        }
-        else model = CustomField("text", s.AiModels.GetValueOrDefault("custom", ""), L("例如 qwen3:14b"));
+        var model = ModelField("text", s.AiModels.GetValueOrDefault("custom", ""), L("例如 qwen3:14b"), null, ling.TextCatalog, ling.ServiceHost,
+            () => _ = ling.FetchCatalog(), v => app.SetAIModel("text", v));
         var address = CustomField("base", s.AiCustomBase, "http://192.168.1.20:8000/v1");
-        // As typed (AISettings.swift › textSection): an http address out on the internet is refused,
-        // and without a key no check runs to say so.
-        var badAddress = Line(L("地址要用 https；这台电脑和局域网里的服务可以用 http。"), Palette.Danger);
-        var baseBox = customFields["base"];
-        void Bad() => badAddress.Visibility = baseBox.Text.Trim().Length > 0 && AIProvider.CustomBase(baseBox.Text) is null ? Visibility.Visible : Visibility.Collapsed;
-        baseBox.TextChanged += (_, _) => Bad();
-        Bad();
         var parts = new List<FrameworkElement>
         {
+            GroupTitle(L("翻译")),
             Card(null, L("地址"), null, address),
-            badAddress,
-            Card(null, L("模型"), null, model),
+            BadAddressLine(customFields["base"]),
             Card(null, "key", null, CustomKey()),
+            Card(null, L("模型"), null, model),
+            new Border { Height = 1, Background = Palette.Line, Margin = new Thickness(0, 6, 0, 6) },
         };
+        parts.AddRange(NotesGroup());
+        parts.Add(Card(null, "", null, SaveButton()));
         if (check.SlowLine(app.Settings.GoogleOff) is { } slow) parts.Add(Line(slow, Palette.WarnIcon));
         var key = ling.CurrentKey();
         if (key is not null && (check.IsRunning || textFailed || check.IsBusy || check.At is not null && !check.Passed && check.Failure is null))
             parts.Add(AICheckView.Steps(app, ChangeKey, recheckInStep: false));
         else if (check.At is not null && !check.IsRunning && check.Failure is null or { Step: AICheck.StepId.Hear })
         {
-            var facts = new List<string> { L("能写纪要") };
-            if (check.Translate is { } t) facts.Add(t.Thinks ? L("会先思考") : L("不思考"));
-            parts.Add(Line(string.Join(" · ", facts), Palette.Tertiary));
+            if (c.NotesApart && check.Translate is { } t) parts.Add(CheckRows(t));
+            else
+            {
+                var facts = new List<string> { L("能写纪要") };
+                if (check.Translate is { } t2) facts.Add(t2.Thinks ? L("会先思考") : L("不思考"));
+                parts.Add(Line(string.Join(" · ", facts), Palette.Tertiary));
+            }
         }
         return new StackPanel { Children = { header, Body([.. parts]) } };
+    }
+
+    /// "192.168.1.20 · qwen-mt-turbo", then the notes' model, or their own server after a bar.
+    string TextDetail()
+    {
+        var ling = app.Ling;
+        var c = ling.Config;
+        if (ling.ServiceHost.Length == 0 || c.TextModel.Length == 0) return L("填上地址和模型");
+        var line = $"{ling.ServiceHost} · {c.TextModel}";
+        if (!c.NotesApart) return line;
+        var n = c.ForNotes;
+        if (n.Base != c.Base && HostOf(n.Base) is { Length: > 0 } host) return line + $" ｜ {host} · {n.TextModel}";
+        return n.TextModel == c.TextModel ? line : line + $" · {n.TextModel}";
+    }
+
+    /// 纪要: the same service as translation, or another one with its own address and key (switching
+    /// back keeps what was typed); then the notes' model, 和翻译模型一样 first. The grey line says what
+    /// it's for, or in red why notes can't be written.
+    IEnumerable<FrameworkElement> NotesGroup()
+    {
+        var ling = app.Ling;
+        var c = ling.Config;
+        var s = app.Settings;
+        var own = s.AiCustomNotesOwn;
+        var notesHost = HostOf(c.ForNotes.Base) is { Length: > 0 } h ? h : ling.ServiceHost;
+        var elsewhere = c.ForNotes.Base != c.Base;
+        yield return GroupTitle(L("纪要"), Ui.Segmented([("same", L("同一个服务")), ("own", L("另一个服务"))], own ? "own" : "same",
+            v => { s.AiCustomNotesOwn = v == "own"; s.Save(); app.AIChanged(); Render(); }));
+        if (own)
+        {
+            var address = CustomField("notesBase", s.AiCustomNotesBase, L("跟上面一样"));
+            yield return Card(null, L("地址"), null, address);
+            yield return BadAddressLine(customFields["notesBase"]);
+            yield return Card(null, "key", null, NotesKey());
+        }
+        yield return Card(null, L("模型"), null, ModelField("notesModel", s.AiModels.GetValueOrDefault("custom.notes", ""), L("和翻译模型一样"), L("和翻译模型一样"),
+            elsewhere ? ling.NotesCatalog : ling.TextCatalog, notesHost,
+            () => _ = elsewhere ? ling.FetchNotesCatalog() : ling.FetchCatalog(), v => app.SetAIModel("notes", v)));
+        yield return ling.Health.NotesLine(notesHost, c.ForNotes.TextModel, sharedKey: !ling.NotesHasOwnKey) is { } why
+            ? Line(why, Palette.Danger)
+            : Line(L("用来写实时纪要、识别说话人，默认和翻译用同一个"), Palette.Tertiary);
+    }
+
+    /// A group's name in the 翻译和纪要 row (翻译, 纪要), with its control on the right.
+    static FrameworkElement GroupTitle(string text, FrameworkElement? control = null)
+    {
+        var title = Ui.Text(text, 14, Palette.Ink, FontWeights.SemiBold, wrap: false);
+        title.VerticalAlignment = VerticalAlignment.Center;
+        FrameworkElement row = control is null ? title : Ui.Spread(title, control);
+        row.Margin = new Thickness(0, 8, 0, 2);
+        return row;
+    }
+
+    /// As typed (AISettings.swift › textSection): an http address out on the internet is refused,
+    /// and without a key no check runs to say so.
+    static FrameworkElement BadAddressLine(TextBox box)
+    {
+        var bad = Line(L("地址要用 https；这台电脑和局域网里的服务可以用 http。"), Palette.Danger);
+        void Bad() => bad.Visibility = box.Text.Trim().Length > 0 && AIProvider.CustomBase(box.Text) is null ? Visibility.Visible : Visibility.Collapsed;
+        box.TextChanged += (_, _) => Bad();
+        Bad();
+        return bad;
+    }
+
+    /// A custom service's model: the names its `/models` lists (ModelPicker, picking saves and
+    /// checks), or without a list a field saved by 保存并检查, with 重新获取 to ask for the list again.
+    FrameworkElement ModelField(string name, string value, string hint, string? sameLabel, IReadOnlyList<string> catalog, string host,
+        Action refetch, Action<string> pick)
+    {
+        if (catalog.Count > 0)
+        {
+            customFields.Remove(name);
+            return ModelPicker.Make(value, sameLabel, catalog, host, refetch, pick);
+        }
+        var field = CustomField(name, value, hint);
+        field.ToolTip = L("这个地址没列出模型，直接填名字");
+        return host.Length == 0 ? field : Ui.Row(8, field, Ui.Button(L("重新获取"), refetch, height: 34));
+    }
+
+    /// After a check with notes apart: one row each, what it runs and how it did.
+    FrameworkElement CheckRows(AICheck.Speed t)
+    {
+        var c = app.Ling.Config;
+        var notes = app.Ling.Health.Notes;
+        var notesText = notes switch
+        {
+            { Kind: AICheck.Kind.Ok, Seconds: { } secs } => LF("能写纪要 · %@ 秒", Secs(secs)),
+            { Kind: AICheck.Kind.Ok } => L("能写纪要"),
+            { Kind: AICheck.Kind.Fail, Why: AICheck.Reason.InvalidKey or AICheck.Reason.MgmtKey } => L("key 不对"),
+            { Kind: AICheck.Kind.Fail } => L("纪要写不了"),
+            { Kind: AICheck.Kind.Running } => L("正在检查…"),
+            _ => "",
+        };
+        static FrameworkElement Row(string use, string model, bool ok, string result)
+        {
+            var color = ok ? Palette.Success : Palette.Danger;
+            var dock = new DockPanel { MinHeight = 36 };
+            var r = Ui.Text(result, 13, color, wrap: false);
+            r.VerticalAlignment = VerticalAlignment.Center; r.Margin = new Thickness(8, 0, 0, 0);
+            DockPanel.SetDock(r, Dock.Right);
+            var d = Ui.Dot(color, 6);
+            d.Margin = new Thickness(0, 0, 10, 0);
+            DockPanel.SetDock(d, Dock.Left);
+            var u = Ui.Text(use, 13, Palette.Ink, wrap: false);
+            u.MinWidth = 40; u.VerticalAlignment = VerticalAlignment.Center; u.Margin = new Thickness(0, 0, 8, 0);
+            DockPanel.SetDock(u, Dock.Left);
+            var m = Ui.Text(model, 13, Palette.Secondary, wrap: false);
+            m.TextTrimming = TextTrimming.CharacterEllipsis; m.VerticalAlignment = VerticalAlignment.Center;
+            m.FontFamily = new FontFamily("Cascadia Mono, Consolas");
+            dock.Children.Add(r); dock.Children.Add(d); dock.Children.Add(u); dock.Children.Add(m);
+            return dock;
+        }
+        return new Border
+        {
+            BorderBrush = Palette.Line, BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(12, 0, 12, 0),
+            Margin = new Thickness(0, 4, 0, 4),
+            Child = new StackPanel
+            {
+                Children =
+                {
+                    Row(L("翻译"), c.TextModel, true, LF("翻一句 %@ 秒", Secs(t.Seconds)) + " · " + (t.Thinks ? L("会先思考") : L("不思考"))),
+                    new Border { Height = 1, Background = Palette.Line },
+                    Row(L("纪要"), c.ForNotes.TextModel, notes?.Kind != AICheck.Kind.Fail, notesText),
+                },
+            },
+        };
     }
 
     // The grey hint in a custom service's key field (a PasswordBox has none), shown while it's empty.
     TextBlock? keyPlaceholder;
     void KeyPlaceholder() { if (keyPlaceholder is { } h) h.Visibility = keyBox.Password.Length == 0 ? Visibility.Visible : Visibility.Collapsed; }
+    TextBlock? notesKeyPlaceholder;
 
     /// The key of a custom service: optional on this computer and the local network.
     FrameworkElement CustomKey()
@@ -705,8 +888,7 @@ sealed partial class SettingsWindow : Window
         if (saved is { Length: > 0 } && !editingKey)
             return Ui.Row(8, Ui.Text(AIKey.Masked(saved), 13, Palette.Ink, wrap: false),
                 Ui.Button(L("更换"), ChangeKey, height: 32),
-                Ui.Button(L("删除"), () => { app.Key.Remove(); app.AIChanged(); }, height: 32),
-                SaveButton());
+                Ui.Button(L("删除"), () => { app.Key.Remove(); app.AIChanged(); }, height: 32));
         if (keyBox.Parent is Panel old) old.Children.Remove(keyBox);
         if (keyBox.Parent is Border oldBorder) oldBorder.Child = null;
         var typed = customFields.TryGetValue("base", out var b) ? b.Text : app.Settings.AiCustomBase;
@@ -718,7 +900,29 @@ sealed partial class SettingsWindow : Window
         var frame = Ui.FieldFrame(new Grid { Children = { keyBox, hint } }, keyBox);
         // Wide enough for the hint in English, Japanese and Korean ("Optional on this PC or your local network").
         frame.Width = 340; frame.Height = 34;
-        return Ui.Row(8, frame, SaveButton());
+        return frame;
+    }
+
+    /// The notes' own key (另一个服务): empty, the key above is used; saved by 保存并检查, sent only
+    /// to the notes' address. A refused one is framed red.
+    FrameworkElement NotesKey()
+    {
+        var ling = app.Ling;
+        var saved = ling.NotesHasOwnKey ? app.Key.Read(LingClient.NotesKeyName) : null;
+        if (saved is { Length: > 0 } && !editingNotesKey)
+            return Ui.Row(8, Ui.Text(AIKey.Masked(saved), 13, Palette.Ink, wrap: false),
+                Ui.Button(L("更换"), () => { editingNotesKey = true; notesKeyBox.Clear(); Render(); notesKeyBox.Focus(); }, height: 32),
+                Ui.Button(L("移除"), () => { ling.RemoveNotesKey(); editingNotesKey = false; app.AIChanged(); }, height: 32));
+        if (notesKeyBox.Parent is Panel old) old.Children.Remove(notesKeyBox);
+        var hint = Ui.Text(L("不填就用上面的 key"), 14, Palette.Tertiary, wrap: false);
+        hint.IsHitTestVisible = false; hint.VerticalAlignment = VerticalAlignment.Center;
+        hint.Visibility = notesKeyBox.Password.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        notesKeyPlaceholder = hint;
+        Ui.StyleField(notesKeyBox);
+        var frame = Ui.FieldFrame(new Grid { Children = { notesKeyBox, hint } }, notesKeyBox);
+        frame.Width = 340; frame.Height = 34;
+        if (ling.Health.Notes?.Why is AICheck.Reason.InvalidKey or AICheck.Reason.MgmtKey) frame.BorderBrush = Palette.Danger;
+        return frame;
     }
 
     /// 同传声音: a speech model (`/audio/speech`), its voice and address; else Windows speaks.
@@ -777,7 +981,7 @@ sealed partial class SettingsWindow : Window
             Card(null, L("模型"), null, CustomField("hear", s.AiHearModels.GetValueOrDefault("custom", ""), L("例如 qwen3-omni"))),
             Card(null, L("地址"), null, CustomField("hearBase", s.AiCustomHearBase, L("跟上面一样"))),
         };
-        if (check.Failure is { Step: AICheck.StepId.Hear } && check.Message(ling.ServiceName, ling.HearHost, c.TextModel, ling.HearName) is { } why)
+        if (check.Failure is { Step: AICheck.StepId.Hear } && check.Message(ling.ServiceLabel, ling.HearHost, c.TextModel, ling.HearName) is { } why)
             parts.Add(Line(why, Palette.Danger));
         parts.Add(Card(null, "", null, SaveButton()));
         return new StackPanel { Children = { header, Body([.. parts]) } };
@@ -862,7 +1066,19 @@ sealed partial class SettingsWindow : Window
             s.AiCustomVoice = F("voiceName", s.AiCustomVoice);
             s.AiCustomVoiceBase = F("voiceBase", s.AiCustomVoiceBase);
             s.AiCustomHearBase = F("hearBase", s.AiCustomHearBase);
+            s.AiCustomNotesBase = F("notesBase", s.AiCustomNotesBase);
+            // The notes model typed by hand (no list): empty is the translation model.
+            if (customFields.TryGetValue("notesModel", out var nm))
+            {
+                if (nm.Text.Trim().Length > 0) s.AiModels["custom.notes"] = nm.Text.Trim(); else s.AiModels.Remove("custom.notes");
+            }
             s.Save();
+            // Notes' own key (另一个服务): saved here too; it goes only to the notes' address.
+            if (s.AiCustomNotesOwn && notesKeyBox.Password.Trim().Length > 0 && app.Ling.SaveNotesKey(notesKeyBox.Password))
+            {
+                notesKeyBox.Clear();
+                editingNotesKey = false;
+            }
         }
         var text = keyBox.Password.Trim();
         keyHint = null;

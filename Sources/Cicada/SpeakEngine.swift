@@ -103,11 +103,13 @@ final class SpeakEngine {
 
     let settings: AppSettings
     private(set) var phase: Phase = .idle {
-        // The press's echo-cancelling unit is kept until its sentence has gone out, not let go of
-        // at key-up: a press while that sentence still plays reuses it instead of remaking the
-        // voice output under it. Idle, it would silence the mic for every other app (the room's
-        // own use keeps it).
-        didSet { if phase == .idle, !voiceMic.inUse { voiceMic.release() } }
+        didSet {
+            if phase == .idle { unitIdle() }
+            // Hands-free: a sentence said while the last one was translated waits its turn.
+            if handsFree, phase == .idle || phase == .speaking, !segments.isEmpty {
+                DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.nextSegment() } }
+            }
+        }
     }
 
     private var mic = AVAudioEngine()
@@ -159,6 +161,8 @@ final class SpeakEngine {
     private var player = AVAudioPlayerNode()
     private var outObserver: NSObjectProtocol?
     private var outFormat: AVAudioFormat?
+    /// Where the output was last pointed, to wire a replaced engine the same way.
+    private var outDevice: OutputDevice?
     private var outDeviceUID: String?
     /// The device the latest `speak` call played to.
     private(set) var lastDevice: OutputDevice?
@@ -169,6 +173,166 @@ final class SpeakEngine {
         self.settings = settings
         self.voiceMic = voiceMic
         wireOutput()
+    }
+
+    // MARK: Hands-free
+
+    /// 不用按键: the mic through echo cancellation the whole time, and every sentence I say is
+    /// interpreted as a press would be (`HandsFreeDetector` says where it starts and ends). Set by the
+    /// app: on with the setting, off while 打开麦克风 hears the room (that unit is shared, and the
+    /// room is heard unprocessed). The talk key still works and pauses the detector while held.
+    var handsFree = false {
+        didSet { if handsFree != oldValue { refreshHandsFree() } }
+    }
+    /// A hands-free sentence with less voice than this is not sent: every real sentence had ≥ 1.95 s,
+    /// what Ming made a sentence of out of the meeting's leftovers ("啊！我要吓死你了！") 0.48 s.
+    static let handsFreeVoiced = 0.8
+    /// The press being finished is a hands-free sentence.
+    private var pressHandsFree = false
+    /// Whether a hands-free sentence is mostly what the meeting said around it (its lines or their
+    /// translations, `EchoMatch`): the meeting's leftovers through the unit, made into a sentence by
+    /// Ming ("营收增长；四名工程师；下半年" with the meeting at 100 % and nobody talking).
+    var meetingSaid: ((_ text: String, _ from: Date, _ to: Date) async -> Bool)?
+    private var handsFreeInput: AudioObjectID?
+    private var handsFreeTimer: Timer?
+    /// Sentences heard, waiting for the one before them to be translated.
+    private var segments: [(buffers: [AVAudioPCMBuffer], start: Date, end: Date)] = []
+    /// Only touched on `micQueue`.
+    private nonisolated(unsafe) var detector = HandsFreeDetector()
+    private nonisolated(unsafe) var recent: [AVAudioPCMBuffer] = []
+    private nonisolated(unsafe) var recentSeconds = 0.0
+    private nonisolated(unsafe) var segment: [AVAudioPCMBuffer]?
+    private nonisolated(unsafe) var segmentStart = Date()
+    /// Debug (`handsFreeDump:<path>`): the echo-cancelled mic as raw 16 kHz float32, to tune the detector.
+    private nonisolated(unsafe) var dump: FileHandle?
+    func setHandsFreeDump(_ path: String?) {
+        micQueue.sync {
+            try? dump?.close()
+            dump = nil
+            guard let path else { return }
+            FileManager.default.createFile(atPath: path, contents: nil)
+            dump = FileHandle(forWritingAtPath: path)
+        }
+    }
+    /// Audio kept from before the detector is sure: its onset and the first syllable's rise.
+    private nonisolated static let lookback = 0.8
+
+    /// Attaches or lets go of the mic to match `handsFree`, the setting and the devices; checked again
+    /// every 2 s while on (the unit is made for one output: headphones plugged in need a new one).
+    func refreshHandsFree() {
+        let want = handsFree && settings.speakEnabled && echoCancel && analyzerFormat != nil ? echoInput : nil
+        if let d = handsFreeInput, want != d || !voiceMic.serves("handsfree", input: d) { stopHandsFree() }
+        if handsFree, handsFreeTimer == nil {
+            handsFreeTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.refreshHandsFree() }
+            }
+        } else if !handsFree {
+            handsFreeTimer?.invalidate()
+            handsFreeTimer = nil
+        }
+        guard let d = want, handsFreeInput == nil else { return }
+        handsFreeInput = d
+        voiceMic.advancedDucking = true
+        voiceMic.prepare(input: d) { [weak self] ok in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    // Stopped while it was being made: nobody else may be left to give it back.
+                    guard self.handsFreeInput == d else {
+                        if self.phase == .idle { self.unitIdle() }
+                        return
+                    }
+                    let queue = self.micQueue
+                    let attached = ok && self.voiceMic.attach("handsfree", input: d) { [weak self] buf in
+                        queue.async { self?.hear(buf) }
+                    }
+                    if !attached { self.handsFreeInput = nil }
+                    debugLog("hands-free: \(attached ? "listening" : "mic not ready, trying again")")
+                }
+            }
+        }
+    }
+
+    private func stopHandsFree() {
+        guard handsFreeInput != nil else { return }
+        handsFreeInput = nil
+        voiceMic.detach("handsfree")
+        micQueue.sync { detector.reset(); segment = nil; recent = []; recentSeconds = 0 }
+        // The talk key's unit keeps the meeting at its level again (made anew once nobody uses it).
+        voiceMic.advancedDucking = false
+        if phase == .idle { unitIdle() }
+        debugLog("hands-free: stopped")
+    }
+
+    /// On `micQueue`: one block of the echo-cancelled mic.
+    private nonisolated func hear(_ buf: AVAudioPCMBuffer) {
+        let n = Int(buf.frameLength)
+        guard n > 0, let d = buf.floatChannelData?[0] else { return }
+        let seconds = Double(n) / buf.format.sampleRate
+        dump?.write(Data(bytes: d, count: n * 4))
+        // The talk key held: that press has the mic.
+        if feeding {
+            segment = nil
+            detector.reset()
+            return
+        }
+        recent.append(buf)
+        recentSeconds += seconds
+        while recentSeconds - Double(recent[0].frameLength) / buf.format.sampleRate >= Self.lookback {
+            recentSeconds -= Double(recent.removeFirst().frameLength) / buf.format.sampleRate
+        }
+        var sum: Float = 0
+        for i in 0..<n { sum += d[i] * d[i] }
+        let rms = (sum / Float(n)).squareRoot()
+        let line = detector.line
+        switch detector.feed(rms: rms, seconds: seconds) {
+        case .began:
+            segment = recent
+            segmentStart = Date().addingTimeInterval(-recentSeconds)
+            debugLog(String(format: "hands-free: voice began (%.0f dB over a %.0f dB line)", 20 * log10(max(rms, 1e-6)), 20 * log10(line)))
+            DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.voiceBegan() } }
+        case .ended(let cut):
+            guard let s = segment else { return }
+            let start = segmentStart
+            segment = cut ? [] : nil
+            segmentStart = Date()
+            DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.voiceEnded(s, start: start, cut: cut) } }
+        case .none:
+            segment?.append(buf)
+        }
+    }
+
+    private func voiceBegan() {
+        if phase == .idle { onLive?(.listening, "", "") }
+    }
+
+    private func voiceEnded(_ buffers: [AVAudioPCMBuffer], start: Date, cut: Bool) {
+        debugLog(String(format: "hands-free: sentence of %.1f s%@", Date().timeIntervalSince(start), cut ? " (cut, still talking)" : ""))
+        segments.append((buffers, start, Date()))
+        nextSegment()
+    }
+
+    /// Sends the oldest sentence heard on as a press would be, once the one before it is translated.
+    private func nextSegment() {
+        guard phase == .idle || phase == .speaking, !segments.isEmpty else { return }
+        guard let format = analyzerFormat, let input = beginUtterance() else {
+            debugLog("hands-free: transcriber not ready, sentence dropped")
+            segments.removeFirst()
+            return
+        }
+        let s = segments.removeFirst()
+        pressStarted = s.start
+        pressPlain = false
+        pressHandsFree = true
+        phase = .listening
+        let conv = PCMConverter()
+        for buf in s.buffers {
+            guard let c = conv.convert(buf, to: format) else { continue }
+            input.append(c)
+            micQueue.sync { keepForMing(c) }
+        }
+        releasedAt = s.end
+        finishUtterance()
     }
 
     private func wireOutput() {
@@ -234,6 +398,20 @@ final class SpeakEngine {
             debugLog("speak transcriber failed: \(error)")
             onStatus?(L("无法准备语音识别：\(error.localizedDescription)"))
         }
+    }
+
+    /// While a meeting is listened to with 同声传译 on, the echo-cancelling unit is made ahead and
+    /// kept between presses. Made at each press, a press lost its first ~1.4 s and the fresh unit let
+    /// the meeting from the speakers through as what I said: a press nobody spoke in sent the meeting
+    /// back into it (audio-test, meeting at 56 %: 1.8.0 100 % and 0 sent; made per press 14–87 % and
+    /// 2 of 3 silent presses sent). The meeting app hears the virtual mic then, so the built-in mic
+    /// it mutes for other apps (#24) matters only outside a meeting, when it is let go of.
+    var keepUnit = false {
+        didSet { if keepUnit != oldValue, phase == .idle { unitIdle() } }
+    }
+
+    private func unitIdle() {
+        if keepUnit, echoCancel, let d = echoInput { voiceMic.prepare(input: d) } else if !voiceMic.inUse { voiceMic.release() }
     }
 
     func teardownAnalyzer() async {
@@ -303,6 +481,7 @@ final class SpeakEngine {
         }
         debugLog("speak: press began")
         pressStarted = Date()
+        pressHandsFree = false
         phase = .listening
         onLive?(.listening, "", "")
         startMic(format: format, input: input)
@@ -357,6 +536,7 @@ final class SpeakEngine {
             return false
         }
         pressStarted = Date()
+        pressHandsFree = false
         phase = .listening
         onLive?(.listening, "", "")
         let conv = PCMConverter()
@@ -389,7 +569,7 @@ final class SpeakEngine {
     private func attachPress(_ press: Date, ok: Bool, device: AudioObjectID, format: AVAudioFormat, input cont: RecognitionStream) {
         // The key was let go of before the unit was ready: the phase going idle found nothing to give back.
         guard phase == .listening, pressStarted == press, utterance?.input === cont else {
-            if phase == .idle, !voiceMic.inUse { voiceMic.release() }
+            if phase == .idle { unitIdle() }
             return
         }
         let conv = converter
@@ -459,7 +639,7 @@ final class SpeakEngine {
 
     /// The press as a WAV file in memory (44-byte RIFF header + little-endian samples), and whether
     /// anyone spoke in it (`PressSpeech`).
-    private func takePressWAV() -> (wav: Data?, spoken: Bool) {
+    private func takePressWAV() -> (wav: Data?, spoken: Bool, voiced: Double) {
         let samples = micQueue.sync { () -> [Int16] in
             defer { pressSamples = [] }
             return pressSamples
@@ -467,7 +647,7 @@ final class SpeakEngine {
         let measure = PressSpeech.measure(samples)
         let spoken = measure.spoken
         debugLog("speak: press of \(String(format: "%.1f", Double(samples.count) / 16_000)) s, \(measure.summary)")
-        guard samples.count >= 16_000 / 4 else { return (nil, spoken) }
+        guard samples.count >= 16_000 / 4 else { return (nil, spoken, measure.voiced) }
         var d = Data()
         func u32(_ v: UInt32) { withUnsafeBytes(of: v.littleEndian) { d.append(contentsOf: $0) } }
         func u16(_ v: UInt16) { withUnsafeBytes(of: v.littleEndian) { d.append(contentsOf: $0) } }
@@ -478,7 +658,7 @@ final class SpeakEngine {
         samples.withUnsafeBufferPointer { buf in
             for s in buf { withUnsafeBytes(of: s.littleEndian) { d.append(contentsOf: $0) } }
         }
-        return (d, spoken)
+        return (d, spoken, measure.voiced)
     }
 
     private nonisolated func recordMic(_ buffer: AVAudioPCMBuffer) {
@@ -506,12 +686,22 @@ final class SpeakEngine {
         Task { await u.input.finish() }
         let released = releasedAt ?? Date()
         releasedAt = nil
-        let (wav, spoken) = takePressWAV()
+        let (wav, spoken, voiced) = takePressWAV()
         probe?.released = released
         // A press too quiet for PressSpeech: nobody spoke (Ming would hear 嗯 in the room's hush and
         // the meeting "Hmm."), or a voice from across the desk under a line the meeting's leftover
         // echo raised. The on-device recognizer decides which once it has finished.
         let quiet = wav != nil && !spoken && probe == nil
+        // Hands-free: a blip or the meeting's leftovers, not a sentence (Ming would make one up).
+        if pressHandsFree, voiced < Self.handsFreeVoiced {
+            debugLog(String(format: "hands-free: only %.2f s of voice, nothing sent", voiced))
+            Task { _ = await u.text.value }
+            finals = []
+            volatile = ""
+            phase = .idle
+            onLive?(.idle, "", "")
+            return
+        }
         // The meeting playing through most of a press on the plain mic: don't send its echo back.
         if pressPlain, probe == nil, let share = playedShare?(pressStarted, released), share > Self.echoShare {
             debugLog(String(format: "speak: the Mac played through %.0f%% of the press (echo), nothing sent", share * 100))
@@ -560,6 +750,17 @@ final class SpeakEngine {
             let heard = await (early ?? startMing()).value
             debugLog("speak: on-device heard \(text.count) chars, Ming \(heard.map { "\($0.original.count)" } ?? "-") chars")
             if let heard { text = heard.original }
+            // Hands-free: a word or two is a noise Ming named (喂, 咳咳; the talk key is there for 好的),
+            // and the meeting's own words are its echo.
+            let short = EchoMatch.units(text).count < 3
+            var echo = false
+            if pressHandsFree, !text.isEmpty, !short { echo = await meetingSaid?(text, pressStarted, released) == true }
+            if pressHandsFree, !text.isEmpty, short || echo {
+                debugLog("hands-free: \(text.count) chars, \(short ? "too short" : "the meeting's own words"): nothing sent")
+                phase = .idle
+                onLive?(.idle, "", "")
+                return
+            }
             // Ming answers recognition and translation together: its whole call counts as `recognize`.
             let textAt = Date()
             probe?.text = text
@@ -697,6 +898,7 @@ final class SpeakEngine {
             debugLog("voice output failed: \(error)")
             return
         }
+        guard outputReady(for: first.format) else { return }
         for b in buffers.dropLast() { player.scheduleBuffer(b, completionHandler: nil) }
         firstAudioAt = Date()
         player.play()
@@ -736,8 +938,10 @@ final class SpeakEngine {
                     firstAt = Date().timeIntervalSince(started)
                     firstAudioAt = Date()
                     configureOutput(format: format, device: device)
-                    if !out.isRunning { try out.start() }
                 }
+                // The engine may have been replaced while the stream ran (the echo-cancelling unit
+                // let go): a player not wired for this format throws, and that took the app down.
+                guard outputReady(for: format) else { break }
                 player.scheduleBuffer(buf, completionHandler: nil)
                 if !player.isPlaying { player.play() }
                 count += 1
@@ -761,6 +965,7 @@ final class SpeakEngine {
     /// Schedules `buffer` last and waits until it has played, or `limit` seconds. A stalled output
     /// never calls back, and would otherwise hold every later sentence; it is rebuilt instead.
     private func waitPlayed(_ buffer: AVAudioPCMBuffer, limit: TimeInterval) async {
+        guard outputReady(for: buffer.format) else { return }
         let once = Once()
         let played = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
             player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in once.run { cont.resume(returning: true) } }
@@ -803,6 +1008,18 @@ final class SpeakEngine {
         out.connect(player, to: out.mainMixerNode, format: format)
         outFormat = format
         outDeviceUID = uid
+        outDevice = device
+    }
+
+    /// The player is wired for `format` and the engine runs (wired again after the engine was
+    /// replaced or reset); false when it can't be started.
+    private func outputReady(for format: AVAudioFormat) -> Bool {
+        if outFormat != format { configureOutput(format: format, device: outDevice) }
+        guard !out.isRunning else { return true }
+        do { try out.start(); return true } catch {
+            debugLog("voice output failed: \(error)")
+            return false
+        }
     }
 
     /// Plays a short sample through the chosen output so the user can check it.
@@ -870,6 +1087,10 @@ enum PressSpeech {
     static func filler(_ text: String) -> Bool {
         let words = text.lowercased().split { !$0.isLetter }.map(String.init)
         guard !words.isEmpty else { return true }
+        // A heading with nothing after it ("翻译结果：", "Translation:"): Ming's answer to the meeting's
+        // noise in a hands-free stretch nobody spoke in, not a sentence.
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let last = trimmed.last, ":：".contains(last), trimmed.count <= 12 { return true }
         return words.allSatisfy { w in fillers.contains(w) || (w.count > 1 && Set(w).count == 1 && fillers.contains(String(w.first!))) }
     }
     static let fillers: Set<String> = ["嗯", "啊", "呃", "哦", "唔", "额", "噢", "哎", "um", "uh", "hmm", "hm", "mm", "mhm", "ah", "oh", "er", "えー", "あの", "음", "어"]

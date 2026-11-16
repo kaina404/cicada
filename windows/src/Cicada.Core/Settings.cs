@@ -26,6 +26,11 @@ public sealed class AppSettings
     /// 语音和文字只发给你的服务 (the Mac's key): with the custom service, Google Translate is never
     /// asked. Kept when another service is picked, but only acts on the custom one (GoogleOff).
     [JsonPropertyName("aiCustomOnly")] public bool AiCustomOnly { get; set; }
+    /// A custom service's notes (the Mac's keys): 另一个服务 (its own address, empty: the same one, and
+    /// its own key in the `custom-notes` key file). Off keeps the address, so switching back and
+    /// forth loses nothing. The notes model is AiModels["custom.notes"] (empty: the translation model).
+    [JsonPropertyName("aiCustomNotesOwn")] public bool AiCustomNotesOwn { get; set; }
+    [JsonPropertyName("aiCustomNotesBase")] public string AiCustomNotesBase { get; set; } = "";
     [JsonIgnore] public bool GoogleOff => AiProvider == "custom" && AiCustomOnly;
     /// 打开麦克风: "both" while the mic is on, else "system" (the Mac's listenSource values; "room",
     /// the mic alone, is the Mac's on macOS 14/15). Not saved: every launch starts with the mic off.
@@ -49,6 +54,10 @@ public sealed class AppSettings
     [JsonPropertyName("subtitleSize")] public int SubtitleSize { get; set; } = 24;
     /// 保存会议录音 (the Mac's key): keep what was heard as system.m4a in the meeting's folder.
     [JsonPropertyName("recordAudio")] public bool RecordAudio { get; set; } = true;
+    /// 存到文件夹 (the Mac's keys): settled meetings are also written as Markdown into exportFolder
+    /// (a path; empty until one is chosen). FolderExport.cs.
+    [JsonPropertyName("exportOn")] public bool ExportOn { get; set; }
+    [JsonPropertyName("exportFolder")] public string ExportFolder { get; set; } = "";
     /// 说话人识别: tell the other side's voices apart (on by default, as on the Mac).
     [JsonPropertyName("speakerVoices")] public bool SpeakerVoices { get; set; } = true;
     /// 会中改正听错的词 (the Mac's key): finished sentences carry the word list to the AI service,

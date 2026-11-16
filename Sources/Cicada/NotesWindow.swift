@@ -835,11 +835,7 @@ struct NotesWindowView: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(Palette.accentPale))
     }
 
-    /// Who the banners name: a custom service by its address, which says more than 这个服务.
-    private var serviceLabel: String {
-        let ling = model.ling
-        return ling.provider.id == .custom && !ling.serviceHost.isEmpty ? ling.serviceHost : ling.serviceName
-    }
+    private var serviceLabel: String { model.ling.serviceLabel }
 
     /// Lines the notes don't cover yet, once they are two minutes behind the meeting (between
     /// ordinary 45 s updates there is always a little that isn't in yet).
@@ -993,9 +989,9 @@ struct NotesWindowView: View {
     private var transcript: some View {
         let ms = matches
         let lines = session?.lines ?? []
-        let speakers = model.settings.speakerVoices ? SpeakerLabels.numbers(lines) : [:]
+        let speakers = model.settings.speakerVoices ? session.map(SpeakerLabels.numbers) ?? [:] : [:]
         return VStack(alignment: .leading, spacing: 10) {
-            if !speakers.isEmpty, let s = session {
+            if !speakers.isEmpty || (model.settings.speakerVoices && session.map { SpeakerLabels.singleVoice($0.lines) != nil } == true), let s = session {
                 SpeakerStrip(model: model, session: s, editing: $editingVoice)
             }
             TranscriptListView(lines: lines, topics: engine.notes.topics, terms: searchTerms,
@@ -1003,7 +999,7 @@ struct NotesWindowView: View {
                                partialShown: TranscriptPartial.shows(model.liveSource, live: live, after: lines.last?.src),
                                jumpTo: jumpTo, speakers: speakers, startedAt: store.liveStart,
                                identifying: model.identifyingLanguage,
-                               voices: speakers.isEmpty ? [:] : SpeakerLabels.voiceNumbers(lines), marked: editingVoice,
+                               voices: speakers.isEmpty ? [:] : session.map(SpeakerLabels.voiceNumbers) ?? [:], marked: editingVoice,
                                places: RecordList.heardBoth(lines), settling: model.settling, voicePending: model.voicePending,
                                onAssign: { ids, voice in if let s = session { model.assignLines(session: s.id, ids, to: voice) } },
                                onRevert: { lineID, fix in if let s = session { model.fixes.revert(fix, lineID: lineID, in: s.id) } }) {

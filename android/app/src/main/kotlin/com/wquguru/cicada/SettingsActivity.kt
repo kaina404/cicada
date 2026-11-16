@@ -14,6 +14,7 @@ import cicada.Languages
 import cicada.Log
 import cicada.Strings
 import cicada.Strings.L
+import cicada.VoiceCatalog
 
 /// 设置, a top-level screen beside 会议记录 (the floating navigation): grouped rows as the Mac
 /// groups them (AI 服务, 语言, 听对方, 我说 · 面对面, …), each a value that opens its choices in a
@@ -35,7 +36,9 @@ class SettingsActivity : Activity() {
     private var builtTitle = ""
 
     // Brought back to the front by the nav, so rebuild if the language changed meanwhile.
-    override fun onResume() { super.onResume(); if (L("设置") != builtTitle) { recreate(); return }; unobserve = cicada.observe(::build); shown = null; build() }
+    override fun onResume() { super.onResume(); if (L("设置") != builtTitle) { recreate(); return }; unobserve = cicada.observe(::build); shown = null; build()
+        if (pickFolder) { pickFolder = false; FolderExportViews.pick(this) }
+    }
     override fun onPause() { super.onPause(); unobserve?.invoke(); unobserve = null }
 
     private fun value(text: String) = ui.text(text, 15f, Palette.secondary, lines = 1)
@@ -43,7 +46,7 @@ class SettingsActivity : Activity() {
     private fun build() {
         val app = cicada
         val s = app.settings
-        val key = listOf(app.ling.keyState, app.ling.currentKey()?.takeLast(4), app.ling.aiCheck.summary, s.toJson(), app.canOverlay, Strings.language, app.updates.available?.version, app.updates.manual, app.vocabulary.terms.size).joinToString("|")
+        val key = listOf(app.ling.keyState, app.ling.currentKey()?.takeLast(4), app.ling.aiCheck.summary, s.toJson(), app.canOverlay, Strings.language, app.updates.available?.version, app.updates.manual, app.vocabulary.terms.size, app.folderExport.stateKey()).joinToString("|")
         if (key == shown) return
         shown = key
         page.removeAllViews()
@@ -80,10 +83,25 @@ class SettingsActivity : Activity() {
                 startActivity(Intent(this, WordListActivity::class.java))
             })))
 
+        // 读出来的声音: the voice for the language they speak now, chosen per language on its own
+        // page (VoicesActivity, the Mac's VoiceSection). 试一句 reads English in English's voice.
         page.addView(ui.sectionLabel(L("我说 · 面对面")))
+        val their = app.listen.theirLanguage
+        val theirVoice = VoiceCatalog.option(app.voiceId(their), their, app.ling.config())
+        val english = VoiceCatalog.option(app.voiceId("en"), "en", app.ling.config())
         page.addView(ui.group(listOf(
             ui.switchRow(L("把我说的翻译给对方"), L("按住说话，松开后用对方的语言读出来"), s.speakBack) { s.speakBack = it; app.saveSettings() },
-            ui.listRow(L("试一句"), AiServiceActivity.cloudVoice(app)?.let { Strings.LF("用 %@ 的声音读一句英语", it) } ?: L("用手机的声音读一句英语"), trailing = ui.icon(R.drawable.i_play, 20, Palette.ink), chevron = false) { tryVoice() })))
+            ui.listRow(L("读出来的声音"), if (app.ling.usable) L("每种语言各记一个声音")
+                       else if (app.ling.provider.id == "ling") L("填入 Ling key：声音更自然，还能用你自己的声音") else L("填好 AI 服务的 key，声音更自然"),
+                       trailing = value(theirVoice?.let { VoicesActivity.name(it) } ?: L("手机的声音"))) {
+                startActivity(Intent(this, VoicesActivity::class.java).putExtra("id", their))
+            },
+            ui.listRow(L("试一句"), when (english?.id) {
+                           null, VoiceCatalog.PHONE -> L("用手机的声音读一句英语")
+                           VoiceCatalog.CLONE -> L("用你的声音读一句英语")
+                           else -> Strings.LF("用 %@ 的声音读一句英语", english.name)
+                       },
+                       trailing = ui.icon(R.drawable.i_play, 20, Palette.ink), chevron = false) { tryVoice() })))
 
         page.addView(ui.sectionLabel(L("在其他应用上")))
         val rows = mutableListOf<View>(
@@ -104,6 +122,9 @@ class SettingsActivity : Activity() {
                                                        "${s.silenceMinutes.toInt()}") { s.silenceMinutes = it.toDouble(); app.saveSettings() })
         page.addView(ui.group(endRows))
 
+        // 会后存一份: 存到文件夹 (FolderExportViews), as the Mac's 设置 › 通用.
+        FolderExportViews.section(this, ui, page)
+
         page.addView(ui.sectionLabel(L("其他")))
         page.addView(ui.group(listOf(
             ui.listRow(L("导入录音或视频"), L("转成一场会议记录")) { startActivity(Intent(this, ImportActivity::class.java)) },
@@ -113,6 +134,11 @@ class SettingsActivity : Activity() {
             listOf(updateRow())))
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         page.addView(ui.helper("${L("知了")} $version · Android").apply { gravity = Gravity.CENTER; setPadding(0, ui.dp(20), 0, 0) })
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FolderExportViews.PICK) { shown = null; FolderExportViews.picked(this, resultCode, data) }
     }
 
     /// 检查更新: its answer on the right; with a new version found, tapping it downloads that.
@@ -142,22 +168,18 @@ class SettingsActivity : Activity() {
             ui.choose(this, label, options, selected) { changed(it); shown = null; build() }
         }
 
-    /// A sample of how my words will sound to them (the Mac's 试一句), in English.
+    /// A sample of how my words will sound to them (the Mac's 试一句), in English's voice.
     private fun tryVoice() {
         val app = cicada
-        val sample = "Could you send the revised quote by Friday? We can sign next week."
-        if (AiServiceActivity.cloudVoice(app) != null) {
-            app.background.execute {
-                if (app.voice.speakCloud(app.ling, sample, onStart = {}, onEnd = {}) != Voice.Result.Spoken)
-                    app.main.post { android.widget.Toast.makeText(this, L("没能读出来"), android.widget.Toast.LENGTH_SHORT).show() }
-            }
-            return
-        }
-        val r = cicada.voice.speak("Could you send the revised quote by Friday? We can sign next week.", "en", onStart = {}, onEnd = {})
-        if (r != Voice.Result.Spoken) android.widget.Toast.makeText(this, if (r == Voice.Result.NoVoice) L("手机不会读这个语言") else L("没能读出来"), android.widget.Toast.LENGTH_SHORT).show()
+        app.previewVoice(app.voiceId("en"), "en", SAMPLE) { android.widget.Toast.makeText(this, it, android.widget.Toast.LENGTH_SHORT).show() }
     }
 
     companion object {
+        const val SAMPLE = "Could you send the revised quote by Friday? We can sign next week."
+
+        /// Debug (`export pick`): open the folder picker once settings is in front.
+        var pickFolder = false
+
         fun paste(box: android.widget.EditText) {
             val clip = box.context.getSystemService(ClipboardManager::class.java).primaryClip
             val text = clip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(box.context)?.toString()?.trim()

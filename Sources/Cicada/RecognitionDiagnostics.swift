@@ -5,8 +5,8 @@ import os
 /// Technical breadcrumbs survive relaunches; never pass transcript text, audio or error userInfo.
 /// File work stays off audio callbacks. Three 1 MB files bound disk usage.
 final class RecognitionDiagnosticLog: @unchecked Sendable {
-    static let shared = RecognitionDiagnosticLog(directory: FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Logs/\(DevBuild.supportFolder)/Recognition", isDirectory: true))
+    static let shared = RecognitionDiagnosticLog(directory: FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
+        .appendingPathComponent("Logs/\(DevBuild.supportFolder)/Recognition", isDirectory: true))
     private let queue = DispatchQueue(label: "cicada.recognition.diagnostics", qos: .utility)
     private let directory: URL
     private let limit: Int

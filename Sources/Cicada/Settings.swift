@@ -36,6 +36,11 @@ final class AppSettings: ObservableObject {
     @Published var speakConfirmed: Bool {
         didSet { save() }
     }
+    /// 不用按键: interpret whenever I speak, no key held (`HandsFreeDetector`). Mac only: the ports
+    /// have no echo cancellation to hear me over the meeting.
+    @Published var speakHandsFree: Bool {
+        didSet { save() }
+    }
     /// Locale of the language I speak.
     @Published var speakFrom: String {
         didSet { save() }
@@ -87,6 +92,14 @@ final class AppSettings: ObservableObject {
                               region: realtimeRegion, model: realtimeModel.trimmingCharacters(in: .whitespacesAndNewlines))
     }
     @Published var screenModel: String {
+        didSet { save() }
+    }
+    /// 存到文件夹: settled meetings are also written as Markdown into `exportFolder` (a path; empty
+    /// until one is chosen). Not a secret: it may sit in UserDefaults.
+    @Published var exportOn: Bool {
+        didSet { save() }
+    }
+    @Published var exportFolder: String {
         didSet { save() }
     }
     /// Imported files: the language they are in ("auto" or a locale), and whether notes are written
@@ -167,6 +180,15 @@ final class AppSettings: ObservableObject {
     @Published var aiCustomRecognize: Bool {
         didSet { save() }
     }
+    /// The custom service's notes: 另一个服务 (its own address, empty: the same one, and its own key
+    /// in the `custom-notes` key file). Off keeps the address, so switching back and forth loses
+    /// nothing. The notes model is `aiModels["custom.notes"]` (empty: the translation model).
+    @Published var aiCustomNotesOwn: Bool {
+        didSet { save() }
+    }
+    @Published var aiCustomNotesBase: String {
+        didSet { save() }
+    }
     /// 语音和文字只发给你的服务: with the custom service, Google Translate is never asked (partial
     /// lines show the original). Kept when another service is picked, but only acts on the custom one.
     @Published var aiCustomOnly: Bool {
@@ -189,9 +211,16 @@ final class AppSettings: ObservableObject {
             let hear = aiCustomHearModel.trimmingCharacters(in: .whitespaces)
             let hearBase = aiCustomHearBase.isEmpty ? base : AIProvider.customBase(aiCustomHearBase)
             let recognizes = aiCustomRecognize && !hear.isEmpty
-            return AIConfig(provider: p, base: base, textModel: aiModels["custom"] ?? "", voiceModel: voice.isEmpty ? nil : voice,
+            let textModel = aiModels["custom"] ?? ""
+            let notesModel = (aiModels["custom.notes"] ?? "").trimmingCharacters(in: .whitespaces)
+            let notesAddress = aiCustomNotesOwn ? aiCustomNotesBase.trimmingCharacters(in: .whitespaces) : ""
+            let notesBase = notesAddress.isEmpty ? nil : AIProvider.customBase(notesAddress)
+            return AIConfig(provider: p, base: base, textModel: textModel, voiceModel: voice.isEmpty ? nil : voice,
                             voiceBase: voiceBase, customVoice: name.isEmpty ? nil : name,
-                            hearModel: recognizes ? hear : nil, hearBase: recognizes ? hearBase : nil)
+                            hearModel: recognizes ? hear : nil, hearBase: recognizes ? hearBase : nil,
+                            notesModel: notesModel.isEmpty || notesModel == textModel ? nil : notesModel,
+                            notesBase: notesBase == base ? nil : notesBase, notesOwnService: aiCustomNotesOwn,
+                            notesBadAddress: !notesAddress.isEmpty && notesBase == nil)
         default:
             return AIConfig(provider: p, base: p.base, textModel: aiModels[p.id.rawValue] ?? p.textModels.first?.id ?? "",
                             voiceModel: p.hasVoices ? aiVoiceModels[p.id.rawValue] ?? p.voiceModels.first?.id : nil, voiceBase: p.base)
@@ -231,6 +260,18 @@ final class AppSettings: ObservableObject {
         didSet { save() }
     }
 
+    /// Repeat the speaker tag on every line instead of only when the speaker changes. Off by
+    /// default: a quiet meeting reads better as runs, but a record used as evidence wants it.
+    @Published var speakerEveryLine: Bool {
+        didSet { save() }
+    }
+
+    /// Recognise people saved in the local voiceprint library. Enrolling a voice is always an
+    /// explicit action with its own consent alert; this switch only controls automatic naming.
+    @Published var speakerMemory: Bool {
+        didSet { save() }
+    }
+
     /// 会中改正听错的词: finished sentences carry the word list to the AI service, which points out
     /// misheard words (`Correction`). On by default; does nothing without an AI service.
     @Published var fixMisheard: Bool {
@@ -246,6 +287,12 @@ final class AppSettings: ObservableObject {
     /// 听哪里: "system" (what the Mac plays), "room" (a real microphone, for a meeting in the room) or
     /// "both" (电脑和会议室: people online and in the room, each heard on its own).
     @Published var listenSource: String {
+        didSet { save() }
+    }
+    /// 开始听时打开麦克风: a user-started meeting, or a meeting app's call, also opens the room
+    /// microphone, once per meeting. Off by default: an open mic pauses 不用按键 and hears the
+    /// speakers. Launch never opens the microphone by itself.
+    @Published var autoMicOnStart: Bool {
         didSet { save() }
     }
     /// The microphone chosen beside 打开麦克风, by UID; empty is 自动. Never the system default's.
@@ -279,6 +326,7 @@ final class AppSettings: ObservableObject {
         speakConfirmed = defaults.object(forKey: "speakConfirmed") as? Bool ?? defaults.bool(forKey: "speakEnabled")
         speakFrom = defaults.string(forKey: "speakFrom")
             ?? speakLocale(forLanguage: Cicada.myLanguage(systemLanguages: Locale.preferredLanguages))
+        speakHandsFree = defaults.bool(forKey: "speakHandsFree")
         speakTo = defaults.string(forKey: "speakTo") ?? "room"
         speakOutput = defaults.string(forKey: "speakOutput") ?? ""
         autoSystemMic = defaults.object(forKey: "autoSystemMic") as? Bool ?? true
@@ -306,6 +354,8 @@ final class AppSettings: ObservableObject {
         realtimeModel = defaults.string(forKey: "realtimeModel") ?? "qwen3.8-omni-flash-realtime"
         // Gemma 4 E4B, instruction-tuned, 4-bit QAT for MLX (mlx-community on Hugging Face).
         screenModel = defaults.string(forKey: "screenModel") ?? "mlx-community/gemma-4-E4B-it-qat-4bit"
+        exportOn = defaults.bool(forKey: "exportOn")
+        exportFolder = defaults.string(forKey: "exportFolder") ?? ""
         importLanguage = defaults.string(forKey: "importLanguage") ?? "auto"
         importNotes = defaults.object(forKey: "importNotes") as? Bool ?? true
         overlayAuto = defaults.object(forKey: "overlayAuto") as? Bool ?? true
@@ -324,6 +374,8 @@ final class AppSettings: ObservableObject {
         aiCustomHearBase = defaults.string(forKey: "aiCustomHearBase") ?? ""
         aiCustomRecognize = defaults.bool(forKey: "aiCustomRecognize")
         aiCustomOnly = defaults.bool(forKey: "aiCustomOnly")
+        aiCustomNotesOwn = defaults.bool(forKey: "aiCustomNotesOwn")
+        aiCustomNotesBase = defaults.string(forKey: "aiCustomNotesBase") ?? ""
         displayMode = defaults.string(forKey: "displayMode") ?? "notes"
         speakVoices = defaults.dictionary(forKey: "speakVoices") as? [String: String] ?? [:]
         endWithApp = defaults.object(forKey: "endWithApp") as? Bool ?? true
@@ -331,6 +383,7 @@ final class AppSettings: ObservableObject {
         silenceEnd = defaults.string(forKey: "silenceEnd") ?? "prompt"
         silenceMinutes = defaults.object(forKey: "silenceMinutes") as? Double ?? 10
         listenSource = ["room", "both"].contains(defaults.string(forKey: "listenSource")) ? defaults.string(forKey: "listenSource")! : "system"
+        autoMicOnStart = defaults.bool(forKey: "autoMicOnStart")
         roomMicUID = defaults.string(forKey: "roomMicUID") ?? ""
         diagnostics = defaults.object(forKey: "diagnostics") as? Bool ?? DevBuild.isDev
         notesCapturable = defaults.bool(forKey: "notesCapturable")
@@ -345,6 +398,8 @@ final class AppSettings: ObservableObject {
             defaults.set(true, forKey: "speakerVoices")
             defaults.set(true, forKey: "speakerVoicesRegular")
         }
+        speakerMemory = defaults.object(forKey: "speakerMemory") as? Bool ?? true
+        speakerEveryLine = defaults.object(forKey: "speakerEveryLine") as? Bool ?? false
     }
 
     private func save() {
@@ -362,6 +417,7 @@ final class AppSettings: ObservableObject {
         defaults.set(speakEnabled, forKey: "speakEnabled")
         defaults.set(speakConfirmed, forKey: "speakConfirmed")
         defaults.set(speakFrom, forKey: "speakFrom")
+        defaults.set(speakHandsFree, forKey: "speakHandsFree")
         defaults.set(speakTo, forKey: "speakTo")
         defaults.set(speakOutput, forKey: "speakOutput")
         defaults.set(autoSystemMic, forKey: "autoSystemMic")
@@ -383,6 +439,8 @@ final class AppSettings: ObservableObject {
         defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")
         defaults.set(realtimeModel, forKey: "realtimeModel")
         defaults.set(screenModel, forKey: "screenModel")
+        defaults.set(exportOn, forKey: "exportOn")
+        defaults.set(exportFolder, forKey: "exportFolder")
         defaults.set(importLanguage, forKey: "importLanguage")
         defaults.set(importNotes, forKey: "importNotes")
         defaults.set(overlayAuto, forKey: "overlayAuto")
@@ -401,6 +459,8 @@ final class AppSettings: ObservableObject {
         defaults.set(aiCustomHearBase, forKey: "aiCustomHearBase")
         defaults.set(aiCustomRecognize, forKey: "aiCustomRecognize")
         defaults.set(aiCustomOnly, forKey: "aiCustomOnly")
+        defaults.set(aiCustomNotesOwn, forKey: "aiCustomNotesOwn")
+        defaults.set(aiCustomNotesBase, forKey: "aiCustomNotesBase")
         defaults.set(displayMode, forKey: "displayMode")
         defaults.set(speakVoices, forKey: "speakVoices")
         defaults.set(endWithApp, forKey: "endWithApp")
@@ -408,10 +468,13 @@ final class AppSettings: ObservableObject {
         defaults.set(silenceEnd, forKey: "silenceEnd")
         defaults.set(silenceMinutes, forKey: "silenceMinutes")
         defaults.set(listenSource, forKey: "listenSource")
+        defaults.set(autoMicOnStart, forKey: "autoMicOnStart")
         defaults.set(roomMicUID, forKey: "roomMicUID")
         defaults.set(diagnostics, forKey: "diagnostics")
         defaults.set(notesCapturable, forKey: "notesCapturable")
         defaults.set(speakerVoices, forKey: "speakerVoices")
+        defaults.set(speakerEveryLine, forKey: "speakerEveryLine")
+        defaults.set(speakerMemory, forKey: "speakerMemory")
         defaults.set(fixMisheard, forKey: "fixMisheard")
         defaults.set(askNames, forKey: "askNames")
     }

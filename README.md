@@ -13,6 +13,8 @@
   <a href="https://cicada.indaloop.app"><img src="https://img.shields.io/badge/Website-cicada.indaloop.app-E8552B?style=for-the-badge" alt="Website: cicada.indaloop.app" height="36"></a>
   &nbsp;
   <a href="https://cicada.indaloop.app/en/download/"><img src="https://img.shields.io/badge/Download-Mac%20·%20Windows%20·%20Linux%20·%20Android-15171C?style=for-the-badge" alt="Download for Mac, Windows, Linux and Android" height="36"></a>
+  &nbsp;
+  <a href="https://x.com/wquguru"><img src="https://img.shields.io/badge/Follow-@wquguru-000000?style=for-the-badge&logo=x&logoColor=white" alt="Follow @wquguru on X" height="36"></a>
 </p>
 
 <p align="center">
@@ -22,6 +24,8 @@
   <img src="https://img.shields.io/badge/Android-10%2B-black" alt="Android 10+">
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="Apache-2.0">
 </p>
+
+<p align="center">⭐ Star this repo if you find it useful so you can find it again later</p>
 
 <p align="center"><a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.ja.md">日本語</a> · <a href="README.ko.md">한국어</a></p>
 
@@ -50,21 +54,27 @@ Installers are available on [the download page](https://cicada.indaloop.app/en/d
 
 The three vertical buttons beside End independently show or hide notes, transcript, and interview coach, and remember your choices.
 
-As the meeting runs, the notes window organizes a summary, topics and key points, conclusions, to-dos, a fishbone diagram, and a glossary of names and terms. Click any conclusion or to-do to jump straight back to the original lines. Pressing `⌘F` searches both the canonical spelling and misrecognized variants.
+As you listen, Cicada organizes a summary, topics and key points, conclusions, to-dos, a fishbone diagram, and a glossary of names and terms. Click any conclusion or to-do to jump straight back to the original lines. Press `⌘F` to search—even misrecognized homophones show up.
 
-With an AI service connected, misheard names and terms are fixed on the spot: sound-alike typos are corrected right away, while unfamiliar names are asked about once and fixed automatically once you confirm. You can paste your usual spellings into **Word list** in Settings. After the meeting, select **Edit line…** to batch-fix the same misheard word across the whole session, with full undo support.
+With an AI service connected, misheard names and terms are fixed on the spot: homophones are corrected right away, while unfamiliar names are asked about once and fixed automatically once you confirm. You can paste common terms into **Word list** in Settings ahead of time. After the meeting, select **Edit line…** to batch-fix the same misheard word across the whole session, with full undo support.
 
 ### Live subtitles and language detection
 
-Cicada detects the spoken language within seconds and translates it into your system language; press `⌃⌥S` to switch display modes. The subtitle bar only appears when someone speaks and turns see-through under your pointer so it never blocks buttons. On macOS 26 with Apple silicon, Cicada also re-listens on device to refine each line 15 to 30 seconds later, fixing typos and missed words.
+Cicada detects the spoken language within seconds and translates it into your system language; press `⌃⌥S` to switch display modes. The subtitle bar only appears when someone speaks and turns see-through under your pointer so it stays out of the way. On macOS 26 with Apple silicon, Cicada also re-listens on device to refine each line 15 to 30 seconds later, fixing typos and missed words.
 
 ### In-person and hybrid meetings
 
-Click **Turn on mic** to listen to people in the meeting room. Hybrid meetings use the exact same button: computer audio is marked **Online** and microphone audio is marked **In room**, combined in a single record (on macOS 14 and 15, turning on the mic listens only to the room). On speakers, Cicada automatically deduplicates audio so nothing is recorded twice; with headphones on, both sides can talk at once and both are kept. Windows and Linux follow the same rules. On the Mac, the small arrow beside the button picks which microphone to use (an iPhone or a conference mic, say) without changing the system default.
+Click **Turn on mic** to capture people speaking in the room. Hybrid meetings use this same button: computer audio is marked **Online** and microphone audio is marked **In room**, combined in a single record (on macOS 14 and 15, turning on the mic listens only to the room). On speakers, Cicada automatically deduplicates audio; with headphones on, both sides can talk at once and both are kept. Windows and Linux follow the same rules.
+
+On a Mac, the small arrow beside the button picks which microphone to use (an iPhone or a conference mic, say) without changing the system default. What the mic hears only goes into the notes, never into the meeting; for the other side to hear you, use simultaneous interpreting below.
 
 ### Simultaneous interpreting
 
-Hold the right `⌥` key and speak so the other side hears your translated voice in the meeting app. Turning on interpreting automatically switches the system microphone to BlackHole 2ch, a virtual driver you can download and install with one click. With a Ling API key you can use natural voices or clone your own voice from an 8 to 30 second sample; without a key, it uses built-in macOS voices.
+Hold the right `⌥` key and speak so the other side hears your translated voice in the meeting app.
+
+On a Mac, you can also turn on **Hands-free** in **Settings › Interpreting**: just start talking while listening to a meeting, the meeting audio automatically ducks, and your translated voice goes out after a 1-second pause. It pauses while the mic is on, and we recommend switching back to the talk key when others are nearby so their voices aren't mistaken for yours.
+
+Turning on interpreting switches the system microphone to BlackHole 2ch, a virtual driver you can download and install with one click. With a Ling API key, you can use natural voices or clone your own voice from an 8 to 30 second recording; without a key, you can still use built-in macOS voices. Windows and Linux interpreting, and Android's In person, can use your own voice too, cloned from a 10 to 15 second recording with a Ling key.
 
 <p align="center">
   <img src="docs/interpreting.png" width="640" alt="Interpreting settings showing the right Option talk key, target language, Ming voice previews, and macOS voices">
@@ -72,9 +82,11 @@ Hold the right `⌥` key and speak so the other side hears your translated voice
 
 ### Meeting records
 
-Bilingual transcripts, notes, and raw audio recordings are saved on your computer. Click any line to play the recording from that point. The on-device voiceprint model automatically separates different speakers (and fills in their names when a Ling key is set), and you can rename or merge them anytime if it gets someone wrong.
+Bilingual transcripts, notes, and raw audio recordings are saved on your device. Click any line to play from that point while the text highlights and scrolls along. The on-device voiceprint model automatically separates speakers (and fills in their names when a Ling key is set), and you can rename or merge them anytime if someone is misidentified. On the Mac, name a speaker and click **Remember this voice** (check with them first) and later meetings recognize them; the voiceprint stays on this Mac, and **Settings › General › Remember speakers** manages or deletes it. Right now "you" in the record only covers what you say while holding the talk key; capturing what you say directly in the meeting is on the [roadmap](#roadmap).
 
-After a meeting, you can generate notes retroactively, export to Markdown, Word, or SRT subtitles, or turn local audio or video files into bilingual records via **File › Import Recording or Video…**. **Share…** turns the notes (and, if you like, the full bilingual transcript) into a link with an expiry and an optional password, copied with one click; before uploading, it automatically blocks keys, unpublished company information, and other sensitive content. Right now "you" in the record only covers what you say while holding the talk key; capturing what you say directly in the meeting is on the [roadmap](#roadmap).
+After a meeting, you can generate notes retroactively, click the summary, a conclusion or a to-do in the main window to fix it in place, use **Transcribe Again** on the recording if the wrong language was picked, export to Markdown, Word, and SRT subtitles, or transcribe local audio and video files via **File › Import Recording or Video…**. On the Mac, **Copy Notes** (⇧⌘C) pastes into Feishu, Notion or Word with its headings, lists and fishbone picture, and as Markdown into a chat. Turn on **Settings › General › Save to folder** and each meeting is also automatically saved as Markdown (with frontmatter at the top for agents) into an Obsidian vault or another folder, updating automatically whenever you rename it or regenerate its notes.
+
+Click **Share…** to generate a link to the notes (optionally including the full bilingual transcript) with an expiration time and password; before uploading, it automatically blocks keys, unpublished company info, and other sensitive content.
 
 <p align="center">
   <img src="docs/records.png" width="640" alt="Meeting records window showing identified speakers and a line-by-line English and Chinese transcript">
@@ -150,23 +162,23 @@ When recording your own voice, choose the Mac microphone, AirPods, or an externa
 
 ## Privacy & Permissions
 
-**Apple silicon Macs**: Audio capture, language detection, speech recognition, and meeting recordings all stay on your computer. The only data that leaves your Mac is the recognized text (sent for translation and meeting notes) and the short voice clips you speak while holding the talk key with a Ling key configured (if a speech model downloads slowly and you click **Use Ling for Now**, or if you switch speech recognition to a self-hosted service in **Settings › AI Service**, meeting audio is also sent to that service). Without an API key, live subtitles, translation, meeting records, and interpreting all work for free. Live notes, one-step voice translation, and voice cloning require your own Ling (Ant Group's LLM service) API key; an hour of meetings costs roughly ¥0.15 to ¥1 RMB, and Ling provides ¥10 of free credit every month, enough for 10 to 50 hours.
+**Apple silicon Macs**: Recording and speech recognition run on your computer; audio never leaves it. Only the recognized text is sent out (for translation and meeting notes). Exceptions: the lines you speak during interpreting with a Ling key configured, clicking **Use Ling for Now**, or switching to a self-hosted service in **Settings › AI Service** will send audio to the corresponding service. Without an API key, live subtitles, translation, meeting records, and interpreting all work for free. Live notes, one-step voice translation, and voice cloning require your own Ling (Ant Group's LLM service) API key. An hour of meetings costs roughly ¥0.15 to ¥1 RMB, and Ling provides ¥10 of free credit every month, enough for 10 to 50 hours.
 
-**Intel Macs, Windows, Linux, Android**: Speech recognition runs in the cloud. Spoken audio is sent in segments to Ling's Ming or your chosen service (OpenRouter, ZenMux, etc.), so an AI service key is required. Recordings and meeting records still stay only on your device.
+**Intel Macs, Windows, Linux, Android**: Speech recognition runs in the cloud and requires an AI service key; audio is sent in segments to Ling's Ming or your chosen service (OpenRouter, ZenMux, etc.). Recordings and meeting records still stay only on your device.
 
 The Mac app only asks for a permission when you use the corresponding feature, and everything else works normally if you decline:
 
 | Permission | What it's for | Without it |
 |---|---|---|
 | System audio recording (Screen & System Audio Recording) | Hears system audio for subtitles; never records the screen | Subtitles and notes won't work |
-| Microphone | Hold-to-talk interpreting; **Turn on mic** for meeting rooms | Can't speak to translate or listen to the room |
-| Input Monitoring | Detects whether right `⌥` is pressed (doesn't block or log other keys) | Switch to a `⌃`/`⌘` shortcut in Settings to skip this permission |
+| Microphone | Hold to talk or **Hands-free** for interpreting; click **Turn on mic** to listen to a meeting room | Can't speak to translate or listen to the room |
+| Input Monitoring | Detects the right `⌥` key (doesn't block or log other keys) | Switch to a `⌃`/`⌘` shortcut to skip this permission |
 | Administrator password | Installs the BlackHole 2ch virtual microphone (asked once) | The other side can't hear interpreting; everything else works |
 
-- **Transparent networking**: Cicada only connects to the internet for translation (`translate.googleapis.com`), your configured AI service (such as `api.ant-ling.com`), downloading the Apple-notarized BlackHole driver (verified against SHA-256), and checking GitHub once a day for updates. There is no analytics, no tracking, and no server of our own.
+- **Transparent networking**: Only connects to the internet for translation (`translate.googleapis.com`), your configured AI service (such as `api.ant-ling.com`), downloading the Apple-notarized BlackHole driver (verified against SHA-256), and checking GitHub once a day for updates. No analytics, no tracking, and no server of our own.
 - **Local storage**: Records and recordings live in `~/Library/Application Support/LiveSubs`. Your key and voice sample are readable only by your current system account and excluded from Time Machine and logs.
 - **Recognition diagnostics (Mac)**: Technical events and error codes stay in `~/Library/Logs/LiveSubs/Recognition` (`LiveSubs Dev` for dev builds), with up to three 1 MB logs. These logs contain no audio, transcripts or keys.
-- **Hidden from screen capture**: On Mac, screen sharing, screen recordings, and screenshots cannot capture the notes window; you can manually turn on **Show in screen sharing** when recording a demo.
+- **Hidden from screen capture**: On Mac, screen sharing, screen recordings, and screenshots cannot capture the notes window. You can manually turn on **Show in screen sharing** when recording a demo.
 
 ## Models
 
@@ -189,7 +201,9 @@ The table below shows the setup on Apple silicon Macs. When using a self-hosted 
 1. Sign up and log in on the [Ling open platform](https://chat.ant-ling.com/platform/api), create a token, and copy the key starting with `sk-`.
 2. Open **Settings › AI Service** in Cicada (or the banner at the top of the notes window), paste the key, and save.
 
-**Can't sign up for Ling?** At the top right of **Settings › AI Service** (or by clicking **Can't use Ling?** during onboarding), you can switch to OpenRouter, ZenMux, OpenAI, or any OpenAI-compatible service (including local or LAN services like Ollama, vLLM, SGLang, Qwen3-ASR, and Whisper). Live notes and full-sentence translation work with all of them, and OpenRouter and ZenMux can also use natural Gemini voices for interpreting; one-step voice translation and voice cloning are supported only by Ling. When Windows, Linux, or Android switches to another service, listening to the other side also goes through that service, so subtitles run 1–2 seconds behind Ling. If a connection fails, Settings tells you directly whether it's a key, model, or proxy issue (see the [setup page](https://cicada.indaloop.app/en/start/#proxy) for proxy details).
+**Can't sign up for Ling?** At the top right of **Settings › AI Service** (or by clicking **Can't use Ling?** during onboarding), you can switch to OpenRouter, ZenMux, OpenAI, or any OpenAI-compatible service (including local or LAN services like Ollama, vLLM, SGLang, Qwen3-ASR, and Whisper).
+
+After switching, live notes and full-sentence translation still work, and OpenRouter and ZenMux can also use natural Gemini voices for interpreting; one-step voice translation and voice cloning are supported only by Ling. With a self-hosted service, notes and speaker naming can use a stronger model of their own, or connect to another service (enter its own address and key); search for models in the list, or type one in directly if it isn't found. When Windows, Linux, or Android switches to another service, listening to the other side also goes through the new service, so subtitles run 1–2 seconds behind Ling. If a connection fails, Settings tells you directly whether it's a key, model, or proxy issue (see the [setup page](https://cicada.indaloop.app/en/start/#proxy) for proxy details).
 
 ## Requirements & Installation
 
@@ -223,7 +237,7 @@ In rough order of priority; feel free to open an Issue for what you'd like to se
 
 - **Record my own speech**: Continuously listen to the microphone with echo cancellation during meetings so what you say directly is also included in records and notes.
 - **Code signing and notarization**: Official signing and notarization for Mac and Windows installers to eliminate security prompts and move AI keys back to the system keychain.
-- **Speaker recognition**: Remember frequent coworkers' voices on device and recognize them automatically in future meetings.
+- **Speaker recognition on the other platforms**: The Mac already remembers frequent coworkers' voices and recognizes them in later meetings; Windows, Linux and Android come next.
 - **Notes without a key**: Generate meeting notes on supported Macs using Apple's on-device models.
 - **Android on app stores**: No more manual APK installs.
 - **iPhone and iPad**: Starting with listening to meeting rooms, face-to-face interpreting, and meeting records.

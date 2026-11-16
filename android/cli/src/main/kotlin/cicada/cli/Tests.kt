@@ -25,6 +25,7 @@ object Tests {
             "todoOwnersShowInTheUiLanguage" to ::todoOwnersShowInTheUiLanguage,
             "readsAMacRecordAndWritesItBackByteForByte" to ::readsAMacRecord,
             "keepsTheMacsImportAndRoomFields" to ::keepsTheMacsImportAndRoomFields,
+            "keepsFieldsItDoesNotKnow" to ::keepsFieldsItDoesNotKnow,
             "jsonEdgeCases" to ::jsonEdgeCases,
             "findsTheNewestAndroidRelease" to ::findsTheNewestAndroidRelease,
             "updateCheckIsSilentAndDue" to ::updateCheckIsSilentAndDue,
@@ -61,6 +62,7 @@ object Tests {
             "keyClicksAreNotSpeech" to ::keyClicksAreNotSpeech,
             "cutsLongSpeechAtItsQuietestMoment" to ::cutsLongSpeech,
             "ignoresClicks" to ::ignoresClicks,
+            "roomGateHearsAcrossTheTable" to ::roomGateHearsAcrossTheTable,
             "wavRoundTrip" to ::wavRoundTrip,
             "parsesNotes" to ::parsesNotes,
             "termsKeepOnlyFormsTheRecognizerWrote" to ::termsKeepOnlyFormsTheRecognizerWrote,
@@ -92,7 +94,7 @@ object Tests {
             "notesPromptNamesTheVoices" to ::notesPromptNamesTheVoices,
             "aHalfSentenceJoinsOnlyTheSameVoice" to ::aHalfSentenceJoinsOnlyTheSameVoice,
             "slowVoiceprintsNeverHoldSubtitlesBack" to ::slowVoiceprintsNeverHoldSubtitlesBack,
-        ) + ProviderTests.tests + AICheckTests.tests + FixTests.tests + ShareTests.tests
+        ) + ProviderTests.tests + VoiceTests.tests + AICheckTests.tests + FixTests.tests + ShareTests.tests + FolderExportTests.tests
         var passed = 0; var failed = 0
         for ((name, test) in tests) {
             try { test(); passed++ } catch (e: Throwable) { failed++; println("FAIL $name: ${e.message ?: e.javaClass.simpleName}") }
@@ -210,6 +212,17 @@ object Tests {
         equal(mac, Json.write(s.toJson()), "written back byte for byte")
         val untitled = Session.read(mac.replace("\"title\" : \"标题\",\n", ""))!!
         equal("周会", SessionStore.displayTitle(untitled), "an imported file is known by its name until the notes name it")
+    }
+
+    /// The Mac's voiceprint library (1.10) adds voiceProfiles / voiceSuggestions; Android has no
+    /// such library but must not drop them when it saves the record again.
+    fun keepsFieldsItDoesNotKnow() {
+        val ref = "{\n    \"1\" : {\n      \"id\" : \"6F9619FF-8B86-D011-B42D-00C04FC964FF\",\n      \"name\" : \"Emma\",\n      \"similarity\" : 0.75\n    }\n  }"
+        // Sorted keys: both come after voiceNames, the last key of MAC.
+        val mac = MAC.removeSuffix("\n}") + ",\n  \"voiceProfiles\" : $ref,\n  \"voiceSuggestions\" : $ref\n}"
+        check(mac.contains("\"voiceProfiles\"") && mac.contains("\"voiceSuggestions\""), "test record has the fields")
+        val s = Session.read(mac)!!
+        equal(mac, Json.write(s.toJson()), "written back byte for byte")
     }
 
     fun renamesLikeTheMac() {
@@ -459,9 +472,11 @@ object Tests {
     }
     fun concat(vararg parts: ShortArray): ShortArray = parts.fold(ShortArray(0)) { a, b -> a + b }
 
-    private fun cut(vararg parts: ShortArray): List<Segment> {
+    private fun cut(vararg parts: ShortArray): List<Segment> = cut(null, *parts)
+
+    private fun cut(gate: VoiceGate?, vararg parts: ShortArray): List<Segment> {
         val list = mutableListOf<Segment>()
-        val seg = Segmenter().apply { onSegment = { list.add(it) } }
+        val seg = Segmenter(gate).apply { onSegment = { list.add(it) } }
         for (p in parts) { var i = 0; while (i < p.size) { seg.feed(p.copyOfRange(i, minOf(p.size, i + 1600))); i += 1600 } }
         seg.flush()
         return list
@@ -490,6 +505,28 @@ object Tests {
         equal(2, list.size, "clicks in a pause don't hold it open")
         check(abs(list[1].start - 3.35) < 0.06, "second start, got ${list[1].start}")
         equal(0, cut(silence(0.5), keys(3.0), silence(1.0)).size, "typing alone makes no segment")
+    }
+
+    /// A room's hiss, about -60 dBFS.
+    private fun room(seconds: Double, seed: Long = 7): ShortArray {
+        val r = java.util.Random(seed)
+        return ShortArray((seconds * 16000).toInt()) { (r.nextGaussian() * 0.001 * 32767).toInt().toShort() }
+    }
+    private fun mix(a: ShortArray, b: ShortArray) = ShortArray(a.size) { (a[it] + b[it]).coerceIn(-32768, 32767).toShort() }
+
+    /// 面对面 (#30): a phone's mic hears a voice across the table around -50 dBFS, under the fixed
+    /// -40 dBFS line, so the meeting showed 等有人说话… for 8 minutes. The room's gate hears it.
+    fun roomGateHearsAcrossTheTable() {
+        val gate = VoiceGate()
+        equal(0.004, gate.threshold, "before the room is known")
+        for (i in 0 until 30 * 33) gate.voiced(if (i % 10 == 0) 0.02 else 0.003, 0.03)
+        check(abs(gate.threshold - 0.006) < 1e-9, "twice the room's noise, got ${gate.threshold}")
+        check(gate.voiced(0.008, 0.03), "a quiet voice across the table")
+        check(!gate.voiced(0.004, 0.03), "the fan")
+        val voice = mix(concat(silence(4.0), tone(3.0, 0.006), silence(1.0)), room(8.0))
+        equal(0, cut(voice).size, "the fixed line misses it")
+        equal(1, cut(VoiceGate(), voice).size, "the room's line hears it")
+        equal(0, cut(VoiceGate(), room(20.0)).size, "the room alone is not speech")
     }
 
     fun ignoresClicks() {
@@ -1138,6 +1175,7 @@ object Tests {
             engine.stop()
         } finally { LingClient.spacing = old }
         check(PressSpeech.filler("嗯嗯。") && PressSpeech.filler("Um, uh...") && !PressSpeech.filler("嗯，好的。") && !PressSpeech.filler("OK."), "fillers")
+        check(PressSpeech.filler("翻译结果：") && PressSpeech.filler("Translation:") && !PressSpeech.filler("我想补充三点：价格、时间和人手。"), "a bare heading is no sentence")
     }
 
     // MARK: 说话人识别 (linux/tests/test_core.py › Speakers)

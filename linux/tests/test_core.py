@@ -248,6 +248,12 @@ class Records(Base):
         self.assertIsNone(s.notes.topics[0].point_time(1))
         self.assertEqual(MAC, s.write())
 
+    def test_keeps_the_macs_voiceprint_matches(self):
+        # The Mac's voiceprint library (1.10) adds voiceProfiles / voiceSuggestions: kept on save.
+        ref = '{\n    "1" : {\n      "id" : "6F9619FF-8B86-D011-B42D-00C04FC964FF",\n      "name" : "Emma",\n      "similarity" : 0.75\n    }\n  }'
+        text = MAC[:-2] + ',\n  "voiceProfiles" : ' + ref + ',\n  "voiceSuggestions" : ' + ref + '\n}'
+        self.assertEqual(text, Session.read(text).write())
+
     def test_keeps_where_a_line_was_heard(self):
         # 电脑和会议室 on the Mac: a room line says "via" : "room"; written back unchanged.
         text = MAC.replace('      "t" : 2.5,\n      "voice" : 1\n', '      "t" : 2.5,\n      "via" : "room",\n      "voice" : 1\n')
@@ -567,6 +573,26 @@ class Notes(Base):
         ling.key_state = lingmod.OK
         notes._sync_key()
         self.assertEqual(notesmod.IDLE, notes.status)
+
+    def test_final_pass_settles(self):
+        """存到文件夹 waits while the final pass is to come or running, and hears when it is over, with
+        notes or without (no lines, a failed reply)."""
+        store = SessionStore()
+        ling = client(Fake(lambda body: reply("not json")))
+        notes = NotesEngine(ling, store)
+        done = []
+        notes.final_done = done.append
+        s = store.begin()
+        store.append(s.id, TranscriptLine(id="h1-1", t=0, src="x", srcLang="en", dstLang="zh-CN"))
+        notes.begin(s.id)
+        self.assertTrue(notes.settling(s.id), "still the meeting's: finish() hasn't run yet")
+        store.end(s.id)
+        notes.finish()
+        self.assertFalse(notes.settling(s.id))
+        self.assertEqual([s.id], done)
+        notes.generate("nothing-here")
+        notes._work.shutdown(wait=True)
+        self.assertEqual([s.id, "nothing-here"], done)
 
     def test_unreachable_is_the_notes_own_and_clears_when_the_service_answers(self):
         # NotesWindow.swift › banner: only the notes' own network failure says "can't reach", it ends
@@ -1244,6 +1270,7 @@ class Speaking(Base):
         self.assertEqual([], fake.spoken, "nothing sent to the voice")
         from cicada.core.speak import filler
         self.assertTrue(filler("嗯嗯。") and filler("Um, uh...") and not filler("嗯，好的。") and not filler("OK."))
+        self.assertTrue(filler("翻译结果：") and filler("Translation:") and not filler("我想补充三点：价格、时间和人手。"))
 
     def test_fetches_the_next_voice_while_the_last_one_plays(self):
         eng, fake, player = self._engine("ORIGINAL: 你好\nTRANSLATION: Hello")
@@ -1439,6 +1466,8 @@ class Speakers(Base):
         md = session_store.markdown(got, voices=True)
         self.assertIn("**[00:00] 说话人 1**", md)
         self.assertIn("**[00:30] 未识别**", md)
+        got.sourceFile = "call.m4a"
+        self.assertIn("**[00:00] 说话人 1**", session_store.markdown(got, voices=True), "an imported file with voices names them")
         notes = MeetingNotes(summary="说话人 2 会发说明", topics=[NoteTopic(title="说话人2 的计划")])
         named = speakers.named(notes, {2: "George"})
         self.assertEqual(("George 会发说明", "George 的计划"), (named.summary, named.topics[0].title))

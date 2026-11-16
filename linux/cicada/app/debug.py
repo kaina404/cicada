@@ -4,8 +4,9 @@ per connection, one JSON line back. Never in release builds.
 
   state | start | stop | feed <wav> | sample | view notes|subtitles | show records|notes|settings|onboarding
   target <code> | key-reload | windows | select <record id> | append <record id> <n> (a growing meeting)
-  provider ling|openrouter|zenmux|custom | ai-model hear|text|voice <id> (设置 › AI 服务; "" back to the recommended) |
-  ai-base text|voice|hear <url> (其他（兼容 OpenAI）'s addresses; "" for voice/hear: the text one)
+  provider ling|openrouter|zenmux|custom | ai-model hear|text|voice|notes <id> (设置 › AI 服务; "" back to the recommended) |
+  ai-base text|voice|hear|notes <url> (其他（兼容 OpenAI）'s addresses; "" for voice/hear/notes: the text one)
+  ai-notes same|own (纪要: 同一个服务 / 另一个服务, the Mac's aiCustomNotesOwn)
   ai-custom-only on|off (语音和文字只发给你的服务, the Mac's aiCustomOnly)
   speak-enable on|off | speak on|off (同声传译) | quit
   calls <program=name,…>|none|real (meeting apps in a call) | endtimes <silence> <countdown> <grace>|off | endkeep
@@ -18,10 +19,19 @@ per connection, one JSON line back. Never in release builds.
   online both|no (answer 线上也有人？) | room-mic-force <source>|"" (a null sink's monitor as the room mic)
   hide notes | problem-wait <seconds>|off (how long unreachable lasts before its notification; off: 2 min)
   codecs (AAC encoder / decoders here) | play [<seconds>] | pause | rate (next speed) | playstate (the shown record's
-  recording: state, time, length, rate, the highlighted line) | settings-general (设置 at 通用)
+  recording: state, time, length, rate, the highlighted line, following, the 回到正在播放 capsule, the scroll) |
+  follow (press 回到正在播放) | play-line <index> (click a line) | line-rect <index>|pill (on the screen) |
+  settings-general (设置 at 通用)
   share <record id>[,full][,pw] | unshare <record id> | share-last (how the last ended) | shareSheet <record id>|""
   share-ui scope notes|full | days 7|30|365 | names|pw|summary on|off | options (更改) | go | strip | back | confirm
-           | copy all|link|password | revoke | close | state"""
+           | copy all|link|password | revoke | close | state
+  export-folder <path>|off|on (存到文件夹: choose a folder as 存到这里 does, and its check) |
+  export-state (folder, problem, index, the records not written yet) | export-all (也存一份) | export-retry |
+  export-choose (open 存到哪里, as 更改… does; answer it with the dialog itself)
+  voice <lang> | voice <lang>=<id> (the voice a language uses: "voice en=clone", "voice zh=灵小锋")
+  voice-clone <wav>|off|state (我自己的声音 from a 16 kHz WAV: Ming hears it, the Mac's checks, then kept; state
+           says the last result and the files' modes) | voice-preview [<lang>] (试听 in that language: what played)
+  voice-dialog open|feed <wav>|finish|play original|clone|save|close|state (the record sheet, a WAV as the mic)"""
 from __future__ import annotations
 
 import os
@@ -124,6 +134,37 @@ def _problem(app) -> dict:
 def updates_notified():
     from ..core import updates
     return updates.notified()
+
+
+def _export(app, cmd: str, arg: str) -> dict:
+    """存到文件夹. Waits for the exporter's worker (it never waits for the main loop), so the reply
+    says what happened."""
+    ex = app.folder_export
+    if cmd == "export-folder":
+        if arg == "off":
+            ex.turn_off()
+        elif arg == "on" and ex.folder:
+            ex.choose(ex.folder)
+        elif arg:
+            ex.choose(arg)
+        else:
+            return {"ok": False, "error": "export-folder <path>|off|on"}
+        ex.wait()
+        return {"ok": True, **ex.state()}
+    if cmd == "export-all":
+        ex.write_all()
+        ex.wait()
+        return {"ok": True, **ex.state()}
+    if cmd == "export-retry":
+        ex.retry()
+        return {"ok": True}
+    if cmd == "export-choose":
+        app.show_settings(general=True)
+        GLib.idle_add(lambda: app.settings_window.folder_card._choose() and False)
+        return {"ok": True}
+    if cmd == "export-state":
+        return {"ok": True, **ex.state()}
+    return {"ok": False, "error": "unknown command"}
 
 
 def command(app, line: str) -> dict:
@@ -274,10 +315,16 @@ def command(app, line: str) -> dict:
     if cmd == "ai-base":
         # A custom service's addresses: text, voice or hear ("" for voice and hear: the text one).
         kind, _, url = arg.partition(" ")
-        field = {"text": "aiCustomBase", "voice": "aiCustomVoiceBase", "hear": "aiCustomHearBase"}.get(kind)
+        field = {"text": "aiCustomBase", "voice": "aiCustomVoiceBase", "hear": "aiCustomHearBase",
+                 "notes": "aiCustomNotesBase"}.get(kind)
         if field is None:
-            return {"ok": False, "error": "ai-base text|voice|hear <url>"}
+            return {"ok": False, "error": "ai-base text|voice|hear|notes <url>"}
         setattr(app.settings, field, url.strip())
+        app.settings.save()
+        app.ai_changed()
+        return {"ok": True, "ai": _ai(app)}
+    if cmd == "ai-notes":
+        app.settings.aiCustomNotesOwn = arg == "own"
         app.settings.save()
         app.ai_changed()
         return {"ok": True, "ai": _ai(app)}
@@ -317,10 +364,21 @@ def command(app, line: str) -> dict:
             app.toggle_speaking()
         # echoCancelled: this press reads the talk key's echo canceller (else the plain mic, echo drop on)
         return {"ok": True, "speaking": app.speak.active, "echoCancelled": app.speak.echo_cancelled}
+    if cmd.startswith("voice"):
+        return _voice(app, cmd, arg)
     if cmd == "codecs":
         from . import media
         return {"ok": True, **media.codecs(), "recordAudio": app.settings.recordAudio, "recording": listen.recording}
-    if cmd in ("play", "pause", "rate", "playstate"):
+    if cmd == "line-rect":  # where transcript row <n> (or the 回到正在播放 capsule: "pill") is on the screen, for real clicks
+        w = app.records_window
+        widget = w.back_pill if arg == "pill" else w._rows[int(arg)][1] if w is not None and int(arg) < len(w._rows) else None
+        if widget is None or not widget.get_mapped():
+            return {"ok": False, "error": "not shown"}
+        x, y = widget.translate_coordinates(w, 0, 0)
+        ox, oy = w.get_window().get_origin()[1:]
+        a = widget.get_allocation()
+        return {"ok": True, "x": ox + x, "y": oy + y, "w": a.width, "h": a.height}
+    if cmd in ("play", "pause", "rate", "playstate", "follow", "play-line"):
         w = app.records_window
         p = w.player if w is not None else None
         if cmd != "playstate" and p is None:
@@ -331,14 +389,25 @@ def command(app, line: str) -> dict:
             p.pause()
         elif cmd == "rate":
             p.next_rate()
+        elif cmd == "follow":
+            w.follow_playing()
+        elif cmd == "play-line":
+            s = app.store.get(w._player_sid)
+            w.play_line(s.lines[int(arg)])
         hl = w._hl_row if w is not None else None
         sid = w.selected if w is not None else None
         s = app.store.get(sid) if sid else None
         return {"ok": True, "record": sid, "audio": w._built_key[3] if w is not None and w._built_key else None,
                 "hasAudio": s.hasAudio if s else None, "playing": p.playing if p else None,
                 "time": round(p.time, 2) if p else None, "length": round(p.length, 2) if p else None,
-                "rate": p.rate if p else None,
+                "rate": p.rate if p else None, "following": p.following if p else None,
+                "pill": w._pill_label.get_text() if w is not None and w.back_pill.get_visible() else None,
+                "scroll": round(w.right.get_vadjustment().get_value()) if w is not None else None,
+                "bars": w._bars is not None and w._bars.get_mapped() if w is not None else None,
+                "bar": w.bottom.get_children() != [] if w is not None else None,
                 "line": next((i for i, (_k, r) in enumerate(w._rows) if r is hl), None) if hl is not None else None}
+    if cmd.startswith("export-"):
+        return _export(app, cmd, arg)
     if cmd == "settings-general":
         app.show_settings(general=True)
         return {"ok": True}
@@ -402,6 +471,8 @@ def command(app, line: str) -> dict:
                 "shown": session_store.display_title(s) if s else None}
     if cmd == "delete":
         app.store.delete(arg)
+        if app.store.get(arg) is None:
+            app.folder_export.deleted(arg)
         return {"ok": True, "exists": app.store.get(arg) is not None, "live": app.store.live}
     if cmd == "notes-end":
         # The notes window's 结束: `ask`, then `keep` (继续记录) or `end` (结束会议).
@@ -678,6 +749,110 @@ def _fixes(app, cmd: str, arg: str) -> dict:
     return {"ok": False, "error": "unknown command " + cmd}
 
 
+def _voice(app, cmd: str, arg: str) -> dict:
+    """我自己的声音 without a microphone: the network runs on a thread and `state` reads the result."""
+    from ..core import voice_reference as vref
+    from ..core import voices as voicemod
+    from ..core.audio import PcmAudioSource, RATE, Wav
+    sw = app.settings_window
+
+    def refresh():
+        if sw is not None and hasattr(sw, "_fill_voices"):
+            sw._fill_voices()
+    if cmd == "voice":
+        lang, _, vid = arg.partition("=")
+        if vid:
+            app.settings.speakVoices[voicemod.key(lang)] = vid
+            app.settings.save()
+            refresh()
+        Log.d("voice %s -> %s clone=%s" % (lang, app.speak.voice(lang), vref.exists()))
+        return {"ok": True, "lang": lang, "chosen": (app.settings.speakVoices or {}).get(voicemod.key(lang)),
+                "uses": app.speak.voice(lang), "options": [v for v, _n, _t in voicemod.voices(lang, app.ling.config())],
+                "clone": vref.exists(), "clones": voicemod.clones(app.ling.config())}
+    if cmd == "voice-clone":
+        if arg == "off":
+            if sw is not None:
+                sw.remove_voice()
+            else:
+                vref.remove()
+            return {"ok": True, "exists": vref.exists()}
+        if arg in ("", "state"):
+            out = {"ok": True, "exists": vref.exists(), "last": getattr(app, "voice_debug", None)}
+            if vref.exists():
+                out.update({"seconds": round(vref.duration(), 2), "textChars": len(vref.text() or ""), "slow": vref.saved_is_slow(),
+                            "modes": [oct(os.stat(p).st_mode & 0o777) for p in (vref.folder(), vref.audio_path(), vref.text_path())]})
+            return out
+        app.voice_debug = {"running": True}
+
+        def run():
+            from .voice_clone import transcribe
+            samples = vref.trim(Wav.read_file(arg))
+            try:
+                text = transcribe(app, samples)
+            except Exception as e:  # noqa: BLE001
+                app.voice_debug = {"running": False, "error": str(e)}
+                return
+            why = vref.check(samples, text)
+            p = vref.pace(text, samples)
+            if why is None:
+                vref.save(samples, text)
+            app.voice_debug = {"running": False, "seconds": round(len(samples) / RATE, 2), "textChars": len(text),
+                               "pace": round(p, 2) if p else None, "why": why, "saved": why is None}
+            GLib.idle_add(lambda: refresh() or False)
+        threading.Thread(target=run, daemon=True).start()
+        return {"ok": True, "started": True}
+    if cmd == "voice-preview":
+        code = arg or app.speak.target
+        app.voice_debug = {"running": True}
+
+        def play():
+            from .room import Player
+            from .settings_window import PREVIEW
+            text = PREVIEW.get(code[:2], PREVIEW["en"])
+            uses = app.speak.voice(code)
+            start, n, first = time.monotonic(), 0, None
+            out = Player(None)
+            try:
+                for pcm in app.speak.speech(text, code):
+                    if first is None:
+                        first = time.monotonic() - start
+                    n += len(pcm)
+                    out.write(pcm)
+                out.drain()
+                app.voice_debug = {"running": False, "voice": uses, "seconds": round(n / 2 / 24000, 2),
+                                   "firstSound": round(first or 0, 2), "took": round(time.monotonic() - start, 2)}
+            except Exception as e:  # noqa: BLE001
+                app.voice_debug = {"running": False, "voice": uses, "error": str(e)}
+            finally:
+                out.close()
+        threading.Thread(target=play, daemon=True).start()
+        return {"ok": True, "started": True}
+    if cmd == "voice-dialog":
+        what, _, rest = arg.partition(" ")
+        d = getattr(sw, "voice_dialog", None)
+        if what == "open":
+            app.show_settings()
+            app.settings_window.record_voice()
+            return {"ok": True}
+        if d is None or d.window is None:
+            return {"ok": False, "error": "no dialog"}
+        r = d.recorder
+        if what == "feed":  # the WAV as the microphone, in real time; the recording stops when it ends
+            d.consent = True
+            r.start(PcmAudioSource(rest))
+        elif what == "finish":
+            r.finish()
+        elif what == "play":
+            d.play(rest)
+        elif what == "save":
+            d.save()
+        elif what == "close":
+            d.close(False)
+        return {"ok": True, "phase": r.phase, "why": r.why, "seconds": round(r.seconds, 1), "textChars": len(r.transcript),
+                "playing": d.playing, "consent": d.consent}
+    return {"ok": False, "error": "unknown command " + cmd}
+
+
 def _ai(app) -> dict:
     """The AI service in use and what its last check found (never the key itself)."""
     c, ling = app.ling.config(), app.ling
@@ -687,5 +862,7 @@ def _ai(app) -> dict:
             "keyWorks": app.key_works, "asking": getattr(app, "_asking", None) is not None,
             "lastVoice": list(ling.last_voice) if ling.last_voice else None, "simulate": ling.simulate,
             "catalog": [len(ling.text_catalog), len(ling.hear_catalog)], "keyFile": os.path.basename(app.key.path),
+            "notes": {"apart": c.notes_apart, "base": c.for_notes.base, "model": c.for_notes.text_model,
+                      "ownKey": ling.notes_has_own_key, "catalog": len(ling.notes_catalog)},
             "customOnly": app.settings.aiCustomOnly, "googleOff": app.translator.google_off,
             "sentencesUntranslated": app.translator.sentences_untranslated}
