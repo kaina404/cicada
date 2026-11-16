@@ -52,7 +52,7 @@ def main():
         def synthesize(text):
             with torch.inference_mode():
                 chunks, words, offset = [], [], 0.0
-                for result in pipeline(text, voice=voice, speed=0.95):
+                for result in pipeline(text, voice=voice, speed=0.8):
                     audio = result.audio.numpy()
                     for token in result.tokens or []:
                         if token.start_ts is not None and token.end_ts is not None:

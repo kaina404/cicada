@@ -20,8 +20,10 @@ final class ShadowReader: ObservableObject {
     @Published private(set) var status = Status.off
     @Published private(set) var playback = ShadowPlayback()
     @Published private(set) var rate: Float = 1
+    /// Finer steps under 1× let a learner slow down a little without the 0.75× drag.
+    static let rates: [Float] = [0.75, 0.8, 0.85, 0.9, 0.95, 1, 1.25]
     func setRate(_ value: Float) {
-        guard [Float(0.75), 1, 1.25].contains(value) else { return }
+        guard Self.rates.contains(value) else { return }
         rate = value; tick()
     }
     func setVolume(_ value: Double) { audio.setVolume(ShadowVolume.clamped(value)) }
