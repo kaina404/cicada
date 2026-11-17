@@ -85,9 +85,10 @@ struct CoachScript: Equatable {
     }
     /// Chinese has no spaces, so each Han character is one token; Latin words and numbers stay whole,
     /// which keeps English unchanged and lets mixed speech ("我用 Kotlin 写") align.
+    /// Fenced code is shown, never read aloud, so it does not count toward reading progress.
     static func words(_ text: String) -> [String] {
         var result: [String] = []; var word = ""
-        for character in CoachPronunciation.spokenText(text).lowercased() {
+        for character in CoachPronunciation.spokenText(withoutCode(text)).lowercased() {
             if isHan(character) {
                 if !word.isEmpty { result.append(word); word = "" }
                 result.append(String(character))
@@ -97,6 +98,16 @@ struct CoachScript: Equatable {
         }
         if !word.isEmpty { result.append(word) }
         return result
+    }
+    /// Drops ``` fenced blocks, including one still streaming without its closing fence.
+    static func withoutCode(_ text: String) -> String {
+        guard text.contains("```") else { return text }
+        var kept: [Substring] = []; var fenced = false
+        for line in text.split(separator: "\n", omittingEmptySubsequences: false) {
+            if line.trimmingCharacters(in: .whitespaces).hasPrefix("```") { fenced.toggle(); continue }
+            if !fenced { kept.append(line) }
+        }
+        return kept.joined(separator: "\n")
     }
     static func endsSentence(_ character: Character) -> Bool { ".!?。！？".contains(character) }
     static func isHan(_ character: Character) -> Bool {
