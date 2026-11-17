@@ -1,0 +1,110 @@
+{
+  "_comment": "Walkthrough card acceptance scenarios (docs/android-technical-interview-assistant-requirements.md §8). Steps: them / me (spoken lines), ocr (board text, \\n between lines), board (image path), wait (seconds), next (manual next card), check. Checks run on the card shown after the previous steps settle.",
+  "scenarios": [
+    {"id": "AC-01", "name": "Bundle, no board, then a follow-up", "steps": [
+      {"them": "Can you explain what a Bundle is in Android and when you would use it?"},
+      {"check": {"type": false, "judge": "SAY starts explaining what a Bundle is, directly and in plain spoken English, without code."}},
+      {"them": "What happens if the Bundle gets too large?"},
+      {"check": {"type": false, "judge": "SAY answers what happens when a Bundle is too large (for example TransactionTooLargeException or a size limit) instead of repeating the definition."}}
+    ]},
+    {"id": "AC-02", "name": "Design, then code, then principle", "steps": [
+      {"them": "How would you design a chat screen like ChatGPT on Android?"},
+      {"check": {"type_not_code": true, "judge": "SAY begins a step-by-step design answer for a ChatGPT-like chat screen (scope or main parts), not a full essay. A suggestion to draw one part on the whiteboard is fine; writing code is not."}},
+      {"them": "Okay, can you write the ViewModel that holds the message list?"},
+      {"check": {"type": true, "judge": "The card gives a short spoken lead-in and a small Kotlin ViewModel snippet for the message list in TYPE."}},
+      {"them": "Why did you pick StateFlow over LiveData there?"},
+      {"check": {"problems_max": 1, "judge": "SAY explains why StateFlow rather than LiveData, for the same chat screen problem."}}
+    ]},
+    {"id": "AC-03", "name": "Switch A to B while the board still shows A", "steps": [
+      {"them": "Please implement load() in the ViewModel. You can use RxJava."},
+      {"ocr": "class ChatViewModel(private val repo: ChatRepository) : ViewModel() {\\n    private val disposables = CompositeDisposable()\\n    fun load() {\\n        disposables.add(repo.messages().subscribeOn(Schedulers.io()).subscribe { messages.postValue(it) })\\n    }\\n}"},
+      {"wait": 4},
+      {"them": "I'd rather not use RxJava here. Let's switch this to Kotlin Flow."},
+      {"check": {"adopted_contains": "Flow", "judge": "SAY acknowledges switching to Kotlin Flow as a plan (I'll ...), does not claim it is already done, and the card stops recommending RxJava. If there is a TYPE it migrates load() to Flow."}}
+    ]},
+    {"id": "AC-04", "name": "A tentative question is not a decision", "steps": [
+      {"them": "Please implement load() in the ViewModel with RxJava."},
+      {"ocr": "fun load() {\\n    disposables.add(repo.messages().subscribeOn(Schedulers.io()).subscribe { messages.postValue(it) })\\n}"},
+      {"wait": 4},
+      {"them": "Hmm, could we use Flow here instead?"},
+      {"check": {"adopted_not_contains": "Flow", "judge": "SAY compares RxJava and Flow or asks whether to switch; it does not announce that the code is being switched to Flow."}}
+    ]},
+    {"id": "AC-05", "name": "Local rename", "steps": [
+      {"them": "Let's start simple. Declare a variable named cat with the value 1."},
+      {"ocr": "val cat = 1"},
+      {"wait": 4},
+      {"them": "Cat isn't a good name. Rename it to dog."},
+      {"check": {"type": true, "type_contains": "dog", "judge": "SAY briefly acknowledges renaming to dog, and TYPE replaces the cat variable with dog; it does not redesign anything else."}}
+    ]},
+    {"id": "AC-06", "name": "Ambiguous 'add another one'", "steps": [
+      {"them": "We have a list screen and a detail screen here. Can you add another one?"},
+      {"check": {"type": false, "judge": "SAY asks a short clarifying question about what to add instead of inventing a new item."}}
+    ]},
+    {"id": "AC-07", "name": "Scrolling is not a change", "steps": [
+      {"them": "Walk me through this API."},
+      {"ocr": "GET /v1/feed?cursor=abc&limit=20\\nResponse(PaginationMetadata(after, before, reachedEnd))\\nPost(postId, createdAt, content, author)\\nAuthor(id, name, avatarURL)"},
+      {"wait": 8},
+      {"mark": "requests"},
+      {"ocr": "Post(postId, createdAt, content, author)\\nAuthor(id, name, avatarURL)"},
+      {"wait": 6},
+      {"check": {"requests_unchanged": true}}
+    ]},
+    {"id": "AC-09", "name": "Follow-up inside a follow-up, then back", "steps": [
+      {"them": "Design the data layer for an offline-first news feed."},
+      {"them": "Wait, why a repository at all?"},
+      {"them": "And who owns the cache, the repository or the data source?"},
+      {"check": {"judge": "SAY answers who owns the cache."}},
+      {"them": "Okay, makes sense. Please continue with the data layer."},
+      {"check": {"judge": "SAY returns to the offline-first data layer design without re-explaining why a repository exists."}}
+    ]},
+    {"id": "AC-10", "name": "Switch problems and return", "steps": [
+      {"them": "Design an image loading library for Android."},
+      {"wait": 3},
+      {"them": "Let's pause that. New question: what is the difference between a Service and a WorkManager job?"},
+      {"check": {"problems_min": 2, "judge": "SAY answers the Service versus WorkManager question."}},
+      {"them": "Good. Now let's go back to the image loading library."},
+      {"check": {"judge": "SAY continues the image loading library design."}}
+    ]},
+    {"id": "AC-11", "name": "An early constraint survives a long discussion", "steps": [
+      {"them": "Design a notes app. It must work fully offline, that's a hard requirement."},
+      {"them": "How would you structure the UI layer?"},
+      {"them": "What about navigation between screens?"},
+      {"them": "How do you handle dependency injection?"},
+      {"them": "Okay. What would you build next?"},
+      {"check": {"constraint_contains": "offline", "judge": "The next step respects the offline requirement (for example local storage or sync), or at least does not contradict it."}}
+    ]},
+    {"id": "AC-12", "name": "Going back to an old approach keeps new constraints", "steps": [
+      {"them": "Implement message loading with RxJava."},
+      {"them": "Also, limit each page to 20 messages."},
+      {"them": "Actually, switch to Kotlin Flow."},
+      {"them": "On second thought, let's go back to RxJava."},
+      {"check": {"adopted_contains": "RxJava", "judge": "SAY goes back to RxJava and still keeps the 20-message page limit (or does not drop it)."}}
+    ]},
+    {"id": "AC-13", "name": "The candidate's own words count", "steps": [
+      {"them": "Explain how a ViewModel survives configuration changes."},
+      {"me": "So the ViewModel lives in the ViewModelStore, which is retained across rotation, and it is cleared only when the activity really finishes."},
+      {"next": true},
+      {"check": {"judge": "SAY does not repeat that the ViewModel is kept in a ViewModelStore across rotation; it moves on to a new point or wraps up."}}
+    ]},
+    {"id": "AC-15", "name": "Steady candidate input does not starve the card", "steps": [
+      {"them": "Explain coroutine cancellation."},
+      {"me": "Okay so cancellation"}, {"me": "is cooperative"}, {"me": "you check isActive"}, {"me": "or call suspending functions"},
+      {"wait": 6},
+      {"check": {"has_card": true}}
+    ]},
+    {"id": "AC-17", "name": "Resume question inside a technical one", "steps": [
+      {"them": "Design the ViewModel for a feed screen."},
+      {"them": "Have you used this approach in a previous project?"},
+      {"check": {"judge": "SAY talks about the candidate's past work using only plausible real experience and does not claim that the design made live in this interview was a past project."}}
+    ]},
+    {"id": "AC-18", "name": "Briefly", "steps": [
+      {"them": "Briefly, in one sentence: what is a ViewModel?"},
+      {"check": {"type": false, "judge": "SAY is one sentence (two at most) that defines a ViewModel."}}
+    ]},
+    {"id": "AC-08", "name": "Real Excalidraw board (P0 frame)", "steps": [
+      {"board": "$FRAMES/t2760.jpg"},
+      {"them": "Can you walk me through this architecture, starting from the UI?"},
+      {"check": {"type": false, "judge": "SAY starts from the UI layer and mentions boxes that are actually on this board (for example FeedScreen, the ViewModels, Domain or Usecase, PostRepository) without inventing components."}}
+    ]}
+  ]
+}

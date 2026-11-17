@@ -1,0 +1,945 @@
+{
+ "date": "2026-11-17",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 16,
+ "total": 16,
+ "scenarios": [
+  {
+   "id": "AC-01",
+   "name": "Bundle, no board, then a follow-up",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "725",
+      "problem": "Explain what a Bundle is in Android and when to use it",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "explain Bundle and when to use it",
+      "say": "A Bundle is a container that holds data as key-value pairs. Android uses it to pass small amounts of data between screens and to save state. I'd use it for simple things like an ID, a title or a filter, not for large objects or images. When the system kills the app in the background, the Bundle is how the screen gets its state back.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY line plainly defines a Bundle as a key-value data container and explains its uses in spoken English, with no code."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "631",
+      "problem": "Explain what a Bundle is in Android and when to use it",
+      "adopted": "none",
+      "constraints": "[\"Bundle must stay small; large data causes TransactionTooLargeException\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what happens if the Bundle gets too large",
+      "say": "The system has a hard limit on saved state, about one megabyte. If I go over it, the app crashes with a TransactionTooLargeException. So I keep the Bundle small: an ID, a title, a filter. For a big object, I save the ID and reload the data from the database or the network. For a large image, I pass a file path or a URL, not the image itself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explains the ~1MB limit and TransactionTooLargeException, directly answering what happens when a Bundle is too large."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Can you explain what a Bundle is in Android and when you would use it?",
+    "Interviewer: What happens if the Bundle gets too large?"
+   ]
+  },
+  {
+   "id": "AC-02",
+   "name": "Design, then code, then principle",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "558",
+      "problem": "Design a ChatGPT-style chat screen on Android",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "design a ChatGPT-style chat screen on Android",
+      "say": "I'd start with the message list as the base. Each message is one item in a LazyColumn, keyed by its id, so new messages don't rebuild the whole list. The input box sits at the bottom, and the send button stays disabled while a reply is still streaming in.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY opens a step-by-step design by scoping the main parts (message list as base, LazyColumn keyed by id, input box, send button state) without writing code or a full essay."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "623",
+      "problem": "Design a ChatGPT-style chat screen on Android",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "write the ViewModel that holds the message list",
+      "say": "I'll keep the list in a StateFlow of an immutable list. The UI collects it as state, so each change gives a new list and Compose redraws only what changed. I'll add a send function that appends the user message first, then a placeholder for the reply. The reply text updates that same item as chunks arrive.",
+      "type": "add@ChatViewModel: data class Message(val id: String, val role: Role, val text: String, val streaming: Boolean = false) ⏎  ⏎ class ChatViewModel : ViewModel() { ⏎     private val _messages = MutableStateFlow<List<Message>>(emptyList()) ⏎     val messages: StateFlow<List<Message>> = _messages.asStateFlow() ⏎  ⏎     fun send(input: String) { ⏎         val userMsg = Message(id = UUID.randomUUID().toString(), role = Role.USER, text = input) ⏎         val replyId = UUID.randomUUID().toString() ⏎         val reply = Message(id = replyId, role = Role.ASSISTANT, text = \"\", streaming = true) ⏎         _messages.update { it + userMsg + reply } ⏎     } ⏎  ⏎     fun onChunk(replyId: String, chunk: String) { ⏎         _messages.update { list -> ⏎             list.map { if (it.id == replyId) it.copy(text = it.text + chunk) else it } ⏎         } ⏎     } ⏎  ⏎     fun onDone(replyId: String) { ⏎         _messages.update { list -> ⏎             list.map { if (it.id == replyId) it.copy(streaming = false) else it } ⏎         } ⏎     } ⏎ }",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "add@ChatViewModel: data class Message(val id: String, val role: Role, val text: String, val streaming: Boolean = false) "
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY section provides a concise spoken lead-in explaining the StateFlow/immutable list approach, and TYPE contains a compact Kotlin ViewModel snippet with Message data class, StateFlow, and send/onChunk/onDone functions."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "1034",
+      "problem": "Design a ChatGPT-style chat screen on Android",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "why StateFlow over LiveData",
+      "say": "There are two reasons. First, StateFlow is a plain Kotlin flow, so it works the same in the ViewModel and in Compose. Second, it always has a current value, so a new screen gets the latest list right away. LiveData is tied to the Android lifecycle, and it's harder to combine with other flows. For a stream that updates many times a second, StateFlow is the simpler fit.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "problems_max",
+       "pass": true,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY clearly explains the choice of StateFlow over LiveData (plain Kotlin flow, always has a current value, easier flow combination, lifecycle coupling of LiveData) in the context of the chat screen's message list."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: How would you design a chat screen like ChatGPT on Android?",
+    "Interviewer: Okay, can you write the ViewModel that holds the message list?",
+    "Interviewer: Why did you pick StateFlow over LiveData there?"
+   ]
+  },
+  {
+   "id": "AC-03",
+   "name": "Switch A to B while the board still shows A",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "878",
+      "problem": "Implement load() in the ViewModel using RxJava",
+      "adopted": "Kotlin Flow instead of RxJava",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "switch from RxJava to Kotlin Flow",
+      "say": "Okay, I'll switch this part to Flow. I'll keep the same loading, data and error states. The repository call becomes a Flow, and I'll collect it in viewModelScope. I'll also use stateIn so the UI gets a StateFlow, and the collection stops when the ViewModel is cleared.",
+      "type": "replace@ChatViewModel: class ChatViewModel(private val repo: ChatRepository) : ViewModel() { ⏎     sealed class State { ⏎         object Loading : State() ⏎         data class Data(val messages: List<Message>) : State() ⏎         data class Error(val message: String) : State() ⏎     } ⏎  ⏎     private val _state = MutableStateFlow<State>(State.Loading) ⏎     val state: StateFlow<State> = _state ⏎  ⏎     fun load() { ⏎         viewModelScope.launch { ⏎             _state.value = State.Loading ⏎             repo.messages() ⏎                 .catch { e -> _state.value = State.Error(e.message ?: \"Unknown error\") } ⏎                 .collect { list -> _state.value = State.Data(list) } ⏎         } ⏎     } ⏎ }",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_contains",
+       "pass": true,
+       "detail": "Kotlin Flow instead of RxJava"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY frames the switch as a plan (\"I'll switch this part to Flow\"), doesn't claim completion, and the TYPE migrates load() to Flow with no RxJava remaining."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Please implement load() in the ViewModel. You can use RxJava.",
+    "[board] class ChatViewModel(private val repo: ChatRepository) : ViewModel() { |     private val disposables = CompositeDisposable() |     fun load() { |         disposables.add(repo.messages().subscribeOn(Schedulers.io()).subscribe { messages.postValue(it) }) |     } | }",
+    "Interviewer: I'd rather not use RxJava here. Let's switch this to Kotlin Flow."
+   ]
+  },
+  {
+   "id": "AC-04",
+   "name": "A tentative question is not a decision",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "974",
+      "problem": "Implement load() in the ViewModel with RxJava",
+      "adopted": "none",
+      "constraints": "[\"Keep the subscription so it can be cancelled\", \"Deliver results on the main thread\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "could we use Flow here instead",
+      "say": "Yes, Flow fits better here. With Flow we don't need a CompositeDisposable, because the collection is cancelled when the scope ends. We'd collect it in viewModelScope, and the UI gets the values through StateFlow. Do you want me to switch this part to Flow?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY compares RxJava and Flow (no CompositeDisposable needed, scope-based cancellation, StateFlow) and asks whether to switch, without announcing a switch."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Please implement load() in the ViewModel with RxJava.",
+    "[board] fun load() { |     disposables.add(repo.messages().subscribeOn(Schedulers.io()).subscribe { messages.postValue(it) }) | }",
+    "Interviewer: Hmm, could we use Flow here instead?"
+   ]
+  },
+  {
+   "id": "AC-05",
+   "name": "Local rename",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "1051",
+      "problem": "Declare a variable named cat with the value 1",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Rename cat to dog",
+      "say": "Okay, I'll rename it to dog. The value stays 1, so only the name changes.",
+      "type": "replace@val cat = 1: val dog = 1",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "replace@val cat = 1: val dog = 1"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "replace@val cat = 1: val dog = 1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY acknowledges renaming cat to dog and notes only the name changes, and TYPE replaces `val cat = 1` with `val dog = 1` without redesigning anything else."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Let's start simple. Declare a variable named cat with the value 1.",
+    "[board] val cat = 1",
+    "Interviewer: Cat isn't a good name. Rename it to dog."
+   ]
+  },
+  {
+   "id": "AC-06",
+   "name": "Ambiguous 'add another one'",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "781",
+      "problem": "Add another screen to the list and detail screen flow",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "add another screen",
+      "say": "Could you tell me which screen you mean? I can't see the list or detail screen on the board yet.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY line asks which screen the interviewer means and notes the referenced screens aren't visible, rather than inventing a new item."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: We have a list screen and a detail screen here. Can you add another one?"
+   ]
+  },
+  {
+   "id": "AC-07",
+   "name": "Scrolling is not a change",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "797",
+      "problem": "Walk through the feed API: GET /v1/feed with cursor and limit, returning posts and pagination metadata",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "Walk me through this API",
+      "say": "This is the feed endpoint. The app sends a cursor and a limit, and gets back a page of posts. Each post has an ID, a time, the content and the author. The author has an ID, a name and an avatar URL. The pagination metadata tells the app where it is. \"After\" and \"before\" are the cursors for the next and previous page, and \"reachedEnd\" says there's nothing more.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "requests_unchanged",
+       "pass": true,
+       "detail": "2 -> 2"
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Walk me through this API.",
+    "[board] GET /v1/feed?cursor=abc&limit=20 | Response(PaginationMetadata(after, before, reachedEnd)) | Post(postId, createdAt, content, author) | Author(id, name, avatarURL)",
+    "[board] Post(postId, createdAt, content, author) | Author(id, name, avatarURL)"
+   ]
+  },
+  {
+   "id": "AC-09",
+   "name": "Follow-up inside a follow-up, then back",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "1094",
+      "problem": "Design the data layer for an offline-first news feed",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "Who owns the cache?",
+      "say": "The repository owns it. The data source just reads and writes rows. It doesn't decide when to refresh or when to drop old items. That rule lives in the repository, so the screen never touches the cache directly.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explicitly states the repository owns the cache and clarifies the data source only reads/writes rows, directly answering the ownership question."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "796",
+      "problem": "Design the data layer for an offline-first news feed",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "Please continue with the data layer",
+      "say": "Okay, so the layers are: the screen, the repository, and two data sources, one for the network and one for the local database. The repository is the only one that decides where data comes from. When the screen asks for the feed, the repository returns the cached list first, so the user sees something right away. Then it fetches fresh data from the network and saves it to the database. The screen just collects a Flow, so it updates by itself when new data arrives.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "3",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY resumes the layered data design (screen, repository, network/local sources) and describes cache-first behavior without re-justifying the repository's existence."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design the data layer for an offline-first news feed.",
+    "Interviewer: Wait, why a repository at all?",
+    "Interviewer: And who owns the cache, the repository or the data source?",
+    "Interviewer: Okay, makes sense. Please continue with the data layer."
+   ]
+  },
+  {
+   "id": "AC-10",
+   "name": "Switch problems and return",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "402",
+      "problem": "Compare Service and WorkManager",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "What is the difference between a Service and a WorkManager job?",
+      "say": "A Service runs code in the background, but it doesn't survive a reboot, and the system can kill it. WorkManager is for work that must finish, even after a restart. It saves the job, adds constraints like network or charging, and retries with backoff. So for a one-off upload I'd use WorkManager, and for something tied to the app running, like music, a Service.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "2"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY correctly distinguishes Service (background execution, not reboot-persistent, killable) from WorkManager (guaranteed completion, persistence across restart, constraints, retry/backoff) and gives appropriate use cases."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "403",
+      "problem": "Design an image loading library for Android",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "Now let's go back to the image loading library",
+      "say": "Okay, back to the image loading library. Before I design it, I'd like to agree on the main goal: images should show up fast and never block the UI. Then I'd split it into a few parts. A request goes into a queue, a memory cache is checked first, then the disk cache, then the network. I'd start with the request flow and the memory cache, because that's the core.",
+      "type": "none",
+      "then": "Wait for the interviewer to pick the first part.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explicitly returns to the image loading library, states a goal, and begins outlining the design (request queue, memory/disk cache, network)."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design an image loading library for Android.",
+    "Interviewer: Let's pause that. New question: what is the difference between a Service and a WorkManager job?",
+    "Interviewer: Good. Now let's go back to the image loading library."
+   ]
+  },
+  {
+   "id": "AC-11",
+   "name": "An early constraint survives a long discussion",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "5",
+      "keeps": "0",
+      "first_ms": "870",
+      "problem": "Design a notes app that works fully offline (hard requirement)",
+      "adopted": "none",
+      "constraints": "[\"Must work fully offline, hard requirement\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What would you build next?",
+      "say": "Next I'd build the local data layer, because offline is the hard requirement. I'd start with a Room database for notes, and a repository that reads and writes only to it. The UI would observe the database through Flow, so the screen always shows saved data, even with no network. After that, I'd add a small sync layer that queues local changes and sends them when a connection comes back.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "constraint_contains",
+       "pass": true,
+       "detail": "[\"Must work fully offline, hard requirement\"]"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The card's next step is a local Room database and repository with Flow-observed UI, directly honoring the offline hard requirement, plus a queued sync layer that doesn't contradict it."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design a notes app. It must work fully offline, that's a hard requirement.",
+    "Interviewer: How would you structure the UI layer?",
+    "Interviewer: What about navigation between screens?",
+    "Interviewer: How do you handle dependency injection?",
+    "Interviewer: Okay. What would you build next?"
+   ]
+  },
+  {
+   "id": "AC-12",
+   "name": "Going back to an old approach keeps new constraints",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "716",
+      "problem": "Implement message loading with RxJava",
+      "adopted": "RxJava for message loading",
+      "constraints": "[\"Limit each page to 20 messages\"]",
+      "abandoned": "[\"Kotlin Flow for message loading\"]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "go back to RxJava",
+      "say": "Okay, I'll go back to RxJava. The repository returns a Single of one page, and the page size stays at 20. I'll call the API on the IO scheduler, so the network work stays off the main thread. The ViewModel subscribes and gets each page as it arrives.",
+      "type": "replace@MessageRepository: class MessageRepository(private val api: MessageApi) { ⏎     fun loadMessages(chatId: String, page: Int): Single<List<Message>> = ⏎         api.getMessages(chatId, page, PAGE_SIZE) ⏎             .subscribeOn(Schedulers.io()) ⏎  ⏎     companion object { ⏎         const val PAGE_SIZE = 20 ⏎     } ⏎ }",
+      "then": "Subscribe in the ViewModel with a CompositeDisposable, and load the next page when the user scrolls to the end.",
+      "fix": "",
+      "past": "3",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_contains",
+       "pass": true,
+       "detail": "RxJava for message loading"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explicitly returns to RxJava and retains the 20-message page size."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Implement message loading with RxJava.",
+    "Interviewer: Also, limit each page to 20 messages.",
+    "Interviewer: Actually, switch to Kotlin Flow.",
+    "Interviewer: On second thought, let's go back to RxJava."
+   ]
+  },
+  {
+   "id": "AC-13",
+   "name": "The candidate's own words count",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "697",
+      "problem": "Explain how a ViewModel survives configuration changes",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Explain how a ViewModel survives configuration changes",
+      "say": "One edge case is that a ViewModel outlives configuration changes but not process death, so anything that must survive that needs saved state or persistence.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY introduces a new edge case about process death and saved state rather than restating the ViewModelStore/rotation point."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Explain how a ViewModel survives configuration changes.",
+    "Candidate: So the ViewModel lives in the ViewModelStore, which is retained across rotation, and it is cleared only when the activity really finishes."
+   ]
+  },
+  {
+   "id": "AC-15",
+   "name": "Steady candidate input does not starve the card",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "787",
+      "problem": "Explain coroutine cancellation",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Explain coroutine cancellation",
+      "say": "A child that catches the exception and keeps working can break cancellation, so I'd let the exception pass.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "has_card",
+       "pass": true,
+       "detail": "A child that catches the exception and keeps working can break cancellation, so "
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Explain coroutine cancellation.",
+    "Candidate: Okay so cancellation",
+    "Candidate: is cooperative",
+    "Candidate: you check isActive",
+    "Candidate: or call suspending functions"
+   ]
+  },
+  {
+   "id": "AC-17",
+   "name": "Resume question inside a technical one",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "547",
+      "problem": "Design the ViewModel for a feed screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Have you used this approach in a previous project?",
+      "say": "Yes, at KKday. I used StateFlow in the product SKU page. Every tap on an option recalculated prices and stock on the main thread. I moved that work to Dispatchers.Default and sent the results out through StateFlow. The screen just collected the state. Tap to finished screen went from about one second to 300 milliseconds.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY describes a plausible past project (KKday, StateFlow on a SKU page) with concrete details, and it does not claim the feed-screen design from this interview was previously implemented."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design the ViewModel for a feed screen.",
+    "Interviewer: Have you used this approach in a previous project?"
+   ]
+  },
+  {
+   "id": "AC-18",
+   "name": "Briefly",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "797",
+      "problem": "Explain what a ViewModel is in one sentence",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "One sentence: what is a ViewModel?",
+      "say": "A ViewModel holds the screen's data and state, so it survives rotation and keeps the UI logic out of the Activity or Fragment.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY is a single sentence that clearly defines a ViewModel (holds screen data/state, survives rotation, keeps UI logic out of Activity/Fragment)."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Briefly, in one sentence: what is a ViewModel?"
+   ]
+  },
+  {
+   "id": "AC-08",
+   "name": "Real Excalidraw board (P0 frame)",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "889",
+      "problem": "Walk through the app architecture from the UI down",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "walk through the architecture from the UI",
+      "say": "I'll start at the top. The UI layer has two screens, FeedScreen and DetailScreen, and each one has its own ViewModel. The ViewModels don't call repositories directly. They go through the domain layer, which holds the use cases. So the screens only know about use cases, not about data sources. That keeps the UI simple and easy to test.",
+      "type": "none",
+      "then": "Wait for the interviewer, then continue down to the domain and repository layers.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY begins at the UI layer and names FeedScreen, DetailScreen, ViewModels, domain layer, and use cases—all consistent with the board—without inventing components."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t2760.jpg",
+    "Interviewer: Can you walk me through this architecture, starting from the UI?"
+   ]
+  }
+ ]
+}
