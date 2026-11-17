@@ -32,6 +32,9 @@ final class InterviewCoach: ObservableObject {
     private var prepare: (() async -> Bool)?
     private let stream: Stream
     var stage: InterviewStage = .general
+    var language: CoachLanguage = .english {
+        didSet { fastFollow.locale = language == .chinese ? "zh-CN" : "en-US" }
+    }
     private var background = ""
     private var turns: [CoachTurn] = []
     private var seen: [String: String] = [:]
@@ -287,7 +290,7 @@ final class InterviewCoach: ObservableObject {
         }).sorted { $0.seconds < $1.seconds }
     }
     private func review() {
-        let messages = CoachPrompt.reviewRequest(turns: evidence, background: background, frames: frames, script: script, stage: stage)
+        let messages = CoachPrompt.reviewRequest(turns: evidence, background: background, frames: frames, script: script, stage: stage, language: language)
         let token = revision, input = interviewerRevision
         let committed = script.committed, cursor = script.cursor
         let started = Date()
@@ -368,7 +371,7 @@ final class InterviewCoach: ObservableObject {
         dirty = false; publishedCurrentAnswer = false
         onWillGenerate?()
         let token = revision
-        let messages = CoachPrompt.request(turns: evidence, background: background, frames: frames, audio: nil, committed: script.spokenText, refresh: refresh, stage: stage)
+        let messages = CoachPrompt.request(turns: evidence, background: background, frames: frames, audio: nil, committed: script.spokenText, refresh: refresh, stage: stage, language: language)
         snapshotIDs = Set(script.committed.map(\.id))
         speculative = speculate; finishedSpeculation = false
         firstLatency = nil; firstSentenceLatency = nil
@@ -425,6 +428,8 @@ final class InterviewCoach: ObservableObject {
     }
     private func spokenAnswer(_ raw: String, finished: Bool) -> String {
         let answer = CoachOutput(raw).next
+        // Both helpers are English-only: the HR filter matches English phrases and IPA marks English words.
+        guard language == .english else { return answer }
         let text = stage == .hr ? CoachHRAnswer.clean(answer, finished: finished) : answer
         return CoachPronunciation.annotate(text, finished: finished)
     }
@@ -434,11 +439,11 @@ final class InterviewCoach: ObservableObject {
         script.replacePending(current.output.next, since: snapshotIDs, newAnswer: !publishedCurrentAnswer)
         if !publishedCurrentAnswer { reading.begin(answerID: script.answerID) }
         publishedCurrentAnswer = true
-        let sentences = script.sentences.filter { $0.last.map { ".!?".contains($0) } == true }
+        let sentences = script.sentences.filter { $0.last.map(CoachScript.endsSentence) == true }
         gloss.enqueue(sentences)
         // Measure a usable, visible sentence, including speculative text held until the endpoint.
         if firstSentenceLatency == nil, let first = CoachScript.sentences(current.output.next).first,
-           first.last.map({ ".!?".contains($0) }) == true {
+           first.last.map(CoachScript.endsSentence) == true {
             firstSentenceLatency = Date().timeIntervalSince(generationStarted)
             let end = lastVoicedAt.isFinite ? lastVoicedAt : lastInterviewerAt
             onEvent?(CoachEvent(kind: "visibleSentence", seconds: clock, answerID: script.answerID,

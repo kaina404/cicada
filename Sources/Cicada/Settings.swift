@@ -80,6 +80,7 @@ final class AppSettings: ObservableObject {
     @Published var assistantSizeLocked: Bool { didSet { save() } }
     @Published var assistantClickThrough: Bool { didSet { save() } }
     @Published var interviewStage: InterviewStage { didSet { save() } }
+    @Published var coachLanguage: CoachLanguage { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
     @Published var realtimeRegion: String { didSet { save() } }
     @Published var realtimeWorkspace: String { didSet { save() } }
@@ -344,6 +345,7 @@ final class AppSettings: ObservableObject {
         assistantSizeLocked = defaults.bool(forKey: "assistantSizeLocked")
         assistantClickThrough = defaults.bool(forKey: "assistantClickThrough")
         interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
+        coachLanguage = CoachLanguage(rawValue: defaults.string(forKey: "coachLanguage") ?? "") ?? .english
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
         // Import only non-secret configuration. The key stays in AIKey's 0600 file.
         let configFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -434,6 +436,7 @@ final class AppSettings: ObservableObject {
         defaults.set(assistantSizeLocked, forKey: "assistantSizeLocked")
         defaults.set(assistantClickThrough, forKey: "assistantClickThrough")
         defaults.set(interviewStage.rawValue, forKey: "interviewStage")
+        defaults.set(coachLanguage.rawValue, forKey: "coachLanguage")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
         defaults.set(realtimeRegion, forKey: "realtimeRegion")
         defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")

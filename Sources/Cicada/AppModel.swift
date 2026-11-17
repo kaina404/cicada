@@ -1422,13 +1422,18 @@ final class AppModel: ObservableObject {
     private func updateCandidateRecognition() {
         listen.gemmaCandidate = coachEnabled && settings.listensToRoom
         roomListen.gemmaCandidate = coachEnabled
+        let chinese = coachEnabled && settings.coachLanguage == .chinese
+            ? sourceLanguages.first { $0.code == "zh-CN" } : nil
+        listen.coachLanguage = chinese; roomListen.coachLanguage = chinese
         if !coachEnabled || !micOn { candidateASRFailed = false }
     }
 
     private func tickCandidate() {
         updateCandidateRecognition()
         candidate.stage = settings.interviewStage
-        candidate.gloss.enabled = settings.askGloss
+        candidate.language = settings.coachLanguage
+        // A Chinese answer needs no Chinese gloss.
+        candidate.gloss.enabled = settings.askGloss && settings.coachLanguage == .english
         let enabled = listen.isRunning && coachEnabled
         if listen.isRunning, screen.chosen != nil, screenUsesRealtime != enabled { startScreen() }
         if enabled {
@@ -1441,7 +1446,8 @@ final class AppModel: ObservableObject {
             if let id = store.liveID { candidate.observe(lines: store.session(id)?.lines ?? [], now: coachTime) }
             candidate.tick(now: coachTime)
         } else if candidate.state != .idle { candidate.stop() }
-        shadowReader.update(enabled: enabled && settings.shadowReading,
+        // The guide voice is English Kokoro; a Chinese interview is read in the user's own language.
+        shadowReader.update(enabled: enabled && settings.shadowReading && settings.coachLanguage == .english,
                             script: candidate.script, finished: candidate.current == nil)
         candidate.fastFollow.update(enabled: enabled && settings.fastReadingFollow, script: candidate.script,
                                     lead: settings.fastReadingLead)
@@ -2503,6 +2509,8 @@ final class AppModel: ObservableObject {
             lineCounter += 1
             store.append(TranscriptLine(id: "t\(lineCounter)", t: coachTime, speaker: "them", src: arg, srcLang: "en", dstLang: ""))
             tickCandidate(); candidate.ask()
+        case "coachLanguage":
+            if let language = CoachLanguage(rawValue: arg) { settings.coachLanguage = language; tickCandidate() }
         case "interviewStage":
             if let stage = InterviewStage(rawValue: arg) {
                 settings.interviewStage = stage; candidate.stage = stage

@@ -329,6 +329,7 @@
 
 /* CandidateFeed */
 "已经说出" = "Already spoken";
+"面试语言" = "Interview language";
 "面试阶段" = "Interview stage";
 "文本和截图发送云端" = "Text and screenshots are sent to the cloud";
 "放大悬浮回答" = "Float enlarged answer";
@@ -339,7 +340,7 @@
 "需要 macOS 26 的本机英文识别" = "Needs on-device English recognition on macOS 26";
 "跟读移动陪读位置，手表控制播放" = "Moves Read along to where you read; the watch plays it";
 "快速跟读" = "Fast follow";
-"本机英文识别逐词跟随，口音不准时仍由 Gemma 校正" = "Follows word by word with on-device English recognition; Gemma still corrects it when your accent trips it up";
+"本机语音识别逐词跟随，口音不准时仍由 Gemma 校正" = "Follows word by word with on-device speech recognition; Gemma still corrects it when your accent trips it up";
 "提前" = "Lead";
 "识别有延迟，光标按你的语速往前多走这几秒，不越过当前句" = "Recognition lags, so the cursor runs this many seconds ahead at your pace, never past the sentence";
 "不提前" = "No lead";
@@ -888,6 +889,7 @@
 "英语" = "English";
 "日语" = "Japanese";
 "中文" = "Chinese";
+"英文" = "English";
 "繁中" = "Trad. Chinese";
 "韩语" = "Korean";
 "西语" = "Spanish";

@@ -6,7 +6,10 @@ import Foundation
 @MainActor
 final class ShadowRecognition {
     var onText: ((String, Bool) -> Void)?
-    /// False when the on-device English model is missing or this Mac cannot run it.
+    /// The interview's language: the reader reads the script in it.
+    let locale: String
+    init(locale: String = "en-US") { self.locale = locale }
+    /// False when the on-device model is missing or this Mac cannot run it.
     var onReady: ((Bool) -> Void)?
     /// A running stream finished or failed; the owner may start a new one.
     var onEnded: ((String) -> Void)?
@@ -21,12 +24,12 @@ final class ShadowRecognition {
         attempted = true
         // Never take over the legacy recognizer or silently route candidate audio to a service.
         guard #available(macOS 26, *), !Recognition.cloudOnly, !Recognition.legacy, Recognition.host == nil else { onReady?(false); return }
-        let token = token
+        let token = token, locale = locale
         task = Task { [weak self] in
-            guard case .installed = await Recognition.status("en-US") else { self?.onReady?(false); return }
+            guard case .installed = await Recognition.status(locale) else { self?.onReady?(false); return }
             var ready = false
             do {
-                let stream = try await Recognition.start("en-US", drafts: true)
+                let stream = try await Recognition.start(locale, drafts: true)
                 guard let self, self.token == token, !Task.isCancelled else { await stream.cancel(); return }
                 self.stream = stream
                 self.onReady?(true); ready = true

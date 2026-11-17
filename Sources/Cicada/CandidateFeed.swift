@@ -39,6 +39,8 @@ struct CandidateFeed: View {
         self.floatingFollow = floatingFollow
     }
 
+    /// A Chinese answer needs no Chinese gloss.
+    private var showsGloss: Bool { settings.askGloss && settings.coachLanguage == .english }
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if floatingFollow == nil {
@@ -51,7 +53,7 @@ struct CandidateFeed: View {
                         VStack(alignment: .leading, spacing: 14) {
                             ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
                                 VStack(alignment: .leading, spacing: 5) {
-                                    if settings.askGloss, let text = gloss.translations[sentence] {
+                                    if showsGloss, let text = gloss.translations[sentence] {
                                         // Keep the gloss compact even when the floating English script is enlarged.
                                         Text(text).font(.system(size: glossFontSize ?? max(11, min(18, fontSize * 0.5)))).foregroundStyle(Palette.secondary)
                                     }
@@ -127,10 +129,11 @@ struct CandidateFeed: View {
                     }
             }.frame(height: expanded ? nil : compactHeight)
                 .frame(maxHeight: expanded ? .infinity : compactHeight)
-                .task(id: settings.askGloss) {
-                    if settings.askGloss { gloss.enqueue(engine.script.sentences) }
+                .task(id: showsGloss) {
+                    if showsGloss { gloss.enqueue(engine.script.sentences) }
                 }
         }.onChange(of: settings.interviewStage) { _, stage in engine.stage = stage }
+        .onChange(of: settings.coachLanguage) { _, language in engine.language = language }
         .onReceive(shadowReader.map { $0.$playback.eraseToAnyPublisher() } ?? Just(ShadowPlayback()).eraseToAnyPublisher()) {
             playback = $0
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
@@ -247,19 +250,27 @@ struct CandidateFeedControls: View {
             }
         }
         if controlsExpanded {
+            Picker("面试语言", selection: $settings.coachLanguage) {
+                ForEach(CoachLanguage.allCases) { language in
+                    Text(verbatim: language.title).tag(language)
+                }
+            }
+            .pickerStyle(.segmented).font(.system(size: 12))
             Picker("面试阶段", selection: $settings.interviewStage) {
                 ForEach(InterviewStage.allCases) { stage in
                     Text(verbatim: stage.title).tag(stage)
                 }
             }
             .pickerStyle(.segmented).font(.system(size: 12))
-            HStack(spacing: 8) {
-                Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
-                if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
-            }.font(.system(size: 11))
+            if settings.coachLanguage == .english {
+                HStack(spacing: 8) {
+                    Toggle("陪读", isOn: $settings.shadowReading).toggleStyle(.checkbox).fixedSize()
+                    if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
+                }.font(.system(size: 11))
+            }
             HStack(spacing: 8) {
                 Toggle("快速跟读", isOn: $settings.fastReadingFollow).toggleStyle(.checkbox).fixedSize()
-                    .help("本机英文识别逐词跟随，口音不准时仍由 Gemma 校正")
+                    .help("本机语音识别逐词跟随，口音不准时仍由 Gemma 校正")
                 if settings.fastReadingFollow, fast.status == .unavailable {
                     Text("需要 macOS 26 的本机英文识别").foregroundStyle(Palette.tertiary)
                 } else if settings.fastReadingFollow {

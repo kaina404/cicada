@@ -16,6 +16,8 @@ final class FastReadingFollow: ObservableObject {
     private(set) var answerID = ""
     /// Recognition lags speech by about a second or two, so the reader is already further on.
     var lead = 0.0
+    /// Takes effect at the next start of the recognizer.
+    var locale = "en-US"
     var now: () -> Double = { ProcessInfo.processInfo.systemUptime }
     private var pace: [(t: Double, word: Int)] = []
     private var sentenceEnds: [Int] = []
@@ -91,7 +93,7 @@ final class FastReadingFollow: ObservableObject {
     }
 
     private func start() {
-        let recognition = ShadowRecognition()
+        let recognition = ShadowRecognition(locale: locale)
         recognition.onText = { [weak self] text, final in self?.hear(text, final: final) }
         recognition.onReady = { [weak self] ready in self?.status = ready ? .on : .unavailable }
         // A stream that stops must not leave the cursor frozen: the next update starts a new one.

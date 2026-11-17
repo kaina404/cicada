@@ -33,7 +33,15 @@ final class ListenEngine {
     let role: Role
     /// A language picked by hand is the meeting's: the people at the table may speak another
     /// (yours, from 同声传译's 我说), so the room side always detects, starting with yours.
-    private var sourceMode: SourceMode { role == .room ? .auto : settings.sourceMode }
+    private var sourceMode: SourceMode {
+        if let coachLanguage { return .fixed(coachLanguage) }
+        return role == .room ? .auto : settings.sourceMode
+    }
+    /// A Chinese interview pins both sides to Mandarin: detection would hold back the first lines,
+    /// and English terms inside Chinese speech could flip it to the English model.
+    var coachLanguage: Lang? {
+        didSet { if oldValue != coachLanguage { sourceModeChanged() } }
+    }
     // Outputs
     var onSubtitle: ((_ source: String, _ translation: String) -> Void)?
     var onStatus: ((String) -> Void)?
