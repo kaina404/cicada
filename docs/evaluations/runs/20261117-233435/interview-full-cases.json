@@ -1,0 +1,416 @@
+{
+ "date": "2026-11-17",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 2,
+ "total": 3,
+ "scenarios": [
+  {
+   "id": "CH-03",
+   "name": "Rejecting A does not adopt B",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "660",
+      "problem": "Design the feed screen data loading using Paging 3 for the list",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the feed list\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Use Paging 3 for the feed list",
+      "say": "The PagingSource is on the board now, so the repository can load one page at a time. Next I'll build the Pager with it and expose the flow.",
+      "type": "add@: private val pager = Pager( ⏎     config = PagingConfig(pageSize = 20, enablePlaceholders = false), ⏎     pagingSourceFactory = { FeedPagingSource(api) } ⏎ ) ⏎  ⏎ val feed = pager.flow.cachedIn(viewModelScope)",
+      "then": "Collect it in the screen with collectAsLazyPagingItems and show the list in a LazyColumn.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "639",
+      "problem": "Design the feed screen data loading using Paging 3 for the list",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the feed list\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "I would rather not use Paging 3. What else could we use?",
+      "say": "Paging 3 gives us a lot for free: it loads pages, retries errors and keeps the list state. Without it, I'd keep the same shape but write the paging myself. A simple cursor list in the ViewModel would hold the items and the next cursor. A load function would fetch one page and append it. Do you want me to switch to that?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "639",
+      "problem": "Design the feed screen data loading using Paging 3 for the list",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the feed list\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "I would rather not use Paging 3. What else could we use?",
+      "say": "Paging 3 gives us a lot for free: it loads pages, retries errors and keeps the list state. Without it, I'd keep the same shape but write the paging myself. A simple cursor list in the ViewModel would hold the items and the next cursor. A load function would fetch one page and append it. Do you want me to switch to that?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY offers a manual cursor-list alternative and asks whether to switch, without declaring it adopted."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "639",
+      "problem": "Design the feed screen data loading using Paging 3 for the list",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the feed list\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "I would rather not use Paging 3. What else could we use?",
+      "say": "Paging 3 gives us a lot for free: it loads pages, retries errors and keeps the list state. Without it, I'd keep the same shape but write the paging myself. A simple cursor list in the ViewModel would hold the items and the next cursor. A load function would fetch one page and append it. Do you want me to switch to that?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY offers to switch (\"Do you want me to switch to that?\") rather than declaring the switch as a done decision."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board] class FeedViewModel : ViewModel() { |   val feed = repo.feed().cachedIn(viewModelScope) | }",
+    "Interviewer: Design the feed screen data loading. Let's use Paging 3 for the list.",
+    "Interviewer: We discussed manual pagination and a simple cursor list too. I would rather not use Paging 3. What else could we use?"
+   ]
+  },
+  {
+   "id": "CH-04",
+   "name": "Discuss then decide: memory only? No, keep Room",
+   "pass": false,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "709",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for local storage\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Design offline caching for the feed, use Room",
+      "say": "Got it, Room for the local store. Before I design the tables, I want to agree on what the feed needs offline. I'd keep the last loaded pages on disk, so the user sees content right away on a cold start. Then I'd refresh from the network in the background. The main question is how we handle new items and deleted items when the user comes back online.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "794",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for local storage\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we use memory only?",
+      "say": "We could, but memory only loses everything when the app is killed. The user would open the feed offline and see nothing. Room gives us a disk copy that survives process death. I'd keep a small memory cache on top of Room for the pages on screen, so scrolling back is instant. Do you want to drop Room and go memory only, or keep Room with a memory layer?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 1->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "794",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for local storage\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we use memory only?",
+      "say": "We could, but memory only loses everything when the app is killed. The user would open the feed offline and see nothing. Room gives us a disk copy that survives process death. I'd keep a small memory cache on top of Room for the pages on screen, so scrolling back is instant. Do you want to drop Room and go memory only, or keep Room with a memory layer?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "538",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "Keep Room, add a memory cache in front of it",
+      "constraints": "[\"Use Room for local storage\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "No, keep Room",
+      "say": "Okay, Room stays. I'll put a small memory cache in front of it for the pages on screen. The feed reads from memory first, then Room, then the network. Each page we load gets saved to Room, so the next open works offline.",
+      "type": "replace@FeedCache: class FeedCache( ⏎     private val dao: FeedDao, ⏎     private val api: FeedApi ⏎ ) { ⏎     private val memory = LinkedHashMap<Int, List<Post>>() ⏎  ⏎     suspend fun page(index: Int): List<Post> { ⏎         memory[index]?.let { return it } ⏎         dao.page(index)?.let { ⏎             memory[index] = it ⏎             return it ⏎         } ⏎         val fresh = api.page(index) ⏎         dao.save(index, fresh) ⏎         memory[index] = fresh ⏎         return fresh ⏎     } ⏎ }",
+      "then": "Next I'd show the page as stale data first, then refresh it in the background.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "538",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "Keep Room, add a memory cache in front of it",
+      "constraints": "[\"Use Room for local storage\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "No, keep Room",
+      "say": "Okay, Room stays. I'll put a small memory cache in front of it for the pages on screen. The feed reads from memory first, then Room, then the network. Each page we load gets saved to Room, so the next open works offline.",
+      "type": "replace@FeedCache: class FeedCache( ⏎     private val dao: FeedDao, ⏎     private val api: FeedApi ⏎ ) { ⏎     private val memory = LinkedHashMap<Int, List<Post>>() ⏎  ⏎     suspend fun page(index: Int): List<Post> { ⏎         memory[index]?.let { return it } ⏎         dao.page(index)?.let { ⏎             memory[index] = it ⏎             return it ⏎         } ⏎         val fresh = api.page(index) ⏎         dao.save(index, fresh) ⏎         memory[index] = fresh ⏎         return fresh ⏎     } ⏎ }",
+      "then": "Next I'd show the page as stale data first, then refresh it in the background.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": false,
+       "detail": "Keep Room, add a memory cache in front of it"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explicitly keeps Room (\"Room stays\") and only adds a memory cache in front of it, with no memory-only suggestion."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design offline caching for the feed. We will use Room.",
+    "Interviewer: Could we use memory only?",
+    "Interviewer: No, keep Room."
+   ]
+  },
+  {
+   "id": "ME-03",
+   "name": "Generated is not spoken",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "702",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through the client architecture",
+      "say": "Sure. I'll go from the top down. The UI layer has the screens and their ViewModels. Below that is the domain layer with the use cases. At the bottom are the repositories and the local data sources.",
+      "type": "none",
+      "then": "I'll explain how the feed flow works, from the screen down to the local database.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "934",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through the client architecture",
+      "say": "The repository also has a remote data source, and the local one is treated as the single source of truth, so a network refresh only writes into the local store rather than feeding the UI directly.",
+      "type": "none",
+      "then": "I'll explain the detail flow the same way, then how DI connects the layers.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY line explains the data flow (network refresh writes into local store, which is the single source of truth feeding the UI) rather than skipping it."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t2760.jpg",
+    "Interviewer: Walk me through the client architecture on the board.",
+    "Candidate: I have not explained the data flow yet."
+   ]
+  }
+ ]
+}

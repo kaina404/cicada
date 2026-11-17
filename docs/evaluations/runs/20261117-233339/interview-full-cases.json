@@ -1,0 +1,416 @@
+{
+ "date": "2026-11-17",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 3,
+ "total": 3,
+ "scenarios": [
+  {
+   "id": "CH-03",
+   "name": "Rejecting A does not adopt B",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "796",
+      "problem": "Design the feed screen data loading with Paging 3",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the list\", \"Feed loads pages of items as the user scrolls\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Board shows the Pager and cachedIn",
+      "say": "Good, the Pager is in place and cachedIn keeps the loaded pages alive when the screen rotates. Next I'd write the PagingSource in the repository, so each page comes from the backend.",
+      "type": "add@: class FeedRepository(private val api: FeedApi) { ⏎     fun feedSource(): PagingSource<Int, FeedItem> = FeedPagingSource(api) ⏎ }",
+      "then": "Then I'd write FeedPagingSource with load and getRefreshKey, and handle the error result.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "541",
+      "problem": "Design the feed screen data loading with Paging 3",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the list\", \"Feed loads pages of items as the user scrolls\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What else could we use instead of Paging 3?",
+      "say": "Paging 3 gives us the PagingSource, cachedIn and load states for free, so we write less code. A simple cursor list is lighter: we keep the last item's cursor, call the API for the next page, and add the results to a list in the ViewModel. The trade-off is that we handle loading, errors and refresh ourselves, and we lose the built-in caching. Do you want me to switch to the cursor list?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "541",
+      "problem": "Design the feed screen data loading with Paging 3",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the list\", \"Feed loads pages of items as the user scrolls\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What else could we use instead of Paging 3?",
+      "say": "Paging 3 gives us the PagingSource, cachedIn and load states for free, so we write less code. A simple cursor list is lighter: we keep the last item's cursor, call the API for the next page, and add the results to a list in the ViewModel. The trade-off is that we handle loading, errors and refresh ourselves, and we lose the built-in caching. Do you want me to switch to the cursor list?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY offers the cursor-list alternative and asks whether to switch, without unilaterally declaring it adopted."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "541",
+      "problem": "Design the feed screen data loading with Paging 3",
+      "adopted": "none",
+      "constraints": "[\"Use Paging 3 for the list\", \"Feed loads pages of items as the user scrolls\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What else could we use instead of Paging 3?",
+      "say": "Paging 3 gives us the PagingSource, cachedIn and load states for free, so we write less code. A simple cursor list is lighter: we keep the last item's cursor, call the API for the next page, and add the results to a list in the ViewModel. The trade-off is that we handle loading, errors and refresh ourselves, and we lose the built-in caching. Do you want me to switch to the cursor list?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY asks \"Do you want me to switch to the cursor list?\" rather than declaring a done decision to switch."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board] class FeedViewModel : ViewModel() { |   val feed = repo.feed().cachedIn(viewModelScope) | }",
+    "Interviewer: Design the feed screen data loading. Let's use Paging 3 for the list.",
+    "Interviewer: We discussed manual pagination and a simple cursor list too. I would rather not use Paging 3. What else could we use?"
+   ]
+  },
+  {
+   "id": "CH-04",
+   "name": "Discuss then decide: memory only? No, keep Room",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "623",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for offline caching\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Design offline caching for the feed, using Room",
+      "say": "Okay, I'll use Room for the local cache. First I want to agree on what we cache and how fresh it must be. I'd store each feed item as a row, with its id, content, and a timestamp for when we saved it. The screen reads from Room first, so the feed shows right away, even with no network. Then a refresh from the server updates the rows in the background.",
+      "type": "none",
+      "then": "I'll define the table columns and the read and write flow next.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "970",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for offline caching\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we use memory only?",
+      "say": "We could, but I wouldn't for the feed. Memory only is simple and fast, but the cache is gone when the app is killed or the phone restarts. So the user opens the app offline and sees an empty feed. Room keeps the data on disk, so the feed still shows after a restart. If you want a memory layer too, I'd put it in front of Room as a fast read, not instead of it.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 1->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "970",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for offline caching\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we use memory only?",
+      "say": "We could, but I wouldn't for the feed. Memory only is simple and fast, but the cache is gone when the app is killed or the phone restarts. So the user opens the app offline and sees an empty feed. Room keeps the data on disk, so the feed still shows after a restart. If you want a memory layer too, I'd put it in front of Room as a fast read, not instead of it.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "689",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for offline caching\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "No, keep Room",
+      "say": "Okay, I'll keep Room as the cache. Next I'd define the table: one entity for a feed item, with its id, the content, and a timestamp for when we saved it. Then a DAO with a query that returns the newest items first.",
+      "type": "add@FeedItem: @Entity(tableName = \"feed_items\") ⏎ data class FeedItem( ⏎     @PrimaryKey val id: String, ⏎     val content: String, ⏎     val savedAt: Long ⏎ )",
+      "then": "Add the DAO with a query ordered by savedAt, then wire it into the repository.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "689",
+      "problem": "Design offline caching for the feed using Room",
+      "adopted": "none",
+      "constraints": "[\"Use Room for offline caching\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "No, keep Room",
+      "say": "Okay, I'll keep Room as the cache. Next I'd define the table: one entity for a feed item, with its id, the content, and a timestamp for when we saved it. Then a DAO with a query that returns the newest items first.",
+      "type": "add@FeedItem: @Entity(tableName = \"feed_items\") ⏎ data class FeedItem( ⏎     @PrimaryKey val id: String, ⏎     val content: String, ⏎     val savedAt: Long ⏎ )",
+      "then": "Add the DAO with a query ordered by savedAt, then wire it into the repository.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explicitly keeps Room as the cache and proceeds to define the entity and DAO, with no memory-only suggestion."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Design offline caching for the feed. We will use Room.",
+    "Interviewer: Could we use memory only?",
+    "Interviewer: No, keep Room."
+   ]
+  },
+  {
+   "id": "ME-03",
+   "name": "Generated is not spoken",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "824",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "walk through the client architecture",
+      "say": "I'll start from the top and go down. The UI layer has two screens, FeedScreen and DetailScreen, and each one has its own ViewModel. The ViewModels call use cases in the domain layer, and those use cases talk to repositories. The repositories get data from local data sources and the CDN. DI with Hilt connects all these layers.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "668",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "walk through the client architecture",
+      "say": "FeedScreen's ViewModel calls ObserveFeedItems, which returns a Flow of posts; the use case asks PostRepository, and the repository reads from PostLocalDataSource. DetailScreen's ViewModel calls GetDetailItems with a postId through PostRepository, comments come from CommentsRepository and CommentsDao, and MediaLoader pulls images straight from the CDN, so images skip the domain layer.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explicitly walks through the data flow from ViewModel through use case and repository to data sources, rather than skipping it."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t2760.jpg",
+    "Interviewer: Walk me through the client architecture on the board.",
+    "Candidate: I have not explained the data flow yet."
+   ]
+  }
+ ]
+}

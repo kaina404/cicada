@@ -92,6 +92,12 @@ def check(spec, card, transcript, marks):
     if "problems_max" in spec: add("problems_max", int(card.get("problems", 0)) <= spec["problems_max"], card.get("problems"))
     if spec.get("requests_unchanged"): add("requests_unchanged", card.get("requests") == marks.get("requests"), f'{marks.get("requests")} -> {card.get("requests")}')
     if spec.get("has_card"): add("has_card", bool(card.get("say")), card.get("say", "")[:80])
+    if "type_not_contains" in spec: add("type_not_contains", spec["type_not_contains"].lower() not in t.lower(), t[:120])
+    if "constraint_not_contains" in spec: add("constraint_not_contains", spec["constraint_not_contains"].lower() not in card.get("constraints", "").lower(), card.get("constraints"))
+    if "say_max_sentences" in spec:
+        n = len([x for x in re.split(r"(?<=[.!?])\s+", card.get("say", "").strip()) if x])
+        add("say_max_sentences", 0 < n <= spec["say_max_sentences"], f"{n} sentences")
+    if "say_not_contains" in spec: add("say_not_contains", spec["say_not_contains"].lower() not in card.get("say", "").lower(), card.get("say", "")[:120])
     if "judge" in spec:
         ok, why = judge(transcript, card, spec["judge"])
         add("judge", ok, why)
@@ -110,6 +116,13 @@ def run(scenario):
         if "them" in step:
             transcript.append("Interviewer: " + step["them"]); lsctl("themSaid:" + step["them"])
             s = settle(before)
+            # A settled state is not proof of a new answer: the request count must have moved and not failed.
+            fresh = bool(s) and int(s.get("requests", 0) or 0) > before and s.get("busy") == "false" and s.get("failed") == "false"
+            steps.append({"card": s or {}, "results": [{"check": "answered", "pass": fresh,
+                          "detail": "no state" if not s else f'requests {before}->{s.get("requests")} busy={s.get("busy")} failed={s.get("failed")}'}]})
+            if not fresh: print(f'  FAIL answered: {steps[-1]["results"][0]["detail"]}')
+        elif "them_nowait" in step:
+            transcript.append("Interviewer: " + step["them_nowait"]); lsctl("themSaid:" + step["them_nowait"]); time.sleep(step.get("gap", 0.3))
         elif "me" in step:
             transcript.append("Candidate: " + step["me"]); lsctl("meSaid:" + step["me"]); time.sleep(0.4)
         elif "ocr" in step:
@@ -124,12 +137,14 @@ def run(scenario):
         elif "mark" in step:
             marks[step["mark"]] = (card_state() or {}).get(step["mark"])
         elif "check" in step:
-            card = card_state() or {}
-            res = check(step["check"], card, transcript, marks)
+            card = card_state()
+            res = check(step["check"], card, transcript, marks) if card else [{"check": "state", "pass": False, "detail": "coachCardState unreadable"}]
+            card = card or {}
             steps.append({"card": card, "results": res})
             for r in res:
                 print(f'  {"PASS" if r["pass"] else "FAIL"} {r["check"]}: {r["detail"]}')
-    ok = all(r["pass"] for st in steps for r in st["results"])
+    checks = [r for st in steps for r in st["results"]]
+    ok = bool(checks) and all(r["pass"] for r in checks)
     return {"id": scenario["id"], "name": scenario["name"], "pass": ok, "checks": steps, "transcript": transcript}
 
 
@@ -147,7 +162,9 @@ def main():
         print(f'  => {"PASS" if results[-1]["pass"] else "FAIL"}')
     lsctl("stop")
     stem = "walkthrough-acceptance" if name == "walkthrough-scenarios.json" else os.path.splitext(name)[0]
-    out = os.path.join(HERE, "..", "docs", "evaluations", f"{stem}-{datetime.date.today()}.json")
+    run_dir = os.path.join(HERE, "..", "docs", "evaluations", "runs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    os.makedirs(run_dir, exist_ok=True)
+    out = os.path.join(run_dir, f"{stem}.json")
     json.dump({"date": str(datetime.date.today()), "method": "lsctl text injection into the dev build; DeepSeek judge",
                "passed": sum(r["pass"] for r in results), "total": len(results), "scenarios": results},
               open(out, "w"), indent=1, ensure_ascii=False)

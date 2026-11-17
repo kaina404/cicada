@@ -34,6 +34,7 @@ tools/*
 !tools/mock-interviewer.py
 !tools/walkthrough-scenarios.json
 !tools/walkthrough-newsfeed.json
+!tools/interview-full-cases.json
 !tools/whiteboard-probe/
 
 # Windows: build output, spike results and clips (windows/spike/make-clips.sh, ming_asr.py)

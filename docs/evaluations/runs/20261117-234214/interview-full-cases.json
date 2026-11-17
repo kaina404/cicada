@@ -1,0 +1,1338 @@
+{
+ "date": "2026-11-17",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 1,
+ "total": 2,
+ "scenarios": [
+  {
+   "id": "NF",
+   "name": "NF-01..18 News Feed main flow",
+   "pass": false,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "971",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Design the news feed",
+      "say": "Thanks, I can see the functional list on the board. Before I design anything, let me confirm the scope. For the feed, I'll cover the post list, likes and comments, and infinite scrolling. For non-functional, I'll aim for smooth scrolling and fast first load. Is that right?",
+      "type": "draw@Non Functional: Non Functional ⏎ - Smooth scrolling, no jank ⏎ - Fast first load, cached posts ⏎ - Works on weak network ⏎ Out Of Scope ⏎ - Creating or editing posts ⏎ - Full comment thread screen",
+      "then": "Wait for the interviewer to confirm the scope.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "971",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Design the news feed",
+      "say": "Thanks, I can see the functional list on the board. Before I design anything, let me confirm the scope. For the feed, I'll cover the post list, likes and comments, and infinite scrolling. For non-functional, I'll aim for smooth scrolling and fast first load. Is that right?",
+      "type": "draw@Non Functional: Non Functional ⏎ - Smooth scrolling, no jank ⏎ - Fast first load, cached posts ⏎ - Works on weak network ⏎ Out Of Scope ⏎ - Creating or editing posts ⏎ - Full comment thread screen",
+      "then": "Wait for the interviewer to confirm the scope.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "draw@Non Functional: Non Functional ⏎ - Smooth scrolling, no jank ⏎ - Fast first load, cached posts ⏎ - Works on weak ne"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY briefly confirms feed scope (post list, likes/comments, infinite scrolling) and non-functional goals in short spoken English, without assuming unmentioned features as decided or including code."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "575",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Posts include text, images and video; 100 million daily users",
+      "say": "Got it, so posts can be text, image or video, and we're designing for 100 million daily users. That scale changes the design: I'll plan for a paged feed with a small memory footprint and heavy caching. I'll also keep the detail screen simple, just the post and its comments.",
+      "type": "draw@Non Functional: Non Functional ⏎ - 100M daily users, global ⏎ - Smooth scrolling, no jank ⏎ - Fast first load, cached posts ⏎ - Works on weak network ⏎ - Small memory footprint ⏎ Out Of Scope ⏎ - Creating or editing posts ⏎ - Full comment thread screen",
+      "then": "Move on to the feed data flow and paging.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "575",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Posts include text, images and video; 100 million daily users",
+      "say": "Got it, so posts can be text, image or video, and we're designing for 100 million daily users. That scale changes the design: I'll plan for a paged feed with a small memory footprint and heavy caching. I'll also keep the detail screen simple, just the post and its comments.",
+      "type": "draw@Non Functional: Non Functional ⏎ - 100M daily users, global ⏎ - Smooth scrolling, no jank ⏎ - Fast first load, cached posts ⏎ - Works on weak network ⏎ - Small memory footprint ⏎ Out Of Scope ⏎ - Creating or editing posts ⏎ - Full comment thread screen",
+      "then": "Move on to the feed data flow and paging.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY interprets 100M users as requiring \"heavy caching\" and \"small memory footprint\" in a way that risks implying per-device caching of everything, and it spends multiple sentences restating requirements rather than briefly acknowledging and moving forward."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "1055",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Creating posts, auth and friends are out of scope",
+      "say": "Okay, so creating posts, authentication and friends are out of scope. That keeps the design focused on reading the feed and the comments. I'll write that down, then move on to the data flow and paging.",
+      "type": "draw@Out Of Scope: Out Of Scope ⏎ - Creating or editing posts ⏎ - Authentication ⏎ - Friends / follow graph",
+      "then": "Move on to the feed data flow and paging.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 3->4 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "6",
+      "keeps": "0",
+      "first_ms": "722",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Users must read cached posts, like posts and write comments offline",
+      "say": "Got it, so reading cached posts, liking and writing comments all need to work offline. That means the app can't wait for the network on any of those actions. I'll add that to the board, then go through the data flow and paging.",
+      "type": "draw@: Non Functional ⏎ - Offline: read cached posts, like, write comments",
+      "then": "Move on to the feed data flow and paging.",
+      "fix": "",
+      "past": "3",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 5->6 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "6",
+      "keeps": "0",
+      "first_ms": "722",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Users must read cached posts, like posts and write comments offline",
+      "say": "Got it, so reading cached posts, liking and writing comments all need to work offline. That means the app can't wait for the network on any of those actions. I'll add that to the board, then go through the data flow and paging.",
+      "type": "draw@: Non Functional ⏎ - Offline: read cached posts, like, write comments",
+      "then": "Move on to the feed data flow and paging.",
+      "fix": "",
+      "past": "3",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "constraint_contains",
+       "pass": true,
+       "detail": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: SAY mentions offline reading, likes, and comments but does not mention local persistence or pending actions to sync."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "8",
+      "keeps": "0",
+      "first_ms": "786",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through the API on the board",
+      "say": "The feed call returns a page of posts plus a cursor for the next page. Each post carries its author, type and counts, so one call fills the list. The comments call returns the post with its latest five comments. For likes and comments I send a requestId, so the server can drop duplicates when the app retries offline actions.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 6->8 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "8",
+      "keeps": "0",
+      "first_ms": "786",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through the API on the board",
+      "say": "The feed call returns a page of posts plus a cursor for the next page. Each post carries its author, type and counts, so one call fills the list. The comments call returns the post with its latest five comments. For likes and comments I send a requestId, so the server can drop duplicates when the app retries offline actions.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY describes the feed endpoint with cursor, comments, and like/comment requestId dedup, consistent with the board and without inventing fields or covering auth."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "9",
+      "keeps": "0",
+      "first_ms": "1033",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Why cursor pagination rather than page numbers",
+      "say": "A feed changes all the time. With page numbers, a new post at the top pushes everything down, so page two repeats posts the user already saw. A cursor marks the last post I received, so the next page starts right after it. It also stays fast at our scale, because the server doesn't count rows. The trade-off is that I can't jump to page ten, but a feed doesn't need that.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 8->9 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "9",
+      "keeps": "0",
+      "first_ms": "1033",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Why cursor pagination rather than page numbers",
+      "say": "A feed changes all the time. With page numbers, a new post at the top pushes everything down, so page two repeats posts the user already saw. A cursor marks the last post I received, so the next page starts right after it. It also stays fast at our scale, because the server doesn't count rows. The trade-off is that I can't jump to page ten, but a feed doesn't need that.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: It explains offset pagination causing repeats when new posts shift items, describes the cursor as marking the last received post, and avoids claiming cursors unconditionally prevent all duplicates or gaps."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "11",
+      "keeps": "0",
+      "first_ms": "827",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Explain the high-level diagram, focusing on the mobile client",
+      "say": "On the client side, the app talks to the backend over HTTPS. Images and video go through the CDN, so the phone doesn't download them from our services. The app calls the feed, comment and like endpoints through the load balancer and API gateway. For the mobile client, the main job is to keep a local cache, so the feed still shows when the network is slow or gone.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 9->11 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "11",
+      "keeps": "0",
+      "first_ms": "827",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Explain the high-level diagram, focusing on the mobile client",
+      "say": "On the client side, the app talks to the backend over HTTPS. Images and video go through the CDN, so the phone doesn't download them from our services. The app calls the feed, comment and like endpoints through the load balancer and API gateway. For the mobile client, the main job is to keep a local cache, so the feed still shows when the network is slow or gone.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY covers the client, HTTPS, CDN, and backend relations and stays client-focused without inventing off-board components like Kafka or Redis."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "13",
+      "keeps": "0",
+      "first_ms": "870",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How would you structure the Android app?",
+      "say": "I'd split it into three layers. The UI layer has the feed and detail screens, each with its own ViewModel. The domain layer holds the use cases, like observing the feed and getting the comments for a post. The data layer has one repository, with a local source and a remote source behind it. The ViewModel only talks to the use cases, so the screens don't know where the data comes from.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 11->13 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "13",
+      "keeps": "0",
+      "first_ms": "870",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How would you structure the Android app?",
+      "say": "I'd split it into three layers. The UI layer has the feed and detail screens, each with its own ViewModel. The domain layer holds the use cases, like observing the feed and getting the comments for a post. The data layer has one repository, with a local source and a remote source behind it. The ViewModel only talks to the use cases, so the screens don't know where the data comes from.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY walks through UI, domain, and data layers in Android terms (screens, ViewModels, use cases, repository with local/remote sources) step by step without dumping a class list or asking for code."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "15",
+      "keeps": "0",
+      "first_ms": "950",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How does a feed item get onto the screen?",
+      "say": "The ViewModel calls the use case, and the use case asks the repository for the feed. The repository returns the cached posts from the local store first, so the list shows right away. Then it fetches new posts from the remote source and saves them locally. The local store is a database, so it sends the updated list to the ViewModel as a Flow. The screen collects that Flow and draws the new items.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "8",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 13->15 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "1",
+      "first_ms": "990",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How does a feed item get onto the screen?",
+      "say": "The ViewModel calls the use case, and the use case asks the repository for the feed. The repository returns the cached posts from the local store first, so the list shows right away. Then it fetches new posts from the remote source and saves them locally. The local store is a database, so it sends the updated list to the ViewModel as a Flow. The screen collects that Flow and draws the new items.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "8",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY continues from the candidate's point by explaining that the local DB emits updates as a Flow to the ViewModel and the screen collects it, extending the flow to the UI without merely restating or inventing arrows."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "18",
+      "keeps": "1",
+      "first_ms": "657",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we keep everything in memory instead of using a database?",
+      "say": "Memory alone would be faster, but it loses everything when the app is killed. We need offline reading, likes and comments, so the data has to survive process death. The database also gives us a single source of truth for the Flow. Do you want me to switch to memory only?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "9",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 17->18 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "18",
+      "keeps": "1",
+      "first_ms": "657",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we keep everything in memory instead of using a database?",
+      "say": "Memory alone would be faster, but it loses everything when the app is killed. We need offline reading, likes and comments, so the data has to survive process death. The database also gives us a single source of truth for the Flow. Do you want me to switch to memory only?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "9",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY weighs memory speed against persistence needs (offline reading, likes, comments, process death) and asks whether to switch rather than announcing a switch to memory only."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "19",
+      "keeps": "1",
+      "first_ms": "690",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How would you handle a like while offline?",
+      "say": "I'd write the like to the local database first, so the UI updates right away. I'd mark it as pending and put it in a small queue. A worker sends it when the network comes back. The server needs to accept the same like twice without counting it twice, so I'd send a request ID with it.",
+      "type": "add@PostLocalDataSource: PendingLikeDao: insert(postId, requestId, state=PENDING)",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "10",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 18->19 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "19",
+      "keeps": "1",
+      "first_ms": "690",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How would you handle a like while offline?",
+      "say": "I'd write the like to the local database first, so the UI updates right away. I'd mark it as pending and put it in a small queue. A worker sends it when the network comes back. The server needs to accept the same like twice without counting it twice, so I'd send a request ID with it.",
+      "type": "add@PostLocalDataSource: PendingLikeDao: insert(postId, requestId, state=PENDING)",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "10",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY describes optimistic local write with pending state and a queue synced later, and distinguishes local success from server confirmation without claiming the offline request reached the server."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "20",
+      "keeps": "1",
+      "first_ms": "784",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What if it keeps failing? Backoff, retry limits, final state.",
+      "say": "I'd use exponential backoff with some random jitter, so many phones don't retry at the same moment. I'd cap the delay, for example at a few minutes. I'd also set a retry limit, like five attempts. After that, the like stays pending and the UI shows a small \"not sent\" mark with a tap to retry. I'd never show it as liked on the server when it isn't.",
+      "type": "add@PostLocalDataSource: PendingLikeDao: insert(postId, requestId, state=PENDING, attempts=0, nextRetryAt)",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 19->20 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "20",
+      "keeps": "1",
+      "first_ms": "784",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What if it keeps failing? Backoff, retry limits, final state.",
+      "say": "I'd use exponential backoff with some random jitter, so many phones don't retry at the same moment. I'd cap the delay, for example at a few minutes. I'd also set a retry limit, like five attempts. After that, the like stays pending and the UI shows a small \"not sent\" mark with a tap to retry. I'd never show it as liked on the server when it isn't.",
+      "type": "add@PostLocalDataSource: PendingLikeDao: insert(postId, requestId, state=PENDING, attempts=0, nextRetryAt)",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY covers exponential backoff with jitter and a delay cap, a retry limit (five attempts), and the final user-visible state (pending/\"not sent\" mark with tap-to-retry, never falsely shown as liked), with no infinite retries."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "1",
+      "first_ms": "883",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Server applied the like, response lost, what happens on retry",
+      "say": "The retry would send the same requestId, so the server can see it's the same like. The server would need to deduplicate on that id and return the current state. Then the app marks it as sent, not liked twice. The count stays correct.",
+      "type": "add@PostLocalDataSource: // PendingLikeDao row: postId, requestId, state, attempts, nextRetryAt ⏎ // Retry sends the same requestId; server deduplicates on it",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "12",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 20->21 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "1",
+      "first_ms": "883",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Server applied the like, response lost, what happens on retry",
+      "say": "The retry would send the same requestId, so the server can see it's the same like. The server would need to deduplicate on that id and return the current state. Then the app marks it as sent, not liked twice. The count stays correct.",
+      "type": "add@PostLocalDataSource: // PendingLikeDao row: postId, requestId, state, attempts, nextRetryAt ⏎ // Retry sends the same requestId; server deduplicates on it",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "12",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explains the duplicate-submission risk, states the server must deduplicate on the requestId, and does not claim the server already guarantees idempotency merely because the field exists."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "22",
+      "keeps": "1",
+      "first_ms": "714",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Like then unlike offline, what to sync",
+      "say": "We have two options here. We could send both actions in order, so the server sees the like and then the unlike. Or we could keep only the latest state, so the server just gets the unlike. Sending both is safer, because the server can check the order. Do you want me to go with sending both actions in order?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 21->22 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "22",
+      "keeps": "1",
+      "first_ms": "714",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Like then unlike offline, what to sync",
+      "say": "We have two options here. We could send both actions in order, so the server sees the like and then the unlike. Or we could keep only the latest state, so the server just gets the unlike. Sending both is safer, because the server can check the order. Do you want me to go with sending both actions in order?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY offers two options but does not state the resulting UI state, and it recommends sending both actions without explaining how the server reconciles them or confirming the final intent; it also lacks a clear statement of the user-visible state after sync."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "23",
+      "keeps": "1",
+      "first_ms": "781",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "200 MB cache limit and logout",
+      "say": "I'd enforce the 200 MB limit in the local store, not in the repository. The store already says LRU, so when a new post comes in and we're over the limit, we drop the least recently used posts first. On logout, I'd clear the whole local store, so the next user never sees the old posts. I'd also clear the in-memory store at the same time.",
+      "type": "draw@PostLocalDataSource: L2: LocalDBStore ⏎ 200MB, LRU, Logsout (Clear) ⏎ + onLogout(): clear L1 + L2",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 22->23 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "23",
+      "keeps": "1",
+      "first_ms": "781",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "200 MB cache limit and logout",
+      "say": "I'd enforce the 200 MB limit in the local store, not in the repository. The store already says LRU, so when a new post comes in and we're over the limit, we drop the least recently used posts first. On logout, I'd clear the whole local store, so the next user never sees the old posts. I'd also clear the in-memory store at the same time.",
+      "type": "draw@PostLocalDataSource: L2: LocalDBStore ⏎ 200MB, LRU, Logsout (Clear) ⏎ + onLogout(): clear L1 + L2",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY covers LRU eviction and clearing on logout, but it does not address keeping pending unsent actions (offline likes/comments) separate from evictable cache or preventing them from being silently dropped."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "24",
+      "keeps": "1",
+      "first_ms": "792",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "prefetch next page without wasting data",
+      "say": "I'd prefetch only when the user is close to the end of the list, not on every scroll. I'd also check the network type first. On Wi-Fi I'd fetch the next page early, but on mobile data I'd wait until the user is almost at the bottom. And I'd skip prefetching images or video on mobile data unless the user turns it on.",
+      "type": "draw@RemoteDataSource: RemoteDataSource ⏎ + shouldPrefetch(): network type + scroll position",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "15",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 23->24 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "24",
+      "keeps": "1",
+      "first_ms": "792",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "prefetch next page without wasting data",
+      "say": "I'd prefetch only when the user is close to the end of the list, not on every scroll. I'd also check the network type first. On Wi-Fi I'd fetch the next page early, but on mobile data I'd wait until the user is almost at the bottom. And I'd skip prefetching images or video on mobile data unless the user turns it on.",
+      "type": "draw@RemoteDataSource: RemoteDataSource ⏎ + shouldPrefetch(): network type + scroll position",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "15",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY covers a proximity threshold, network-type gating, and separate treatment of pages vs. media, with no performance claims."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "25",
+      "keeps": "1",
+      "first_ms": "935",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "have you built something similar before",
+      "say": "Yes, at KKday I built the AI trip planner, and it had the same pattern. The app showed day one first while the rest was still being made, so the user saw something right away. I also worked on the product page there, where I cached data at several levels and cut the load time from about three seconds to under one second. In my own app, Cabinet, I keep partial results and retry only the failed parts.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "16",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 24->25 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "25",
+      "keeps": "1",
+      "first_ms": "935",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "have you built something similar before",
+      "say": "Yes, at KKday I built the AI trip planner, and it had the same pattern. The app showed day one first while the rest was still being made, so the user saw something right away. I also worked on the product page there, where I cached data at several levels and cut the load time from about three seconds to under one second. In my own app, Cabinet, I keep partial results and retry only the failed parts.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "16",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY claims (AI trip planner with progressive/partial results, multi-level caching on the product page, partial results with retry in Cabinet) are consistent with the confirmed background, and it does not present this interview's live feed design as a past project."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "1",
+      "first_ms": "555",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "back to this feed",
+      "say": "Okay, back to the feed. The next piece I'd add is the offline like queue. A like goes into a small local table first, and the UI reads from the database, so the count updates right away. A worker sends it later and retries with backoff.",
+      "type": "add@PostLocalDataSource: // PendingLikeDao: postId, action, requestId, retryCount, state",
+      "then": "I'll explain how the worker sends and settles each queued like.",
+      "fix": "",
+      "past": "17",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 25->26 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "1",
+      "first_ms": "555",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "1",
+      "problems": "1",
+      "written": "false",
+      "heard": "back to this feed",
+      "say": "Okay, back to the feed. The next piece I'd add is the offline like queue. A like goes into a small local table first, and the UI reads from the database, so the count updates right away. A worker sends it later and retries with backoff.",
+      "type": "add@PostLocalDataSource: // PendingLikeDao: postId, action, requestId, retryCount, state",
+      "then": "I'll explain how the worker sends and settles each queued like.",
+      "fix": "",
+      "past": "17",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explicitly returns to the feed design by adding the offline like queue, a feed-related offline sync topic, rather than discussing the past project."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "27",
+      "keeps": "1",
+      "first_ms": "802",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "2",
+      "problems": "1",
+      "written": "false",
+      "heard": "we are out of time, any questions",
+      "say": "Yes, I have two quick ones. Six months after I join, what would make you feel you hired the right Android engineer? And what's the biggest mobile challenge right now: voice response speed, partial results, or reliable actions?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 26->27 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "27",
+      "keeps": "1",
+      "first_ms": "802",
+      "problem": "Design the news feed for an Android app like Facebook",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"100 million daily users globally\", \"Creating posts, authentication and friends are out of scope\", \"Users must read cached posts, like posts and write comments offline\"]",
+      "abandoned": "[]",
+      "asides": "2",
+      "problems": "1",
+      "written": "false",
+      "heard": "we are out of time, any questions",
+      "say": "Yes, I have two quick ones. Six months after I join, what would make you feel you hired the right Android engineer? And what's the biggest mobile challenge right now: voice response speed, partial results, or reliable actions?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY asks two questions but includes \"what would make you feel you hired the right Android engineer,\" which references a hire rating, violating the criterion."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t180.jpg",
+    "Interviewer: Design the news feed for an Android app like Facebook.",
+    "Interviewer: Posts include text, images and video. Show like and comment counts. Tapping comments opens the detail screen. Assume 100 million daily users globally.",
+    "Interviewer: Creating posts, authentication and friends are out of scope.",
+    "Candidate: I will focus on the feed and comments.",
+    "Interviewer: Users must read cached posts, like posts and write comments offline.",
+    "[board image] t900.jpg",
+    "Interviewer: Walk me through the API on the board.",
+    "Interviewer: Why use cursor pagination rather than page numbers?",
+    "[board image] t1260.jpg",
+    "Interviewer: Explain the high-level diagram, focusing on the mobile client.",
+    "[board image] t1980.jpg",
+    "Interviewer: How would you structure the Android app?",
+    "[board image] t2760.jpg",
+    "Interviewer: How does a feed item get onto the screen?",
+    "Candidate: The repository writes remote results to the local database.",
+    "Interviewer: Could we keep everything in memory instead of using a database?",
+    "Interviewer: How would you handle a like while offline?",
+    "Interviewer: What if it keeps failing? Please cover backoff, retry limits and the user-visible final state.",
+    "Interviewer: The server applied the like, but the response was lost. What happens on retry?",
+    "Interviewer: The user likes and then unlikes the same post offline. What should we sync?",
+    "Interviewer: How would you enforce a 200 megabyte cache limit, and what should happen on logout?",
+    "Interviewer: How would you prefetch the next page without wasting mobile data?",
+    "Interviewer: Have you built something similar before?",
+    "Interviewer: Back to this feed.",
+    "Interviewer: We are out of time. Any questions for me?"
+   ]
+  },
+  {
+   "id": "ME-03",
+   "name": "Generated is not spoken",
+   "pass": true,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "1170",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "walk me through the client architecture",
+      "say": "Sure. I'll go from the top down. The UI layer has two screens, Feed and Detail, and each one has its own ViewModel. Below that is the domain layer with use cases, and at the bottom are the repositories and local data sources. Hilt connects the layers, so each layer only knows the one below it.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "4",
+      "keeps": "0",
+      "first_ms": "968",
+      "problem": "Walk through the client architecture on the board",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "walk me through the client architecture",
+      "say": "Now the data flow. The ViewModel calls a use case, and the use case asks a repository. The repository decides where the data comes from: the network or the local data source. Results come back as Flow, so the screen updates when data changes. Hilt builds these objects, so the ViewModel never creates a repository itself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explicitly walks through the data flow (ViewModel → use case → repository → network/local source, results as Flow), rather than skipping it as already covered."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t2760.jpg",
+    "Interviewer: Walk me through the client architecture on the board.",
+    "Candidate: I have not explained the data flow yet."
+   ]
+  }
+ ]
+}
