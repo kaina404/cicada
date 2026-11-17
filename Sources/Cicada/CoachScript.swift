@@ -22,7 +22,8 @@ struct CoachScript: Equatable {
             sentence.append(character)
             let next = text.index(after: index)
             let boundary = next == text.endIndex || text[next].isWhitespace
-            if character.isNewline || ".!?".contains(character) && boundary {
+            // Chinese full stops end a sentence without a following space.
+            if character.isNewline || "。！？".contains(character) || ".!?".contains(character) && boundary {
                 let value = sentence.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !value.isEmpty { result.append(value) }
                 sentence = ""
@@ -82,8 +83,24 @@ struct CoachScript: Equatable {
               word > cursor, word <= Self.words(pending).count else { return }
         confirmedWords = word; previewWords = word
     }
+    /// Chinese has no spaces, so each Han character is one token; Latin words and numbers stay whole,
+    /// which keeps English unchanged and lets mixed speech ("我用 Kotlin 写") align.
     static func words(_ text: String) -> [String] {
-        CoachPronunciation.spokenText(text).lowercased().split { !$0.isLetter && !$0.isNumber }.map(String.init)
+        var result: [String] = []; var word = ""
+        for character in CoachPronunciation.spokenText(text).lowercased() {
+            if isHan(character) {
+                if !word.isEmpty { result.append(word); word = "" }
+                result.append(String(character))
+            } else if character.isLetter || character.isNumber {
+                word.append(character)
+            } else if !word.isEmpty { result.append(word); word = "" }
+        }
+        if !word.isEmpty { result.append(word) }
+        return result
+    }
+    static func endsSentence(_ character: Character) -> Bool { ".!?。！？".contains(character) }
+    static func isHan(_ character: Character) -> Bool {
+        character.unicodeScalars.first?.properties.isIdeographic == true
     }
     /// Bounded edit alignment tolerates ASR substitutions, insertions and omissions.
     static func matchedPrefix(_ speech: String, in script: String) -> Int {
@@ -125,12 +142,19 @@ struct CoachScript: Equatable {
     static func droppingWords(_ count: Int, from text: String) -> String {
         let text = CoachPronunciation.spokenText(text)
         guard count > 0 else { return text }
+        // Counts tokens exactly as `words` does: a Han character is a token of its own.
+        let rest = { (start: String.Index) in
+            String(text[start...].drop { $0.isWhitespace || ".!?,;:。！？，；：、".contains($0) })
+        }
         var remaining = count; var inWord = false
         for index in text.indices {
-            let word = text[index].isLetter || text[index].isNumber
+            let han = isHan(text[index])
+            let word = !han && (text[index].isLetter || text[index].isNumber)
             if inWord && !word { remaining -= 1 }
-            if remaining == 0 {
-                return String(text[index...].drop { $0.isWhitespace || ".!?,;:".contains($0) })
+            if remaining == 0 { return rest(index) }
+            if han {
+                remaining -= 1
+                if remaining == 0 { return rest(text.index(after: index)) }
             }
             inWord = word
         }
@@ -144,6 +168,9 @@ enum CoachEndpoint {
         let words = CoachScript.words(text)
         guard words.count >= 3 else { return 1.5 }
         if ["and", "or", "but", "because", "if", "when", "with", "the", "a", "to", "for", "of", "then"].contains(words.last ?? "") { return 1.8 }
+        // Han tokens are single characters, so trailing Chinese connectives are matched on the text.
+        let tail = text.trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        if ["因为", "但是", "然后", "所以", "而且", "如果", "就是", "那个", "还有", "和", "的", "跟"].contains(where: tail.hasSuffix) { return 1.8 }
         return 0.65
     }
 }
