@@ -7,6 +7,18 @@
     "image": null,
     "items": [
       {
+        "kind": "new",
+        "platforms": ["mac"],
+        "title": "面试教练支持中文面试。",
+        "text": "面试语言切到中文后，双方按普通话识别，回答是可直接念的口语化中文完整稿，跟读光标逐字前进；英文技术名词保留原文，不加音标和中文对照。"
+      },
+      {
+        "kind": "improved",
+        "platforms": ["mac"],
+        "title": "中国大陆也能下载面试教练模型。",
+        "text": "连不上 huggingface.co 时自动改用 hf-mirror.com 和阿里云 PyPI 镜像；Silero 语音模型随 App 附带，Smart Turn 模型按固定的 SHA-256 校验。"
+      },
+      {
         "kind": "fixed",
         "platforms": ["mac"],
         "title": "面试回答不再显示内部判断信息。",

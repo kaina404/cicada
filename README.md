@@ -98,6 +98,8 @@ The Mac interview coach uses an explicit answer boundary before displaying, tran
 
 Interview Coach retains earlier recognition versions of the same question, so a later fragment can be checked against the fuller wording. Ambiguous questions prompt a brief clarification.
 
+On Mac, Interview Coach can run a Chinese interview: switch Interview language to Chinese in its controls. Both sides are then recognized as Mandarin, and DeepSeek writes complete spoken-Chinese answers (about 150–250 characters for an open HR question) that follow your reading character by character, with English technical terms kept as they are. IPA reading aids, the Chinese gloss and English Read along are off in Chinese. When huggingface.co cannot be reached, as is common in mainland China, model and package downloads switch to hf-mirror.com and Aliyun's PyPI mirror; the Silero voice model now ships with the app and the Smart Turn model is checked against a pinned SHA-256.
+
 Selecting a shared window before the interviewer speaks only updates screen context; it does not start a self-introduction. Refresh Answer can analyse the current screen directly when no interviewer request exists.
 
 Assistant also adds full British IPA to numbers such as `2000`, `10%` and `0.1%`. Decimal digits are read individually; IPA is excluded from read-along speech, translation and reading progress.
