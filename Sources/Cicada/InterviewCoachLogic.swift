@@ -388,7 +388,10 @@ enum CoachPrompt {
         for frame in frames.suffix(3) {
             content.append(["type": "text", "text": String(format: "Screen keyframe at %.1f seconds:", frame.seconds)])
             if !frame.ocr.isEmpty { content.append(["type": "text", "text": "Screen OCR (reference): " + String(frame.ocr.prefix(4000))]) }
-            content.append(["type": "image_url", "image_url": ["url": "data:image/jpeg;base64," + frame.jpeg.base64EncodedString()]])
+            // A text-only board (debug OCR injection) has no picture to send.
+            if !frame.jpeg.isEmpty {
+                content.append(["type": "image_url", "image_url": ["url": "data:image/jpeg;base64," + frame.jpeg.base64EncodedString()]])
+            }
         }
         if let audio, !audio.pcm.isEmpty {
             content.append(["type": "text", "text": String(format: "Original system audio, interviewer, %.1f–%.1f seconds (not the candidate):", audio.start, audio.end)])
