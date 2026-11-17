@@ -1,0 +1,215 @@
+{
+ "date": "2026-11-17",
+ "model": "deepseek-flash",
+ "thinking": "disabled",
+ "source": "AndroidEngineerMockInterview.mp4 (candidate local screen, Excalidraw + Meet tile)",
+ "read": {
+  "180": {
+   "first_token_s": 0.7540857791900635,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"Text, Text, Text\", \"Img\", \"Andi\", \"14:0\", \"COMMENT LIKE\", \"Text, Text, Text\", \"Text, Text, Text\", \"Text, Text, Text\", \"Img\", \"Jin\", \"10:00\", \"Comment Like\", \"Text, Text, Text\", \"Max\", \"04.05\", \"Comment Like\", \"Video\", \"Kate\", \"03.05\", \"Text Comment Like\", \"Comments\", \"Comment 1\", \"Comment 2\", \"Comment 3\", \"Comment 4\", \"Comment 5\", \"Functional Requirements\", \"1. View list of Feed/Post\", \"2. User interaction:\", \"Like Count, Comment Count, tap on Comment go to\", \"Detail Screen\", \"3. Infinite Scrolling list\", \"4. Type of Content (\", \"Non FUnctional\", \"Out Of Scope\", \"Meha Garg\", \"Andrey Rezanov\", \"meha garg\", \"110%\"], \"boxes\": [\"Img\", \"Video\", \"Comments\", \"Functional Requirements\"], \"arrows\": [[\"Img\",\"Comments\"]], \"occluded\": [\"Andi 14:0…\", \"COMMENT LIKE…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\", \"Text, Text, Text…\","
+  },
+  "540": {
+   "first_token_s": 0.7721128463745117,
+   "prompt_tokens": 1119,
+   "output": "```json\n{\n  \"texts\": [\n    \"eed\",\n    \", Text\",\n    \", Text\",\n    \", Text\",\n    \"ment Like\",\n    \"ment Like\",\n    \"t, Text\",\n    \"t, Text\",\n    \"ment Like\",\n    \"o\",\n    \"ment Like\",\n    \"Post\",\n    \"Jin\",\n    \"10:00\",\n    \"Img\",\n    \"Text, Text, Text\",\n    \"Text, Text, Text\",\n    \"Text, Text, Text\",\n    \"Comments\",\n    \"Comment 1\",\n    \"Comment 2\",\n    \"Comment 3\",\n    \"Comment 4\",\n    \"Comment 5\",\n    \"API\",\n    \"HTTP with REST APIs\",\n    \"(SSE, Polling, Websocket/gRPC)\",\n    \"Json (Protobuff, XML)\",\n    \"GET /v1/feed?cursor=\\\"abc&limit<20>\",\n    \"Response(\",\n    \"ements\",\n    \"d/Post\",\n    \"on:\",\n    \"ent Count, tap on Comment go to Detail Screen\",\n    \"g - 130% +\",\n    \"t (Text, Image, Video\",\n    \"To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool\",\n    \"Andrey Rezanov\",\n    \"meha garg\",\n    \"Meha Garg\"\n  ],\n  \"boxes\": [\n    \"eed\",\n    \"Post\",\n    \"Img\",\n    \"API\"\n  ],\n  \"arrows\": [\n    [\n      \"eed\",\n      \"Post\"\n    ]\n  ],\n  \"occluded\": [\n    \"Left edge of the 'Feed' box and its text (e.g., 'eed', ', Text', 'ment Like')\",\n    \"Bottom text cut off by the screen edge: 't (Text, Image, Video'\",\n    \"Bottom text cut off by the screen edge: 'g - 130% +'\"\n  ],\n  \"unreadable\": []\n}\n```"
+  },
+  "900": {
+   "first_token_s": 0.7079741954803467,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"Comments\", \"Comment 1\", \"Comment 2\", \"Comment 3\", \"Comment 4\", \"Comment 5\", \"mment go to Detail Screen\", \"20, ... )\", \"Comments, Like in offline\", \"viction/Conflict,...)\", \"Json (Protob\", \"GET /v1/feed?cursor=\\\"abc123\\\"&limit<20>&after\", \"Response\", \"(PaginationMetadata(after, before, cursor, reachedEnd,limit,...)\", \"Post(postId, createdAt, content, author, type,\", \"PostType(text, Image, Video...)\", \"Author(id: String, name:String, avatarURL; activeAt, ...)\", \"GET /v1/feed/{postId}/comments?cursor=<\\\"abc>&limit=<20>\", \"Response (PostDetailResponse(Post+ [Comment]\", \"Comment(id, text, ...) (latest 5 comment)\", \"User Interactions\", \"POST /v1/feed/{postId}/like\", \"Request (requestId, userIn…ion\", \"POST(.... likeCount, likedAt, ...)\", \"userInteraction(\", \"To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool\", \"Andrey Rezanov\", \"meha garg\", \"130%\"], \"boxes\": [], \"arrows\": [], \"occluded\": [\"Json (Protob…\", \"Request (requestId, userIn…ion\", \"mment go to Detail Screen\", \"20, ... )\", \"viction/Conflict,...)\"], \"unreadable\": []}"
+  },
+  "1260": {
+   "first_token_s": 0.7169919013977051,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"Response(Response)\", \"POST /v1/feed/{postId}/comments\", \"Request(requestId, content(text, image, ...))\", \"CDN\", \"Client\", \"Meha Garg\", \"Https\", \"LoadBalancer\", \"APIGateway\", \"Backend\", \"Services:\", \"FeedService\", \"PostService\", \"CommentService\", \"UserInteractionServ\", \"Blob Storage/ S3\", \"…s - Processed)\", \"…ctional\", \"…bility\", \"…ormant (latency - ..)\", \"…Efficiency/Synchronization (Eviction/Conflict,...)\", \"…Scope\", \"…ng a POST\", \"…ntication\", \"…ds\"], \"boxes\": [\"CDN\", \"Client\", \"LoadBalancer\", \"APIGateway\", \"Services: FeedService PostService CommentService UserInteractionServ Blob Storage/ S3\", \"Backend\"], \"arrows\": [[\"CDN\", \"Client\"], [\"Client\", \"LoadBalancer\"]], \"occluded\": [\"left edge text lines cut off: '…s - Processed)', '…ctional', '…bility', '…ormant (latency - ..)', '…Efficiency/Synchronization (Eviction/Conflict,...)', '…Scope', '…ng a POST', '…ntication', '…ds'\", \"top text partially hidden behind toolbar: 'Response(Response)' and request line above POST\", \"right side of diagram hidden behind video call tiles\"], \"unreadable\": [\"small text above POST line partially covered by toolbar\"]}"
+  },
+  "1620": {
+   "first_token_s": 0.9608011245727539,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error,\", \"Content\", \"MediaLoader\", \"FeedScreenSH/ViewModel\", \"DetailScreenSH/ViewModel\", \"Domain / Usecase\", \"DI\", \"Data\"], \"boxes\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error, Content\", \"MediaLoader\", \"FeedScreenSH/ViewModel\", \"DetailScreenSH/ViewModel\", \"Domain / Usecase\", \"DI\", \"Data\"], \"arrows\": [[\"MediaLoader\", \"UI\"]], \"occluded\": [\"top edge of the UI box and the arrow's origin are cut off by the toolbar\"], \"unreadable\": []}"
+  },
+  "1980": {
+   "first_token_s": 1.3001468181610107,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error,\", \"Content\", \"MediaLoader\", \"FeedScreenSh/ViewModel\", \"DetailScreenSh/ViewModel\", \"DI\", \"ObserveFeedItems:\", \"Flow<List<Post>>\", \"suspend\", \"GetDetailItems(postId):\", \"Post\", \"ObserveCommentsForPost(po\", \"stID): List<Comment>\", \"Domain / Usecase\", \"DI\", \"PostRepository\", \"PostLocalDataSource\", \"RemoteDataSource\", \"L1: InMemoryStore\", \"L2: LocalDBStore\", \"200MB, LRU, Logsout (Clear\", \"NetworkDispatcher (OKhttp) -\", \"> Service\", \"Data\", \"BE\", \"To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool\"], \"boxes\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error, Content\", \"MediaLoader\", \"FeedScreenSh/ViewModel\", \"DetailScreenSh/ViewModel\", \"DI\", \"ObserveFeedItems: Flow<List<Post>>\", \"suspend GetDetailItems(postId): Post\", \"ObserveCommentsForPost(postID): List<Comment>\", \"Domain / Usecase\", \"DI\", \"PostRepository\", \"PostLocalDataSource\", \"RemoteDataSource\", \"L1: InMemoryStore\", \"L2: LocalDBStore 200MB, LRU, Logsout (Clear\", \"NetworkDispatcher (OKhttp) - > Service\", \"Data\", \"BE\"], \"arrows\": [[\"NetworkDispatcher (OKhttp) - > Service\", \"BE\"]], \"occluded\": [\"ObserveCommentsForPost(po…\", \"L2: LocalDBStore 200MB, LRU, Logsout (Clear…\"], \"unreadable\": []}"
+  },
+  "2400": {
+   "first_token_s": 0.6873660087585449,
+   "prompt_tokens": 1119,
+   "output": "```json\n{\"texts\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error,\", \"Content\", \"MediaLoader\", \"FeedScreenSH/ViewModel\", \"DetailScreenSH/ViewModel\", \"DI\", \"ObserveFeedItems:\", \"Flow<List<Post>>\", \"suspend\", \"GetDetailItems(postId):\", \"Post\", \"ObserveCommentsForPost(po\", \"stID): List<Comment>\", \"Domain / Usecase\", \"DI\", \"PostRepository\", \"UserRepository\", \"CommentsRepository\", \"CommentsRepository\", \"Meha Garg\", \"PostLocalDataSource\", \"RemoteDataSource\", \"CommentsDao\", \"L1: InMemoryStore\", \"NetworkDispatcher (OkHttp) -\", \"> Service\", \"PostsDao\", \"L2: LocalDBStore\", \"200MB, LRU, Logsout (Clear\", \"Data\", \"BE\", \"SSOT\", \"Likes / comments\", \"meha garg\", \"Andrey Rezanov\"], \"boxes\": [\"UI\", \"FeedScreen\", \"DetailScreen\", \"Loading,Error, Content\", \"MediaLoader\", \"FeedScreenSH/ViewModel\", \"DetailScreenSH/ViewModel\", \"DI\", \"ObserveFeedItems: Flow<List<Post>>\", \"suspend GetDetailItems(postId): Post\", \"ObserveCommentsForPost(postID): List<Comment>\", \"Domain / Usecase\", \"DI\", \"PostRepository\", \"UserRepository\", \"CommentsRepository\", \"CommentsRepository\", \"PostLocalDataSource\", \"RemoteDataSource\", \"CommentsDao\", \"L1: InMemoryStore\", \"NetworkDispatcher (OkHttp) - > Service\", \"PostsDao\", \"L2: LocalDBStore 200MB, LRU, Logsout (Clear\", \"Data\", \"BE\"], \"arrows\": [[\"UI\", \"FeedScreen\"], [\"UI\", \"DetailScreen\"], [\"UI\", \"Loading,Error, Content\"], [\"UI\", \"MediaLoader\"], [\"FeedScreen\", \"FeedScreenSH/ViewModel\"], [\"DetailScreen\", \"DetailScreenSH/ViewModel\"], [\"FeedScreenSH/ViewModel\", \"DI\"], [\"DetailScreenSH/ViewModel\", \"DI\"], [\"DI\", \"ObserveFeedItems: Flow<List<Post>>\"], [\"DI\", \"suspend GetDetailItems(postId): Post\"], [\"DI\", \"ObserveCommentsForPost(postID): List<Comment>\"], [\"ObserveFeedItems: Flow<List<Post>>\", \"Domain / Usecase\"], [\"suspend GetDetailItems(postId): Post\", \"Domain / Usecase\"], [\"ObserveCommentsForPost(postID): List<Comment>\", \"Domain / Usecase\"], [\"Domain / Usecase\", \"DI\"], [\"DI\", \"PostRepository\"], [\"DI\", \"UserRepository\"], [\"DI\", \"CommentsRepository\"], [\"PostRepository\", \"PostLocalDataSource\"], [\"PostRepository\", \"RemoteDataSource\"], [\"UserRepository\", \"RemoteDataSource\"], [\"CommentsRepository\", \"RemoteDataSource\"], [\"CommentsRepository\", \"CommentsDao\"], [\"PostLocalDataSource\", \"L1: InMemoryStore\"], [\"PostLocalDataSource\", \"PostsDao\"], [\"L1: InMemoryStore\", \"L2: LocalDBStore 200MB, LRU, Logsout (Clear\"], [\"PostsDao\", \"L2: LocalDBStore 200MB, LRU, Logsout (Clear\"], [\"RemoteDataSource\", \"NetworkDispatcher (OkHttp) - > Service\"], [\"NetworkDispatcher (OkHttp) - > Service\", \"BE\"]], \"occluded\": [\"ObserveCommentsForPost(po…\", \"stID): List<Comment>\", \"NetworkDispatcher (OkHttp) -…\", \"> Service\", \"200MB, LRU, Logsout (Clear…\"], \"unreadable\": []}\n```"
+  },
+  "2760": {
+   "first_token_s": 0.9312238693237305,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\":[\"DI (Hilt/Dagger)\",\"UI\",\"UI\",\"FeedScreen\",\"DetailScreen\",\"Meha Garg\",\"Loading,Error,\",\"Content\",\"MediaLoader\",\"FeedScreenSH/ViewModel\",\"DetailScreenSH/ViewModel\",\"DI\",\"ObserveFeedItems:\",\"Flow<List<Post>\",\"suspend\",\"GetDetailItems(postId):\",\"Post\",\"ObserveCommentsForPost(po\",\"stID): List<Comment>\",\"Domain / Usecase\",\"DI\",\"UserInteractionRepository\",\"PostRepository\",\"UserRepository\",\"CommentsRepository\",\"PostLocalDataSource\",\"CommentsDao\",\"CDN\",\"use wheel or spacebar while dragging, or use the hand tool\"],\"boxes\":[\"UI\",\"UI\",\"FeedScreen\",\"DetailScreen\",\"Loading,Error, Content\",\"MediaLoader\",\"FeedScreenSH/ViewModel\",\"DetailScreenSH/ViewModel\",\"DI\",\"ObserveFeedItems: Flow<List<Post>\",\"suspend GetDetailItems(postId): Post\",\"ObserveCommentsForPost(postID): List<Comment>\",\"Domain / Usecase\",\"DI\",\"UserInteractionRepository\",\"PostRepository\",\"UserRepository\",\"CommentsRepository\",\"PostLocalDataSource\",\"CommentsDao\",\"CDN\"],\"arrows\":[[\"CDN\",\"MediaLoader\"],[\"DI\",\"GetDetailItems(postId): Post\"],[\"DI\",\"PostRepository\"],[\"DI\",\"UserRepository\"],[\"PostRepository\",\"PostLocalDataSource\"],[\"PostLocalDataSource\",\"PostRepository\"],[\"UserRepository\",\"PostRepository\"],[\"CommentsRepository\",\"PostRepository\"]],\"occluded\":[\"UI…\",\"UI…\",\"DI…\",\"Domain / Usecase…\",\"PostLocalDataSource…\",\"CommentsDao…\"],\"unreadable\":[]}"
+  },
+  "3000": {
+   "first_token_s": 0.6093881130218506,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"Mobile System Design - Mock Interview Feedback\", \"Decision = HIRE\", \"Rating pillars:\", \"1. Problem Navigation: 5/5\", \"- Lead the interview\", \"- Asked questions on functional and non func requirements\", \"- Identified and focused on main problems (offline mode, sync)\", \"- Extremely good organization of the problem space (especially the initial high level diagram)\", \"- Good timing\", \"2. Solution Design: 5/5\", \"Achieved working solution (REST API with Cursor-based pagination)\", \"Addressed scalability issues with client side caching, CDNs\", \"Designed with UX in mind (Push notifications, Optimistic UI) Deployed needed architectural patte…\", \"3. Technical Proficiency: 5-/5\", \"Knows common frameworks, APIs (Room)\", \"Can be better: discuss prefetching\", \"Knows modern Android frameworks (Jetpack compose, Kotlin courutines, OKHttp)\", \"Identified alternative solutions (For example even for encoding suggested Protobuf)\", \"Foresees potential points of failure - Yes\", \"Offline Mode Deep Dive - Did well\", \"Errors and Retries - Did well\", \"4. Technical Communication: 5/5\", \"Explained ideas clearly and logically\", \"Made complex topics easily digestible\", \"To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool\", \"Andrey Rezanov\", \"meha garg\", \"90%\"], \"boxes\": [], \"arrows\": [], \"occluded\": [\"architectural patte… (cut off by video tile)\", \"Made complex topics easily digestible (bottom partially cut off by screen edge)\"], \"unreadable\": []}"
+  },
+  "3120": {
+   "first_token_s": 0.878338098526001,
+   "prompt_tokens": 1119,
+   "output": "{\"texts\": [\"1. Problem Navigation: 5/5\", \"- Led the interview\", \"- Asked questions on functional and non func requirements\", \"- Identified and focused on main problems (offline mode, sync)\", \"- Extremely good organization of the problem space (especially the initial high level diagram)\", \"- Good timing\", \"2. Solution Design: 5/5\", \"Achieved working solution (REST API with Cursor-based pagination)\", \"Addressed scalability issues with client side caching, CDNs\", \"Designed with UX in mind (Push notifications, Optimistic UI)\", \"Deployed needed architectural patterns - Yes (DI, Repository, three layered approach)\", \"3. Technical Proficiency: 5-/5\", \"Knows common frameworks, APIs (Room)\", \"Can be better: discuss prefetching\", \"Knows modern Android frameworks (Jetpack compose, Kotlin courutines, OKHttp)\", \"Identified alternative solutions (For example even for encoding suggested Protobuf)\", \"Foresees potential points of failure - Yes\", \"Offline Mode Deep Dive - Did well\", \"Errors and Retries - Did well\", \"4. Technical Communication: 5/5\", \"Explained ideas clearly and logically\", \"Made complex topics easily digestible\", \"Shared trade-offs and design choices\", \"Responded well to questions and feedback\", \"To move canvas, hold mouse wheel or spacebar while dragging, or use the hand tool\", \"90%\", \"Andrey Rezanov\", \"meha garg\"], \"boxes\": [], \"arrows\": [], \"occluded\": [\"meet.google.com…\", \"Andrey Rezanov…\", \"meha garg…\"], \"unreadable\": []}"
+  }
+ },
+ "pairs": {
+  "300": {
+   "first_token_s": 1.063662052154541,
+   "output": "{\"view\": \"none\", \"added\": [\"1.\"], \"removed\": [], \"edited\": [], \"in_progress\": [\"1.\"], \"uncertain\": []}"
+  },
+  "700": {
+   "first_token_s": 1.3956470489501953,
+   "output": "{\"view\": \"none\", \"added\": [\"GET /v1/feed/postId\", \"Response (PostDet\"], \"removed\": [], \"edited\": [], \"in_progress\": [\"Response (PostDet\"], \"uncertain\": []}"
+  },
+  "1100": {
+   "first_token_s": 0.804887056350708,
+   "output": "{\"view\": \"pan\", \"added\": [\"Comments box with Comment 1-5\", \"GET /v1/feed?cursor=\\\"abc123\\\"&limit<20>&after\", \"Response (PaginationMetadata(after, before, cursor, reachedEnd, limit, ...)\", \"Post(postId, createdAt, content, author, type, PostType(text, Image, Video...)\", \"Author(id: String, name:String, avatarURL, activeAt, ...)\", \"Json\", \"Authorization : Bearer <token_api>\"], \"removed\": [], \"edited\": [], \"in_progress\": [], \"uncertain\": []}"
+  },
+  "1250": {
+   "first_token_s": 0.9286949634552002,
+   "output": "{\"view\": \"none\", \"added\": [\"CDN box\", \"arrow from CDN to Client\"], \"removed\": [\"LoadB box\"], \"edited\": [], \"in_progress\": [], \"uncertain\": []}"
+  },
+  "1500": {
+   "first_token_s": 1.1378529071807861,
+   "output": "{\"view\": \"pan\", \"added\": [\"Domain / Usecase\"], \"removed\": [], \"edited\": [], \"in_progress\": [], \"uncertain\": []}"
+  },
+  "1800": {
+   "first_token_s": 0.9281439781188965,
+   "output": "{\"view\": \"zoom\", \"added\": [\"LocalDataSource/In\"], \"removed\": [], \"edited\": [], \"in_progress\": [\"LocalDataSource/In\"], \"uncertain\": []}"
+  },
+  "2200": {
+   "first_token_s": 1.018183946609497,
+   "output": "{\"view\": \"pan\", \"added\": [], \"removed\": [], \"edited\": [\"RemoteDataSource (previously obscured by the 'Meha Garg' name tag, now fully visible)\"], \"in_progress\": [], \"uncertain\": []}"
+  },
+  "2600": {
+   "first_token_s": 0.8221409320831299,
+   "output": "{\"view\": \"pan\", \"added\": [\"Exponential Backoff + Retries\", \"BE\", \"SSOT\"], \"removed\": [], \"edited\": [], \"in_progress\": [\"Exponential Backoff + Retries\"], \"uncertain\": []}"
+  }
+ },
+ "pairs_with_log": {
+  "1100": "{\"view\": \"pan\", \"added\": [\"Comments\", \"Comment 1\", \"Comment 2\", \"Comment 3\", \"Comment 4\", \"Comment 5\", \"Json\", \"Authorization : Bearer <token_API>\", \"GET /v1/feed?cursor=\\\"abc123\\\"&limit<20>&after\", \"Response\", \"(PaginationMetadata(after, before, cursor, reachedEnd,limit,...)\", \"Post(postId, createdAt, content, author, type,\", \"PostType(text, Image, Video...)\", \"Author(id: String, name:String, avatarURL; activeAt, ...)\"], \"removed\": [], \"edited\": [], \"in_progress\": [], \"uncertain\": []}",
+  "2600": "{\"view\": \"pan\", \"added\": [\"Exponential Backoff + Retries\", \"BE\", \"SSOT\"], \"removed\": [], \"edited\": [], \"in_progress\": [\"Exponential Backoff + Retries\"], \"uncertain\": []}",
+  "2200": "{\"view\": \"pan\", \"added\": [], \"removed\": [], \"edited\": [], \"in_progress\": [], \"uncertain\": []}"
+ },
+ "pairs_manual_verdict": {
+  "300": "mostly",
+  "700": "correct",
+  "1100": "wrong: revealed content as added",
+  "1250": "correct",
+  "1500": "correct",
+  "1800": "correct",
+  "2200": "mostly: one false edit",
+  "2600": "partial: revealed BE/SSOT as added"
+ },
+ "local_filter": {
+  "1100": [
+   "Authorization : Bearer <token_API>"
+  ],
+  "2600": [
+   "Exponential Backoff + Retries"
+  ]
+ },
+ "latency": {
+  "text_full_transcript": {
+   "runs": [
+    {
+     "first": 1.254302978515625,
+     "total": 1.883671760559082,
+     "prompt": 28480,
+     "cached": 0,
+     "error": null
+    },
+    {
+     "first": 0.5918450355529785,
+     "total": 1.6602599620819092,
+     "prompt": 28480,
+     "cached": 28288,
+     "error": null
+    },
+    {
+     "first": 0.6472368240356445,
+     "total": 1.5890350341796875,
+     "prompt": 28480,
+     "cached": 28288,
+     "error": null
+    },
+    {
+     "first": 0.655501127243042,
+     "total": 1.37562894821167,
+     "prompt": 28480,
+     "cached": 28288,
+     "error": null
+    },
+    {
+     "first": 0.6924011707305908,
+     "total": 1.5538952350616455,
+     "prompt": 28480,
+     "cached": 28288,
+     "error": null
+    },
+    {
+     "first": 0.7660119533538818,
+     "total": 1.6100938320159912,
+     "prompt": 28480,
+     "cached": 28288,
+     "error": null
+    }
+   ],
+   "median_first": 0.6739511489868164,
+   "max_first": 1.254302978515625,
+   "median_first_warm": 0.655501127243042
+  },
+  "image_full_transcript": {
+   "runs": [
+    {
+     "first": 1.5255322456359863,
+     "total": 2.3937251567840576,
+     "prompt": 29449,
+     "cached": 768,
+     "error": null
+    },
+    {
+     "first": 0.7042109966278076,
+     "total": 1.4997100830078125,
+     "prompt": 29449,
+     "cached": 29184,
+     "error": null
+    },
+    {
+     "first": 0.5668039321899414,
+     "total": 1.4398810863494873,
+     "prompt": 29449,
+     "cached": 29184,
+     "error": null
+    },
+    {
+     "first": 0.6267898082733154,
+     "total": 1.8137080669403076,
+     "prompt": 29449,
+     "cached": 29184,
+     "error": null
+    },
+    {
+     "first": 0.5566108226776123,
+     "total": 1.5579180717468262,
+     "prompt": 29449,
+     "cached": 29184,
+     "error": null
+    },
+    {
+     "first": 0.992882251739502,
+     "total": 1.837956190109253,
+     "prompt": 29449,
+     "cached": 29184,
+     "error": null
+    }
+   ],
+   "median_first": 0.6655004024505615,
+   "max_first": 1.5255322456359863,
+   "median_first_warm": 0.6267898082733154
+  }
+ }
+}
