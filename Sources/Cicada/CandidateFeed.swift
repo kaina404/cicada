@@ -6,6 +6,7 @@ struct CandidateFeed: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject private var gloss: AskGloss
     @ObservedObject private var fast: FastReadingFollow
+    @ObservedObject private var cards: CoachCards
     var shadowReader: ShadowReader?
     var expanded = false
     var compactHeight: CGFloat = 250
@@ -31,7 +32,7 @@ struct CandidateFeed: View {
          compactHeight: CGFloat = 250, microphoneName: String = "", micOn: Bool = false,
          onMic: (() -> Void)? = nil, onMicrophoneSettings: (() -> Void)? = nil, onFloat: (() -> Void)? = nil, fontSize: CGFloat = 20, glossFontSize: CGFloat? = nil,
          floatingFollow: Bool? = nil) {
-        self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.fast = engine.fastFollow; self.shadowReader = shadowReader
+        self.engine = engine; self.settings = settings; self.gloss = engine.gloss; self.fast = engine.fastFollow; self.cards = engine.cards; self.shadowReader = shadowReader
         self.expanded = expanded; self.compactHeight = compactHeight
         self.microphoneName = microphoneName; self.micOn = micOn; self.onMic = onMic
         self.onMicrophoneSettings = onMicrophoneSettings; self.onFloat = onFloat; self.fontSize = fontSize
@@ -51,6 +52,12 @@ struct CandidateFeed: View {
             GeometryReader { viewport in
                     ScrollView(showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 14) {
+                            if engine.cardMode {
+                                CoachCardHeader(cards: cards).background(GeometryReader { row in
+                                    Color.clear.preference(key: ReadingRowTops.self,
+                                        value: [Self.headerRow: row.frame(in: .named(Self.readingSpace)).minY])
+                                })
+                            }
                             ForEach(Array(engine.script.sentences.enumerated()), id: \.offset) { index, sentence in
                                 VStack(alignment: .leading, spacing: 5) {
                                     if showsGloss, let text = gloss.translations[sentence] {
@@ -93,6 +100,13 @@ struct CandidateFeed: View {
                                         value: [index: row.frame(in: .named(Self.readingSpace)).minY])
                                 })
                             }
+                            if engine.cardMode {
+                                CoachCardFooter(cards: cards, fontSize: fontSize, onNext: { engine.ask() }, onRetry: { engine.retry() })
+                                    .background(GeometryReader { row in
+                                        Color.clear.preference(key: ReadingRowTops.self,
+                                            value: [Self.editRow: row.frame(in: .named(Self.readingSpace)).minY])
+                                    })
+                            }
                             if !engine.script.committed.isEmpty {
                                 Text("已经说出").font(.system(size: 11)).foregroundStyle(Palette.secondary)
                                 Text(engine.script.spokenText).font(.system(size: max(16, fontSize * 0.8))).foregroundStyle(Palette.secondary)
@@ -109,21 +123,22 @@ struct CandidateFeed: View {
                     .onPreferenceChange(ReadingRowTops.self) { rowTops = $0 }
                     .onPreferenceChange(FastFollowFrame.self) { fastFrame = $0 }
                     .task(id: ReadingScrollRequest(answerID: engine.script.answerID,
-                        sentence: followedSentence, sentenceCount: engine.script.sentences.count,
+                        sentence: scrollRow, sentenceCount: engine.script.sentences.count,
                         translations: gloss.translations, size: viewport.size, fontSize: fontSize,
-                        follows: floatingFollow ?? followsReading, target: rowTops[followedSentence], line: followedLine)) {
+                        follows: floatingFollow ?? followsReading, target: rowTops[scrollRow], line: followedLine)) {
                         guard floatingFollow ?? followsReading else { return }
                         // Coalesce sentence, gloss and layout updates before scrolling. A layout
                         // correction must retarget the same animation rather than snap to its end.
                         do { try await Task.sleep(for: .milliseconds(16)) } catch { return }
                         guard !Task.isCancelled else { return }
-                        guard let target = rowTops[followedSentence] else { return }
+                        let row = scrollRow
+                        guard let target = rowTops[row] else { return }
                         let newAnswer = scrollAnswerID != engine.script.answerID
-                        let handoff = scrolledSentence != followedSentence || scrolledLine != followedLine
-                        scrollAnswerID = engine.script.answerID; scrolledSentence = followedSentence
+                        let handoff = scrolledSentence != row || scrolledLine != followedLine
+                        scrollAnswerID = engine.script.answerID; scrolledSentence = row
                         scrolledLine = followedLine
                         // A long sentence keeps the line being read, plus one line before it, at the top.
-                        let lineTarget = followedLine > 1 ? fastFrame.map { $0.minY + CGFloat(followedLine - 1) * fontSize * 1.2 } : nil
+                        let lineTarget = row == followedSentence && followedLine > 1 ? fastFrame.map { $0.minY + CGFloat(followedLine - 1) * fontSize * 1.2 } : nil
                         // Slow and eased at both ends: a sudden jump makes the reader lose their place.
                         scroller.scroll(to: lineTarget ?? target, restart: handoff, animated: !(reduceMotion || newAnswer))
                     }
@@ -139,6 +154,15 @@ struct CandidateFeed: View {
         }.foregroundStyle(Palette.tertiary).padding(.horizontal, 24).padding(.bottom, 8)
     }
     private var readingTopInset: CGFloat { floatingFollow == nil ? 24 : 0 }
+    /// Card mode: the card's header while its first sentence is still unread, the step to type or draw
+    /// while writing (the code card sits below the sentences); otherwise the sentence being read.
+    private var scrollRow: Int {
+        guard engine.cardMode, cards.card != nil else { return followedSentence }
+        if cards.phase == .write { return Self.editRow }
+        return followedSentence == 0 && engine.script.cursor == 0 ? Self.headerRow : followedSentence
+    }
+    private static let headerRow = -1
+    private static let editRow = 100_000
 
     private static let readingSpace = "readingContent"
     private func firstWord(in sentence: Int) -> Int {
@@ -268,6 +292,10 @@ struct CandidateFeedControls: View {
                     if settings.shadowReading, let shadowReader { ShadowStatus(reader: shadowReader, settings: settings) }
                 }.font(.system(size: 11))
             }
+            if settings.coachLanguage == .english {
+                Toggle("讲题卡片", isOn: $settings.coachCards).toggleStyle(.checkbox).fixedSize().font(.system(size: 11))
+                    .help("技术题一步一步引导：先说这几句，再写这一段；跟着白板和问答更新")
+            }
             HStack(spacing: 8) {
                 Toggle("快速跟读", isOn: $settings.fastReadingFollow).toggleStyle(.checkbox).fixedSize()
                     .help("本机语音识别逐词跟随，口音不准时仍由 Gemma 校正")
@@ -346,10 +374,12 @@ struct CoachSnapshot: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("面试教练").font(.headline)
             Text(microphoneName).font(.caption)
+            if engine.cardMode { CoachCardHeader(cards: engine.cards) }
             ForEach(Array(engine.script.sentences.prefix(5).enumerated()), id: \.offset) { index, sentence in
                 Text(sentence).font(.system(size: 18)).fixedSize(horizontal: false, vertical: true)
                     .padding(4).background(index == engine.script.currentSentence ? Palette.accent.opacity(0.09) : .clear)
             }
+            if engine.cardMode { CoachCardFooter(cards: engine.cards, fontSize: 18, onNext: {}, onRetry: {}, selectable: false) }
             if !engine.script.spokenText.isEmpty {
                 Text(engine.script.spokenText).font(.system(size: 14)).foregroundStyle(Palette.secondary)
             }

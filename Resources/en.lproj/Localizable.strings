@@ -1725,3 +1725,23 @@
 "标记这个人叫什么" = "Name this person";
 "标记人名…" = "Name…";
 "记住这个声音…" = "Remember This Voice…";
+
+/* Walkthrough cards */
+"讲题卡片" = "Walkthrough cards";
+"技术题一步一步引导：先说这几句，再写这一段；跟着白板和问答更新" = "Guides technical questions step by step: say this, then write this; follows the whiteboard and the conversation";
+"听到：%@" = "Heard: %@";
+"先纠正一句" = "Correct this first";
+"· 接下来：%@" = "· Next: %@";
+"正在想第一步" = "Working out the first step";
+"然后：%@" = "Then: %@";
+"正在更新" = "Updating";
+"这一步没生成出来" = "This step didn’t come through";
+"下一步" = "Next Step";
+"按实际进展给出下一步（⌃⌥A）" = "Give the next step from what actually happened (⌃⌥A)";
+"之前的卡片（%lld）" = "Earlier cards (%lld)";
+"替换" = "Replace";
+"画" = "Draw";
+"新增" = "Add";
+"位置：%@" = "At: %@";
+"屏幕上已看到" = "Seen on screen";
+"现在写" = "Write now";
