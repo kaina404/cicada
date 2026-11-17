@@ -44,6 +44,11 @@ enum CoachCardPrompt {
     acknowledge it briefly ("Okay, I'll switch this part to B."), stop recommending the old approach and give
     the next step for the new one, keeping every earlier requirement that still applies. Say "I'll…" for work
     not yet visible on the board; never claim it is done.
+    A dropped requirement is simply no longer required: record dropConstraint citing that line and never record
+    its opposite ("no offline" is not "no local database") unless someone said it.
+    Never state a guarantee nobody established: a requestId or cursor on the board shows intent, so what the
+    server must do with it (deduplicate, keep order) is a contract to confirm ("the server would need to…"),
+    and no technique "never" fails.
     A reference you cannot resolve ("add another one") gets one short clarifying question of at most 15
     words, with no list of options, and no TYPE.
     Board evidence: content that moved out of view was not deleted; text hidden by the video tile or the screen
@@ -132,7 +137,7 @@ enum CoachCardPrompt {
         // Put the candidate's own recent words where they cannot be missed (AC-13: points were repeated).
         let said = c.said.isEmpty ? c.newLines.filter { $0.role == "candidate" }.map(\.text) : c.said
         if !said.isEmpty {
-            parts.append("The candidate has ALREADY SAID these in their own words since the last card. Do not repeat these points; continue after them:\n- " + said.joined(separator: "\n- "))
+            parts.append("The candidate has ALREADY SAID these in their own words since the last card. Do not repeat these points; continue after them. A line saying something is not covered yet (\"I have not explained the data flow\") is not a point made: cover that next:\n- " + said.joined(separator: "\n- "))
         }
         if let card = c.card {
             let sentences = CoachScript.sentences(c.script.pending)
@@ -171,7 +176,8 @@ enum CoachCardPrompt {
         You edit what a job candidate will say next in a live English interview. The candidate has ALREADY said
         some things in their own words. Remove every sentence of the draft that restates any of those points,
         even when it is paraphrased or adds only small wording changes. Keep the sentences that add something
-        new, word for word. If nothing new remains, write ONE short sentence that adds one new relevant point
+        new, word for word. A line saying something has NOT been explained yet makes no point: keep every
+        sentence about that topic. If nothing new remains, write ONE short sentence that adds one new relevant point
         (a limit, an edge case, a trade-off) and never restates. Output only the final spoken text, no labels.
         """
         let user = "Already said by the candidate:\n- " + said.joined(separator: "\n- ") + "\n\nDraft:\n" + say

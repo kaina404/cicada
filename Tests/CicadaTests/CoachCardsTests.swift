@@ -252,6 +252,8 @@ struct CoachCardsTests {
         #expect(CoachCards.decidedApproach("I'd rather not use RxJava here. Let's switch this to Kotlin Flow.") == "Kotlin Flow")
         #expect(CoachCards.decidedApproach("Actually, switch to Kotlin Flow.") == "Kotlin Flow")
         #expect(CoachCards.decidedApproach("Use Paging 3 instead.") == "Paging 3")
+        #expect(CoachCards.decidedApproach("Please replace RxJava with Kotlin Flow.") == "Kotlin Flow")
+        #expect(CoachCards.decidedApproach("Don't replace RxJava with Flow.") == nil)
         #expect(CoachCards.decidedApproach("Hmm, could we use Flow here instead?") == nil)
         #expect(CoachCards.decidedApproach("Can you write the ViewModel?") == nil)
         #expect(CoachCards.announcesSwitch(CoachCard(say: "Yes, Flow fits better here. With Flow I can collect in viewModelScope.")))
@@ -281,6 +283,63 @@ struct CoachCardsTests {
         #expect(CoachCards.withoutSubtaskProblems(coroutines, newLines: [unrelated], memory: memory) == coroutines)
     }
 
+    /// ME-08: a new problem that shares a word ("cache") with the current one is still a new problem,
+    /// and is recorded even when the card's CASE forgot it.
+    @Test func aNamedNewProblemIsNotMergedIntoASimilarOne() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Feed cache for the Android news feed", evidence: ["t1"])],
+                     evidence: CoachEvidence(interviewer: ["t1"]), at: 0)
+        let line = CoachTurn(id: "t2", seconds: 5, role: "interviewer", text: "This is a new problem: design the chat message cache. Keep the last 30 days of messages.")
+        let chat = [CoachCaseOp(op: "newProblem", text: "Chat message cache")]
+        #expect(CoachCards.withoutSubtaskProblems(chat, newLines: [line], memory: memory) == chat)
+        #expect(CoachCards.missingProblemOps([], newLines: [line], memory: memory).first?.op == "newProblem")
+        let aside = CoachTurn(id: "t3", seconds: 6, role: "interviewer", text: "Another problem with that cache is memory pressure, right?")
+        #expect(CoachCards.missingProblemOps([], newLines: [aside], memory: memory).isEmpty)
+    }
+
+    /// NF-05, ME-10: explaining the board or a reference gets no code to type.
+    @Test @MainActor func anExplainRequestGetsNoCode() async throws {
+        let reply = "<<<CICADA_CARD>>>\nSAY:\nThe feed call takes a cursor.\nTYPE: add at=\"API\"\n```\nGET /v1/feed?cursor=x\n```\nCASE: []"
+        let engine = coach(Model([reply]))
+        defer { engine.endMeeting() }
+        engine.picture(CoachFrame(jpeg: Data(), seconds: 0, ocr: "GET /v1/feed?cursor=abc"))
+        engine.observe(lines: [line("q", "them", "Walk me through the API on the board.")], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        #expect(engine.cards.card?.say == "The feed call takes a cursor.")
+        #expect(engine.cards.card?.edit == nil)
+    }
+
+    /// ME-03: naming what is still missing is not a point already made.
+    @Test func notCoveredYetIsNotAPointMade() {
+        #expect(CoachCards.saysNotCovered("I have not explained the data flow yet."))
+        #expect(CoachCards.saysNotCovered("We haven't talked about caching."))
+        #expect(!CoachCards.saysNotCovered("The repository writes remote results to the local database."))
+        #expect(!CoachCards.saysNotCovered("I did not use RxJava here because Flow is simpler."))
+    }
+
+    /// CH-06: "add another one" names nothing to add.
+    @Test func unnamedAdditionsAreUnresolved() {
+        #expect(CoachCards.unresolvedReference("Add another one after it."))
+        #expect(CoachCards.unresolvedReference("Can you add one more here?"))
+        #expect(!CoachCards.unresolvedReference("Add another field after isLoading."))
+        #expect(!CoachCards.unresolvedReference("Add an optional errorMessage string to this UI state."))
+    }
+
+    /// CH-06: a card that guesses what to add is retried for a clarifying question and loses its TYPE.
+    @Test @MainActor func anUnresolvedAdditionAsksInsteadOfTyping() async throws {
+        let guess = "<<<CICADA_CARD>>>\nSAY:\nOkay, I'll add one more item.\nTYPE: replace at=\"items\"\n```kotlin\nval items = listOf(\"a\", \"b\", \"c\")\n```\nCASE: []"
+        let model = Model([guess, "<<<CICADA_CARD>>>\nSAY:\nAnother variable, item or function?\nCASE: []"])
+        let engine = coach(model)
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("q", "them", "Add another one after it.")], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        #expect(engine.cards.card?.say == "Another variable, item or function?")
+        #expect(engine.cards.card?.edit == nil)
+        #expect(model.asked.count == 2)
+    }
+
     @Test func helpers() {
         var script = CoachScript(modelReading: true)
         script.replacePending("One two three. Four five.", since: [], newAnswer: true)
@@ -296,6 +355,29 @@ struct CoachCardsTests {
         #expect(CoachCards.asksToExplain("Can you walk me through this architecture, starting from the UI?"))
         #expect(!CoachCards.asksToExplain("Can you draw the data layer under it?"))
         #expect(!CoachCards.asksToExplain("Explain it and add the cache box."))
+    }
+
+    /// RT-08: a new meeting starts its reading cursor at zero; the cursor left from the last meeting must not
+    /// stop the candidate's first own-words line in the new one from checking the card.
+    @Test @MainActor func aNewMeetingChecksTheFirstOwnWordsLine() async throws {
+        let model = Model(Array(repeating: "<<<CICADA_CARD>>>\nSAY:\nOne two three.\nCASE: []", count: 4))
+        let cards = CoachCards { messages, name in model.stream(messages, name) }
+        var script = CoachScript()
+        cards.input = { .init(turns: [], background: "", frames: [], script: script, stage: .general) }
+        func settle() async { for _ in 0..<2000 where cards.busy { await Task.yield() }; for _ in 0..<50 { await Task.yield() } }
+        cards.receive(.manual, now: 1); await settle()
+        script.replacePending("One two three.", since: [])
+        script.commit(id: "c1", text: "One two three")
+        #expect(script.cursor == 3)
+        cards.candidateSpoke(script, now: 2); await settle()
+        cards.reset()
+        script = CoachScript()
+        cards.receive(.manual, now: 1); await settle()
+        let before = cards.requests
+        script.replacePending("One two three.", since: [])
+        script.commit(id: "c2", text: "I would cache the posts in Room first")
+        cards.candidateSpoke(script, now: 2)
+        #expect(cards.requests == before + 1)
     }
 }
 

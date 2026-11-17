@@ -108,6 +108,9 @@ final class CoachCards: ObservableObject {
         card = nil; past = []; busy = false; failed = false; phase = .idle; held = nil; written = false
         boardCount = 0; boardLines = []; boardPending = false; prepared = ""; requests = 0; keeps = 0
         cardShownAt = .infinity
+        // The next meeting's clock and reading cursor start at zero again: values left from this one kept
+        // its first own-words line from being checked.
+        clock = 0; boardChangedAt = -.infinity; checkedCard = false; lastCommitCursor = 0; idleSince = 0
     }
 
     // MARK: Requests
@@ -136,7 +139,10 @@ final class CoachCards: ObservableObject {
                                       + input.script.committed.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a }))
         // The candidate's own words since the current card appeared, not just since the last request: a check
         // right after they spoke moves the base, and a manual "next" then repeated them (AC-13).
-        let said = input.turns.filter { $0.role == "candidate" && ($0.seconds >= cardShownAt || newLines.contains($0)) }.map(\.text)
+        // "I have not explained the data flow yet" covers nothing: as a point already made it got the data flow
+        // edited out of the card (ME-03).
+        let said = input.turns.filter { $0.role == "candidate" && ($0.seconds >= cardShownAt || newLines.contains($0)) }
+            .map(\.text).filter { !Self.saysNotCovered($0) }
         let messages = CoachCardPrompt.request(.init(
             turns: input.turns, background: input.background, frames: input.frames, script: input.script,
             stage: input.stage, memory: memory, newLines: newLines, newBoard: newBoard, boardID: boardID,
@@ -195,6 +201,21 @@ final class CoachCards: ObservableObject {
                         if let previousSay, self.past.last?.card.say == previousSay { self.past.removeLast() }
                     }
                 }
+                // "Add another one after it." names nothing, yet DeepSeek picked a value and a spot itself (CH-06):
+                // retry once asking for the clarifying question, and never keep a TYPE for it.
+                if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
+                   Self.unresolvedReference(latest.text), card.edit != nil || !card.say.contains("?") {
+                    var retry = ""
+                    for try await piece in self.stream(Self.appending("The interviewer said \"\(latest.text)\" without naming what to add. SAY is one short clarifying question of at most 15 words, with no list of options. No TYPE.", to: messages), CoachPrompt.model) {
+                        guard !Task.isCancelled, self.token == tok else { return }
+                        retry += piece
+                    }
+                    if let again = try CoachCard.parse(retry, finished: true), !again.keep, again.say.contains("?") {
+                        card = again; shown = false
+                        if let previousSay, self.past.last?.card.say == previousSay { self.past.removeLast() }
+                    }
+                    card.edit = nil
+                }
                 // After new requirements, DeepSeek reads them back; drop sentences that only echo the
                 // interviewer's informational line (the newsfeed run, step 2).
                 if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
@@ -203,8 +224,9 @@ final class CoachCards: ObservableObject {
                 }
                 // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question).
                 if boardID == nil, card.edit?.action == "draw" { card.edit = nil }
-                // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows).
-                if card.edit?.action == "draw", let latest = input.turns.last(where: { $0.role == "interviewer" }),
+                // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows; NF-05
+                // and ME-10 typed code for "walk me through the API" and "explain the difference").
+                if card.edit != nil, let latest = input.turns.last(where: { $0.role == "interviewer" }),
                    Self.asksToExplain(latest.text) { card.edit = nil }
                 // DeepSeek keeps restating what the candidate just said in their own words, even when told
                 // not to; a short focused edit removes it (AC-13). Only for cards not already on screen.
@@ -222,6 +244,8 @@ final class CoachCards: ObservableObject {
                    let approach = Self.decidedApproach(latest.text) {
                     card.ops.append(CoachCaseOp(op: "adopt", text: approach, evidence: [latest.id]))
                 }
+                // A retry stream can end after the meeting was reset or a newer request took over.
+                guard !Task.isCancelled, self.token == tok else { return }
                 self.apply(card, shown: shown, trigger: trigger, input: input, usedBoard: usedBoard, evidence: evidence)
                 self.onEvent?(CoachEvent(kind: "latency", seconds: self.clock, answerID: input.script.answerID,
                                          firstToken: self.firstToken, total: Date().timeIntervalSince(started)))
@@ -342,7 +366,9 @@ final class CoachCards: ObservableObject {
         guard !CoachEvidence.isTentative(text) else { return nil }
         // "Switch … to X" is the clearest; "use X instead" counts unless negated ("I'd rather not use RxJava").
         let patterns = [#"(?i)\b(?:switch(?: this| it| that)?(?: part)? to|change (?:it|this|that) to)\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)(?:\s+instead\b|\s+here\b|[.!,]|$)"#,
-                        #"(?i)(?<!not )\buse\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)\s+instead\b"#]
+                        #"(?i)(?<!not )\buse\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)\s+instead\b"#,
+                        // "Please replace RxJava with Kotlin Flow." (CH-01 left the decision unrecorded).
+                        #"(?i)(?<!not |n't )\breplace\s+[A-Za-z][A-Za-z0-9+ ]{0,30}?\s+with\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)(?:\s+instead\b|\s+here\b|[.!,]|$)"#]
         for pattern in patterns {
             guard let regex = try? NSRegularExpression(pattern: pattern),
                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
@@ -411,7 +437,8 @@ final class CoachCards: ObservableObject {
             return shared.isEmpty && !continues
         }
     }
-    nonisolated static let newQuestionPattern = #"\b(new question|next question|different question|another question|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this))\b"#
+    // "This is a new problem: design the chat cache" shares "cache" with the feed cache and was merged into it (ME-08).
+    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this))\b"#
 
     /// The interviewer plainly opens a new question or returns to an earlier one, and the card's CASE did
     /// not record it (AC-10): the app records it from the interviewer's own line. Applied before the
@@ -421,7 +448,7 @@ final class CoachCards: ObservableObject {
         guard let line = interviewer.last else { return [] }
         let recorded = ops.contains { $0.op == "newProblem" || $0.op == "switch" }
         let t = line.text.lowercased()
-        let opensNew = t.range(of: #"\b(new question|next question|different question|another question|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this))\b"#, options: .regularExpression) != nil
+        let opensNew = t.range(of: newQuestionPattern, options: .regularExpression) != nil
         var extra: [CoachCaseOp] = []
         // "Let's pause that" pauses a question that was never recorded when its card was cancelled by this
         // very turn: record that earlier question first, so it can be resumed.
@@ -439,6 +466,18 @@ final class CoachCards: ObservableObject {
         }
         if opensNew { extra.append(CoachCaseOp(op: "newProblem", text: String(line.text.prefix(120)), evidence: [line.id])) }
         return extra
+    }
+
+    /// "I haven't explained the data flow yet": the candidate names what is still missing.
+    nonisolated static func saysNotCovered(_ text: String) -> Bool {
+        text.range(of: #"(?i)\b(haven't|have not|didn't|did not|not yet)\b.{0,20}\b(explain|cover|talk|mention|discuss|gone|go|got)"#,
+                   options: .regularExpression) != nil
+    }
+
+    /// "Add another one", "add one more after it": the thing to add is not named.
+    nonisolated static func unresolvedReference(_ text: String) -> Bool {
+        text.range(of: #"(?i)\b(add|insert|put|write)\s+(another|one more)(\s+one)?\s*(after|before|below|above|here|there|next to|please|[.!?]|$)"#,
+                   options: .regularExpression) != nil
     }
 
     /// An explain-only request: walk through, explain, describe… without asking to draw, add or write anything.
