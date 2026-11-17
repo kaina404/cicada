@@ -152,3 +152,9 @@ IPA 词典来源、固定版本和 MIT 许可证见 `Resources/pronunciation/REA
 用户反馈高一策略过密，改为高三阅读辅助。保留专业词音标，跳过常见词和常见长词；其他词只对至少九个字母的词查词标注，同一词在每篇答案内仅标首次。此为实用筛选，不声称官方高考词表分级。照片中的 software、engineer、years、experience、full、product 不再标注；itinerary、integration、architecture 保留辅助。DeepSeek 的回答判断流程不变。
 
 验证：`scripts/test.sh` 363 项、60 个 suite 全通过，`scripts/build.sh` 通过。截图介绍语回归仅保留 itinerary、integration、architecture 三处提示，流式前缀与正文词序不变；新版 App 英文被动快照自查中，一篇 157 词回答显示 12 处音标，software、engineer、experience 保持正文。测试为文字注入，已停止监听并保留新版开发 App；未进行真实面试音频重放。
+
+## 讲题卡片（英文，2026-11-17）
+
+英文面试默认打开「讲题卡片」（`AppSettings.coachCards`）后，回答路径换成 `CoachCards`：每次只给下一张卡片（说 / 写或画 / 然后），解题记录与只追加的日志见 [技术方案](walkthrough-coach-plan.md) 与 [需求](android-technical-interview-assistant-requirements.md)。中文面试与关闭卡片时仍走本文的整段回答路径。
+
+本文「屏幕变化只更新下一次请求的素材，不单独触发重写」在卡片模式下改为：白板出现**没见过的文字**、画面稳定 2 秒且距上次白板请求至少 5 秒时，请求下一张卡片；滚动露出的旧内容由程序比对剔除，不触发。只有面试官的完整一句话和手动操作会作废正在进行的卡片请求；候选人说话与白板变化只排队，避免持续输入饿死回答。卡片里的代码只显示，不计入跟读。
