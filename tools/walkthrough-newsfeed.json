@@ -1,0 +1,41 @@
+{
+  "_comment": "End-to-end walkthrough run: the mobile system design question from AndroidEngineerMockInterview.mp4 (Facebook News Feed), with the real Excalidraw frames ($FRAMES/t<seconds>.jpg) shown at the matching stage. Interviewer lines follow that interview and its feedback (offline mode, sync, cursor pagination, caching, optimistic UI, retries, prefetching).",
+  "scenarios": [
+    {"id": "NF", "name": "Mobile system design: Facebook News Feed, full interview", "steps": [
+      {"board": "$FRAMES/t180.jpg"},
+      {"them": "Let's do a mobile system design question today. Design the news feed for an app like Facebook. I've put a rough sketch of the two screens on the board."},
+      {"check": {"type_not_code": true, "judge": "SAY opens like a strong candidate: it starts by clarifying the scope or functional requirements of the feed (and maybe non-functional ones), in short spoken sentences, not a full essay and not code."}},
+      {"them": "Good questions. Posts can be text, images or video. Show like and comment counts, and tapping a comment opens the detail screen. Assume about 100 million daily users, globally."},
+      {"check": {"judge": "SAY acknowledges these requirements and moves the design forward (for example non-functional requirements, out of scope items, or the next step). Confirming them back in one sentence is fine and good practice; reading them back over several sentences is not."}},
+      {"me": "Okay, so we need an infinite scrolling feed with text, image and video posts, and a detail screen with comments."},
+      {"them": "One more thing: users should still see their feed and be able to like posts when the connection is bad or offline."},
+      {"check": {"constraint_contains": "offline", "judge": "SAY takes offline viewing and offline likes on board as a requirement and says how it shapes the design at a high level, without diving into code."}},
+      {"board": "$FRAMES/t900.jpg"},
+      {"them": "Okay. Let's talk about the API between the app and the backend."},
+      {"check": {"judge": "SAY proposes or explains the API in a way consistent with the board (REST, a feed endpoint with cursor pagination, a comments endpoint, a like endpoint). Cards go one step at a time, so covering part of the API now is fine; contradicting the board or inventing a different API is not."}},
+      {"them": "Why cursor-based pagination and not page numbers?"},
+      {"check": {"judge": "SAY explains why a cursor beats page or offset numbers for a live feed (new posts shift offsets, duplicates or gaps, stable position) in short spoken sentences."}},
+      {"board": "$FRAMES/t1260.jpg"},
+      {"them": "Walk me through the high-level architecture you have drawn here."},
+      {"check": {"type": false, "judge": "SAY walks through the high-level diagram using parts actually on the board (Client, HTTPS, Backend with load balancer, API gateway, services and Blob Storage/S3, CDN, push via FCM or APNs) without inventing components. It need not name every part."}},
+      {"board": "$FRAMES/t1980.jpg"},
+      {"them": "Now let's zoom into the client. How would you structure the Android app itself?"},
+      {"check": {"judge": "SAY describes a layered client structure (UI, domain or use cases, data; dependency injection) consistent with the board, step by step."}},
+      {"board": "$FRAMES/t2760.jpg"},
+      {"them": "Walk me through how a feed item gets from the network onto the screen."},
+      {"check": {"type": false, "judge": "SAY traces the path through the client layers on the board (remote data source, repository, local store or cache, use case, ViewModel, screen) in a sensible order, without inventing components. Cards go one step at a time, so it may skip or compress a layer; a wrong order or invented parts fail."}},
+      {"them": "Could we just keep everything in memory instead of using a database?"},
+      {"check": {"adopted_not_contains": "memory", "judge": "SAY weighs in-memory only against a database (offline requirement, process death, memory limits) and does not announce switching to in-memory only."}},
+      {"them": "How do you handle a like when the user is offline?"},
+      {"check": {"judge": "SAY explains an optimistic update in the UI plus a locally stored pending action that is sent when the connection returns."}},
+      {"them": "And what if that request keeps failing?"},
+      {"check": {"judge": "SAY covers retries with exponential backoff and a limit, and what the user sees if it finally fails (revert or mark failed)."}},
+      {"them": "Have you built something similar in a past project?"},
+      {"check": {"judge": "SAY talks about the candidate's past work from plausible real experience and does not claim the design made live in this interview was a past project."}},
+      {"them": "Okay, let's go back to the feed. How would you prefetch the next page so scrolling feels smooth?"},
+      {"check": {"judge": "SAY returns to the feed design and explains prefetching the next page before the user reaches the end (for example a threshold of remaining items), possibly also image prefetching."}},
+      {"them": "Great, I think we're about out of time. Do you have any questions for me?"},
+      {"check": {"type": false, "judge": "SAY briefly wraps up and asks the interviewer one or two thoughtful questions (questions about the role, the team or the target company's product are fine, even if they are not about the news feed; the target company, ActAI, builds A1, a voice and text AI app, so questions about voice response speed, partial results or reliable actions are relevant); it does not keep designing."}}
+    ]}
+  ]
+}

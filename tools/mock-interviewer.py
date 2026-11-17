@@ -134,7 +134,9 @@ def run(scenario):
 
 
 def main():
-    data = json.load(open(os.path.join(HERE, "walkthrough-scenarios.json")))
+    # SCENARIOS=<file in tools/> runs another script, e.g. walkthrough-newsfeed.json (a full interview).
+    name = os.environ.get("SCENARIOS", "walkthrough-scenarios.json")
+    data = json.load(open(os.path.join(HERE, name)))
     wanted = set(sys.argv[1:])
     results = []
     for sc in data["scenarios"]:
@@ -144,7 +146,8 @@ def main():
         results.append(run(sc))
         print(f'  => {"PASS" if results[-1]["pass"] else "FAIL"}')
     lsctl("stop")
-    out = os.path.join(HERE, "..", "docs", "evaluations", f"walkthrough-acceptance-{datetime.date.today()}.json")
+    stem = "walkthrough-acceptance" if name == "walkthrough-scenarios.json" else os.path.splitext(name)[0]
+    out = os.path.join(HERE, "..", "docs", "evaluations", f"{stem}-{datetime.date.today()}.json")
     json.dump({"date": str(datetime.date.today()), "method": "lsctl text injection into the dev build; DeepSeek judge",
                "passed": sum(r["pass"] for r in results), "total": len(results), "scenarios": results},
               open(out, "w"), indent=1, ensure_ascii=False)

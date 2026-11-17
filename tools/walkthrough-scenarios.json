@@ -84,7 +84,7 @@
       {"them": "Explain how a ViewModel survives configuration changes."},
       {"me": "So the ViewModel lives in the ViewModelStore, which is retained across rotation, and it is cleared only when the activity really finishes."},
       {"next": true},
-      {"check": {"judge": "SAY does not repeat that the ViewModel is kept in a ViewModelStore across rotation; it moves on to a new point or wraps up."}}
+      {"check": {"judge": "SAY does not repeat that the ViewModel is kept in a ViewModelStore across rotation; it moves on to a new point or wraps up. A short lead-in clause that refers back before the new point is fine."}}
     ]},
     {"id": "AC-15", "name": "Steady candidate input does not starve the card", "steps": [
       {"them": "Explain coroutine cancellation."},

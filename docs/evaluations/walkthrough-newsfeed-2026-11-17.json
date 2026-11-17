@@ -1,0 +1,515 @@
+{
+ "date": "2026-11-17",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "NF",
+   "name": "Mobile system design: Facebook News Feed, full interview",
+   "pass": false,
+   "checks": [
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "1173",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Design the news feed, sketch on the board",
+      "say": "Thanks, I can see the two screens and the requirements. Before I design anything, let me confirm the scope. The feed shows posts with text, image and video, with like and comment counts, and tapping a comment opens the detail screen. It scrolls forever. Is that the right scope?",
+      "type": "draw@Non Functional: - Fast first screen (cached posts shown first) ⏎ - Smooth scroll, no jank ⏎ - Paging cache, survives process death ⏎ - Offline: show last cached feed",
+      "then": "Wait for the interviewer to confirm the scope, then I'll sketch the layers.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "draw@Non Functional: - Fast first screen (cached posts shown first) ⏎ - Smooth scroll, no jank ⏎ - Paging cache, survive"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY line opens by confirming scope and functional requirements (post types, counts, comment navigation, infinite scroll) in short spoken sentences, not an essay or code."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "653",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "100 million daily users, global, text/image/video",
+      "say": "Got it, so 100 million daily users worldwide, and posts can be text, images or video. That scale changes the design, so I'll write the non-functional needs first. The feed must open fast, scroll smoothly, and still show something when the network is slow.",
+      "type": "draw@Non Functional: - Fast first screen: show cached posts first ⏎ - Smooth scroll, no jank ⏎ - Paging cache, survives process death ⏎ - Offline: show last cached feed ⏎ - Global: CDN for images and video",
+      "then": "I'll sketch the layers next: UI, ViewModel, repository, local cache and network.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY confirms the requirements concisely in one sentence and explicitly moves the design forward by stating it will write non-functional needs first."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "5",
+      "keeps": "0",
+      "first_ms": "694",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "offline and bad connection requirement",
+      "say": "Got it, so the feed and likes must work offline too. That means the local cache is the source of truth for the screen, and the network just refreshes it. I'll add that to the non-functional list, then sketch the layers.",
+      "type": "draw@: - Offline: show last cached feed, likes work offline ⏎ - Likes queued locally, synced when back online",
+      "then": "I'll sketch the layers next: UI, ViewModel, repository, local cache and network.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "constraint_contains",
+       "pass": true,
+       "detail": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY line restates offline feed and likes as a requirement, notes the local cache as source of truth with network as refresh, and commits to adding it to the non-functional list before sketching layers—high-level, no code."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "0",
+      "first_ms": "819",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Let's talk about the API between the app and the backend",
+      "say": "The API you sketched already covers the main calls, so I'll build on it. For the feed I'd use cursor pagination, not page numbers, because new posts keep arriving at the top. The cursor is the last post ID we received, so the list stays stable while the user scrolls. For likes I'd keep the requestId you wrote, so a retry never counts twice.",
+      "type": "add@User Interactions: POST /v1/feed/{postId}/like ⏎ Request (requestId, userId, liked: Boolean) ⏎ Response (postId, likeCount, liked, userInteraction)",
+      "then": "I'll explain how the offline like queue uses that requestId next.",
+      "fix": "",
+      "past": "3",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY builds on the sketched API with cursor pagination for the feed and a like endpoint using requestId, consistent with the board's REST style and endpoints."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "8",
+      "keeps": "0",
+      "first_ms": "713",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Why cursor-based pagination and not page numbers?",
+      "say": "Page numbers break when new posts arrive at the top. A post moves to the next page, so the user sees it twice or misses it. A cursor is the last post ID we received, so the next request continues from that exact point. It also stays fast at 100 million users, because the database doesn't count and skip rows.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY explains that new posts shift page offsets causing duplicates or missed posts, and that a cursor (last post ID) continues from a stable position, in short spoken sentences."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "10",
+      "keeps": "0",
+      "first_ms": "1127",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through the high-level architecture you have drawn here.",
+      "say": "Sure. On the left, the client talks to the backend over HTTPS. Images and videos go through the CDN, so the app doesn't download them from our servers. Behind the load balancer and API gateway, we have separate services. FeedService builds the feed, PostService handles posts, CommentService handles comments, and UserInteractionService handles likes.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY describes the client, HTTPS, load balancer, API gateway, and named services, all of which are on the board, without inventing components."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "12",
+      "keeps": "0",
+      "first_ms": "1065",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How would you structure the Android app itself?",
+      "say": "I'd split it into three layers. The UI layer has the feed and detail screens, each with its own ViewModel. Below that, a domain layer with use cases, and a data layer with one repository. The repository reads from two local stores and the network, so the screens don't care where the data comes from.",
+      "type": "draw@UI layer: UI: FeedScreen + FeedViewModel, DetailScreen + DetailViewModel ⏎ Domain: ObserveFeedItems, GetDetailItems, ObserveCommentsForPost ⏎ Data: PostRepository -> PostLocalDataSource (L1 memory, L2 DB) + RemoteDataSource",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY describes a three-layer client structure (UI with per-screen ViewModels, domain use cases, data repository over local and remote sources) consistent with the board, and THEN waits for the interviewer."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "14",
+      "keeps": "0",
+      "first_ms": "805",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Walk me through how a feed item gets from the network onto the screen",
+      "say": "The ViewModel calls ObserveFeedItems, and the use case asks PostRepository for the feed. The repository returns the cached list from L1 memory first, so the screen shows something right away. Then it fetches the next page from RemoteDataSource on the network dispatcher. New posts go into the local store, and the Flow emits again, so the list updates on screen.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY traces network → RemoteDataSource → repository/local store → Flow emission → ViewModel/use case → screen in a sensible order, using the board's client layers without inventing components."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "15",
+      "keeps": "0",
+      "first_ms": "1074",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Could we just keep everything in memory instead of using a database?",
+      "say": "We could, but I wouldn't. Memory is lost when the app is killed, so the feed would be empty on the next launch. With 100 million users on weak networks, we need the feed to show offline. So I'd keep L1 memory for speed and L2 local DB for offline and restart. Memory alone also grows without limit, so I'd cap it with an LRU.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "8",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explains why memory alone fails (lost on process death, offline requirement, unbounded growth) and keeps the DB, without announcing a switch to in-memory only."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "16",
+      "keeps": "0",
+      "first_ms": "789",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "How do you handle a like when the user is offline?",
+      "say": "I'd write the like to the local database first, so the UI updates right away. Then I'd put it in a small queue of pending actions. When the network comes back, a worker sends each one with its requestId, so the server can drop duplicates. If the server rejects it, I'd roll the like back and show a small message.",
+      "type": "add@UserInteractionRepository: LikeQueue (pending likes, requestId)",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "9",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY describes writing the like locally so the UI updates immediately (optimistic update), queuing it as a pending action, and sending it via a worker when the network returns."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "0",
+      "first_ms": "710",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what if the like request keeps failing",
+      "say": "Right now the like stays in the queue and retries, so the user sees it as done. The risk is that it never reaches the server, and the count stays wrong. A better option is a retry limit: after a few failures, I'd mark the like as failed, roll it back, and tell the user. Do you want me to switch to that?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "10",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY mentions a retry limit and marking the like as failed/rolling back, but it does not cover exponential backoff."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "18",
+      "keeps": "0",
+      "first_ms": "558",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "have you built something similar before",
+      "say": "Yes, at KKday I built the AI trip planner. The plan came in pieces over SSE, so the app showed day one first while the rest was still loading. I also kept the progress saved, so a follow-up question could change the plan. The reliability part is close to this feed: I checked the response, retried with the exact error, and fell back to a safe default. On Android I also rebuilt the product page with caching and StateFlow, so the screen stayed smooth while data updated.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY references a plausible past project (KKday AI trip planner, SSE streaming, caching/StateFlow) and does not claim the feed design from this interview was built before."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "19",
+      "keeps": "0",
+      "first_ms": "784",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "how would you prefetch the next page",
+      "say": "I'd start loading the next page before the user reaches the bottom. The ViewModel watches the scroll position, and when the user is about one screen away from the end, it asks the repository for the next cursor. The new items go into the same list, so the screen just grows. I'd also keep a small buffer in memory, so the next page is often ready before it's needed.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "12",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY explains prefetching the next page before the user reaches the bottom, using a scroll-position threshold (about one screen away) and a memory buffer so items are ready before needed."
+      }
+     ]
+    },
+    {
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "20",
+      "keeps": "0",
+      "first_ms": "728",
+      "problem": "Design the news feed for an app like Facebook: feed list with text/image/video posts, like and comment counts, tap comment to open detail screen, infinite scrolling.",
+      "adopted": "none",
+      "constraints": "[\"View list of Feed/Post\", \"Like count, comment count, tap on comment goes to detail screen\", \"Infinite scrolling list\", \"Type of content: text, image, video\", \"About 100 million daily users, globally\", \"Posts can be text, images or video\", \"Users still see their feed and can like posts when the connection is bad or offline\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "any questions for me",
+      "say": "Yes, two quick ones. Six months after I join, what would make you feel you hired the right Android engineer? And what's the biggest mobile challenge right now: voice response speed, partial results, or reliable actions?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: SAY asks two brief, thoughtful questions—one about what success would look like six months in, and one about the target company's product challenges (voice response speed, partial results, reliable actions)—without continuing the design."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "[board image] t180.jpg",
+    "Interviewer: Let's do a mobile system design question today. Design the news feed for an app like Facebook. I've put a rough sketch of the two screens on the board.",
+    "Interviewer: Good questions. Posts can be text, images or video. Show like and comment counts, and tapping a comment opens the detail screen. Assume about 100 million daily users, globally.",
+    "Candidate: Okay, so we need an infinite scrolling feed with text, image and video posts, and a detail screen with comments.",
+    "Interviewer: One more thing: users should still see their feed and be able to like posts when the connection is bad or offline.",
+    "[board image] t900.jpg",
+    "Interviewer: Okay. Let's talk about the API between the app and the backend.",
+    "Interviewer: Why cursor-based pagination and not page numbers?",
+    "[board image] t1260.jpg",
+    "Interviewer: Walk me through the high-level architecture you have drawn here.",
+    "[board image] t1980.jpg",
+    "Interviewer: Now let's zoom into the client. How would you structure the Android app itself?",
+    "[board image] t2760.jpg",
+    "Interviewer: Walk me through how a feed item gets from the network onto the screen.",
+    "Interviewer: Could we just keep everything in memory instead of using a database?",
+    "Interviewer: How do you handle a like when the user is offline?",
+    "Interviewer: And what if that request keeps failing?",
+    "Interviewer: Have you built something similar in a past project?",
+    "Interviewer: Okay, let's go back to the feed. How would you prefetch the next page so scrolling feels smooth?",
+    "Interviewer: Great, I think we're about out of time. Do you have any questions for me?"
+   ]
+  }
+ ]
+}
