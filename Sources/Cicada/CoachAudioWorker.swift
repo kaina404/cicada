@@ -27,9 +27,12 @@ final class CoachAudioWorker {
     static func prepareModels() async -> Bool {
         guard let script = scriptURL else { return false }
         let python = python
+        await HubMirror.resolve()
+        let environment = HubMirror.environment()
         return await Task.detached(priority: .utility) {
             let process = Process()
             process.executableURL = python; process.arguments = [script.path, "--prepare"]
+            process.environment = environment
             process.standardOutput = FileHandle.nullDevice; process.standardError = FileHandle.nullDevice
             do { try process.run(); process.waitUntilExit(); return process.terminationStatus == 0 }
             catch { return false }
@@ -42,6 +45,7 @@ final class CoachAudioWorker {
         guard let script = Self.scriptURL else { return }
         let process = Process(); let output = Pipe(); let incoming = Pipe()
         process.executableURL = Self.python; process.arguments = ["-u", script.path]
+        process.environment = HubMirror.environment()
         process.standardInput = incoming; process.standardOutput = output
         process.standardError = FileHandle.nullDevice
         let token = run

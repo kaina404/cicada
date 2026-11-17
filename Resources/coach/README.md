@@ -7,8 +7,14 @@ Missing runtime or model failures leave the existing pause/text endpoint fallbac
 active; `assistantState` exposes whether acoustic detection is ready.
 
 - Python 3.12, ONNX Runtime 1.24.1 (MIT), NumPy and Transformers from the existing MLX environment.
-- [Silero VAD v6.2](https://github.com/snakers4/silero-vad/tree/v6.2), MIT. Model URL and SHA-256 are pinned in the worker.
-- [Smart Turn v3.2](https://github.com/pipecat-ai/smart-turn), BSD-2-Clause. Weights `pipecat-ai/smart-turn-v3`, revision `f766f81d3cfdf7737ac64aad813d91bbfd56bf93`, CPU ONNX graph.
+- [Silero VAD v6.2](https://github.com/snakers4/silero-vad/tree/v6.2), MIT. Shipped as `silero-v6.2.onnx` (Copyright (c) 2020-present Silero Team), so VAD needs no network; the worker checks its pinned SHA-256 and only downloads it if the bundled copy is missing.
+- [Smart Turn v3.2](https://github.com/pipecat-ai/smart-turn), BSD-2-Clause. Weights `pipecat-ai/smart-turn-v3`, revision `f766f81d3cfdf7737ac64aad813d91bbfd56bf93`, CPU ONNX graph, SHA-256 pinned in the worker.
+
+Downloads from mainland China: `HubMirror` probes huggingface.co once per launch. When it does not
+answer, the app starts these workers and the mlx-vlm server with `HF_ENDPOINT=https://hf-mirror.com`
+and `PIP_INDEX_URL` set to Aliyun's PyPI mirror; variables the user already set win. Debug
+`hubMirror:<on|off|auto>` forces it. The Gemma weights from the mirror are not hash-pinned
+(safetensors, no code); the ONNX graphs are.
 - [ONNX Runtime](https://github.com/microsoft/onnxruntime), MIT.
 
 VAD runs in independent 512-sample windows for each channel, with 64 context

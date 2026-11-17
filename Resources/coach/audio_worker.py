@@ -17,6 +17,14 @@ from typing import Any
 SILERO_URL = "https://raw.githubusercontent.com/snakers4/silero-vad/v6.2/src/silero_vad/data/silero_vad.onnx"
 SILERO_SHA = "1a153a22f4509e292a94e67d6f9b85e8deb25b4988682b7e174c65279d8788e3"
 TURN_REVISION = "f766f81d3cfdf7737ac64aad813d91bbfd56bf93"
+# Checked as well as the revision: HF_ENDPOINT may point at a third-party mirror (hf-mirror.com).
+TURN_SHA = "2bb026316b14a660486a75b1733cd3fbab8c2fd0314dc9af7be49f8cca967e4f"
+# Shipped next to this script (MIT), so VAD needs no network, GitHub included.
+BUNDLED_SILERO = Path(__file__).resolve().parent / "silero-v6.2.onnx"
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def model_paths() -> tuple[Path, str]:
@@ -26,7 +34,9 @@ def model_paths() -> tuple[Path, str]:
     folder = Path.home() / ".cicada-mlx" / "models"
     folder.mkdir(parents=True, exist_ok=True)
     vad = folder / "silero-v6.2.onnx"
-    if not vad.exists() or hashlib.sha256(vad.read_bytes()).hexdigest() != SILERO_SHA:
+    if BUNDLED_SILERO.exists() and sha256(BUNDLED_SILERO) == SILERO_SHA:
+        vad = BUNDLED_SILERO
+    elif not vad.exists() or sha256(vad) != SILERO_SHA:
         with urllib.request.urlopen(SILERO_URL, timeout=60) as response:
             data = response.read(10_000_000)
         if hashlib.sha256(data).hexdigest() != SILERO_SHA:
@@ -37,6 +47,9 @@ def model_paths() -> tuple[Path, str]:
     turn = hf_hub_download(
         "pipecat-ai/smart-turn-v3", "smart-turn-v3.2-cpu.onnx", revision=TURN_REVISION
     )
+    if sha256(Path(turn)) != TURN_SHA:
+        Path(turn).unlink(missing_ok=True)
+        raise ValueError("Smart Turn model checksum mismatch")
     return vad, turn
 
 

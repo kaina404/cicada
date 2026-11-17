@@ -312,6 +312,8 @@ final class AppModel: ObservableObject {
     func stopWatchControl() { watchControl?.stop() }
 
     init() {
+        // Settled before a meeting's first model download is needed.
+        Task { await HubMirror.resolve() }
         watchControl = CicadaWatchReceiver(
             pairingURL: Bundle.main.url(forResource: "LocalPairing", withExtension: "json"),
             phonePairingDirectory: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
@@ -1440,6 +1442,7 @@ final class AppModel: ObservableObject {
             candidate.start(background: candidateBackground, available: canAsk) { [weak self] in
                 guard let self else { return false }
                 if CoachDeepSeekTest.enabled { return AIKey.read("deepseek") != nil }
+                await HubMirror.resolve()
                 if !(await VisionServer.waitReady(seconds: 0)) { self.screen.server.start(model: CoachPrompt.model) }
                 return await VisionServer.waitReady(seconds: 90)
             }
@@ -2509,6 +2512,10 @@ final class AppModel: ObservableObject {
             lineCounter += 1
             store.append(TranscriptLine(id: "t\(lineCounter)", t: coachTime, speaker: "them", src: arg, srcLang: "en", dstLang: ""))
             tickCandidate(); candidate.ask()
+        // hubMirror:<on|off|auto>: force model downloads through hf-mirror.com, or not, or probe again.
+        case "hubMirror":
+            HubMirror.force(arg == "on" ? true : arg == "off" ? false : nil)
+            Task { await HubMirror.resolve(); debugLog("hub: mirrored=\(HubMirror.mirrored)") }
         case "coachLanguage":
             if let language = CoachLanguage(rawValue: arg) { settings.coachLanguage = language; tickCandidate() }
         case "interviewStage":

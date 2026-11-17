@@ -60,7 +60,7 @@ final class KokoroWorker {
         guard FileManager.default.isExecutableFile(atPath: python.path) else { fail(); return }
         let p = Process(), incoming = Pipe(), outgoing = Pipe()
         p.executableURL = python; p.arguments = ["-u", script.path]
-        var environment = ProcessInfo.processInfo.environment
+        var environment = HubMirror.environment()
         environment["TOKENIZERS_PARALLELISM"] = "false"
         p.environment = environment
         p.standardInput = incoming; p.standardOutput = outgoing; p.standardError = FileHandle.nullDevice

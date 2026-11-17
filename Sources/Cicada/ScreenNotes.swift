@@ -571,7 +571,8 @@ final class VisionServer {
         p.arguments = ["--model", model, "--host", "127.0.0.1", "--port", "\(Self.port)"]
         // Prefix caching in memory only: assistant tasks share the meeting's prefix, and meeting
         // content must never be written to the server's disk cache.
-        var env = ProcessInfo.processInfo.environment
+        // The first start downloads the model: from mainland China through hf-mirror.com.
+        var env = HubMirror.environment()
         env["APC_ENABLED"] = "1"
         env["APC_DISK_ENABLED"] = "0"
         env["APC_MEMORY_MAX_GB"] = "2"
