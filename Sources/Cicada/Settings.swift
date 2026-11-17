@@ -73,6 +73,10 @@ final class AppSettings: ObservableObject {
     @Published var shadowReading: Bool { didSet { save() } }
     /// 快速跟读: display-only word follow from on-device drafts (`FastReadingFollow`). Off by default.
     @Published var fastReadingFollow: Bool { didSet { save() } }
+    /// English interviews: step-by-step walkthrough cards instead of one full answer per question.
+    @Published var coachCards: Bool { didSet { save() } }
+    /// Cards: prepare likely follow-ups in the background (FR-11 item 5); off unless it costs no latency.
+    @Published var coachFollowUps: Bool { didSet { save() } }
     /// Seconds the fast follow cursor runs ahead of what was recognized, covering recognition delay.
     @Published var fastReadingLead: Double { didSet { save() } }
     @Published var assistantFontSize: Double { didSet { save() } }
@@ -339,6 +343,8 @@ final class AppSettings: ObservableObject {
         shadowVolume = ShadowVolume.clamped(defaults.object(forKey: "shadowVolume") as? Double ?? ShadowVolume.initial)
         shadowReading = defaults.bool(forKey: "shadowReading")
         fastReadingFollow = defaults.bool(forKey: "fastReadingFollow")
+        coachCards = defaults.object(forKey: "coachCards") as? Bool ?? true
+        coachFollowUps = defaults.bool(forKey: "coachFollowUps")
         fastReadingLead = min(3, max(0, defaults.object(forKey: "fastReadingLead") as? Double ?? 2))
         assistantFontSize = AssistantAppearance.fontSize(defaults.object(forKey: "assistantFontSize") as? Double ?? 32)
         assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
@@ -430,6 +436,8 @@ final class AppSettings: ObservableObject {
         defaults.set(ShadowVolume.clamped(shadowVolume), forKey: "shadowVolume")
         defaults.set(shadowReading, forKey: "shadowReading")
         defaults.set(fastReadingFollow, forKey: "fastReadingFollow")
+        defaults.set(coachCards, forKey: "coachCards")
+        defaults.set(coachFollowUps, forKey: "coachFollowUps")
         defaults.set(fastReadingLead, forKey: "fastReadingLead")
         defaults.set(assistantFontSize, forKey: "assistantFontSize")
         defaults.set(assistantOpacity, forKey: "assistantOpacity")

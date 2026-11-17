@@ -22,6 +22,10 @@ final class InterviewCoach: ObservableObject {
     let fastFollow = FastReadingFollow()
     let acoustic = CoachAudioWorker()
     let reading: CoachReading
+    /// English walkthrough cards (docs/walkthrough-coach-plan.md); the full-answer path stays for Chinese.
+    let cards: CoachCards
+    var cardsEnabled = false
+    var cardMode: Bool { cardsEnabled && language == .english }
     @Published private(set) var acousticReady = false
     private var acousticEndpoint: Double?
     private var acousticHoldUntil = -Double.infinity
@@ -67,10 +71,12 @@ final class InterviewCoach: ObservableObject {
     init(stream: Stream? = nil,
          readingInfer: @escaping CoachReading.Infer = CoachReading.infer) {
         let cloud = LingClient()
-        self.stream = stream ?? { messages, model in
+        let stream: Stream = stream ?? { messages, model in
             CoachDeepSeekTest.enabled ? cloud.streamCoachTest(messages) : InterviewCoach.stream(messages, model)
         }
+        self.stream = stream
         reading = CoachReading(infer: readingInfer)
+        cards = CoachCards(stream: stream)
         acoustic.onEvent = { [weak self] event in self?.acousticEvent(event) }
         reading.onFailure = { [weak self] failed in self?.readingFailed = failed }
         reading.onProgress = { [weak self] id, through, transcript in
@@ -78,6 +84,18 @@ final class InterviewCoach: ObservableObject {
             let before = self.script.cursor
             self.script.advanceReading(to: through, answerID: id)
             if self.script.cursor > before { self.emit("readingProgress", text: transcript) }
+        }
+        cards.input = { [weak self] in
+            guard let self else { return nil }
+            return CoachCards.Input(turns: self.evidence, background: self.background, frames: self.frames,
+                                    script: self.script, stage: self.stage)
+        }
+        cards.prepare = { [weak self] in await self?.prepare?() ?? false }
+        cards.onSay = { [weak self] text, newCard in self?.publishCard(text, newCard: newCard) }
+        cards.onEvent = { [weak self] event in
+            guard let self else { return }
+            var event = event; event.answerID = self.script.answerID
+            self.onEvent?(event)
         }
     }
     private func acousticEvent(_ event: CoachAudioWorker.Event) {
@@ -142,6 +160,7 @@ final class InterviewCoach: ObservableObject {
                 guard !wasSeen else { continue }
                 script.commit(id: turn.id, text: turn.text)
                 emit("committed", text: turn.text)
+                if cardMode { cards.candidateSpoke(script, now: now) }
             } else {
                 var recognition = turnRecognitions[turn.id] ?? CoachRecognition()
                 if !wasSeen {
@@ -225,6 +244,8 @@ final class InterviewCoach: ObservableObject {
         // or asking DeepSeek again: otherwise a static screen would regenerate the answer every few seconds.
         if frame.refresh, !frames.isEmpty { frames[frames.count - 1] = frame; return }
         frames.append(frame); frames = Array(frames.suffix(3))
+        // Cards read the board as evidence: a settled change may ask for the next step (plan §5).
+        if cardMode { cards.frame(frame, now: clock); return }
         // A selected page is context, not an interviewer request. OCR alone must not
         // start an answer before anyone asks; explicit screen-only analysis uses ask().
         if script.pending.isEmpty, current == nil,
@@ -259,6 +280,14 @@ final class InterviewCoach: ObservableObject {
             if finishedSpeculation { finish(interrupted: false); state = .ready }
         }
         reading.tick(script: script, blocked: current != nil || (!CoachDeepSeekTest.enabled && (task != nil || dirty)), now: now)
+        if cardMode {
+            cards.tick(now: now, script: script)
+            // A finished interviewer turn is the one event that replaces a running card request.
+            guard dirty, now >= due, now >= endpoint || !lastInterviewerAt.isFinite else { return }
+            dirty = false
+            if lastInterviewerAt.isFinite { cards.receive(.interviewer, now: now) }
+            return
+        }
         guard state == .ready, dirty, now >= due, task == nil else { return }
         guard now >= endpoint || !lastInterviewerAt.isFinite else { return }
         if script.pending.isEmpty { generate(speculate: false) }
@@ -270,11 +299,13 @@ final class InterviewCoach: ObservableObject {
     @discardableResult
     func ask() -> Bool {
         guard canRefreshAnswer else { return false }
+        if cardMode { cards.receive(.manual, now: clock); return true }
         invalidate(); endpoint = clock; dirty = true; generate(speculate: false, refresh: true)
         return true
     }
     func retry() {
         if readingFailed { reading.retry() }
+        if cardMode, cards.failed { cards.receive(.manual, now: clock); return }
         guard state == .failed else { return }
         state = .ready
         if script.pending.isEmpty { ask() }
@@ -455,6 +486,14 @@ final class InterviewCoach: ObservableObject {
                             end.isFinite ? max(0, clock - end) : -1))
         }
     }
+    /// A card's spoken part goes into the script like an answer, so reading, IPA and committed speech
+    /// work unchanged. Code never enters the script (it is shown on the card only).
+    private func publishCard(_ text: String, newCard: Bool) {
+        let spoken = CoachPronunciation.annotate(text, finished: !cards.busy)
+        script.replacePending(spoken, since: Set(script.committed.map(\.id)), newAnswer: newCard)
+        if newCard { reading.begin(answerID: script.answerID); gloss.enqueue(script.sentences) }
+    }
+
     private func finish(interrupted: Bool) {
         guard var paragraph = current else { return }
         current = nil; raw = ""
@@ -476,6 +515,7 @@ final class InterviewCoach: ObservableObject {
         turnRecognitions = [:]
         lastInterviewerAt = -.infinity
         lastInterviewerWords = []
+        cards.reset()
     }
     func endMeeting() {
         stop(); turns = []; seen = [:]; paragraphs = []; current = nil; gloss.clear()

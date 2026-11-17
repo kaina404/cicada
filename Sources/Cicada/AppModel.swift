@@ -1434,6 +1434,8 @@ final class AppModel: ObservableObject {
         updateCandidateRecognition()
         candidate.stage = settings.interviewStage
         candidate.language = settings.coachLanguage
+        candidate.cardsEnabled = settings.coachCards
+        candidate.cards.preparesFollowUps = settings.coachFollowUps
         // A Chinese answer needs no Chinese gloss.
         candidate.gloss.enabled = settings.askGloss && settings.coachLanguage == .english
         let enabled = listen.isRunning && coachEnabled
@@ -2230,6 +2232,7 @@ final class AppModel: ObservableObject {
         }
         screen.isAsking = { [weak self] in
             self?.candidate.state == .generating || self?.candidate.state == .loading || self?.candidate.reading.busy == true
+                || self?.candidate.cards.busy == true
         }
         screen.onKeyframesCleared = { [weak self] in self?.candidate.clearPicture() }
         screen.onKeyframe = { [weak self] frame in
@@ -2481,6 +2484,27 @@ final class AppModel: ObservableObject {
         case "shadowState": debugLog("shadow: status=\(shadowReader.status.rawValue) volume=\(settings.shadowVolume) cursor=\(shadowReader.plan.cursor) words=\(shadowReader.plan.words.count)")
         case "askGloss": settings.askGloss = arg == "on"; tickCandidate()
         case "assistantReconnect": candidate.retry()
+        // Walkthrough cards (docs/walkthrough-coach-plan.md).
+        case "coachCards": settings.coachCards = arg == "on"; tickCandidate()
+        case "coachFollowUps": settings.coachFollowUps = arg == "on"; tickCandidate()
+        case "coachCardNext": candidate.ask()
+        case "coachCardWrite": candidate.cards.enterWrite()
+        // coachOCR:<text> shows the coach a board with this text and no picture ("\\n" separates lines).
+        case "coachOCR":
+            candidate.picture(CoachFrame(jpeg: Data(), seconds: coachTime, ocr: arg.replacingOccurrences(of: "\\n", with: "\n")))
+        // coachBoard:<image path> shows the coach a board picture with its Vision OCR, as a keyframe would.
+        case "coachBoard":
+            guard let img = NSImage(contentsOfFile: arg)?.cgImage(forProposedRect: nil, context: nil, hints: nil),
+                  let jpeg = RealtimeMedia.jpeg(img) else { break }
+            let seconds = coachTime
+            Task { [weak self] in
+                let ocr = await Task.detached { ScreenWatch.recognizeText(img) }.value
+                self?.candidate.picture(CoachFrame(jpeg: jpeg, seconds: seconds, ocr: ocr))
+            }
+        case "coachCardState":
+            let cards = candidate.cards
+            let card = cards.card
+            debugLog("coach card: mode=\(candidate.cardMode) busy=\(cards.busy) failed=\(cards.failed) phase=\(cards.phase.rawValue) requests=\(cards.requests) keeps=\(cards.keeps) first_ms=\(Int((cards.firstToken ?? -1) * 1000)) problem=\(cards.memory.problem?.goal ?? "none") adopted=\(cards.memory.problem?.adopted?.text ?? "none") constraints=\(cards.memory.problem?.constraints.filter { $0.status != .superseded }.map(\.text) ?? []) abandoned=\(cards.memory.problem?.abandoned.map(\.text) ?? []) asides=\(cards.memory.asides.count) problems=\(cards.memory.problems.count) written=\(cards.written) heard=\(card?.heard ?? "") say=\(card?.say.replacingOccurrences(of: "\n", with: " ") ?? "") type=\(card?.edit.map { "\($0.action)@\($0.at): \($0.code.replacingOccurrences(of: "\n", with: " ⏎ "))" } ?? "none") then=\(card?.then ?? "") fix=\(card?.fix ?? "") past=\(cards.past.count) prepared=\(!cards.prepared.isEmpty)")
         case "coachSimulateHang": LingClient.simulateCoachHangs = Int(arg) ?? 1
         case "assistantBackgroundReload": candidateBackgroundChanged()
         case "assistantFloat":
