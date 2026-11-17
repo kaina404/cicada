@@ -215,6 +215,72 @@ struct CoachCardsTests {
         #expect(memory.problem?.goal.hasPrefix("Design an image loading library") == true)
     }
 
+    @Test @MainActor func aCopiedCardForANewQuestionIsRetriedWithTheQuestionNamed() async throws {
+        // Seen in the newsfeed run: asked about the API, DeepSeek repeated the offline card word for word.
+        let offline = "<<<CICADA_CARD>>>\nSAY:\nGot it, so the feed has to work offline too. I'd keep a local copy of the feed.\nCASE: []"
+        let model = Model([offline, offline, "<<<CICADA_CARD>>>\nSAY:\nFor the API I'd use REST with a cursor for paging.\nCASE: []"])
+        let engine = coach(model)
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("t4", "them", "Users should still see the feed when offline.")], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        engine.observe(lines: [line("t4", "them", "Users should still see the feed when offline."),
+                               line("t5", "them", "Okay. Let's talk about the API between the app and the backend.", t: 5)], now: 5)
+        for t in stride(from: 5.0, through: 9, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        #expect(model.asked.count == 3)
+        #expect(text(model.asked[2]).contains("Your draft repeated the card already shown"))
+        #expect(engine.cards.card?.say == "For the API I'd use REST with a cursor for paging.")
+        #expect(engine.cards.past.map(\.card.say) == ["Got it, so the feed has to work offline too. I'd keep a local copy of the feed."])
+    }
+
+    @Test func echoesOfTheInterviewerAndUnfoundedCoverageAreDropped() {
+        // Seen in the newsfeed run, step 2.
+        let line = "Good questions. Posts can be text, images or video. Show like and comment counts, and tapping a comment opens the detail screen. Assume about 100 million daily users, globally."
+        let say = "Got it. So the feed mixes text, image and video posts, and each one shows like and comment counts. Tapping a comment opens the detail screen. With that scale I'd cache the feed on the phone and load thumbnails lazily."
+        #expect(CoachCards.withoutRecital(say, of: line) == "Got it. With that scale I'd cache the feed on the phone and load thumbnails lazily.")
+        // Seen in the newsfeed run: the card's own point marked as spoken, citing an unrelated candidate line.
+        var memory = CoachCase()
+        let evidence = CoachEvidence(candidate: ["m3"], candidateText: ["m3": "Okay, so we need an infinite scrolling feed with text, image and video posts."])
+        memory.apply([CoachCaseOp(op: "newProblem", text: "News feed"),
+                      CoachCaseOp(op: "spoken", text: "Each like carries an ID so a retry doesn't count twice", evidence: ["m3"]),
+                      CoachCaseOp(op: "spoken", text: "Infinite scrolling feed with mixed posts", evidence: ["m3"])], evidence: evidence, at: 0)
+        #expect(memory.problem?.spoken == ["Infinite scrolling feed with mixed posts"])
+    }
+
+    @Test func decisionsAndSwitchAnnouncementsAreRecognised() {
+        #expect(CoachCards.decidedApproach("I'd rather not use RxJava here. Let's switch this to Kotlin Flow.") == "Kotlin Flow")
+        #expect(CoachCards.decidedApproach("Actually, switch to Kotlin Flow.") == "Kotlin Flow")
+        #expect(CoachCards.decidedApproach("Use Paging 3 instead.") == "Paging 3")
+        #expect(CoachCards.decidedApproach("Hmm, could we use Flow here instead?") == nil)
+        #expect(CoachCards.decidedApproach("Can you write the ViewModel?") == nil)
+        #expect(CoachCards.announcesSwitch(CoachCard(say: "Yes, Flow fits better here. With Flow I can collect in viewModelScope.")))
+        #expect(CoachCards.announcesSwitch(CoachCard(say: "Okay.", edit: .init(action: "replace", at: "load()", code: "flow {}"))))
+        #expect(!CoachCards.announcesSwitch(CoachCard(say: "Both work. Flow ties into coroutines; RxJava is already here. Do you want me to switch?")))
+    }
+
+    @Test func aLongCardKeepsFiveSentencesAndItsClosingQuestion() {
+        let long = "One. Two. Three. Four. Five. Six. Seven. Does that direction sound right?"
+        #expect(CoachCards.capped(long) == "One. Two. Three. Four. Does that direction sound right?")
+        #expect(CoachCards.capped("One. Two. Three. Four. Five. Six.") == "One. Two. Three. Four. Five.")
+        #expect(CoachCards.capped("Short. Card.") == "Short. Card.")
+    }
+
+    @Test func aSubtaskOfTheCurrentProblemIsNotANewProblem() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Design a ChatGPT-style chat screen on Android")], evidence: CoachEvidence(), at: 0)
+        let viewModel = [CoachCaseOp(op: "newProblem", text: "Write the ViewModel that holds the chat message list", id: "chat-viewmodel")]
+        let write = CoachTurn(id: "t19", seconds: 8, role: "interviewer", text: "Okay, can you write the ViewModel that holds the message list?")
+        #expect(CoachCards.withoutSubtaskProblems(viewModel, newLines: [write], memory: memory).isEmpty)
+        // A plainly new question stays new.
+        let service = [CoachCaseOp(op: "newProblem", text: "Service versus WorkManager")]
+        let pause = CoachTurn(id: "t20", seconds: 9, role: "interviewer", text: "Let's pause that. New question: Service or WorkManager?")
+        #expect(CoachCards.withoutSubtaskProblems(service, newLines: [pause], memory: memory) == service)
+        let unrelated = CoachTurn(id: "t21", seconds: 9, role: "interviewer", text: "Explain coroutine cancellation.")
+        let coroutines = [CoachCaseOp(op: "newProblem", text: "Coroutine cancellation")]
+        #expect(CoachCards.withoutSubtaskProblems(coroutines, newLines: [unrelated], memory: memory) == coroutines)
+    }
+
     @Test func helpers() {
         var script = CoachScript(modelReading: true)
         script.replacePending("One two three. Four five.", since: [], newAnswer: true)

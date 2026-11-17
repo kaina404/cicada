@@ -138,6 +138,14 @@ struct CoachCase: Codable, Equatable {
         case "spoken":
             // Coverage comes only from the candidate's own final speech, never from the AI script.
             guard ids.contains(where: evidence.candidate.contains), !p.spoken.contains(text) else { return notes }
+            // Seen live: the card's own points were marked as spoken, citing an unrelated candidate line.
+            // When the cited lines are known, the point must share content with them.
+            let cited = ids.compactMap { evidence.candidateText[$0] }.joined(separator: " ")
+            if !cited.isEmpty {
+                let point = Set(CoachScript.words(text).filter { $0.count > 3 })
+                let said = Set(CoachScript.words(cited).filter { $0.count > 3 })
+                guard !point.isEmpty, Double(point.intersection(said).count) / Double(point.count) >= 0.3 else { return notes }
+            }
             p.spoken.append(text); record("Explained: " + text, nil)
         case "implemented":
             let source: Fact.Source = ids.contains(where: evidence.board.contains) ? .board : .candidate
@@ -176,6 +184,8 @@ struct CoachEvidence: Equatable {
     var board: Set<String> = []
     /// Lines phrased as a tentative question ("Could we use Flow?"): evidence of an option, not a decision.
     var tentative: Set<String> = []
+    /// What the candidate's lines say, by id: coverage must share content with the line it cites.
+    var candidateText: [String: String] = [:]
 
     static func isTentative(_ text: String) -> Bool {
         let t = text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)

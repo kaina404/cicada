@@ -50,6 +50,8 @@ final class CoachCards: ObservableObject {
     private var checkedCard = false
     private var lastCommitCursor = 0
     private var idleSince = 0.0
+    /// Meeting time the current card appeared; candidate lines after it are their own words for this card.
+    private var cardShownAt = Double.infinity
 
     init(stream: @escaping InterviewCoach.Stream) { self.stream = stream }
 
@@ -105,6 +107,7 @@ final class CoachCards: ObservableObject {
         schedule = CoachCardSchedule(); base = CoachBase(); memory = CoachCase()
         card = nil; past = []; busy = false; failed = false; phase = .idle; held = nil; written = false
         boardCount = 0; boardLines = []; boardPending = false; prepared = ""; requests = 0; keeps = 0
+        cardShownAt = .infinity
     }
 
     // MARK: Requests
@@ -128,13 +131,17 @@ final class CoachCards: ObservableObject {
             interviewer: Set(input.turns.filter { $0.role == "interviewer" }.map(\.id)),
             candidate: Set(input.turns.filter { $0.role == "candidate" }.map(\.id) + input.script.committed.map(\.id)),
             board: Set((0..<boardCount).map { "B\($0 + 1)" }),
-            tentative: Set(input.turns.filter { $0.role == "interviewer" && CoachEvidence.isTentative($0.text) }.map(\.id)))
+            tentative: Set(input.turns.filter { $0.role == "interviewer" && CoachEvidence.isTentative($0.text) }.map(\.id)),
+            candidateText: Dictionary(input.turns.filter { $0.role == "candidate" }.map { ($0.id, $0.text) }
+                                      + input.script.committed.map { ($0.id, $0.text) }, uniquingKeysWith: { a, _ in a }))
+        // The candidate's own words since the current card appeared, not just since the last request: a check
+        // right after they spoke moves the base, and a manual "next" then repeated them (AC-13).
+        let said = input.turns.filter { $0.role == "candidate" && ($0.seconds >= cardShownAt || newLines.contains($0)) }.map(\.text)
         let messages = CoachCardPrompt.request(.init(
             turns: input.turns, background: input.background, frames: input.frames, script: input.script,
             stage: input.stage, memory: memory, newLines: newLines, newBoard: newBoard, boardID: boardID,
-            card: card, trigger: trigger, prepared: prepared))
-        // The candidate's own words since the last card: the draft is checked against them before showing.
-        let said = newLines.filter { $0.role == "candidate" }.map(\.text)
+            card: card, trigger: trigger, prepared: prepared, said: said))
+        let previousSay = card?.say
         // Only a new question or a manual action may replace the card while it streams; a card that must
         // first be checked against the candidate's words waits for that check (AC-13).
         let live = trigger == .interviewer || card == nil || (trigger == .manual && said.isEmpty)
@@ -156,6 +163,44 @@ final class CoachCards: ObservableObject {
                 }
                 guard !Task.isCancelled, self.token == tok else { return }
                 guard var card = try CoachCard.parse(raw, finished: true) else { throw URLError(.cannotParseResponse) }
+                // Seen live: asked about the API, DeepSeek copied the card already on screen word for word.
+                // A new question gets one retry that names it; anything else just keeps the card.
+                if !card.keep, let current = previousSay, Self.sameText(card.say, current) {
+                    let question = newLines.last(where: { $0.role == "interviewer" })?.text
+                    if trigger == .interviewer, let question {
+                        var retry = ""
+                        for try await piece in self.stream(Self.appending("Your draft repeated the card already shown. The interviewer just said: \"\(question)\". Respond to that now; do not repeat the current card.", to: messages), CoachPrompt.model) {
+                            guard !Task.isCancelled, self.token == tok else { return }
+                            retry += piece
+                        }
+                        if let again = try CoachCard.parse(retry, finished: true), !again.keep, !Self.sameText(again.say, current) {
+                            card = again; shown = false
+                            if self.past.last?.card.say == current { self.past.removeLast() }
+                        } else { card.keep = true }
+                    } else { card.keep = true }
+                    // A copy that already streamed onto the screen left the old card in the history twice.
+                    if card.keep, shown, self.past.last?.card.say == current { self.past.removeLast() }
+                }
+                // "Could we use Flow?" still sometimes got "Yes, Flow fits better, I'll switch" (AC-04): retry once
+                // with the rule spelled out.
+                if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
+                   CoachEvidence.isTentative(latest.text), Self.announcesSwitch(card) {
+                    var retry = ""
+                    for try await piece in self.stream(Self.appending("The interviewer only asked whether another option could work: \"\(latest.text)\". Do not switch and do not write code. In two or three sentences weigh the current approach against it, then ask whether they want the switch.", to: messages), CoachPrompt.model) {
+                        guard !Task.isCancelled, self.token == tok else { return }
+                        retry += piece
+                    }
+                    if let again = try CoachCard.parse(retry, finished: true), !again.keep, !Self.announcesSwitch(again) {
+                        card = again; shown = false
+                        if let previousSay, self.past.last?.card.say == previousSay { self.past.removeLast() }
+                    }
+                }
+                // After new requirements, DeepSeek reads them back; drop sentences that only echo the
+                // interviewer's informational line (the newsfeed run, step 2).
+                if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
+                   !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
+                    card.say = Self.withoutRecital(card.say, of: latest.text)
+                }
                 // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question).
                 if boardID == nil, card.edit?.action == "draw" { card.edit = nil }
                 // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows).
@@ -168,7 +213,15 @@ final class CoachCards: ObservableObject {
                     guard !Task.isCancelled, self.token == tok else { return }
                     if !revised.isEmpty { card.say = revised }
                 }
+                card.say = Self.capped(card.say)
+                card.ops = Self.withoutSubtaskProblems(card.ops, newLines: newLines, memory: self.memory)
                 card.ops = Self.missingProblemOps(card.ops, newLines: newLines, memory: self.memory) + card.ops
+                // Also when the card's own adopt cites nothing usable (seen live: dropped as an alternative).
+                if let latest = newLines.last(where: { $0.role == "interviewer" }),
+                   !card.ops.contains(where: { $0.op == "adopt" && ($0.evidence ?? []).contains(latest.id) }),
+                   let approach = Self.decidedApproach(latest.text) {
+                    card.ops.append(CoachCaseOp(op: "adopt", text: approach, evidence: [latest.id]))
+                }
                 self.apply(card, shown: shown, trigger: trigger, input: input, usedBoard: usedBoard, evidence: evidence)
                 self.onEvent?(CoachEvent(kind: "latency", seconds: self.clock, answerID: input.script.answerID,
                                          firstToken: self.firstToken, total: Date().timeIntervalSince(started)))
@@ -207,7 +260,7 @@ final class CoachCards: ObservableObject {
 
     private func adopt(_ partial: CoachCard, now: Double) {
         if let old = card { past.append(Past(id: UUID().uuidString, card: old, seconds: now)); past = Array(past.suffix(20)) }
-        card = partial; phase = .say; checkedCard = false; written = false
+        card = partial; phase = .say; checkedCard = false; written = false; cardShownAt = now
         onSay?(Self.spoken(partial), true)
     }
 
@@ -260,7 +313,8 @@ final class CoachCards: ObservableObject {
     // MARK: Pure helpers
 
     nonisolated static func spoken(_ card: CoachCard) -> String {
-        card.fix.isEmpty ? card.say : card.fix + "\n" + card.say
+        let say = capped(card.say)
+        return card.fix.isEmpty ? say : card.fix + "\n" + say
     }
     nonisolated static func finishedReading(_ script: CoachScript) -> Bool {
         let total = CoachScript.words(script.pending).count
@@ -277,6 +331,88 @@ final class CoachCards: ObservableObject {
         }
         return true
     }
+    /// The card switches approach outright: code to type, or "I'll switch / let's use / fits better".
+    nonisolated static func announcesSwitch(_ card: CoachCard) -> Bool {
+        if let edit = card.edit, !edit.code.isEmpty { return true }
+        return card.say.lowercased().range(of: #"\b(i'll|i will|let me|let's|we'll) (switch|change|move|rewrite|migrate|use)\b|\bfits better\b|\bi'd switch\b"#, options: .regularExpression) != nil
+    }
+    /// "Let's switch this to Kotlin Flow." / "Use Flow instead." → the chosen approach, when the card's CASE
+    /// forgot to record the decision (AC-03).
+    nonisolated static func decidedApproach(_ text: String) -> String? {
+        guard !CoachEvidence.isTentative(text) else { return nil }
+        // "Switch … to X" is the clearest; "use X instead" counts unless negated ("I'd rather not use RxJava").
+        let patterns = [#"(?i)\b(?:switch(?: this| it| that)?(?: part)? to|change (?:it|this|that) to)\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)(?:\s+instead\b|\s+here\b|[.!,]|$)"#,
+                        #"(?i)(?<!not )\buse\s+([A-Za-z][A-Za-z0-9+ ]{1,30}?)\s+instead\b"#]
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern),
+                  let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                  let range = Range(match.range(at: 1), in: text) else { continue }
+            let approach = text[range].trimmingCharacters(in: .whitespaces)
+            // "use it", "use this" name nothing.
+            if !["it", "this", "that", "them", "one"].contains(approach.lowercased()) { return approach }
+        }
+        return nil
+    }
+
+    /// Cards are one small step: at most five sentences, plus a closing check-in question when there is one.
+    /// Seen in the newsfeed run: a twelve-sentence design monologue on one card.
+    nonisolated static let sentenceLimit = 5
+    nonisolated static func capped(_ say: String) -> String {
+        let sentences = CoachScript.sentences(say)
+        guard sentences.count > sentenceLimit else { return say }
+        var kept = Array(sentences.prefix(sentenceLimit - 1))
+        if let last = sentences.last, last.trimmingCharacters(in: .whitespaces).hasSuffix("?") { kept.append(last) }
+        else { kept.append(sentences[sentenceLimit - 1]) }
+        return kept.map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
+    }
+
+    nonisolated static func sameText(_ a: String, _ b: String) -> Bool {
+        let x = CoachScript.words(a), y = CoachScript.words(b)
+        guard !x.isEmpty, !y.isEmpty else { return false }
+        return x == y || CoachBase.similarity(x.joined(separator: " "), y.joined(separator: " ")) > 0.9
+    }
+    /// Content words: what a sentence is about, without the glue.
+    nonisolated static func contentWords(_ text: String) -> Set<String> {
+        Set(CoachScript.words(text).filter { $0.count > 3 && !["that", "this", "with", "have", "they", "then", "will", "would", "about", "each", "there", "into", "from", "your", "just"].contains($0) })
+    }
+    /// Drops sentences that mostly repeat `line`. The first sentence is the one allowed acknowledgement
+    /// ("Got it, so the feed has to work offline too.") and always stays.
+    nonisolated static func withoutRecital(_ say: String, of line: String) -> String {
+        let source = contentWords(line)
+        let sentences = CoachScript.sentences(say)
+        let kept = sentences.enumerated().filter { index, sentence in
+            guard index > 0 else { return true }
+            let words = contentWords(sentence)
+            guard words.count >= 3 else { return true }
+            return Double(words.intersection(source).count) / Double(words.count) < 0.6
+        }.map(\.element)
+        return kept.isEmpty ? (sentences.first ?? say) : kept.joined(separator: " ")
+    }
+    nonisolated static func appending(_ note: String, to messages: [[String: Any]]) -> [[String: Any]] {
+        var messages = messages
+        guard var content = messages.last?["content"] as? [[String: Any]] else { return messages }
+        content.append(["type": "text", "text": note])
+        messages[messages.count - 1]["content"] = content
+        return messages
+    }
+
+    /// "Okay, can you write the ViewModel?" is part of the current problem, yet DeepSeek kept opening a new
+    /// one for it (AC-02). Its newProblem stands only when nothing is open yet, the interviewer marks a new
+    /// question, or the new goal shares nothing with the current one and the line does not continue it.
+    nonisolated static func withoutSubtaskProblems(_ ops: [CoachCaseOp], newLines: [CoachTurn], memory: CoachCase) -> [CoachCaseOp] {
+        guard let current = memory.problem, let line = newLines.last(where: { $0.role == "interviewer" }) else { return ops }
+        let t = line.text.lowercased()
+        if t.range(of: newQuestionPattern, options: .regularExpression) != nil { return ops }
+        let continues = t.range(of: #"^\s*(okay|ok|so|now|and|then|why|how come|can you|could you|please|great|good|alright|right)\b"#, options: .regularExpression) != nil
+        let generic: Set<String> = ["android", "design", "build", "implement", "write", "make", "would", "could", "app", "your", "with"]
+        return ops.filter { op in
+            guard op.op == "newProblem", let goal = op.text else { return true }
+            let shared = contentWords(goal).intersection(contentWords(current.goal)).subtracting(generic)
+            return shared.isEmpty && !continues
+        }
+    }
+    nonisolated static let newQuestionPattern = #"\b(new question|next question|different question|another question|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this))\b"#
+
     /// The interviewer plainly opens a new question or returns to an earlier one, and the card's CASE did
     /// not record it (AC-10): the app records it from the interviewer's own line. Applied before the
     /// card's own ops.

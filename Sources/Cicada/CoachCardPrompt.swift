@@ -30,6 +30,11 @@ enum CoachCardPrompt {
     FIX: only when the sentence the candidate is reading now has become wrong: one natural correcting sentence.
     REASON: only for a reason nobody stated; start it with "(optional)". It is a suggestion, not history.
 
+    A system design question ("design X") opens with a card that briefly confirms scope and requirements
+    (functional, non-functional, out of scope) before any design, even when some are already on the board;
+    that is what interviewers grade first. A narrow technical question is answered directly.
+    When the interviewer confirms or adds requirements, acknowledge them in at most one short sentence and
+    move the design forward; never read the requirements back to them.
     Scope: answer what was asked. Do not add features or requirements nobody asked for (loading states, error
     handling, tests…) to the plan; mention one as an optional idea in REASON or ask, never as the next step.
     A board change by itself is not a request: when the board shows the step done, confirm briefly and go on.
@@ -54,6 +59,8 @@ enum CoachCardPrompt {
 
     CASE: one line, a JSON array of changes to the walkthrough state, each {"op":…, "text":…, "evidence":[ids]}.
     A constraint is only a requirement someone actually stated, citing that line; never your own idea.
+    newProblem only when the interviewer moves to a different question. Implementing, extending or asking
+    about part of the current problem ("now write the ViewModel", "why StateFlow there?") stays in it.
     ops: newProblem (text = goal; optional "id"), switch ("id" of an earlier problem), constraint,
     dropConstraint, alternative, adopt, spoken (a point the candidate's OWN lines covered), implemented (seen
     on the board), notImplemented, pending, done, pushAside (a follow-up question), popAside, correct ("of" =
@@ -89,6 +96,8 @@ enum CoachCardPrompt {
         var card: CoachCard?
         var trigger: CoachCardSchedule.Trigger
         var prepared: String = ""
+        /// The candidate's own lines since the current card appeared.
+        var said: [String] = []
     }
 
     static func request(_ c: Context) -> [[String: Any]] {
@@ -121,7 +130,7 @@ enum CoachCardPrompt {
         if let id = c.boardID { parts.append("The latest screen keyframe is board id \(id).") }
         else { parts.append("No whiteboard has been seen in this interview: do not use TYPE draw.") }
         // Put the candidate's own recent words where they cannot be missed (AC-13: points were repeated).
-        let said = c.newLines.filter { $0.role == "candidate" }.map(\.text)
+        let said = c.said.isEmpty ? c.newLines.filter { $0.role == "candidate" }.map(\.text) : c.said
         if !said.isEmpty {
             parts.append("The candidate has ALREADY SAID these in their own words since the last card. Do not repeat these points; continue after them:\n- " + said.joined(separator: "\n- "))
         }
@@ -132,6 +141,11 @@ enum CoachCardPrompt {
         }
         if !c.prepared.isEmpty {
             parts.append("Prepared follow-up drafts (predictions, NOT questions anyone asked; use only if the real request matches, and check them):\n" + c.prepared)
+        }
+        // Last, where it is read: after new requirements DeepSeek recited them back before moving on.
+        if c.trigger == .interviewer, let latest = c.newLines.last(where: { $0.role == "interviewer" }),
+           !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
+            parts.append("The interviewer's latest line gives information rather than asking a question. Acknowledge it in ONE short sentence without repeating its details, then move the design forward.")
         }
         parts.append("Trigger: \(c.trigger). Write the next card now. " + CoachPrompt.personalFactsReminder)
         return parts.joined(separator: "\n\n")
