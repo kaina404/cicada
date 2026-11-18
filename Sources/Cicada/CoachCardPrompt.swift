@@ -13,7 +13,8 @@ enum CoachCardPrompt {
     self-introduction of ten to fourteen sentences (about the time they asked for), with concrete facts from
     <knowledge> instead of vague claims such as "made the app faster". A direct question (where, what, which,
     how many) gets its concrete answer in SAY right now: name the layers, the choice, the place the data
-    lives. Never only announce what you will explain or draw. Explain what code does and why; never read symbols aloud. When the interviewer
+    lives. A question with several parts (what risk, who watched, which signal) gets each part answered, in
+    order, without restating the earlier answer. Never only announce what you will explain or draw. Explain what code does and why; never read symbols aloud. When the interviewer
     asks for one sentence, briefly or a short answer, SAY is exactly that: one sentence means one sentence.
     Before writing SAY, read the candidate's own lines since the current card: never repeat a point they
     already made in their own words; continue after it. If their own lines already answered the question, SAY
@@ -33,6 +34,8 @@ enum CoachCardPrompt {
     interviewer asks to draw or sketch a flow, the architecture or a sequence and the board does not show
     that diagram yet, the draw is the WHOLE small diagram at once (the candidate cannot draw from words):
     `flowchart TD` for components and data flow (top to bottom: the card is narrow), `sequenceDiagram` for calls in order over time.
+    An Android client in an architecture flowchart is its layers (screen, ViewModel, repository, local database),
+    not one box.
     At most 8 boxes or participants, short English labels, plain arrows with short labels; no styling,
     classDef, subgraphs or notes. A later draw on that diagram has only the new boxes and arrows, reusing
     the ids of the boxes they connect to. SAY walks through the diagram in drawing order.
@@ -43,7 +46,9 @@ enum CoachCardPrompt {
 
     A system design question ("design X") opens with a card that briefly confirms scope and requirements
     (functional, non-functional, out of scope) before any design, even when some are already on the board;
-    that is what interviewers grade first. A narrow technical question is answered directly.
+    that is what interviewers grade first. When the interviewer invites clarifying questions, SAY asks two or
+    three concrete ones (who the users are, what holds the truth, offline behaviour) before or with any direct
+    answer; "does that match?" alone is not clarifying. A narrow technical question is answered directly.
     When the interviewer confirms or adds requirements, acknowledge them in at most one short sentence and
     move the design forward; never read the requirements back to them.
     Scope: answer what was asked. Do not add features or requirements nobody asked for (loading states, error
@@ -57,6 +62,9 @@ enum CoachCardPrompt {
     not yet visible on the board; never claim it is done.
     A dropped requirement is simply no longer required: record dropConstraint citing that line and never record
     its opposite ("no offline" is not "no local database") unless someone said it.
+    Facts the interviewer gives about the scenario bind: a value they call missing, unreliable or ambiguous
+    (no amount in the chat, two contacts with the same name) is never filled in or guessed; asking the user
+    for it is the step.
     Never state a guarantee nobody established: a requestId or cursor on the board shows intent, so what the
     server must do with it (deduplicate, keep order) is a contract to confirm ("the server would need to…"),
     and no technique "never" fails.
@@ -190,7 +198,7 @@ enum CoachCardPrompt {
         }
         // Last, where it is read: after new requirements DeepSeek recited them back before moving on.
         if c.trigger == .interviewer, let latest = c.newLines.last(where: { $0.role == "interviewer" }),
-           !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
+           !asks(latest.text) {
             parts.append("The interviewer's latest line gives information rather than asking a question. Acknowledge it in ONE short sentence without repeating its details, then move the design forward.")
         }
         if let hint = focusHint(memory: c.memory, latest: c.newLines.last(where: { $0.role == "interviewer" })?.text) {
@@ -200,17 +208,44 @@ enum CoachCardPrompt {
         return parts.joined(separator: "\n\n")
     }
 
+    /// A question mark, or a request in the imperative: the wallet run's "Draw the client, the server and local
+    /// storage as a flowchart, and tell me what each part owns." was taken as information and got one sentence.
+    static func asks(_ line: String) -> Bool {
+        line.trimmingCharacters(in: .whitespaces).hasSuffix("?") || line.range(of:
+            #"(?i)\b(draw|sketch|walk (me|us) through|tell (me|us)|show (me|us)|explain|describe|design|write|add|update|revise|list|give (me|us))\b"#,
+            options: .regularExpression) != nil
+    }
+
     /// Read last, so it wins over the long transcript. The 40-minute runs: with Room chosen as the single
     /// source of truth, one run still answered "keep the text in the ViewModel" for 50 tokens a second
     /// (D-06), and voice and phone-call answers left out echo cancellation and the foreground service
     /// (D-13, D-14) although the rules list them.
     static func focusHint(memory: CoachCase, latest: String?) -> String? {
         var notes: [String] = []
-        if let adopted = memory.problem?.adopted?.text {
+        // Wallet runs 2026-11-19: "What questions do you have for me?" came before the app recorded the new
+        // problem, so the old problem's money note pulled the card back to the release question.
+        let opensNew = latest?.range(of: CoachCards.newQuestionPattern, options: [.regularExpression, .caseInsensitive]) != nil
+        let problem = opensNew ? nil : memory.problem
+        if opensNew {
+            notes.append("The interviewer's latest line opens a new question: answer that question, not the previous one.")
+        }
+        if let adopted = problem?.adopted?.text {
             notes.append("Already decided in this problem: \(adopted) Keep this answer consistent with it. Never add a second place the UI reads the same data from (no \"keep the text in the ViewModel\" next to a database source of truth): batching, throttling and caching happen on the way into that one place, and the UI keeps reading only from it.")
         }
         if let latest, latest.range(of: #"(?i)\b(voice|phone call|incoming call|microphone|mic|speak(s|ing)?|talking|audio)\b"#, options: .regularExpression) != nil {
             notes.append("Android points for this answer (one clause each, only those that fit): a foreground service of type microphone keeps voice mode running; audio focus (a call takes it); the device's echo cancellation (AcousticEchoCanceler) so the mic does not hear the AI's own speech.")
+        }
+        // Wallet run 2026-11-19: amounts, the atomic ledger, "reject the duplicate" and a chat-flow
+        // confirmation kept only on the phone were missed although the interviewer graded them.
+        let topic = (latest ?? "") + " " + (problem?.goal ?? "")
+        if topic.range(of: #"(?i)\b(wallet|pay(s|ing|ment)?|transfer(s|red)?|balance|ledger|dollars?|refund)\b"#, options: .regularExpression) != nil {
+            notes.append("Money points (one clause each, only those this question needs): amounts as a Long in minor units (80 dollars = 8000 cents); when the interviewer gave balances and an amount, say both balances after the transfer in numbers; the result screen's states: success, clear failure, processing, and outcome unknown (still checking); the server checks and debits the payer and credits the payee in ONE database transaction (row lock or conditional update), so a balance never goes negative; a lost response or timeout is an unknown outcome, not a failure: query by the same client transfer ID and resend only that ID; a lookup that finds nothing does not prove no money moved (the request may still be in flight or the read may lag), so the state stays unknown; the server answers a repeat of that ID with the same parameters with the original transfer's current status (not an error) and rejects it with different parameters; after the user confirms on a trusted native screen, the server binds the authorization to payer, recipient, amount and expiry, so chat or model text never authorizes a payment or reports its success; the app shows success only from the server's transfer record.")
+        }
+        if let latest, latest.range(of: #"(?i)\b(log(s|ged)? ?out|sign(s|ed)? ?out|switch(es|ed)? (to )?(another |a different )?(account|user)|account [A-Z]\b)"#, options: .regularExpression) != nil {
+            notes.append("Account switch points: tag every in-flight request, cache write and callback with the account and a session generation, and drop a response whose session is no longer current, so the new account never sees the old one's data; work the old account already committed stays on the server and comes back from its own history after it signs in again.")
+        }
+        if let latest, latest.range(of: #"(?i)\b(ship|release|roll ?out|first version|first users|go live)\b"#, options: .regularExpression) != nil {
+            notes.append("Release answer: the first version's scope and what waits; the pre-release checks, one for each failure case already discussed in this problem, named; what you monitor in the rollout; when you pause (reads and status keep working), who owns the fix and the reconciliation, and when it resumes. The checks are part of the answer, not extra scope: say them as tests passed before release.")
         }
         return notes.isEmpty ? nil : notes.joined(separator: "\n")
     }

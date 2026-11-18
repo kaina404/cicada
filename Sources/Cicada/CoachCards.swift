@@ -458,9 +458,11 @@ final class CoachCards: ObservableObject {
     }
     // "This is a new problem: design the chat cache" shares "cache" with the feed cache and was merged into it (ME-08).
     // "Do you have any questions for me?" ends the design; it was filed under its last question (the 40-minute run, P2-7).
+    /// "Let's switch to the design exercise" kept the whole wallet design under the resume question (wallet run 5).
+    /// "What questions do you have for me?" (wallet rerun 2026-11-19) stayed in the release question and got its answer again.
     /// "Now a different one: draw me a sequence diagram of login" (founder runs 2026-11-18/19) is a new
     /// problem too; DeepSeek kept it inside the chat flowchart's design problem.
-    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this)|questions for (me|us)|(different|another) one\W+(can you |could you |please )?(draw|sketch)|(a |one )?(new|different|another|second) (diagram|chart))\b"#
+    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s (switch|move|turn) to (the |a )?(design|coding|system|next)|let'?s pause (that|this)|(any |what )?questions (do you have |have you got )?for (me|us)|(different|another) one\W+(can you |could you |please )?(draw|sketch)|(a |one )?(new|different|another|second) (diagram|chart))\b"#
 
     /// The interviewer plainly opens a new question or returns to an earlier one, and the card's CASE did
     /// not record it (AC-10): the app records it from the interviewer's own line. Applied before the
@@ -478,12 +480,16 @@ final class CoachCards: ObservableObject {
             extra.append(CoachCaseOp(op: "newProblem", text: String(earlier.text.prefix(120)), evidence: [earlier.id]))
         }
         guard !recorded else { return extra }
-        if t.range(of: #"\b(go(ing)? back to|back to the|return to|resume)\b"#, options: .regularExpression) != nil {
-            let words = Set(CoachScript.words(t).filter { $0.count > 3 })
-            let best = memory.problems.filter { $0.id != memory.problem?.id }
-                .map { ($0, Set(CoachScript.words($0.goal)).intersection(words).count) }
-                .max { $0.1 < $1.1 }
-            if let (problem, score) = best, score > 0 { return [CoachCaseOp(op: "switch", id: problem.id, evidence: [line.id])] }
+        let back = #"\b(go(ing)? back to|back to the|return to|resume)\b"#
+        if t.range(of: back, options: .regularExpression) != nil {
+            // Only the sentence that goes back, and only to a problem it matches better than the current one:
+            // "Back to the first transfer. … What could go wrong …" matched "what" in a resume question (wallet run 6).
+            let sentence = t.components(separatedBy: CharacterSet(charactersIn: ".?!")).first { $0.range(of: back, options: .regularExpression) != nil } ?? t
+            let words = Set(CoachScript.words(sentence).filter { $0.count > 3 })
+            func score(_ p: CoachCase.Problem) -> Int { Set(CoachScript.words(p.goal)).intersection(words).count }
+            let current = memory.problem.map(score) ?? 0
+            let best = memory.problems.filter { $0.id != memory.problem?.id }.map { ($0, score($0)) }.max { $0.1 < $1.1 }
+            if let (problem, s) = best, s > current { return [CoachCaseOp(op: "switch", id: problem.id, evidence: [line.id])] }
             return []
         }
         if opensNew { extra.append(CoachCaseOp(op: "newProblem", text: String(line.text.prefix(120)), evidence: [line.id])) }

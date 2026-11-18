@@ -358,6 +358,47 @@ struct CoachCardsTests {
         #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "How do you test it?") == nil)
     }
 
+    // Wallet run 2026-11-19: cents, the atomic ledger, idempotent replay, server-side authorization,
+    // stale-session callbacks and the pre-release checks were missed.
+    @Test func theFocusHintCarriesMoneyAccountAndReleasePoints() {
+        var wallet = CoachCase()
+        wallet.apply([CoachCaseOp(op: "newProblem", text: "Design a mobile wallet", evidence: ["t1"])],
+                     evidence: CoachEvidence(interviewer: ["t1"]), at: 0)
+        let chat = CoachCardPrompt.focusHint(memory: wallet, latest: "Now the pilot must also start from a group chat. Two contacts are called Alex.")
+        #expect(chat?.contains("8000 cents") == true)
+        #expect(chat?.contains("never authorizes") == true)
+        #expect(chat?.contains("Release answer") == false)
+        let money = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "A has 100 dollars. Walk me through sending B 80.")
+        #expect(money?.contains("ONE database transaction") == true)
+        let account = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "While the request is in flight the user switches to account C. What goes wrong?")
+        #expect(account?.contains("session generation") == true)
+        #expect(account?.contains("Money points") == false)
+        #expect(money?.contains("does not prove no money moved") == true)
+        let close = CoachCardPrompt.focusHint(memory: wallet, latest: "That's it from me. What questions do you have for me about the team or the role?")
+        #expect(close?.contains("Money points") == false)
+        #expect(close?.contains("opens a new question") == true)
+        let release = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "You have two weeks. What's in the first version and how do you roll it out?")
+        #expect(release?.contains("pre-release checks") == true)
+    }
+
+    // Wallet run 6, 2026-11-19: "Back to the first transfer" inside the wallet design went to a resume question.
+    @Test func goingBackWithinTheDesignDoesNotSwitchToAnOldQuestion() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Tell about a delivery risk: what you did and when", id: "risk")], evidence: CoachEvidence(), at: 0)
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Design a mobile wallet: transfer, ledger, failures", id: "wallet")], evidence: CoachEvidence(), at: 1)
+        let back = CoachTurn(id: "t40", seconds: 40, role: "interviewer", text: "Back to the first transfer. While the request is in flight the user switches to account C. What could go wrong?")
+        #expect(CoachCards.missingProblemOps([], newLines: [back], memory: memory).isEmpty)
+        let risk = CoachTurn(id: "t41", seconds: 41, role: "interviewer", text: "Let's go back to the delivery risk you mentioned. What happened next?")
+        #expect(CoachCards.missingProblemOps([], newLines: [risk], memory: memory).first?.id == "risk")
+    }
+
+    // Wallet rerun 2026-11-19: an imperative request without "?" got a one-sentence acknowledgement.
+    @Test func anImperativeRequestIsAQuestionNotInformation() {
+        #expect(CoachCardPrompt.asks("Draw the client, the server and local storage as a flowchart, and tell me what each part owns."))
+        #expect(CoachCardPrompt.asks("Why StateFlow there?"))
+        #expect(!CoachCardPrompt.asks("Users are signed in. Cached reads work offline; submitting money needs the network."))
+    }
+
     // Founder runs 2026-11-18/19: a second, different diagram stayed inside the first diagram's problem.
     @Test func aDifferentDiagramOpensANewProblem() {
         var memory = CoachCase()
@@ -377,6 +418,11 @@ struct CoachCardsTests {
         memory.apply([CoachCaseOp(op: "newProblem", text: "Design the ChatGPT Android app")], evidence: CoachEvidence(), at: 0)
         let line = CoachTurn(id: "t90", seconds: 9, role: "interviewer", text: "Okay, we're almost out of time. Do you have any questions for me?")
         #expect(CoachCards.missingProblemOps([], newLines: [line], memory: memory).map(\.op) == ["newProblem"])
+        let design = CoachTurn(id: "t92", seconds: 11, role: "interviewer", text: "Let's switch to the design exercise. Design a mobile wallet from scratch.")
+        #expect(CoachCards.missingProblemOps([], newLines: [design], memory: memory).map(\.op) == ["newProblem"])
+        // Wallet rerun 2026-11-19: this wording stayed under the release question.
+        let what = CoachTurn(id: "t91", seconds: 10, role: "interviewer", text: "That's it from me. What questions do you have for me about the team or the role?")
+        #expect(CoachCards.missingProblemOps([], newLines: [what], memory: memory).map(\.op) == ["newProblem"])
     }
 
     @Test func aSubtaskOfTheCurrentProblemIsNotANewProblem() {

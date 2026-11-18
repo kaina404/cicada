@@ -54,7 +54,8 @@ struct CoachCardFooter: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            HStack(spacing: 10) {
+            // The debug snapshot leaves the controls out: ImageRenderer draws a native button as a 🚫 placeholder.
+            if selectable { HStack(spacing: 10) {
                 Button("下一步", action: onNext).disabled(cards.busy && cards.card == nil)
                     .help("按实际进展给出下一步（⌃⌥A）")
                 if cards.busy, cards.card != nil {
@@ -65,7 +66,7 @@ struct CoachCardFooter: View {
                     Text("这一步没生成出来").foregroundStyle(Palette.accent)
                     Button("重试", action: onRetry)
                 }
-            }.font(.system(size: 12))
+            }.font(.system(size: 12)) }
             if !cards.past.isEmpty {
                 DisclosureGroup(isExpanded: $showsPast) {
                     VStack(alignment: .leading, spacing: 8) {
