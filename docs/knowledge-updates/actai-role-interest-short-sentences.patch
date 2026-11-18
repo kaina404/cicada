@@ -1,0 +1,28 @@
+--- 04_talk_tracks.md
++++ 04_talk_tracks.md
+@@ -133,7 +133,24 @@
+ 
+ Good morning, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps, and over the past three years I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. I was also the technical lead for an AI trip planning project, and after we launched it, the system handled about 300,000 trip planning requests every day. Before that, I was the only Android engineer at Kezhi Technology, an AI education startup, and I worked on Android apps at Debon Securities and Ping An. I'm interested in ActAI because your AI helps users get things done, while users stay in control. I hope I can bring my Android and AI experience to ActAI. Thank you.
+ 
+-## Why do you want to join ActAI? (Why this company? Why us? Why are you interested in this role?)
++## Why are you interested in this role? (What interests you about this position?)
++
++Use this short-sentence answer for role-interest questions. Do not route them to the two-minute company-motivation answer below. Use simple spoken English. One main idea per sentence. Avoid stacked clauses and long sentences. Apply this preference to future ordinary HR answers without rewriting the locked self-introduction.
++
++I'm interested in this role because it brings Android and AI together.
++That's the direction I want to grow in.
++
++I like ActAI's idea of helping people get everyday tasks done.
++They don't need to write complex prompts.
++I'm exploring the same idea through my own assistant app, Cabinet.
++It's something I enjoy working on.
++
++At KKday and Kezhi, my main focus was Android development.
++I also helped build and launch AI products.
++I'd like to bring that experience to this role.
++I want to help build an app people can trust and use every day.
++
++## Why do you want to join ActAI? (Why this company? Why us?)
+ 
+ Two fixed versions, used verbatim. This track overrides the usual 60–100 word HR length.
+ - Default: when the interviewer just asks why I want to join (no time limit), or asks for "two minutes", "a longer version" or "more detail", use the full two-minute version, all of it.
