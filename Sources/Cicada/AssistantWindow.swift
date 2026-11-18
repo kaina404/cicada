@@ -364,6 +364,12 @@ private struct AssistantFloatingControls: View {
                 Toggle("稿件点击穿透", isOn: $settings.assistantClickThrough)
                     .toggleStyle(.checkbox)
                     .fixedSize()
+                // The other side's speech: SpeechAnalyzer + the translation chain, or Qwen3-ASR + Hy-MT2 on MLX.
+                Toggle("Qwen+Hy", isOn: $settings.mlxListen)
+                    .toggleStyle(.checkbox)
+                    .fixedSize()
+                    .disabled(!MLXListen.installed && !settings.mlxListen)
+                    .help(Text(MLXListen.installed ? "对方声音用本机 Qwen3-ASR 识别、Hy-MT2 译成中文" : "本机未安装 Qwen3-ASR 或 Hy-MT2"))
                 Button {
                     paired = hasPhonePairing()
                     screenEnabled = isPhoneScreenEnabled()

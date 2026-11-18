@@ -78,7 +78,7 @@ extension AppModel {
         all["listen"] = { [
             "running": self.listen.isRunning, "status": self.status, "source": self.settings.listenSource,
             "sourceSelection": self.sourceSelection, "lang": self.listen.activeLang?.locale ?? "",
-            "target": self.settings.target, "recognizer": Recognition.name, "recordTrack": Recognition.recordTrack,
+            "target": self.settings.target, "recognizer": self.listen.usesMLXNow ? "qwen3-asr" : Recognition.name, "recordTrack": Recognition.recordTrack,
             "identifyingLanguage": self.identifyingLanguage, "liveID": self.store.liveID ?? "",
             "autoEnded": self.autoEnded, "endPending": self.ending.map { "\($0.reason)" } ?? "",
             "cloud": [

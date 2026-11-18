@@ -25,6 +25,7 @@ final class AppModel: ObservableObject {
     private var watchControl: CicadaWatchReceiver?
     private var shadowVolumeSetting: AnyCancellable?
     private var shadowSetting: AnyCancellable?
+    private var mlxListenSetting: AnyCancellable?
     private var fastFollowWord: AnyCancellable?
     private var candidateTimer: Timer?
     private var manualAssistant = false
@@ -332,6 +333,11 @@ final class AppModel: ObservableObject {
             Task { @MainActor [weak self] in self?.followShadow(word) }
         }
         shadowVolumeSetting = settings.$shadowVolume.sink { [weak self] in self?.shadowReader.setVolume($0) }
+        // Qwen+Hy only hears the meeting's side; turned off, the worker's memory goes back to the Mac.
+        mlxListenSetting = settings.$mlxListen.removeDuplicates().sink { [weak self] on in
+            self?.listen.mlxListen = on
+            if !on { MLXListen.shared.stop() }
+        }
         candidate.reading.usesTranscripts = true
         shadowSetting = settings.$shadowReading.dropFirst().sink { [weak self] enabled in
             if !enabled { self?.shadowReader.stop() }
@@ -2847,6 +2853,9 @@ final class AppModel: ObservableObject {
             Task { await notes.replay(parts[0], step: parts.count > 1 ? Int(parts[1]) ?? 4 : 4) }
         case "notesShow": notes.show(arg)
         case "dock": settings.showInDock = arg != "off"  // 在 Dock 中显示
+        case "mlxListen":  // 助手「Qwen+Hy」: mlxListen:<on|off>
+            guard MLXListen.installed || arg == "off" else { debugFail("mlx listen: not installed"); break }
+            settings.mlxListen = arg != "off"
         case "dockState":
             debugLog("dock: shown=\(settings.showInDock) live=\(DockIcon.live) policy=\(NSApp.activationPolicy().rawValue) active=\(NSApp.isActive)")
         case "dockRender":  // dockRender:<png>: the Dock tile as drawn now

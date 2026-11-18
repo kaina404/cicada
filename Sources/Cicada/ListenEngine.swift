@@ -169,6 +169,26 @@ final class ListenEngine {
             Task { await switchTranscriber(to: activeLang ?? settings.speakFromLang) }
         }
     }
+    /// 助手的「Qwen+Hy」: the meeting's side is heard by Qwen3-ASR and put into Chinese by Hy-MT2,
+    /// both on this Mac (`MLXListen`), instead of SpeechAnalyzer and the translation chain.
+    var mlxListen = false {
+        didSet {
+            guard oldValue != mlxListen else { return }
+            if mlxListen { MLXListen.shared.warmUp() }
+            guard isRunning, !gemmaCandidate else { return }
+            debugLog("mlx listen: \(mlxListen ? "on" : "off") mid-meeting")
+            generation += 1
+            router.detach()
+            resultsTask?.cancel()
+            if let recognizer { Task { await recognizer.cancel() } }
+            recognizer = nil
+            Task { await switchTranscriber(to: activeLang ?? settings.speakFromLang) }
+        }
+    }
+    /// The Qwen+Hy switch applies here: the main engine, not hearing the candidate, models on the Mac.
+    private var usesMLX: Bool { mlxListen && role == .main && !gemmaCandidate && MLXListen.installed }
+    /// Debug state: the meeting's side is heard by Qwen right now.
+    var usesMLXNow: Bool { isRunning && usesMLX }
     private var recognizer: RecognitionStream?
     private var resultsTask: Task<Void, Never>?
     /// The record's recognizer for the current transcriber (`Recognition.recordTrack`). Its lines
@@ -715,7 +735,7 @@ final class ListenEngine {
     private func switchTranscriber(to lang: Lang, replaySeconds: Double = 0) async {
         // No models to switch between: the service hears every language, and a language picked in
         // settings only becomes its hint (`cloudHint`).
-        if !gemmaCandidate && (Recognition.cloudOnly || serverHears) {
+        if !gemmaCandidate && !usesMLX && (Recognition.cloudOnly || serverHears) {
             guard isRunning else { return }
             if case .fixed = sourceMode { activeLang = lang } else if activeLang == nil { activeLang = lang }
             if !cloudListening { startCloud() }
@@ -757,7 +777,7 @@ final class ListenEngine {
 
         do {
             do {
-                if !gemmaCandidate { try await ensureModel(for: lang) }
+                if !gemmaCandidate && !usesMLX { try await ensureModel(for: lang) }
             } catch where sourceMode == .auto && previous != nil && previous != lang {
                 // A model that can't be had (no network, or the Mac's five reserved languages taken):
                 // retrying would fail the same way every 30 s. Go back to the one that works, unsure again.
@@ -793,6 +813,9 @@ final class ListenEngine {
                 activeLang = sourceLanguages.first(where: { $0.code == "en" }) ?? lang
                 detection.setConfirmed(true)
                 stream = CandidateRecognition()
+            } else if usesMLX {
+                // A language picked by hand pins Qwen to it; otherwise Qwen tells for itself.
+                if case .fixed = sourceMode { stream = MLXStream(language: lang.code) } else { stream = MLXStream(language: nil) }
             } else {
                 stream = try await Recognition.start(lang.locale, drafts: true, confidence: true)
             }
@@ -803,7 +826,7 @@ final class ListenEngine {
             var listening: RecognitionStream = stream
             // Gemma hears the candidate in Float32, which SpeechAnalyzer can't take: no record track
             // there (it ended the app as soon as the mic's audio arrived).
-            if !gemmaCandidate, let record = try? await Recognition.startRecord(lang.locale, format: stream.format) {
+            if !gemmaCandidate, !usesMLX, let record = try? await Recognition.startRecord(lang.locale, format: stream.format) {
                 guard isRunning, gen == generation else {
                     await stream.cancel()
                     await record.cancel()
@@ -826,7 +849,7 @@ final class ListenEngine {
                     self?.recognitionFailed(error, generation: gen)
                 }
             }
-            debugLog("transcriber started recognizer=\(gemmaCandidate ? "gemma" : Recognition.name) locale=\(lang.locale) format=\(stream.format)")
+            debugLog("transcriber started recognizer=\(gemmaCandidate ? "gemma" : usesMLX ? "qwen3-asr" : Recognition.name) locale=\(lang.locale) format=\(stream.format)")
             setStatus(L("正在听"))
         } catch {
             debugLog("transcriber start failed locale=\(lang.locale): \(error)")
@@ -1410,6 +1433,15 @@ final class ListenEngine {
                    kind: TranslationService.Kind = .sentence, trace: TranslateTrace? = nil) async -> String? {
         let target = target ?? resolvedTarget
         if source == target { return text }
+        // Qwen+Hy: drafts and sentences into Chinese by Hy-MT2, never off the Mac.
+        if usesMLX, kind == .draft || kind == .sentence, target.hasPrefix("zh") {
+            let started = Date()
+            let out = await MLXListen.shared.translate(text, sentence: kind == .sentence)
+            trace?.attempts.append(.init(provider: "hy-mt2", seconds: Date().timeIntervalSince(started),
+                                         failure: out == nil ? "unavailable" : nil))
+            if kind == .draft { translator?.onDraft?(Date().timeIntervalSince(started), out != nil) }
+            return out
+        }
         let out = await translator?.translate(text, source: source, target: target, kind: kind, trace: trace)
         // A partial without a translation is fine while the AI service will translate the sentence.
         let coming = kind == .draft && translator?.ling.usable == true

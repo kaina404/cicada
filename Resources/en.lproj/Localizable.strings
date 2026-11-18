@@ -314,6 +314,8 @@
 "共享中可见" = "Visible in screen sharing";
 "连接手机" = "Connect phone";
 "稿件点击穿透" = "Click through script";
+"对方声音用本机 Qwen3-ASR 识别、Hy-MT2 译成中文" = "Hear the other side with Qwen3-ASR and translate into Chinese with Hy-MT2, on this Mac";
+"本机未安装 Qwen3-ASR 或 Hy-MT2" = "Qwen3-ASR or Hy-MT2 isn't installed on this Mac";
 "同一 Wi-Fi 下，用系统相机扫码打开网页。" = "On the same Wi-Fi, scan with your camera to open the control page.";
 "暂时无法生成配对码" = "Could not generate pairing code";
 "请在系统设置中允许 Cicada 录制屏幕。" = "Allow Cicada to record the screen in System Settings.";

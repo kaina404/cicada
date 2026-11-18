@@ -83,6 +83,8 @@ final class AppSettings: ObservableObject {
     @Published var assistantOpacity: Double { didSet { save() } }
     @Published var assistantSizeLocked: Bool { didSet { save() } }
     @Published var assistantClickThrough: Bool { didSet { save() } }
+    /// 助手「Qwen+Hy」: the other side heard by Qwen3-ASR and translated by Hy-MT2 on this Mac (`MLXListen`).
+    @Published var mlxListen: Bool { didSet { save() } }
     @Published var interviewStage: InterviewStage { didSet { save() } }
     @Published var coachLanguage: CoachLanguage { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
@@ -350,6 +352,7 @@ final class AppSettings: ObservableObject {
         assistantOpacity = AssistantAppearance.opacity(defaults.object(forKey: "assistantOpacity") as? Double ?? 0.8)
         assistantSizeLocked = defaults.bool(forKey: "assistantSizeLocked")
         assistantClickThrough = defaults.bool(forKey: "assistantClickThrough")
+        mlxListen = defaults.bool(forKey: "mlxListen")
         interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
         coachLanguage = CoachLanguage(rawValue: defaults.string(forKey: "coachLanguage") ?? "") ?? .english
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
@@ -443,6 +446,7 @@ final class AppSettings: ObservableObject {
         defaults.set(assistantOpacity, forKey: "assistantOpacity")
         defaults.set(assistantSizeLocked, forKey: "assistantSizeLocked")
         defaults.set(assistantClickThrough, forKey: "assistantClickThrough")
+        defaults.set(mlxListen, forKey: "mlxListen")
         defaults.set(interviewStage.rawValue, forKey: "interviewStage")
         defaults.set(coachLanguage.rawValue, forKey: "coachLanguage")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
