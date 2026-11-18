@@ -8,12 +8,26 @@ DeepSeek. Text injection is repeatable but skips ASR, endpointing by sound and r
   scripts/build.sh && open build/Cicada.app          # dev build with debug control
   python3 -I tools/mock-interviewer.py [AC-05 ...]   # all scenarios, or the named ones
   FRAMES=<dir of P0 frames> for AC-08.  Writes docs/evaluations/walkthrough-acceptance-<date>.json
+  Injected lines count as heard speech, so long runs no longer end themselves after 10 silent minutes.
+  PACE=1 plays at speaking speed (interviewer lines and `me_card` read at ~150 words a minute); default 0.
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LSCTL = os.path.join(HERE, "lsctl")
 KEY_FILE = os.path.expanduser("~/Library/Application Support/LiveSubs Dev/ai-key-deepseek")
+PACE = float(os.environ.get("PACE", "0"))
+
+
+def speak_time(text):
+    """Seconds a person needs to say `text` at ~150 words a minute, scaled by PACE."""
+    return PACE * len(text.split()) / 2.5
+
+
+def type_code(card):
+    """The code of the card's TYPE edit, lines joined by a literal \\n as coachOCR takes them; '' when none."""
+    t = card.get("type", "none")
+    return "" if t == "none" or ": " not in t else t.split(": ", 1)[1].replace(" ⏎ ", "\\n")
 
 
 def lsctl(command, timeout=5):
@@ -62,12 +76,19 @@ def settle(before_requests, timeout=40):
     return card_state()
 
 
-def judge(transcript, card, criterion):
+def judge(transcript, card, criterion, more=()):
     key = open(KEY_FILE).read().strip()
-    prompt = ("You grade an interview-coaching card against one criterion. Reply with PASS or FAIL, a colon, "
-              "and a short reason.\n\nConversation so far:\n" + "\n".join(transcript) +
-              "\n\nCard now shown to the candidate:\nHEARD: {heard}\nSAY: {say}\nTYPE: {type}\nTHEN: {then}\n\nCriterion: ".format(**card)
-              + criterion)
+    shown = "HEARD: {heard}\nSAY: {say}\nTYPE: {type}\nTHEN: {then}".format(**card)
+    # The candidate pages on with "next": the follow-up cards are part of the same answer (R-01 was graded
+    # on its first card only).
+    for i, say in enumerate(more):
+        shown += f"\n\nNext card {i + 1} (read right after):\nSAY: {say}"
+    prompt = ("You grade an interview-coaching answer against one criterion. Reply with PASS or FAIL, a colon, "
+              "and a short reason. The answer is spoken in a few short sentences, so a list of points in the "
+              "criterion gives examples: PASS when the answer covers at least two of them correctly (all of "
+              "them if fewer than two are listed) and says nothing wrong. Every \"does not\" condition must "
+              "hold.\n\nConversation so far:\n" + "\n".join(transcript) +
+              "\n\nCard shown to the candidate:\n" + shown + "\n\nCriterion: " + criterion)
     body = {"model": "deepseek-flash", "temperature": 0, "max_tokens": 120, "thinking": {"type": "disabled"},
             "messages": [{"role": "user", "content": prompt}]}
     req = urllib.request.Request("https://api.deepseek.com/chat/completions", data=json.dumps(body).encode(),
@@ -98,9 +119,6 @@ def check(spec, card, transcript, marks):
         n = len([x for x in re.split(r"(?<=[.!?])\s+", card.get("say", "").strip()) if x])
         add("say_max_sentences", 0 < n <= spec["say_max_sentences"], f"{n} sentences")
     if "say_not_contains" in spec: add("say_not_contains", spec["say_not_contains"].lower() not in card.get("say", "").lower(), card.get("say", "")[:120])
-    if "judge" in spec:
-        ok, why = judge(transcript, card, spec["judge"])
-        add("judge", ok, why)
     return results
 
 
@@ -109,20 +127,54 @@ def run(scenario):
     for c in ["coachLanguage:english", "coachCards:on", "assistant:on", "start:user"]:
         lsctl(c)
     time.sleep(3)
-    transcript, marks, steps = [], {}, []
+    transcript, marks, steps, board, t0, segment = [], {}, [], [], time.time(), ""
+    pending = None  # (check step, spec, card, transcript): judged once the candidate has read the card(s)
+    def grade(more=()):
+        nonlocal pending
+        if not pending: return
+        st, spec, card, said = pending; pending = None
+        ok, why = judge(said, card, spec["judge"], more)
+        st["results"].append({"check": "judge", "pass": ok, "detail": why})
+        print(f'  {"PASS" if ok else "FAIL"} judge: {why}')
     for step in scenario["steps"]:
+        if pending and "me_card" not in step: grade()
         s = card_state() or {}
         before = int(s.get("requests", 0) or 0)
+        if "segment" in step:
+            segment, board = step["segment"], []  # a new segment starts on a clean board
+            print(f'  -- {segment} @ {int(time.time() - t0)}s'); continue
         if "them" in step:
-            transcript.append("Interviewer: " + step["them"]); lsctl("themSaid:" + step["them"])
+            time.sleep(speak_time(step["them"]))
+            transcript.append("Interviewer: " + step["them"]); lsctl("themSaid:" + step["them"]); asked = time.time()
             s = settle(before)
+            steps.append({"segment": segment, "at": int(asked - t0), "them": step["them"],
+                          "settle_s": round(time.time() - asked, 1), "first_ms": (s or {}).get("first_ms")})
             # A settled state is not proof of a new answer: the request count must have moved and not failed.
             fresh = bool(s) and int(s.get("requests", 0) or 0) > before and s.get("busy") == "false" and s.get("failed") == "false"
-            steps.append({"card": s or {}, "results": [{"check": "answered", "pass": fresh,
+            steps[-1].update({"card": s or {}, "results": [{"check": "answered", "pass": fresh,
                           "detail": "no state" if not s else f'requests {before}->{s.get("requests")} busy={s.get("busy")} failed={s.get("failed")}'}]})
             if not fresh: print(f'  FAIL answered: {steps[-1]["results"][0]["detail"]}')
         elif "them_nowait" in step:
             transcript.append("Interviewer: " + step["them_nowait"]); lsctl("themSaid:" + step["them_nowait"]); time.sleep(step.get("gap", 0.3))
+        elif "me_card" in step:
+            # The candidate reads the card aloud sentence by sentence, as with read-along; `next` follows THEN.
+            more = []
+            for k in range(1 + step.get("next", 0)):
+                if k:
+                    b = int((card_state() or {}).get("requests", 0) or 0); lsctl("coachCardNext"); settle(b)
+                say = (card_state() or {}).get("say", "")
+                if k: more.append(say)
+                for sentence in [x for x in re.split(r"(?<=[.!?])\s+", say.strip()) if x]:
+                    time.sleep(speak_time(sentence)); transcript.append("Candidate: " + sentence); lsctl("meSaid:" + sentence)
+                time.sleep(0.4)
+            grade(more)
+        elif "ocr_card" in step:
+            # The candidate writes the card's TYPE on the board: the board text grows by that code.
+            code = type_code(card_state() or {})
+            if code:
+                board.append(code); time.sleep(speak_time(code))
+            text = "\\n".join(board) if board else step["ocr_card"]
+            transcript.append("[board] " + text.replace("\\n", " | ")); lsctl("coachOCR:" + text)
         elif "me" in step:
             transcript.append("Candidate: " + step["me"]); lsctl("meSaid:" + step["me"]); time.sleep(0.4)
         elif "ocr" in step:
@@ -140,12 +192,15 @@ def run(scenario):
             card = card_state()
             res = check(step["check"], card, transcript, marks) if card else [{"check": "state", "pass": False, "detail": "coachCardState unreadable"}]
             card = card or {}
-            steps.append({"card": card, "results": res})
+            steps.append({"segment": segment, "at": int(time.time() - t0), "card": card, "results": res})
             for r in res:
                 print(f'  {"PASS" if r["pass"] else "FAIL"} {r["check"]}: {r["detail"]}')
+            if "judge" in step["check"] and card: pending = (steps[-1], step["check"], card, list(transcript))
+    grade()
     checks = [r for st in steps for r in st["results"]]
     ok = bool(checks) and all(r["pass"] for r in checks)
-    return {"id": scenario["id"], "name": scenario["name"], "pass": ok, "checks": steps, "transcript": transcript}
+    return {"id": scenario["id"], "name": scenario["name"], "pass": ok, "minutes": round((time.time() - t0) / 60, 1),
+            "checks": steps, "transcript": transcript}
 
 
 def main():
@@ -161,7 +216,8 @@ def main():
         results.append(run(sc))
         print(f'  => {"PASS" if results[-1]["pass"] else "FAIL"}')
     lsctl("stop")
-    stem = "walkthrough-acceptance" if name == "walkthrough-scenarios.json" else os.path.splitext(name)[0]
+    # basename: an absolute SCENARIOS path made the results overwrite the script itself.
+    stem = "walkthrough-acceptance" if name == "walkthrough-scenarios.json" else os.path.splitext(os.path.basename(name))[0]
     run_dir = os.path.join(HERE, "..", "docs", "evaluations", "runs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     os.makedirs(run_dir, exist_ok=True)
     out = os.path.join(run_dir, f"{stem}.json")

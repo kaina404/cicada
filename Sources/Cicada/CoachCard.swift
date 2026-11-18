@@ -19,6 +19,8 @@ struct CoachCard: Equatable {
     var then = ""
     var reason = ""
     var ops: [CoachCaseOp] = []
+    /// Most sentences SAY may keep: a self-introduction gets more (`CoachCards.sentenceLimit(for:)`).
+    var sentenceLimit = CoachCards.sentenceLimit
 
     static let marker = "<<<CICADA_CARD>>>"
     private static let headers = ["HEARD", "FIX", "SAY", "TYPE", "THEN", "REASON", "CASE"]

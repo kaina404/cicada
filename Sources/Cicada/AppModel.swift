@@ -2472,13 +2472,15 @@ final class AppModel: ObservableObject {
             guard let start = store.liveStart else { break }
             lineCounter += 1
             store.append(TranscriptLine(id: "m\(lineCounter)", t: Date().timeIntervalSince(start), speaker: "me", src: arg, srcLang: "en", dstLang: ""))
-            tickCandidate()
+            // An injected line stands in for recognized speech: without this a 40-minute injected interview
+            // ended itself after ten minutes (the 40-minute run, T-1).
+            heardWords(); tickCandidate()
         // themSaid:<text>: a line of the other side, to replay a recorded meeting turn by turn.
         case "themSaid":
             guard let start = store.liveStart else { break }
             lineCounter += 1
             store.append(TranscriptLine(id: "t\(lineCounter)", t: Date().timeIntervalSince(start), speaker: "them", src: arg, srcLang: "en", dstLang: ""))
-            tickCandidate()
+            heardWords(); tickCandidate()
         case "assistant":
             settings.continuousAssistant = arg == "on"
             if arg != "on" { manualAssistant = false }

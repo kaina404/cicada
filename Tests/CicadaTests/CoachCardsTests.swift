@@ -234,6 +234,19 @@ struct CoachCardsTests {
         #expect(engine.cards.past.map(\.card.say) == ["Got it, so the feed has to work offline too. I'd keep a local copy of the feed."])
     }
 
+    @Test func aScopeCheckOnANewProblemKeepsItsReadBack() {
+        // Seen in the 40-minute run, D-01: the problem statement ends without "?", so the echo filter removed the
+        // scope itself and left "Before I design, let me check the scope. Is that right?".
+        let line = "Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend."
+        var card = CoachCard()
+        card.say = "Before I design, let me check the scope. Users chat with the AI and see answers stream in, with stop and regenerate. Photo upload, voice mode and history on phone and web are also in. Is that right?"
+        #expect(CoachCards.checksNewProblem(card, line: line))
+        card.ops = [CoachCaseOp(op: "newProblem", text: "ChatGPT Android client")]
+        #expect(CoachCards.checksNewProblem(card, line: "Design the Android app for ChatGPT. Focus on the client."))
+        // Plain new requirements are still not read back (the newsfeed run, step 2).
+        #expect(!CoachCards.checksNewProblem(CoachCard(), line: "Posts can be text, images or video. Assume about 100 million daily users."))
+    }
+
     @Test func echoesOfTheInterviewerAndUnfoundedCoverageAreDropped() {
         // Seen in the newsfeed run, step 2.
         let line = "Good questions. Posts can be text, images or video. Show like and comment counts, and tapping a comment opens the detail screen. Assume about 100 million daily users, globally."
@@ -266,6 +279,42 @@ struct CoachCardsTests {
         #expect(CoachCards.capped(long) == "One. Two. Three. Four. Does that direction sound right?")
         #expect(CoachCards.capped("One. Two. Three. Four. Five. Six.") == "One. Two. Three. Four. Five.")
         #expect(CoachCards.capped("Short. Card.") == "Short. Card.")
+    }
+
+    // The 40-minute run, O-01: "two minutes" about yourself got a five-sentence card, about 30 seconds.
+    @Test func aSelfIntroductionGetsALongerCard() {
+        #expect(CoachCards.sentenceLimit(for: "Let's start easy: tell me about yourself in two minutes.") == CoachCards.introductionLimit)
+        #expect(CoachCards.sentenceLimit(for: "Could you give us a short introduction?") == CoachCards.introductionLimit)
+        #expect(CoachCards.sentenceLimit(for: "Give me an introduction to SSE.") == CoachCards.sentenceLimit)
+        #expect(CoachCards.sentenceLimit(for: "Tell me about a device-specific bug.") == CoachCards.sentenceLimit)
+        #expect(CoachCards.sentenceLimit(for: "What is the introduction of Compose about?") == CoachCards.sentenceLimit)
+        let intro = (1...16).map { "Sentence \($0)." }.joined(separator: " ")
+        var card = CoachCard(say: intro)
+        #expect(CoachScript.sentences(CoachCards.spoken(card)).count == CoachCards.sentenceLimit)
+        card.sentenceLimit = CoachCards.introductionLimit
+        #expect(CoachScript.sentences(CoachCards.spoken(card)).count == CoachCards.introductionLimit)
+    }
+
+    // The 40-minute runs, D-06 / D-13 / D-14: the decision and the Android points are repeated last.
+    @Test func theFocusHintRepeatsTheDecisionAndAndroidVoicePoints() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Design the ChatGPT Android app", evidence: ["t1"]),
+                      CoachCaseOp(op: "adopt", text: "Room is the single source of truth.", evidence: ["m2"])],
+                     evidence: CoachEvidence(interviewer: ["t1"], candidate: ["m2"]), at: 0)
+        let tokens = CoachCardPrompt.focusHint(memory: memory, latest: "Tokens arrive 50 times a second. How do you update the UI?")
+        #expect(tokens?.contains("Room is the single source of truth.") == true)
+        #expect(tokens?.contains("foreground service") == false)
+        let call = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "A phone call comes in during voice mode. What happens?")
+        #expect(call?.contains("foreground service of type microphone") == true)
+        #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "How do you test it?") == nil)
+    }
+
+    // The 40-minute run, P2-7: "Do you have any questions for me?" stayed under the two-week trade-off.
+    @Test func questionsForTheInterviewerOpenANewProblem() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Design the ChatGPT Android app")], evidence: CoachEvidence(), at: 0)
+        let line = CoachTurn(id: "t90", seconds: 9, role: "interviewer", text: "Okay, we're almost out of time. Do you have any questions for me?")
+        #expect(CoachCards.missingProblemOps([], newLines: [line], memory: memory).map(\.op) == ["newProblem"])
     }
 
     @Test func aSubtaskOfTheCurrentProblemIsNotANewProblem() {

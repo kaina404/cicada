@@ -151,6 +151,8 @@ final class CoachCards: ObservableObject {
         // Only a new question or a manual action may replace the card while it streams; a card that must
         // first be checked against the candidate's words waits for that check (AC-13).
         let live = trigger == .interviewer || card == nil || (trigger == .manual && said.isEmpty)
+        // A self-introduction keeps its longer limit while the candidate pages through it with "next".
+        let limit = Self.sentenceLimit(for: input.turns.last(where: { $0.role == "interviewer" })?.text ?? "")
         busy = true; failed = false; requests += 1; firstToken = nil
         let started = Date()
         emit("cardRequest", text: "\(trigger)")
@@ -163,7 +165,8 @@ final class CoachCards: ObservableObject {
                     guard !Task.isCancelled, self.token == tok else { return }
                     if self.firstToken == nil { self.firstToken = Date().timeIntervalSince(started) }
                     raw += piece
-                    guard live, let partial = try CoachCard.parse(raw, finished: false), !partial.keep, !partial.say.isEmpty else { continue }
+                    guard live, var partial = try CoachCard.parse(raw, finished: false), !partial.keep, !partial.say.isEmpty else { continue }
+                    partial.sentenceLimit = limit
                     if !shown { self.adopt(partial, now: self.clock); shown = true }
                     else { self.card = partial.withOps(self.card?.ops ?? []); self.onSay?(Self.spoken(partial), false) }
                 }
@@ -219,7 +222,7 @@ final class CoachCards: ObservableObject {
                 // After new requirements, DeepSeek reads them back; drop sentences that only echo the
                 // interviewer's informational line (the newsfeed run, step 2).
                 if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
-                   !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
+                   !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?"), !Self.checksNewProblem(card, line: latest.text) {
                     card.say = Self.withoutRecital(card.say, of: latest.text)
                 }
                 // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question).
@@ -235,7 +238,8 @@ final class CoachCards: ObservableObject {
                     guard !Task.isCancelled, self.token == tok else { return }
                     if !revised.isEmpty { card.say = revised }
                 }
-                card.say = Self.capped(card.say)
+                card.sentenceLimit = limit
+                card.say = Self.capped(card.say, limit: limit)
                 card.ops = Self.withoutSubtaskProblems(card.ops, newLines: newLines, memory: self.memory)
                 card.ops = Self.missingProblemOps(card.ops, newLines: newLines, memory: self.memory) + card.ops
                 // Also when the card's own adopt cites nothing usable (seen live: dropped as an alternative).
@@ -337,7 +341,7 @@ final class CoachCards: ObservableObject {
     // MARK: Pure helpers
 
     nonisolated static func spoken(_ card: CoachCard) -> String {
-        let say = capped(card.say)
+        let say = capped(card.say, limit: card.sentenceLimit)
         return card.fix.isEmpty ? say : card.fix + "\n" + say
     }
     nonisolated static func finishedReading(_ script: CoachScript) -> Bool {
@@ -383,12 +387,18 @@ final class CoachCards: ObservableObject {
     /// Cards are one small step: at most five sentences, plus a closing check-in question when there is one.
     /// Seen in the newsfeed run: a twelve-sentence design monologue on one card.
     nonisolated static let sentenceLimit = 5
-    nonisolated static func capped(_ say: String) -> String {
+    /// "Tell me about yourself in two minutes" got five sentences, about 30 seconds (the 40-minute run, O-01).
+    nonisolated static let introductionLimit = 14
+    nonisolated static func sentenceLimit(for line: String) -> Int {
+        line.range(of: #"(?i)\b(tell me (a bit |a little )?about yourself|introduce yourself|self-introduction|(give|do) (me |us )?(a |an )?(quick |short |brief )?introduction(?! (to|of|on|for)\b)|walk me through your (background|resume|cv|career))\b"#,
+                   options: .regularExpression) != nil ? introductionLimit : sentenceLimit
+    }
+    nonisolated static func capped(_ say: String, limit: Int = sentenceLimit) -> String {
         let sentences = CoachScript.sentences(say)
-        guard sentences.count > sentenceLimit else { return say }
-        var kept = Array(sentences.prefix(sentenceLimit - 1))
+        guard sentences.count > limit else { return say }
+        var kept = Array(sentences.prefix(limit - 1))
         if let last = sentences.last, last.trimmingCharacters(in: .whitespaces).hasSuffix("?") { kept.append(last) }
-        else { kept.append(sentences[sentenceLimit - 1]) }
+        else { kept.append(sentences[limit - 1]) }
         return kept.map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
     }
 
@@ -414,6 +424,11 @@ final class CoachCards: ObservableObject {
         }.map(\.element)
         return kept.isEmpty ? (sentences.first ?? say) : kept.joined(separator: " ")
     }
+    /// A new problem's statement is read back on purpose: the scope check repeats the task, then asks "Is that
+    /// right?" (the 40-minute run, D-01: dropping the echo left "let me check the scope. Is that right?").
+    nonisolated static func checksNewProblem(_ card: CoachCard, line: String) -> Bool {
+        card.ops.contains { $0.op == "newProblem" } || line.range(of: newQuestionPattern, options: [.regularExpression, .caseInsensitive]) != nil
+    }
     nonisolated static func appending(_ note: String, to messages: [[String: Any]]) -> [[String: Any]] {
         var messages = messages
         guard var content = messages.last?["content"] as? [[String: Any]] else { return messages }
@@ -438,7 +453,8 @@ final class CoachCards: ObservableObject {
         }
     }
     // "This is a new problem: design the chat cache" shares "cache" with the feed cache and was merged into it (ME-08).
-    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this))\b"#
+    // "Do you have any questions for me?" ends the design; it was filed under its last question (the 40-minute run, P2-7).
+    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this)|questions for (me|us))\b"#
 
     /// The interviewer plainly opens a new question or returns to an earlier one, and the card's CASE did
     /// not record it (AC-10): the app records it from the interviewer's own line. Applied before the

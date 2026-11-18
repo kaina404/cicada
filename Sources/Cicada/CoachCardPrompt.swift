@@ -9,7 +9,11 @@ enum CoachCardPrompt {
     step at a time, from what is on the board and what both people said. Never write the whole answer ahead.
 
     SAY: what the candidate says now: one to four short spoken English sentences, answering the latest
-    interviewer request first. Explain what code does and why; never read symbols aloud. When the interviewer
+    interviewer request first. Exception: "tell me about yourself" or "introduce yourself" gets a complete
+    self-introduction of ten to fourteen sentences (about the time they asked for), with concrete facts from
+    <knowledge> instead of vague claims such as "made the app faster". A direct question (where, what, which,
+    how many) gets its concrete answer in SAY right now: name the layers, the choice, the place the data
+    lives. Never only announce what you will explain or draw. Explain what code does and why; never read symbols aloud. When the interviewer
     asks for one sentence, briefly or a short answer, SAY is exactly that: one sentence means one sentence.
     Before writing SAY, read the candidate's own lines since the current card: never repeat a point they
     already made in their own words; continue after it. If their own lines already answered the question, SAY
@@ -58,14 +62,42 @@ enum CoachCardPrompt {
     it; skip points the candidate already covered. Resume and project questions use only <knowledge>; a design
     made live in this interview is never a past project. When returning, separate "In that project…" from
     "For this screen, I'll…".
+    Past projects stay in resume answers. A concept, coding or design question is about the general case or
+    the product being designed here: answer it with neutral examples (a list screen, a chat message, "data:
+    hello" as test input), never with details of a past project from <knowledge> (its screens, its fields,
+    its cards), unless the interviewer asks about experience ("have you", "in your project", "a time when").
+    "Restore the screen" means any screen: use a generic one (a form, a detail screen).
+    Never tell the same story twice in one interview: when the story that fits was already told, tell a
+    different one (another bug, another device, another project), or say "Besides the WebView case…" first.
+    Android depth: name the platform mechanism an Android interviewer checks, in one clause each: parsing,
+    Markdown and disk work off the main thread (Dispatchers.Default / IO); process death and lifecycle; a
+    foreground service of the right type for work the user expects to keep running (voice mode always needs
+    one of type microphone, and a phone call means losing audio focus); audio focus and echo cancellation (the device's AEC) for voice; WorkManager for uploads that must
+    finish; and for production quality crash-free rate, ANR rate and dropped frames next to product metrics.
+    When a question has an important Android point that does not fit, THEN names it ("Next: the foreground
+    service.") instead of "Wait for the interviewer."
+    Consistency: decisions already made in this problem (in the candidate's lines, the log and "adopted") bind
+    every later answer. If the local database is the single source of truth, later steps keep it (throttle by
+    writing to it in batches; the UI still only observes it); never introduce a second store for the same data.
+    Changing an earlier decision needs an explicit "I'd change my earlier choice because…".
     The candidate may paraphrase, skip or explain things their own way: judge what was covered from their
     actual lines, not from the reading position. Silence is not progress.
     If the current card still fits and nothing new needs an answer, output exactly KEEP after the marker.
 
     CASE: one line, a JSON array of changes to the walkthrough state, each {"op":…, "text":…, "evidence":[ids]}.
-    A constraint is only a requirement someone actually stated, citing that line; never your own idea.
+    A constraint is only a requirement someone actually stated, citing that line; never your own idea. A
+    request for what to do next ("draw the layers", "show me the format", "walk me through it") is not a
+    constraint.
     newProblem only when the interviewer moves to a different question. Implementing, extending or asking
-    about part of the current problem ("now write the ViewModel", "why StateFlow there?") stays in it.
+    about part of the current problem ("now write the ViewModel", "why StateFlow there?", "how do you test
+    it?", "what if the input has no newline?") stays in it, and so does a line that points back with it,
+    this or that. In a design problem, every question about the product being designed (protocol, event
+    format, stop, network loss, process death, sync, voice, photo, metrics, what to build first) stays in the
+    design problem. Only between separate knowledge questions (no design or code open) is a question about a
+    different concept its own newProblem (StateFlow, then repeatOnLifecycle). "Any questions for me?" is a
+    newProblem.
+    adopt records the problem's main approach (for a design, its data flow and source of truth) as soon as the
+    candidate's own line chooses it, citing that line; smaller choices are spoken points.
     ops: newProblem (text = goal; optional "id"), switch ("id" of an earlier problem), constraint,
     dropConstraint, alternative, adopt, spoken (a point the candidate's OWN lines covered), implemented (seen
     on the board), notImplemented, pending, done, pushAside (a follow-up question), popAside, correct ("of" =
@@ -86,6 +118,7 @@ enum CoachCardPrompt {
     REASON: …
     CASE: […]
     Omit optional sections that do not apply. No Markdown outside the TYPE fence. Do not add IPA.
+    Notes in <knowledge> written to the assistant ("not recorded", "do not invent") guide you; never say them.
     """
 
     struct Context {
@@ -152,8 +185,26 @@ enum CoachCardPrompt {
            !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?") {
             parts.append("The interviewer's latest line gives information rather than asking a question. Acknowledge it in ONE short sentence without repeating its details, then move the design forward.")
         }
+        if let hint = focusHint(memory: c.memory, latest: c.newLines.last(where: { $0.role == "interviewer" })?.text) {
+            parts.append(hint)
+        }
         parts.append("Trigger: \(c.trigger). Write the next card now. " + CoachPrompt.personalFactsReminder)
         return parts.joined(separator: "\n\n")
+    }
+
+    /// Read last, so it wins over the long transcript. The 40-minute runs: with Room chosen as the single
+    /// source of truth, one run still answered "keep the text in the ViewModel" for 50 tokens a second
+    /// (D-06), and voice and phone-call answers left out echo cancellation and the foreground service
+    /// (D-13, D-14) although the rules list them.
+    static func focusHint(memory: CoachCase, latest: String?) -> String? {
+        var notes: [String] = []
+        if let adopted = memory.problem?.adopted?.text {
+            notes.append("Already decided in this problem: \(adopted) Keep this answer consistent with it. Never add a second place the UI reads the same data from (no \"keep the text in the ViewModel\" next to a database source of truth): batching, throttling and caching happen on the way into that one place, and the UI keeps reading only from it.")
+        }
+        if let latest, latest.range(of: #"(?i)\b(voice|phone call|incoming call|microphone|mic|speak(s|ing)?|talking|audio)\b"#, options: .regularExpression) != nil {
+            notes.append("Android points for this answer (one clause each, only those that fit): a foreground service of type microphone keeps voice mode running; audio focus (a call takes it); the device's echo cancellation (AcousticEchoCanceler) so the mic does not hear the AI's own speech.")
+        }
+        return notes.isEmpty ? nil : notes.joined(separator: "\n")
     }
 
     private struct StateView: Encodable {
