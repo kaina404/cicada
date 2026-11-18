@@ -1,0 +1,639 @@
+{
+  "normalization": "NFKC, lowercase, curly apostrophe unified; punctuation to spaces, whitespace collapsed. Number spellings and abbreviations preserved; not the full planned numerical normalization.",
+  "metrics": {
+    "apple": {
+      "all": {
+        "samples": 18,
+        "reference_words": 636,
+        "wer": 0.11635220125786164,
+        "substitutions": 32,
+        "deletions": 23,
+        "insertions": 19,
+        "failures": 0,
+        "empty": 0
+      },
+      "ami": {
+        "samples": 12,
+        "reference_words": 188,
+        "wer": 0.09042553191489362,
+        "substitutions": 9,
+        "deletions": 6,
+        "insertions": 2,
+        "failures": 0,
+        "empty": 0
+      },
+      "earnings22": {
+        "samples": 6,
+        "reference_words": 448,
+        "wer": 0.12723214285714285,
+        "substitutions": 23,
+        "deletions": 17,
+        "insertions": 17,
+        "failures": 0,
+        "empty": 0
+      }
+    },
+    "qwen3asr": {
+      "all": {
+        "samples": 18,
+        "reference_words": 636,
+        "wer": 0.11635220125786164,
+        "substitutions": 21,
+        "deletions": 45,
+        "insertions": 8,
+        "failures": 0,
+        "empty": 0
+      },
+      "ami": {
+        "samples": 12,
+        "reference_words": 188,
+        "wer": 0.047872340425531915,
+        "substitutions": 2,
+        "deletions": 6,
+        "insertions": 1,
+        "failures": 0,
+        "empty": 0
+      },
+      "earnings22": {
+        "samples": 6,
+        "reference_words": 448,
+        "wer": 0.14508928571428573,
+        "substitutions": 19,
+        "deletions": 39,
+        "insertions": 7,
+        "failures": 0,
+        "empty": 0
+      }
+    },
+    "parakeet": {
+      "all": {
+        "samples": 18,
+        "reference_words": 636,
+        "wer": 0.17138364779874213,
+        "substitutions": 44,
+        "deletions": 57,
+        "insertions": 8,
+        "failures": 1,
+        "empty": 0
+      },
+      "ami": {
+        "samples": 12,
+        "reference_words": 188,
+        "wer": 0.12234042553191489,
+        "substitutions": 11,
+        "deletions": 8,
+        "insertions": 4,
+        "failures": 0,
+        "empty": 0
+      },
+      "earnings22": {
+        "samples": 6,
+        "reference_words": 448,
+        "wer": 0.19196428571428573,
+        "substitutions": 33,
+        "deletions": 49,
+        "insertions": 4,
+        "failures": 1,
+        "empty": 0
+      }
+    },
+    "nemotron": {
+      "all": {
+        "samples": 18,
+        "reference_words": 636,
+        "wer": 0.17295597484276728,
+        "substitutions": 39,
+        "deletions": 62,
+        "insertions": 9,
+        "failures": 0,
+        "empty": 0
+      },
+      "ami": {
+        "samples": 12,
+        "reference_words": 188,
+        "wer": 0.11702127659574468,
+        "substitutions": 7,
+        "deletions": 15,
+        "insertions": 0,
+        "failures": 0,
+        "empty": 0
+      },
+      "earnings22": {
+        "samples": 6,
+        "reference_words": 448,
+        "wer": 0.19642857142857142,
+        "substitutions": 32,
+        "deletions": 47,
+        "insertions": 9,
+        "failures": 0,
+        "empty": 0
+      }
+    }
+  },
+  "per_sample": [
+    {
+      "engine": "apple",
+      "id": "ihm-025",
+      "wer": 0.13333333333333333,
+      "reference": "SO EVEN IF IT DOESN'T WORK YOU CAN JIGGERY POKERY AROUND AND MAKE IT WORK",
+      "hypothesis": "So even if it doesn't work, you can jiggery puck it around and make it work."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-028",
+      "wer": 0.05263157894736842,
+      "reference": "YOU OPEN THE WINDOW YOU READ THROUGH IT YOU MIGHT CLICK ON YOU KNOW CLOSE IT AGAIN STRAIGHT AWAY",
+      "hypothesis": "Open the window, you read through it, you might click on, you know, close it again straight away."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-031",
+      "wer": 0.06666666666666667,
+      "reference": "I MEAN IF YOU ALREADY STARTED ON ON DOING YOUR STUFF I GUESS WE CAN",
+      "hypothesis": "I mean, if you already started on on doing stuff, I guess we can"
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-036",
+      "wer": 0.0,
+      "reference": "WE DON'T WE'RE NOT ACTUALLY SURE WHAT THE USER WANTS WITH IT BUT IT'S INTERESTING SO WHY NOT GIVE IT TO HIM",
+      "hypothesis": "We don't we're not actually sure what the user wants with it, but it's interesting, so why not give it to him?"
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-037",
+      "wer": 0.21052631578947367,
+      "reference": "PROBABLY JUST TWO OR TWO OR THREE OF WHATEVER WHATEVER THEY'RE LOOKING AT LIKE DIALOGUE ACTS TO WHATEVER CHARACTERISATIONS",
+      "hypothesis": "probably just 2 or 2 or 3 of whatever, whatever they're looking at, like dialogue acts to whatever characterizations."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-041",
+      "wer": 0.21428571428571427,
+      "reference": "ACTUALLY IS THE CODE ACCESSIBLE LIKE THE THE GUI STUFF THAT YOU'VE DONE YEAH",
+      "hypothesis": "Actually, is the code accessible, like the gooey stuff that you've done?"
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-043",
+      "wer": 0.0,
+      "reference": "SO IF THERE'S A DE SO IT'LL BE A CHOICE FROM THE MENU BUT YEAH EXACTLY",
+      "hypothesis": "So if there's a de- so it'll be a choice from the menu, but yeah, exactly."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-046",
+      "wer": 0.08333333333333333,
+      "reference": "WELL IT MIGHT COME TO US AS WE START PLAYING WITH IT",
+      "hypothesis": "Well, it might come to us because we start playing with it."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-052",
+      "wer": 0.21428571428571427,
+      "reference": "YEAH UH CHANGE THE CONTENTS OF THE SAME WINDOW LIKE FROM TRANSCRIPTION TO SUMMARY",
+      "hypothesis": "Yeah, it would change to contents of the same window. like from transcription to summary."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-070",
+      "wer": 0.06666666666666667,
+      "reference": "WELL IT'LL BE YOU KNOW STILL LIMITED VERSION OF YOU KNOW THE NEXT QUERY SEARCH",
+      "hypothesis": "Well, it'll be, you know, still limited version of, you know, the next query."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-072",
+      "wer": 0.0,
+      "reference": "SO IT'LL BE LIKE ALL THE UM CASES OF THAT TOPIC",
+      "hypothesis": "So it'll be like all the, um, cases of that topic."
+    },
+    {
+      "engine": "apple",
+      "id": "ihm-075",
+      "wer": 0.0625,
+      "reference": "COMMEN COMMENTING IT OUT ONE BIT AT A TIME AND RUNNING IT DOES IT WORK YEAH",
+      "hypothesis": "commenting it out one bit at a time and running it. Does it work? Yeah."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-000",
+      "wer": 0.08256880733944955,
+      "reference": "If we look into, take this forward, then what you can expect is that we, uh, you know, in in ' 22 we'll be able, as we recover from, uh, COVID, although we still have some weakness in, you know, the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, uh, but not at the level of Q4, uh, not the high level of Q4 because that is a seasonality and not at the low levels we've seen earlier in- in 2021, where we were very much focused on, focused on EBITDA in the midst of COVID.",
+      "hypothesis": "If we look into, take this forward, then what you can expect is that we, uh, you know, in the, in, in 22 will be able as we recover from, uh, COVID, although we still have some weakness in, you know, the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, uh, but not at the level of Q4, uh, not the high level of Q4, that's a seasonality, and not at the low levels we've seen earlier. in in 21, but we were very much focused on focused on EBI in the midst of COVID."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-001",
+      "wer": 0.288135593220339,
+      "reference": "As far as the capital allocation, the significant part of the capital we earned over last year, will be paid via dividends, then as I mentioned we still have some of the liabilities in our balance sheet that there is a significant excess of liabilities over receivables and this is also to be included in our cash flow funds.",
+      "hypothesis": "As far as the capital allocation, um, the the significant uh, part of the capital we uh, we earned uh, over last year, will be paid uh, via dividends. Then, as I mentioned, we still have some of the liabilities. Uh, in our balance with uh, there is a significant excess of liability of uh, liabilities uh, over receivables and this, this is also to be uh, included uh, in our cash flow funds."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-002",
+      "wer": 0.07936507936507936,
+      "reference": "So what we are looking into uh, very closely right now, that's actually something you are well familiar with, we have been working on green energy on new energy sources, namely, small uh, nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting uh, source of energy uh, in our sector, also, offshore uh, projects uh, are being considered.",
+      "hypothesis": "So what we are looking into, uh, very closely right now, That's actually something you are well familiar with. We have been working on green energy, on new energy sources. Namely, small nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting source of energy in our sector. Also offshore projects are being considered."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-003",
+      "wer": 0.13924050632911392,
+      "reference": "Uh, what influences our- our revenues are the digital sales as uh, then, the- the sales are each time the reporting is instant without the sub-distributor in the middle of the process, uh, and most of the sales occurred uh, for PC on all of the available PC platforms, there's obviously the Xbox digital, uh, sales and since Cyberpunk is non-existent on the Sony store front we we didn't report any revenues NSAs from- from this one.",
+      "hypothesis": "Uh, what influences our, our revenues are the digital sales as uh, than the, the sales are instant and the reporting is instant without the subdistributor in the middle of the process. Uh, and most of the sales occurred uh, for PC on all of the available PC platforms. There's obviously the Xbox digital uh sales. And some cyberpunk is not existent on the sunny storefront. We didn't report any revenues NSAs from from this one."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-004",
+      "wer": 0.1267605633802817,
+      "reference": "Uh, and I think the cooperation that we have with with the units within our technical organization, with the skillset that they bring, uh, the cooperation between the commercial and technical parts, that will yield, uh, better control and better, um, uh, performance and execution going forward in- in- in all aspects, and not just commercial, I would say, but also from a customer experience perspective, uh, and a production perspective.",
+      "hypothesis": "And I think the corporation that we have with, with the units within our technical organization, with the skill set that they bring. uh, corporation between the commercial and technical parts, that will yield uh, better control and better, uh, uh, performance and execution going forward within, in, in all aspects and not just commercial, I would say, but also from a custom experience perspective. uh and a production perspective."
+    },
+    {
+      "engine": "apple",
+      "id": "earnings22-005",
+      "wer": 0.08955223880597014,
+      "reference": "So, so, um, uh, I- I- I wouldn't read, um, much more into that from China, but I do believe, uh, uh, our feeling is consistent with what we communicated in Q4, saying that, um, we expect China to be, uh, you know, flat to-slightly positive for us for the year, despite the continued, uh, uh, negative development of the fermented category in, um, in China.",
+      "hypothesis": "So, um, uh, I, I, I wouldn't read, uh, much more into that from China, but I do believe, uh, uh, our feeling is consistent with what we communicated in Q4, saying that, um, we expect China to be, uh, you know, flat to slightly positive for us for the year. despite the continued negative development of the fermented category in China."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-025",
+      "wer": 0.06666666666666667,
+      "reference": "SO EVEN IF IT DOESN'T WORK YOU CAN JIGGERY POKERY AROUND AND MAKE IT WORK",
+      "hypothesis": "So even if it doesn't work, you can jiggery pokery it around and make it work."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-028",
+      "wer": 0.0,
+      "reference": "YOU OPEN THE WINDOW YOU READ THROUGH IT YOU MIGHT CLICK ON YOU KNOW CLOSE IT AGAIN STRAIGHT AWAY",
+      "hypothesis": "You open the window. You read through it. You might click on. You know, close it again straight away."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-031",
+      "wer": 0.06666666666666667,
+      "reference": "I MEAN IF YOU ALREADY STARTED ON ON DOING YOUR STUFF I GUESS WE CAN",
+      "hypothesis": "I mean, if you already started on on doing stuff, I guess we can."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-036",
+      "wer": 0.0,
+      "reference": "WE DON'T WE'RE NOT ACTUALLY SURE WHAT THE USER WANTS WITH IT BUT IT'S INTERESTING SO WHY NOT GIVE IT TO HIM",
+      "hypothesis": "We don't. We're not actually sure what the user wants with it, but it's interesting. So why not give it to him?"
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-037",
+      "wer": 0.05263157894736842,
+      "reference": "PROBABLY JUST TWO OR TWO OR THREE OF WHATEVER WHATEVER THEY'RE LOOKING AT LIKE DIALOGUE ACTS TO WHATEVER CHARACTERISATIONS",
+      "hypothesis": "Probably just two or two or three of whatever whatever they're looking at, like dialogue acts to whatever characterizations."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-041",
+      "wer": 0.07142857142857142,
+      "reference": "ACTUALLY IS THE CODE ACCESSIBLE LIKE THE THE GUI STUFF THAT YOU'VE DONE YEAH",
+      "hypothesis": "Actually, is the code accessible, like the the GUI stuff that you've done?"
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-043",
+      "wer": 0.0625,
+      "reference": "SO IF THERE'S A DE SO IT'LL BE A CHOICE FROM THE MENU BUT YEAH EXACTLY",
+      "hypothesis": "So if there's a, so it'll be a choice from the menu. But yeah, exactly."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-046",
+      "wer": 0.0,
+      "reference": "WELL IT MIGHT COME TO US AS WE START PLAYING WITH IT",
+      "hypothesis": "Well, it might come to us as we start playing with it."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-052",
+      "wer": 0.07142857142857142,
+      "reference": "YEAH UH CHANGE THE CONTENTS OF THE SAME WINDOW LIKE FROM TRANSCRIPTION TO SUMMARY",
+      "hypothesis": "Yeah, change the contents of the same window, like from transcription to summary."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-070",
+      "wer": 0.0,
+      "reference": "WELL IT'LL BE YOU KNOW STILL LIMITED VERSION OF YOU KNOW THE NEXT QUERY SEARCH",
+      "hypothesis": "Well, it'll be you know still limited version of you know the next query search."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-072",
+      "wer": 0.09090909090909091,
+      "reference": "SO IT'LL BE LIKE ALL THE UM CASES OF THAT TOPIC",
+      "hypothesis": "So it'll be like all the cases of that topic."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "ihm-075",
+      "wer": 0.125,
+      "reference": "COMMEN COMMENTING IT OUT ONE BIT AT A TIME AND RUNNING IT DOES IT WORK YEAH",
+      "hypothesis": "Coming, commenting it out one bit at a time, running it. Does it work? Yeah."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-000",
+      "wer": 0.11926605504587157,
+      "reference": "If we look into, take this forward, then what you can expect is that we, uh, you know, in in ' 22 we'll be able, as we recover from, uh, COVID, although we still have some weakness in, you know, the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, uh, but not at the level of Q4, uh, not the high level of Q4 because that is a seasonality and not at the low levels we've seen earlier in- in 2021, where we were very much focused on, focused on EBITDA in the midst of COVID.",
+      "hypothesis": "If we look into take this forward, then what you can expect is that we, you know, in in 22, will be able as we recover from COVID, although we still have some weakness in you know the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, but not at the level of Q4, not the higher level of Q4 because that's a seasonality, and not at the lower level. We've seen earlier in in 21, but we were very much focused on focused on EBITDA in the midst of COVID."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-001",
+      "wer": 0.11864406779661017,
+      "reference": "As far as the capital allocation, the significant part of the capital we earned over last year, will be paid via dividends, then as I mentioned we still have some of the liabilities in our balance sheet that there is a significant excess of liabilities over receivables and this is also to be included in our cash flow funds.",
+      "hypothesis": "As far as the capital allocation, the significant part of the capital we we earned over last year will be paid via dividend. Then, as I mentioned, we still have some of the liabilities in our balance sheet. There is a significant excess of liability of liabilities over receivables, and this. This is also to be included in our cash flow plans."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-002",
+      "wer": 0.09523809523809523,
+      "reference": "So what we are looking into uh, very closely right now, that's actually something you are well familiar with, we have been working on green energy on new energy sources, namely, small uh, nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting uh, source of energy uh, in our sector, also, offshore uh, projects uh, are being considered.",
+      "hypothesis": "So, what we are looking into very closely right now—that's actually something you are well familiar with. We have been working on green energy, on new energy sources, namely small nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting source of energy in our sector, also. Offshore projects are being considered."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-003",
+      "wer": 0.17721518987341772,
+      "reference": "Uh, what influences our- our revenues are the digital sales as uh, then, the- the sales are each time the reporting is instant without the sub-distributor in the middle of the process, uh, and most of the sales occurred uh, for PC on all of the available PC platforms, there's obviously the Xbox digital, uh, sales and since Cyberpunk is non-existent on the Sony store front we we didn't report any revenues NSAs from- from this one.",
+      "hypothesis": "What influences our our revenues are the digital sales, as then the the sales are instant and the reporting is instant, without the sub distributor in the middle of the process, and most of the sales occurred for PC on all of the available PC platforms. There is obviously the Xbox digital sales, and since Cyberpunk is not existent on the Sony storefront, we we didn't report any. Revenues and sales from from this one."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-004",
+      "wer": 0.18309859154929578,
+      "reference": "Uh, and I think the cooperation that we have with with the units within our technical organization, with the skillset that they bring, uh, the cooperation between the commercial and technical parts, that will yield, uh, better control and better, um, uh, performance and execution going forward in- in- in all aspects, and not just commercial, I would say, but also from a customer experience perspective, uh, and a production perspective.",
+      "hypothesis": "And I think the cooperation that we have with with the unit within our technical organisation, with the skill set that they bring, cooperation between the commercial and technical parts, that will yield better control, better performance, and execution going forward in in in all aspects, and not just commercial, I would say, but also from a customer experience perspective. And the production perspective."
+    },
+    {
+      "engine": "qwen3asr",
+      "id": "earnings22-005",
+      "wer": 0.1791044776119403,
+      "reference": "So, so, um, uh, I- I- I wouldn't read, um, much more into that from China, but I do believe, uh, uh, our feeling is consistent with what we communicated in Q4, saying that, um, we expect China to be, uh, you know, flat to-slightly positive for us for the year, despite the continued, uh, uh, negative development of the fermented category in, um, in China.",
+      "hypothesis": "So I I wouldn't read much more into that from China, but I do believe our feeling is consistent with what we communicated in Q4, saying that we expect China to be you know flat to slightly positive for us for the year, despite the continued negative development of the fermented category. In in China."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-025",
+      "wer": 0.13333333333333333,
+      "reference": "SO EVEN IF IT DOESN'T WORK YOU CAN JIGGERY POKERY AROUND AND MAKE IT WORK",
+      "hypothesis": "So even if it doesn't work, you can jiggery pugger it around and make it work."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-028",
+      "wer": 0.0,
+      "reference": "YOU OPEN THE WINDOW YOU READ THROUGH IT YOU MIGHT CLICK ON YOU KNOW CLOSE IT AGAIN STRAIGHT AWAY",
+      "hypothesis": "you open the window, you read through it, you might click on you know, close it again straight away."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-031",
+      "wer": 0.06666666666666667,
+      "reference": "I MEAN IF YOU ALREADY STARTED ON ON DOING YOUR STUFF I GUESS WE CAN",
+      "hypothesis": "I mean, if you already started on on doing stuff, I guess we can"
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-036",
+      "wer": 0.09090909090909091,
+      "reference": "WE DON'T WE'RE NOT ACTUALLY SURE WHAT THE USER WANTS WITH IT BUT IT'S INTERESTING SO WHY NOT GIVE IT TO HIM",
+      "hypothesis": "We don't we're not actually sure what the user wants with it, but it is interesting, so why not give it to him?"
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-037",
+      "wer": 0.15789473684210525,
+      "reference": "PROBABLY JUST TWO OR TWO OR THREE OF WHATEVER WHATEVER THEY'RE LOOKING AT LIKE DIALOGUE ACTS TO WHATEVER CHARACTERISATIONS",
+      "hypothesis": "Probably just two or two or three of whatever, whatever they're looking at, like dialogue next and whatever characterization."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-041",
+      "wer": 0.07142857142857142,
+      "reference": "ACTUALLY IS THE CODE ACCESSIBLE LIKE THE THE GUI STUFF THAT YOU'VE DONE YEAH",
+      "hypothesis": "Actually is the code accessible, like the the GUI stuff that you've done."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-043",
+      "wer": 0.3125,
+      "reference": "SO IF THERE'S A DE SO IT'LL BE A CHOICE FROM THE MENU BUT YEAH EXACTLY",
+      "hypothesis": "So if there's a d so it'll be a choice for the menu."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-046",
+      "wer": 0.16666666666666666,
+      "reference": "WELL IT MIGHT COME TO US AS WE START PLAYING WITH IT",
+      "hypothesis": "Well, it might come to us to start playing with it."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-052",
+      "wer": 0.14285714285714285,
+      "reference": "YEAH UH CHANGE THE CONTENTS OF THE SAME WINDOW LIKE FROM TRANSCRIPTION TO SUMMARY",
+      "hypothesis": "Yeah, change the contents of the same window, like from a transcription to summary."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-070",
+      "wer": 0.13333333333333333,
+      "reference": "WELL IT'LL BE YOU KNOW STILL LIMITED VERSION OF YOU KNOW THE NEXT QUERY SEARCH",
+      "hypothesis": "Well it'll be, you know, still limited version of, you know, the next query we'll type."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-072",
+      "wer": 0.09090909090909091,
+      "reference": "SO IT'LL BE LIKE ALL THE UM CASES OF THAT TOPIC",
+      "hypothesis": "So it'll be like all the um cases of that company."
+    },
+    {
+      "engine": "parakeet",
+      "id": "ihm-075",
+      "wer": 0.125,
+      "reference": "COMMEN COMMENTING IT OUT ONE BIT AT A TIME AND RUNNING IT DOES IT WORK YEAH",
+      "hypothesis": "Coming commenting it out one bit at a time, running it, does it work? Yeah."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-000",
+      "wer": 0.23853211009174313,
+      "reference": "If we look into, take this forward, then what you can expect is that we, uh, you know, in in ' 22 we'll be able, as we recover from, uh, COVID, although we still have some weakness in, you know, the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, uh, but not at the level of Q4, uh, not the high level of Q4 because that is a seasonality and not at the low levels we've seen earlier in- in 2021, where we were very much focused on, focused on EBITDA in the midst of COVID.",
+      "hypothesis": "If we look and to take this for then what you can expect is that we know in the end in 22 will be able as we recover from COVID, although we still have some weak end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, but not at the level of Q four, not the high level of Q four, because that's a seasonality, and not at the low levels we've seen earlier in twenty one, when we were very much focused on focused on EPIDA in the midst of COVID."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-001",
+      "wer": 0.06779661016949153,
+      "reference": "As far as the capital allocation, the significant part of the capital we earned over last year, will be paid via dividends, then as I mentioned we still have some of the liabilities in our balance sheet that there is a significant excess of liabilities over receivables and this is also to be included in our cash flow funds.",
+      "hypothesis": "As far as the capital allocation, the significant third of the capital we earn over last year will be paid via dividend. Then, as I mentioned, we still have some of the liabilities in our balance sheet. There is a significant excess of liabilities over receivables, and this is also to be included in our cash flow funds."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-002",
+      "wer": 0.14285714285714285,
+      "reference": "So what we are looking into uh, very closely right now, that's actually something you are well familiar with, we have been working on green energy on new energy sources, namely, small uh, nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting uh, source of energy uh, in our sector, also, offshore uh, projects uh, are being considered.",
+      "hypothesis": "So what we are looking into very closely now is actually something you are well familiar with. We have been working on green energy on new energy source namely small nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting source of energy in our sector. Also offshore projects are being considered."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-003",
+      "wer": 0.24050632911392406,
+      "reference": "Uh, what influences our- our revenues are the digital sales as uh, then, the- the sales are each time the reporting is instant without the sub-distributor in the middle of the process, uh, and most of the sales occurred uh, for PC on all of the available PC platforms, there's obviously the Xbox digital, uh, sales and since Cyberpunk is non-existent on the Sony store front we we didn't report any revenues NSAs from- from this one.",
+      "hypothesis": "What influences our revenues are the digital sales as the saves are instant and the reporting is instant with the sub distributor of the process. And most of the sales occurred for PC on all of the available PC platforms. There is obviously the Xbox digital sales. And since Cyberpunk is non-existent on the Sony store front, we we didn't report any revenues, any sales from this one."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-004",
+      "wer": 0.14084507042253522,
+      "reference": "Uh, and I think the cooperation that we have with with the units within our technical organization, with the skillset that they bring, uh, the cooperation between the commercial and technical parts, that will yield, uh, better control and better, um, uh, performance and execution going forward in- in- in all aspects, and not just commercial, I would say, but also from a customer experience perspective, uh, and a production perspective.",
+      "hypothesis": "And I think the cooperation that we have with the unit, but in our technical organization, with the skills that they bring cooperation between the commercial and technical parts, that will yield uh better control, better um uh performance and execution going forward in in in all aspects and and not just commercial I would say, but also from a customer experience perspective uh and a production perspective."
+    },
+    {
+      "engine": "parakeet",
+      "id": "earnings22-005",
+      "wer": 0.26865671641791045,
+      "reference": "So, so, um, uh, I- I- I wouldn't read, um, much more into that from China, but I do believe, uh, uh, our feeling is consistent with what we communicated in Q4, saying that, um, we expect China to be, uh, you know, flat to-slightly positive for us for the year, despite the continued, uh, uh, negative development of the fermented category in, um, in China.",
+      "hypothesis": "So I wouldn't read much into that from China. But I believe our feeling is consistent with what we communicated in Q4, saying that we expect China to be flat to slightly positive for us for the year, despite the continued negative development of the fermented category in China."
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-025",
+      "wer": 0.2,
+      "reference": "SO EVEN IF IT DOESN'T WORK YOU CAN JIGGERY POKERY AROUND AND MAKE IT WORK",
+      "hypothesis": "So even if it doesn't work, you can jigger grid around and make it"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-028",
+      "wer": 0.0,
+      "reference": "YOU OPEN THE WINDOW YOU READ THROUGH IT YOU MIGHT CLICK ON YOU KNOW CLOSE IT AGAIN STRAIGHT AWAY",
+      "hypothesis": "You open the window, you read through it.  You might click on you know close it again straight away"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-031",
+      "wer": 0.13333333333333333,
+      "reference": "I MEAN IF YOU ALREADY STARTED ON ON DOING YOUR STUFF I GUESS WE CAN",
+      "hypothesis": "I mean, if you already started on doing stuff I guess we can"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-036",
+      "wer": 0.22727272727272727,
+      "reference": "WE DON'T WE'RE NOT ACTUALLY SURE WHAT THE USER WANTS WITH IT BUT IT'S INTERESTING SO WHY NOT GIVE IT TO HIM",
+      "hypothesis": "I'm not actually sure what the user wants with it, but it's interesting so why not give it"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-037",
+      "wer": 0.05263157894736842,
+      "reference": "PROBABLY JUST TWO OR TWO OR THREE OF WHATEVER WHATEVER THEY'RE LOOKING AT LIKE DIALOGUE ACTS TO WHATEVER CHARACTERISATIONS",
+      "hypothesis": "Probably just two or two or three of whatever whatever they're looking at like dialogue acts to whatever character"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-041",
+      "wer": 0.07142857142857142,
+      "reference": "ACTUALLY IS THE CODE ACCESSIBLE LIKE THE THE GUI STUFF THAT YOU'VE DONE YEAH",
+      "hypothesis": "Actually, is the code accessible like the the GUI stuff that you've done"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-043",
+      "wer": 0.0625,
+      "reference": "SO IF THERE'S A DE SO IT'LL BE A CHOICE FROM THE MENU BUT YEAH EXACTLY",
+      "hypothesis": "So if there's a so it'll be a choice from the menu, but yeah exactly"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-046",
+      "wer": 0.08333333333333333,
+      "reference": "WELL IT MIGHT COME TO US AS WE START PLAYING WITH IT",
+      "hypothesis": "Well it might come to us as we start playing with"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-052",
+      "wer": 0.21428571428571427,
+      "reference": "YEAH UH CHANGE THE CONTENTS OF THE SAME WINDOW LIKE FROM TRANSCRIPTION TO SUMMARY",
+      "hypothesis": "Yeah change uh contents of the same window like from transcription to"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-070",
+      "wer": 0.2,
+      "reference": "WELL IT'LL BE YOU KNOW STILL LIMITED VERSION OF YOU KNOW THE NEXT QUERY SEARCH",
+      "hypothesis": "Well it'll be still limited version of you know the next query se"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-072",
+      "wer": 0.09090909090909091,
+      "reference": "SO IT'LL BE LIKE ALL THE UM CASES OF THAT TOPIC",
+      "hypothesis": "So it'll be like all the cases of that topic"
+    },
+    {
+      "engine": "nemotron",
+      "id": "ihm-075",
+      "wer": 0.0625,
+      "reference": "COMMEN COMMENTING IT OUT ONE BIT AT A TIME AND RUNNING IT DOES IT WORK YEAH",
+      "hypothesis": "Coming commenting it out one bit at a time and running it.  Does it work?  Yeah"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-000",
+      "wer": 0.1559633027522936,
+      "reference": "If we look into, take this forward, then what you can expect is that we, uh, you know, in in ' 22 we'll be able, as we recover from, uh, COVID, although we still have some weakness in, you know, the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, uh, but not at the level of Q4, uh, not the high level of Q4 because that is a seasonality and not at the low levels we've seen earlier in- in 2021, where we were very much focused on, focused on EBITDA in the midst of COVID.",
+      "hypothesis": "If we look into take this forward, then what you can expect is that we uh in the in twenty two will be able, as we recover from COVID, although we still have some weakness in you know the end of January and in January as we speak, we will be able to get to a better sustainable commercial rate, but not at the level of Q four not the high level of Q four because that's a seasonality and not at the low levels we've seen earlier in twenty one where we were very much focused on focused on EBDA in the midst of COVID"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-001",
+      "wer": 0.11864406779661017,
+      "reference": "As far as the capital allocation, the significant part of the capital we earned over last year, will be paid via dividends, then as I mentioned we still have some of the liabilities in our balance sheet that there is a significant excess of liabilities over receivables and this is also to be included in our cash flow funds.",
+      "hypothesis": "As far as the capital allocation, the significant part of the capital we earned over last year will be paid via dividend.  Then as I mentioned, we still have some of the liabilities in our balance sheet there is a significant excess of liability of liability over receivables and this this is also to be included in our cash flow plans"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-002",
+      "wer": 0.15873015873015872,
+      "reference": "So what we are looking into uh, very closely right now, that's actually something you are well familiar with, we have been working on green energy on new energy sources, namely, small uh, nuclear reactors as a source of energy, hydrogen, which is potentially a very interesting uh, source of energy uh, in our sector, also, offshore uh, projects uh, are being considered.",
+      "hypothesis": "So what we are looking into very closely right now that's actually something you well familiar with.  We have been working on green energy on new energy sources, namely small nuclear reactors as a source of energy.  Hydrogen.  We just potentially very interesting source of energy in our sector also offshore projects are being considered"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-003",
+      "wer": 0.26582278481012656,
+      "reference": "Uh, what influences our- our revenues are the digital sales as uh, then, the- the sales are each time the reporting is instant without the sub-distributor in the middle of the process, uh, and most of the sales occurred uh, for PC on all of the available PC platforms, there's obviously the Xbox digital, uh, sales and since Cyberpunk is non-existent on the Sony store front we we didn't report any revenues NSAs from- from this one.",
+      "hypothesis": "What influences our our revenues are the digital sales as the sales are instant and the reporting is instant without the subdistributor in the middle of the process, and most of the sales occurred for PC on all of the available PC platforms there is obviously the exbox digital sales and since cyberpunk is not existent on the sunny storefront we we didn't report any revenues and the sales from from this one"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-004",
+      "wer": 0.19718309859154928,
+      "reference": "Uh, and I think the cooperation that we have with with the units within our technical organization, with the skillset that they bring, uh, the cooperation between the commercial and technical parts, that will yield, uh, better control and better, um, uh, performance and execution going forward in- in- in all aspects, and not just commercial, I would say, but also from a customer experience perspective, uh, and a production perspective.",
+      "hypothesis": "And I think the cooperation that we have with with the units within our technical organisation with the skill set that they bring cooperation between the commercial and technical parts that will yield better control, better performance and executation going forward in all aspects and not just commercial, I would say, but also from a customer experience perspective and a production perspective"
+    },
+    {
+      "engine": "nemotron",
+      "id": "earnings22-005",
+      "wer": 0.2835820895522388,
+      "reference": "So, so, um, uh, I- I- I wouldn't read, um, much more into that from China, but I do believe, uh, uh, our feeling is consistent with what we communicated in Q4, saying that, um, we expect China to be, uh, you know, flat to-slightly positive for us for the year, despite the continued, uh, uh, negative development of the fermented category in, um, in China.",
+      "hypothesis": "So II wouldn't read uh much more into that from China, but I do believe our feeling is consistent with what we communicated in Q four saying that we expect China to be flat to slightly positive for us for the year despite the continued negative development of the fermented category in China"
+    }
+  ]
+}

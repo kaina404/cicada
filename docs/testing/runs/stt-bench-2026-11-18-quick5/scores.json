@@ -1,0 +1,143 @@
+{
+  "scope": "5 minute engine-only realtime replay, no human reference, no WER, no translation or UI latency",
+  "metrics": {
+    "apple": {
+      "completed": true,
+      "first_nonempty_text_at": 1.12143699999433,
+      "duration_processed": 300,
+      "words": 769,
+      "text_updates": 1054,
+      "non_prefix_updates": 34,
+      "decode_seconds": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "max": null
+      },
+      "input_backlog_seconds": {
+        "n": 0,
+        "p50": null,
+        "p95": null,
+        "max": null
+      },
+      "peak_rss_bytes": 50888704,
+      "mlx_peak_bytes": null,
+      "last_at": 300.0684874166618
+    },
+    "qwen3asr": {
+      "completed": true,
+      "first_nonempty_text_at": 1.1122397080034716,
+      "duration_processed": 300,
+      "words": 757,
+      "text_updates": 268,
+      "non_prefix_updates": 200,
+      "decode_seconds": {
+        "n": 300,
+        "p50": 0.2259,
+        "p95": 0.3356,
+        "max": 0.5071962920046644
+      },
+      "input_backlog_seconds": {
+        "n": 300,
+        "p50": 0.2292,
+        "p95": 0.3387,
+        "max": 0.5122280409996165
+      },
+      "peak_rss_bytes": 2455797760,
+      "mlx_peak_bytes": 2753544362,
+      "last_at": 300.2106730410014,
+      "common_4way_anchor_delta_seconds": {
+        "n": 277,
+        "p50": 0.0181,
+        "p95": 0.7045,
+        "max": 2.03811749999295
+      }
+    },
+    "parakeet": {
+      "completed": true,
+      "first_nonempty_text_at": 1.1511932499997783,
+      "duration_processed": 300,
+      "words": 699,
+      "text_updates": 281,
+      "non_prefix_updates": 241,
+      "decode_seconds": {
+        "n": 300,
+        "p50": 0.3215,
+        "p95": 0.3563,
+        "max": 0.38850329199340194
+      },
+      "input_backlog_seconds": {
+        "n": 300,
+        "p50": 0.3249,
+        "p95": 0.3598,
+        "max": 0.3901510420109844
+      },
+      "peak_rss_bytes": 871628800,
+      "mlx_peak_bytes": 2508856452,
+      "last_at": 300.4205504170095,
+      "common_4way_anchor_delta_seconds": {
+        "n": 277,
+        "p50": 0.1952,
+        "p95": 0.9079,
+        "max": 13.854341209007544
+      }
+    },
+    "nemotron": {
+      "completed": true,
+      "first_nonempty_text_at": 1.3462255000049481,
+      "duration_processed": 300,
+      "words": 768,
+      "text_updates": 592,
+      "non_prefix_updates": 0,
+      "decode_seconds": {
+        "n": 934,
+        "p50": 0.039,
+        "p95": 0.0457,
+        "max": 0.05899520833918359
+      },
+      "input_backlog_seconds": {
+        "n": 934,
+        "p50": 0.0426,
+        "p95": 0.0502,
+        "max": 0.06553637500328469
+      },
+      "peak_rss_bytes": 1269186560,
+      "mlx_peak_bytes": null,
+      "last_at": 300.0434677916637,
+      "common_4way_anchor_delta_seconds": {
+        "n": 277,
+        "p50": -0.3669,
+        "p95": 0.2243,
+        "max": 0.3320782083465019
+      }
+    }
+  },
+  "pairwise_anchors": {
+    "qwen3asr": {
+      "shared_unique_5gram_candidate_minus_apple_seconds": {
+        "n": 512,
+        "p50": -0.0254,
+        "p95": 0.7127,
+        "max": 2.03811749999295
+      }
+    },
+    "parakeet": {
+      "shared_unique_5gram_candidate_minus_apple_seconds": {
+        "n": 360,
+        "p50": 0.2073,
+        "p95": 3.6304,
+        "max": 21.099428125016857
+      }
+    },
+    "nemotron": {
+      "shared_unique_5gram_candidate_minus_apple_seconds": {
+        "n": 496,
+        "p50": -0.3694,
+        "p95": 0.2309,
+        "max": 0.3366870000172639
+      }
+    }
+  },
+  "common_4way_anchor_count": 277,
+  "anchor_caveat": "Only uniquely occurring shared text, not proven correct; selection bias; overlapping anchors are correlated; not word-level ground truth."
+}
