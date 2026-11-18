@@ -1,0 +1,1276 @@
+{
+ "date": "2026-11-18",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 2,
+ "scenarios": [
+  {
+   "id": "DF1",
+   "name": "design recheck 1",
+   "pass": false,
+   "minutes": 6.5,
+   "checks": [
+    {
+     "segment": "5 系统设计",
+     "at": 35,
+     "them": "Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+     "settle_s": 5.4,
+     "first_ms": "837",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "837",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "none",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT, client focus, what I need from the backend",
+      "say": "Got it. Before I design, let me confirm the scope. In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web. Out of scope for now: the model itself and the web client. On the non-functional side, I care about a fast first token, no jank while text streams in, and a message that never gets lost or sent twice.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 41,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "837",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "none",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT, client focus, what I need from the backend",
+      "say": "Got it. Before I design, let me confirm the scope. In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web. Out of scope for now: the model itself and the web client. On the non-functional side, I care about a fast first token, no jank while text streams in, and a message that never gets lost or sent twice.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "problems_min",
+       "pass": false,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer opens by confirming scope (in/out of scope) and proposes an MVP ordering (streaming first, then stop/regenerate, history sync, photo, voice), stays on the ChatGPT app, and contains no leftover SSE parser or resume talk."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 100,
+     "them": "Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+     "settle_s": 4.3,
+     "first_ms": "552",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "1",
+      "first_ms": "552",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw the main layers, where does the data live",
+      "say": "The data lives in a local database on the phone, and that's the single source of truth. The layers are the UI, the ViewModel, the repository, the local database and the network. The UI only reads from the database, and the repository writes network results into it.",
+      "type": "none",
+      "then": "Next I'd show the message flow: the user sends, the repository saves it, then the stream writes chunks into the database.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 6->7 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 105,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "1",
+      "first_ms": "552",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw the main layers, where does the data live",
+      "say": "The data lives in a local database on the phone, and that's the single source of truth. The layers are the UI, the ViewModel, the repository, the local database and the network. The UI only reads from the database, and the repository writes network results into it.",
+      "type": "none",
+      "then": "Next I'd show the message flow: the user sends, the repository saves it, then the stream writes chunks into the database.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer names UI, ViewModel, repository, local database, and network layers, and states messages live in the local database as the single source of truth, with no incorrect claims."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 139,
+     "them": "What is your single source of truth?",
+     "settle_s": 4.3,
+     "first_ms": "898",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "12",
+      "keeps": "2",
+      "first_ms": "898",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what is your single source of truth",
+      "say": "The Room database is the single source of truth. The UI never reads the network directly. Every message, including the streaming one, is written to Room first, and the UI just observes it. So the screen always shows what's saved, even after process death.",
+      "type": "none",
+      "then": "Next I'd show the send and stream flow: the user sends, the repository saves the message, then the stream writes chunks into the same row.",
+      "fix": "",
+      "past": "9",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 10->12 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 144,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "12",
+      "keeps": "2",
+      "first_ms": "898",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what is your single source of truth",
+      "say": "The Room database is the single source of truth. The UI never reads the network directly. Every message, including the streaming one, is written to Room first, and the UI just observes it. So the screen always shows what's saved, even after process death.",
+      "type": "none",
+      "then": "Next I'd show the send and stream flow: the user sends, the repository saves the message, then the stream writes chunks into the same row.",
+      "fix": "",
+      "past": "9",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states Room is the single source of truth, that the UI never reads the network directly, and that streamed content is written to Room first with the UI observing it."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 179,
+     "them": "How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+     "settle_s": 4.4,
+     "first_ms": "703",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "3",
+      "first_ms": "703",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to phone. WebSocket is for two-way traffic, and we don't need that here. Polling wastes requests and makes the first token slower.",
+      "type": "none",
+      "then": "Next I'd cover stop: the client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 16->17 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 184,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "3",
+      "first_ms": "703",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to phone. WebSocket is for two-way traffic, and we don't need that here. Polling wastes requests and makes the first token slower.",
+      "type": "none",
+      "then": "Next I'd cover stop: the client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer picks SSE for one-way server-to-client streaming and explains WebSocket is for two-way traffic, covering the required reasoning; it does not paste code."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 210,
+     "them": "What does one event look like? Show me the format.",
+     "settle_s": 4.4,
+     "first_ms": "712",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "3",
+      "first_ms": "712",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What does one event look like? Show me the format.",
+      "say": "Each event is one small JSON object on its own line. It carries the requestId, the messageId, the text piece, and a sequence number. The last event has a done flag, and the server sends a heartbeat comment now and then to keep the connection open.",
+      "type": "draw@SSE event format: event: delta ⏎ data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":3,\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":9,\"finishReason\":\"stop\"} ⏎  ⏎ : heartbeat",
+      "then": "Next: stop. The client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "17",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 20->21 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 215,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "3",
+      "first_ms": "712",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What does one event look like? Show me the format.",
+      "say": "Each event is one small JSON object on its own line. It carries the requestId, the messageId, the text piece, and a sequence number. The last event has a done flag, and the server sends a heartbeat comment now and then to keep the connection open.",
+      "type": "draw@SSE event format: event: delta ⏎ data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":3,\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":9,\"finishReason\":\"stop\"} ⏎  ⏎ : heartbeat",
+      "then": "Next: stop. The client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "17",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer shows a plausible SSE event format with requestId, messageId, seq, delta text, a done event with finishReason, and a heartbeat, and it's framed as a proposal rather than an existing ChatGPT API."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 256,
+     "them": "Tokens arrive 50 times a second. How do you update the UI without lag?",
+     "settle_s": 4.9,
+     "first_ms": "890",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "5",
+      "first_ms": "890",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Tokens arrive 50 times a second, how to avoid lag",
+      "say": "Fifty updates a second is too many for the UI. So I don't write every token to Room. I keep the growing text in memory in the ViewModel. Then I show it at most every 50 to 100 milliseconds, or once per frame. Room gets one write when the answer finishes or the user stops it.",
+      "type": "none",
+      "then": "Next: stop. The client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 24->26 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 261,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "5",
+      "first_ms": "890",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Tokens arrive 50 times a second, how to avoid lag",
+      "say": "Fifty updates a second is too many for the UI. So I don't write every token to Room. I keep the growing text in memory in the ViewModel. Then I show it at most every 50 to 100 milliseconds, or once per frame. Room gets one write when the answer finishes or the user stops it.",
+      "type": "none",
+      "then": "Next: stop. The client closes the stream and sends a stop call with the requestId.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer batches tokens (updates every 50–100 ms or once per frame), writes to Room in chunks (one write at finish/stop), and explicitly avoids per-token UI updates."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 308,
+     "them": "Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+     "settle_s": 4.4,
+     "first_ms": "693",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "5",
+      "first_ms": "693",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "AI talking, user starts talking — what happens",
+      "say": "The AI stops talking right away. The mic is open, so the device's echo cancellation keeps the AI's own voice out of the input. I also take audio focus, so a phone call pauses voice mode. Then the user's speech goes to the server for transcription, and the reply streams back the same way as text.",
+      "type": "none",
+      "then": "Next: the foreground service that keeps voice mode alive when the screen is off.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 31->32 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 312,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "5",
+      "first_ms": "693",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "AI talking, user starts talking — what happens",
+      "say": "The AI stops talking right away. The mic is open, so the device's echo cancellation keeps the AI's own voice out of the input. I also take audio focus, so a phone call pauses voice mode. Then the user's speech goes to the server for transcription, and the reply streams back the same way as text.",
+      "type": "none",
+      "then": "Next: the foreground service that keeps voice mode alive when the screen is off.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers stopping playback immediately, echo cancellation so the AI doesn't hear itself, and sending the user's speech to the server, and it correctly treats voice as now in scope after being parked earlier."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 354,
+     "them": "A phone call comes in during voice mode. What happens?",
+     "settle_s": 3.8,
+     "first_ms": "701",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "6",
+      "first_ms": "701",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "phone call during voice mode",
+      "say": "The call takes audio focus, so voice mode pauses. I stop the mic and the playback, and I keep the foreground service alive. When the call ends, I get audio focus back and resume listening. If the user was mid-sentence, the transcript up to the last seq is already saved, so nothing is lost.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 36->37 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 358,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "6",
+      "first_ms": "701",
+      "problem": "Design the Android app for ChatGPT: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; client focus, define backend needs",
+      "adopted": "Local database is the single source of truth for conversations; UI observes it; backend provides streaming with request ID, stop, and cursor-based history sync",
+      "constraints": "[\"Users chat with the AI and see answers stream in\", \"Users can stop or regenerate an answer\", \"Users can upload a photo\", \"Users can use voice mode\", \"Users see their history on phone and web\", \"Focus on the client; tell what is needed from the backend\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "phone call during voice mode",
+      "say": "The call takes audio focus, so voice mode pauses. I stop the mic and the playback, and I keep the foreground service alive. When the call ends, I get audio focus back and resume listening. If the user was mid-sentence, the transcript up to the last seq is already saved, so nothing is lost.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers audio focus loss pausing voice mode, stopping mic and playback, keeping a foreground service alive, and resuming cleanly after the call, with nothing wrong."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+    "Candidate: Got it.",
+    "Candidate: Before I design, let me confirm the scope.",
+    "Candidate: In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web.",
+    "Candidate: Out of scope for now: the model itself and the web client.",
+    "Candidate: On the non-functional side, I care about a fast first token, no jank while text streams in, and a message that never gets lost or sent twice.",
+    "Interviewer: Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+    "Candidate: The data lives in a local database on the phone, and that's the single source of truth.",
+    "Candidate: The layers are the UI, the ViewModel, the repository, the local database and the network.",
+    "Candidate: The UI only reads from the database, and the repository writes network results into it.",
+    "[board] Compose UI -> ViewModel -> Repository -> Room DB | Remote API (SSE)",
+    "Interviewer: What is your single source of truth?",
+    "Candidate: The Room database is the single source of truth.",
+    "Candidate: The UI never reads the network directly.",
+    "Candidate: Every message, including the streaming one, is written to Room first, and the UI just observes it.",
+    "Candidate: So the screen always shows what's saved, even after process death.",
+    "Interviewer: How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+    "Candidate: SSE, because the answer only flows one way, from server to phone.",
+    "Candidate: WebSocket is for two-way traffic, and we don't need that here.",
+    "Candidate: Polling wastes requests and makes the first token slower.",
+    "Interviewer: What does one event look like? Show me the format.",
+    "Candidate: Each event is one small JSON object on its own line.",
+    "Candidate: It carries the requestId, the messageId, the text piece, and a sequence number.",
+    "Candidate: The last event has a done flag, and the server sends a heartbeat comment now and then to keep the connection open.",
+    "[board] event: delta | data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":3,\"text\":\"Hello\"} |  | event: done | data: {\"requestId\":\"r1\",\"messageId\":\"m1\",\"seq\":9,\"finishReason\":\"stop\"} |  | : heartbeat",
+    "Interviewer: Tokens arrive 50 times a second. How do you update the UI without lag?",
+    "Candidate: Fifty updates a second is too many for the UI.",
+    "Candidate: So I don't write every token to Room.",
+    "Candidate: I keep the growing text in memory in the ViewModel.",
+    "Candidate: Then I show it at most every 50 to 100 milliseconds, or once per frame.",
+    "Candidate: Room gets one write when the answer finishes or the user stops it.",
+    "Interviewer: Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+    "Candidate: The AI stops talking right away.",
+    "Candidate: The mic is open, so the device's echo cancellation keeps the AI's own voice out of the input.",
+    "Candidate: I also take audio focus, so a phone call pauses voice mode.",
+    "Candidate: Then the user's speech goes to the server for transcription, and the reply streams back the same way as text.",
+    "Interviewer: A phone call comes in during voice mode. What happens?",
+    "Candidate: The call takes audio focus, so voice mode pauses.",
+    "Candidate: I stop the mic and the playback, and I keep the foreground service alive.",
+    "Candidate: When the call ends, I get audio focus back and resume listening.",
+    "Candidate: If the user was mid-sentence, the transcript up to the last seq is already saved, so nothing is lost."
+   ]
+  },
+  {
+   "id": "DF2",
+   "name": "design recheck 2",
+   "pass": false,
+   "minutes": 6.5,
+   "checks": [
+    {
+     "segment": "5 系统设计",
+     "at": 35,
+     "them": "Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+     "settle_s": 5.4,
+     "first_ms": "948",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "948",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "none",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT, client focus, what I need from the backend",
+      "say": "Got it. Let me confirm the scope first. In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history on phone and web. Out of scope for now: model training and the web client itself. Can I start with the data flow?",
+      "type": "none",
+      "then": "Wait for the interviewer to confirm the scope, then draw the layers.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 41,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "948",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "none",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT, client focus, what I need from the backend",
+      "say": "Got it. Let me confirm the scope first. In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history on phone and web. Out of scope for now: model training and the web client itself. Can I start with the data flow?",
+      "type": "none",
+      "then": "Wait for the interviewer to confirm the scope, then draw the layers.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "problems_min",
+       "pass": false,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer opens by confirming scope (in-scope features and out-of-scope items) before drawing anything, stays on the ChatGPT app, and contains no leftover SSE parser code or resume talk."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 87,
+     "them": "Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+     "settle_s": 5.0,
+     "first_ms": "1049",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "0",
+      "first_ms": "1049",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Draw the main layers; where does the data live",
+      "say": "I'll draw the layers now. The data lives in a local database on the phone, and the UI only reads from it. The network layer writes new messages and streamed chunks into that database. So the screen never waits on the network.",
+      "type": "none",
+      "then": "Next I'll cover stop and regenerate, then what the backend must provide.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 6->7 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 92,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "0",
+      "first_ms": "1049",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Draw the main layers; where does the data live",
+      "say": "I'll draw the layers now. The data lives in a local database on the phone, and the UI only reads from it. The network layer writes new messages and streamed chunks into that database. So the screen never waits on the network.",
+      "type": "none",
+      "then": "Next I'll cover stop and regenerate, then what the backend must provide.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer describes the UI, network layer, and local database, and states messages live in the local database with the UI reading from it."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 123,
+     "them": "What is your single source of truth?",
+     "settle_s": 3.8,
+     "first_ms": "695",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "13",
+      "keeps": "1",
+      "first_ms": "695",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What is your single source of truth?",
+      "say": "The Room database is the single source of truth. The UI only reads from it, and the repository is the only writer. So the network never touches the screen directly.",
+      "type": "none",
+      "then": "Next: how stop and regenerate work on top of that.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 11->13 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 127,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "13",
+      "keeps": "1",
+      "first_ms": "695",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "What is your single source of truth?",
+      "say": "The Room database is the single source of truth. The UI only reads from it, and the repository is the only writer. So the network never touches the screen directly.",
+      "type": "none",
+      "then": "Next: how stop and regenerate work on top of that.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume."
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states the Room database is the single source of truth, the UI only reads from it, and the repository is the only writer so the network never touches the screen directly."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 154,
+     "them": "How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+     "settle_s": 4.4,
+     "first_ms": "691",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "2",
+      "first_ms": "691",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to phone. WebSocket is more work, and I don't need to send audio or video back. Polling is simple, but it adds delay and wastes requests. With SSE I get each chunk as it arrives, and I can stop by closing the connection.",
+      "type": "none",
+      "then": "Next: what the backend must send with each chunk, so a dropped connection can resume.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 16->17 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 159,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "17",
+      "keeps": "2",
+      "first_ms": "691",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to phone. WebSocket is more work, and I don't need to send audio or video back. Polling is simple, but it adds delay and wastes requests. With SSE I get each chunk as it arrives, and I can stop by closing the connection.",
+      "type": "none",
+      "then": "Next: what the backend must send with each chunk, so a dropped connection can resume.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer picks SSE for the one-way server-to-client stream, explains WebSocket is more work and only needed for two-way (audio/video back), and notes polling adds delay and wastes requests. It does not paste code."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 198,
+     "them": "What does one event look like? Show me the format.",
+     "settle_s": 3.8,
+     "first_ms": "856",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "22",
+      "keeps": "3",
+      "first_ms": "856",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "show me the event format",
+      "say": "Each event is one small JSON line. It carries the message id, the chunk of text, and a type, so the client knows if it's a delta or the end.",
+      "type": "draw@Remote API (SSE) box: event: delta ⏎ data: {\"id\":\"m1\",\"type\":\"delta\",\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ data: {\"id\":\"m1\",\"type\":\"done\",\"finish\":\"stop\"}",
+      "then": "Next: how the repository writes these chunks into Room without flooding the UI.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 21->22 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 202,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "22",
+      "keeps": "3",
+      "first_ms": "856",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "show me the event format",
+      "say": "Each event is one small JSON line. It carries the message id, the chunk of text, and a type, so the client knows if it's a delta or the end.",
+      "type": "draw@Remote API (SSE) box: event: delta ⏎ data: {\"id\":\"m1\",\"type\":\"delta\",\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ data: {\"id\":\"m1\",\"type\":\"done\",\"finish\":\"stop\"}",
+      "then": "Next: how the repository writes these chunks into Room without flooding the UI.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The shown event format includes a message id, delta text, and a done event, but it lacks any sequence or offset field, and it is not framed as a proposal to agree with the backend."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 233,
+     "them": "Tokens arrive 50 times a second. How do you update the UI without lag?",
+     "settle_s": 4.3,
+     "first_ms": "721",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "4",
+      "first_ms": "721",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "tokens arrive 50 times a second, how to avoid lag",
+      "say": "I wouldn't update the UI on every chunk. The repository writes chunks into Room, and the UI collects from the database. I'd batch the writes, maybe every 50 to 100 milliseconds, so the screen updates a few times a second, not 50. Compose then only redraws the changed text. The stream itself runs on Dispatchers.IO, never the main thread.",
+      "type": "none",
+      "then": "Next: what happens if the connection drops mid-answer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 24->26 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 238,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "26",
+      "keeps": "4",
+      "first_ms": "721",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "tokens arrive 50 times a second, how to avoid lag",
+      "say": "I wouldn't update the UI on every chunk. The repository writes chunks into Room, and the UI collects from the database. I'd batch the writes, maybe every 50 to 100 milliseconds, so the screen updates a few times a second, not 50. Compose then only redraws the changed text. The stream itself runs on Dispatchers.IO, never the main thread.",
+      "type": "none",
+      "then": "Next: what happens if the connection drops mid-answer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer says it wouldn't update the UI on every chunk, batches writes every 50–100 ms, and keeps the stream off the main thread, covering the batching and no-per-token-update requirements."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 286,
+     "them": "Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+     "settle_s": 4.4,
+     "first_ms": "852",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "6",
+      "first_ms": "852",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "AI talking, user starts talking",
+      "say": "I'd stop the AI's speech right away and switch the mic to the user. The voice session runs in a foreground service of type microphone, so it keeps going when the screen is off. I'd also handle audio focus, because a phone call takes it and I have to pause. And I'd use the device's echo cancellation, so the mic doesn't pick up the AI's own voice.",
+      "type": "none",
+      "then": "Next: how the user's speech becomes text and reaches the chat.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 31->32 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 290,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "6",
+      "first_ms": "852",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "AI talking, user starts talking",
+      "say": "I'd stop the AI's speech right away and switch the mic to the user. The voice session runs in a foreground service of type microphone, so it keeps going when the screen is off. I'd also handle audio focus, because a phone call takes it and I have to pause. And I'd use the device's echo cancellation, so the mic doesn't pick up the AI's own voice.",
+      "type": "none",
+      "then": "Next: how the user's speech becomes text and reaches the chat.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers stopping playback immediately, echo cancellation, and foreground service/audio focus handling, and it correctly treats voice as now in scope after being parked earlier. It does not explicitly mention VAD detection or cancelling the current answer on the server, but it covers at least two required points and says nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 338,
+     "them": "A phone call comes in during voice mode. What happens?",
+     "settle_s": 4.4,
+     "first_ms": "783",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "7",
+      "first_ms": "783",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "phone call during voice mode",
+      "say": "The call takes audio focus, so I pause the session and stop the AI's speech. I keep the voice session alive in the foreground service, but I don't record while the call is active. When the call ends, I ask the user to tap to continue, so the mic doesn't open by surprise. If the call runs long, I show a clear \"paused\" state and keep the transcript in Room.",
+      "type": "none",
+      "then": "Next: what the client needs from the backend for stop and resume.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 36->37 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计",
+     "at": 343,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "7",
+      "first_ms": "783",
+      "problem": "Design the Android client for a ChatGPT-style app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend.",
+      "adopted": "Local database is the single source of truth; UI observes it; messages written locally first, streamed chunks written as they arrive; backend provides streaming endpoint, stable message id and resume.",
+      "constraints": "[\"Users chat with the AI and see answers stream in.\", \"Users can stop or regenerate an answer.\", \"Users can upload a photo.\", \"Users can use voice mode.\", \"Users see their history on phone and web.\", \"Focus on the client; state what is needed from the backend.\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "phone call during voice mode",
+      "say": "The call takes audio focus, so I pause the session and stop the AI's speech. I keep the voice session alive in the foreground service, but I don't record while the call is active. When the call ends, I ask the user to tap to continue, so the mic doesn't open by surprise. If the call runs long, I show a clear \"paused\" state and keep the transcript in Room.",
+      "type": "none",
+      "then": "Next: what the client needs from the backend for stop and resume.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers audio focus loss pausing the session, stopping AI speech and recording during the call, the foreground service with microphone type keeping the session alive, and a clean resume via user tap after the call ends."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+    "Candidate: Got it.",
+    "Candidate: Let me confirm the scope first.",
+    "Candidate: In scope: chat with streaming answers, stop and regenerate, photo upload, voice mode, and history on phone and web.",
+    "Candidate: Out of scope for now: model training and the web client itself.",
+    "Candidate: Can I start with the data flow?",
+    "Interviewer: Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+    "Candidate: I'll draw the layers now.",
+    "Candidate: The data lives in a local database on the phone, and the UI only reads from it.",
+    "Candidate: The network layer writes new messages and streamed chunks into that database.",
+    "Candidate: So the screen never waits on the network.",
+    "[board] Compose UI -> ViewModel -> Repository -> Room DB | Remote API (SSE)",
+    "Interviewer: What is your single source of truth?",
+    "Candidate: The Room database is the single source of truth.",
+    "Candidate: The UI only reads from it, and the repository is the only writer.",
+    "Candidate: So the network never touches the screen directly.",
+    "Interviewer: How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+    "Candidate: SSE, because the answer only flows one way, from server to phone.",
+    "Candidate: WebSocket is more work, and I don't need to send audio or video back.",
+    "Candidate: Polling is simple, but it adds delay and wastes requests.",
+    "Candidate: With SSE I get each chunk as it arrives, and I can stop by closing the connection.",
+    "Interviewer: What does one event look like? Show me the format.",
+    "Candidate: Each event is one small JSON line.",
+    "Candidate: It carries the message id, the chunk of text, and a type, so the client knows if it's a delta or the end.",
+    "[board] event: delta | data: {\"id\":\"m1\",\"type\":\"delta\",\"text\":\"Hello\"} |  | event: done | data: {\"id\":\"m1\",\"type\":\"done\",\"finish\":\"stop\"}",
+    "Interviewer: Tokens arrive 50 times a second. How do you update the UI without lag?",
+    "Candidate: I wouldn't update the UI on every chunk.",
+    "Candidate: The repository writes chunks into Room, and the UI collects from the database.",
+    "Candidate: I'd batch the writes, maybe every 50 to 100 milliseconds, so the screen updates a few times a second, not 50.",
+    "Candidate: Compose then only redraws the changed text.",
+    "Candidate: The stream itself runs on Dispatchers.IO, never the main thread.",
+    "Interviewer: Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+    "Candidate: I'd stop the AI's speech right away and switch the mic to the user.",
+    "Candidate: The voice session runs in a foreground service of type microphone, so it keeps going when the screen is off.",
+    "Candidate: I'd also handle audio focus, because a phone call takes it and I have to pause.",
+    "Candidate: And I'd use the device's echo cancellation, so the mic doesn't pick up the AI's own voice.",
+    "Interviewer: A phone call comes in during voice mode. What happens?",
+    "Candidate: The call takes audio focus, so I pause the session and stop the AI's speech.",
+    "Candidate: I keep the voice session alive in the foreground service, but I don't record while the call is active.",
+    "Candidate: When the call ends, I ask the user to tap to continue, so the mic doesn't open by surprise.",
+    "Candidate: If the call runs long, I show a clear \"paused\" state and keep the transcript in Room."
+   ]
+  }
+ ]
+}

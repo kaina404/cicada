@@ -1,0 +1,2514 @@
+{
+ "date": "2026-11-18",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "I40",
+   "name": "40-minute Android interview, one meeting",
+   "pass": false,
+   "minutes": 29.6,
+   "checks": [
+    {
+     "segment": "1 开场",
+     "at": 12,
+     "them": "Hi, thanks for joining. I'm one of the Android engineers here. Let's start easy: tell me about yourself in two minutes.",
+     "settle_s": 7.7,
+     "first_ms": "687",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "687",
+      "problem": "Tell me about yourself in two minutes",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "tell me about yourself in two minutes",
+      "say": "Good morning, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 20,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "687",
+      "problem": "Tell me about yourself in two minutes",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "tell me about yourself in two minutes",
+      "say": "Good morning, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer mentions KKday (AI trip planner and Android work) and earlier Android roles at Debon Securities and Ping An, with no invented employers, titles, or numbers and no code."
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 178,
+     "them": "What did you build most recently on Android?",
+     "settle_s": 4.4,
+     "first_ms": "967",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "8",
+      "first_ms": "967",
+      "problem": "What did you build most recently on Android?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "what did you build most recently on Android",
+      "say": "The most recent Android work is the Android version of Cabinet AI. I wrote it in Kotlin and Compose, and I built the base framework myself. I used AI coding tools for the simple screens, and it isn't on Google Play yet.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 20->21 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 183,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "8",
+      "first_ms": "967",
+      "problem": "What did you build most recently on Android?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "what did you build most recently on Android",
+      "say": "The most recent Android work is the Android version of Cabinet AI. I wrote it in Kotlin and Compose, and I built the base framework myself. I used AI coding tools for the simple screens, and it isn't on Google Play yet.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer identifies the most recent Android work as Cabinet AI, a personal project not yet on Google Play, and does not repeat the self-introduction."
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 218,
+     "them": "Walk me through the SSE itinerary feature at KKday, from server to screen.",
+     "settle_s": 5.5,
+     "first_ms": "898",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "25",
+      "keeps": "10",
+      "first_ms": "898",
+      "problem": "Walk me through the SSE itinerary feature at KKday, from server to screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "walk me through the SSE itinerary feature, server to screen",
+      "say": "Sure. The user sends a destination, a budget and a number of days. The backend agent picks places and bookable products, then streams the plan back as SSE events, one day at a time. On Android, I read that stream and show each day card as it arrives, so Day 1 appears while the rest is still being made.",
+      "type": "none",
+      "then": "Next I'd cover the event format and what happens when a check fails.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 24->25 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 223,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "25",
+      "keeps": "10",
+      "first_ms": "898",
+      "problem": "Walk me through the SSE itinerary feature at KKday, from server to screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "walk me through the SSE itinerary feature, server to screen",
+      "say": "Sure. The user sends a destination, a budget and a number of days. The backend agent picks places and bookable products, then streams the plan back as SSE events, one day at a time. On Android, I read that stream and show each day card as it arrives, so Day 1 appears while the rest is still being made.",
+      "type": "none",
+      "then": "Next I'd cover the event format and what happens when a check fails.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer explains the SSE flow—backend agent streams the plan day by day, Android renders each day card as it arrives so Day 1 shows while the rest is generated—stays on the past KKday project, and cites no numbers beyond the 300,000 daily requests."
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 293,
+     "them": "What exactly did you write on Android, and what did your team write?",
+     "settle_s": 4.9,
+     "first_ms": "1040",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "10",
+      "first_ms": "1040",
+      "problem": "Walk me through the SSE itinerary feature at KKday, from server to screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what did you write on Android, what did your team write",
+      "say": "On Android, I wrote the SSE client myself. That means the stream reading, the day card list, and the resume and retry logic. I also wrote the code that checks each card before it shows. The backend agent, the product tools and the personalization data layer were my design, but the backend team wrote most of that code. The app team built the screens around my cards.",
+      "type": "none",
+      "then": "Next I'd cover how the app handles a day card that arrives out of order.",
+      "fix": "",
+      "past": "19",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 31->32 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 298,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "10",
+      "first_ms": "1040",
+      "problem": "Walk me through the SSE itinerary feature at KKday, from server to screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what did you write on Android, what did your team write",
+      "say": "On Android, I wrote the SSE client myself. That means the stream reading, the day card list, and the resume and retry logic. I also wrote the code that checks each card before it shows. The backend agent, the product tools and the personalization data layer were my design, but the backend team wrote most of that code. The app team built the screens around my cards.",
+      "type": "none",
+      "then": "Next I'd cover how the app handles a day card that arrives out of order.",
+      "fix": "",
+      "past": "19",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer clearly separates the candidate's own Android work (SSE client, stream reading, day card list, resume/retry logic, card checks) from the team's work (backend team wrote most backend code, app team built surrounding screens), and it does not claim sole authorship of everything or invent names."
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 349,
+     "them": "The crash rate went down 90% at Debon. What was the hardest crash?",
+     "settle_s": 4.9,
+     "first_ms": "1109",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "38",
+      "keeps": "12",
+      "first_ms": "1109",
+      "problem": "What was the hardest crash at Debon?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "hardest crash at Debon, crash rate down 90%",
+      "say": "The hardest one was a WebView crash on certain phone models. It only happened on a few devices, so it was hard to reproduce. I got the model list from Bugly and found a pattern. Then I fixed it group by group, starting with the most common one. Most of our crashes were null pointers, out-of-memory errors and WebView problems.",
+      "type": "none",
+      "then": "Next: how I checked a fix actually worked.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 37->38 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 354,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "38",
+      "keeps": "12",
+      "first_ms": "1109",
+      "problem": "What was the hardest crash at Debon?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "hardest crash at Debon, crash rate down 90%",
+      "say": "The hardest one was a WebView crash on certain phone models. It only happened on a few devices, so it was hard to reproduce. I got the model list from Bugly and found a pattern. Then I fixed it group by group, starting with the most common one. Most of our crashes were null pointers, out-of-memory errors and WebView problems.",
+      "type": "none",
+      "then": "Next: how I checked a fix actually worked.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer names WebView crashes on certain phone models as the hardest, mentions Bugly and a plausible general fix approach, and lists null pointers, out-of-memory, and WebView problems as crash types—covering multiple listed points without inventing exact device models or numbers, and keeping the facts at Debon."
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 399,
+     "them": "Tell me about a device-specific bug. How did you find it?",
+     "settle_s": 3.9,
+     "first_ms": "543",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "44",
+      "keeps": "12",
+      "first_ms": "543",
+      "problem": "Tell me about a device-specific bug and how you found it",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "5",
+      "written": "false",
+      "heard": "tell me about a device-specific bug",
+      "say": "At Debon, one crash only happened on a few old phone models. I couldn't reproduce it on my own phone. So I grouped the crashes by phone model in Bugly. The pattern showed it was an old WebView version. I added a version check, a simpler page for those phones, and a fallback.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 43->44 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 简历深挖",
+     "at": 403,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "44",
+      "keeps": "12",
+      "first_ms": "543",
+      "problem": "Tell me about a device-specific bug and how you found it",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "5",
+      "written": "false",
+      "heard": "tell me about a device-specific bug",
+      "say": "At Debon, one crash only happened on a few old phone models. I couldn't reproduce it on my own phone. So I grouped the crashes by phone model in Bugly. The pattern showed it was an old WebView version. I added a version check, a simpler page for those phones, and a fallback.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer tells a plausible device-specific WebView crash story on old phone models and explains it was found by grouping Bugly crash reports by phone model, consistent with the Debon context."
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 448,
+     "them": "Okay, let's move on to some Android fundamentals. What happens when a child coroutine fails? When do you use SupervisorJob?",
+     "settle_s": 4.3,
+     "first_ms": "972",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "50",
+      "keeps": "12",
+      "first_ms": "972",
+      "problem": "What happens when a child coroutine fails, and when do you use SupervisorJob?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "6",
+      "written": "false",
+      "heard": "child coroutine fails, when to use SupervisorJob",
+      "say": "When a child coroutine fails, it cancels its parent. The parent then cancels all its other children, and the failure goes up to the scope. So one failed request can kill unrelated work in the same scope. I use SupervisorJob when the children should fail independently, like separate requests on one screen. One failure then doesn't cancel the others.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 49->50 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 453,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "50",
+      "keeps": "12",
+      "first_ms": "972",
+      "problem": "What happens when a child coroutine fails, and when do you use SupervisorJob?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "6",
+      "written": "false",
+      "heard": "child coroutine fails, when to use SupervisorJob",
+      "say": "When a child coroutine fails, it cancels its parent. The parent then cancels all its other children, and the failure goes up to the scope. So one failed request can kill unrelated work in the same scope. I use SupervisorJob when the children should fail independently, like separate requests on one screen. One failure then doesn't cancel the others.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "6"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer correctly explains that a failing child cancels its parent and siblings in a regular Job, and that SupervisorJob keeps children independent so one failure doesn't cancel others; it stays on coroutines with no resume content."
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 496,
+     "them": "StateFlow, SharedFlow, Channel: which one for one-time UI events?",
+     "settle_s": 4.4,
+     "first_ms": "642",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "56",
+      "keeps": "14",
+      "first_ms": "642",
+      "problem": "StateFlow, SharedFlow or Channel for one-time UI events?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "StateFlow, SharedFlow, Channel for one-time UI events",
+      "say": "For one-time UI events, I'd use a Channel. A StateFlow always keeps the latest value, so a new collector gets an old event again. A SharedFlow with no replay can drop an event when nobody is collecting. A Channel delivers each event once, to one collector. I'd receive it with `receiveAsFlow` and collect it with `repeatOnLifecycle`, so events aren't lost when the screen is in the background.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 55->56 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 500,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "56",
+      "keeps": "14",
+      "first_ms": "642",
+      "problem": "StateFlow, SharedFlow or Channel for one-time UI events?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "StateFlow, SharedFlow, Channel for one-time UI events",
+      "say": "For one-time UI events, I'd use a Channel. A StateFlow always keeps the latest value, so a new collector gets an old event again. A SharedFlow with no replay can drop an event when nobody is collecting. A Channel delivers each event once, to one collector. I'd receive it with `receiveAsFlow` and collect it with `repeatOnLifecycle`, so events aren't lost when the screen is in the background.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer compares all three correctly — StateFlow replays the latest value to new collectors, a no-replay SharedFlow can drop events with no collector, and a Channel delivers each event once to one collector — and picks Channel with a clear reason, in short spoken form."
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 548,
+     "them": "Why do we use repeatOnLifecycle to collect a Flow?",
+     "settle_s": 4.4,
+     "first_ms": "1070",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "62",
+      "keeps": "14",
+      "first_ms": "1070",
+      "problem": "StateFlow, SharedFlow or Channel for one-time UI events?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "Why use repeatOnLifecycle to collect a Flow?",
+      "say": "It ties collection to the screen's lifecycle. When the screen goes to the background, collection stops, so we don't keep doing work nobody sees. When it comes back, collection starts again, so the UI always gets fresh data. Without it, a collector on the Activity keeps running and can leak or crash.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 61->62 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 552,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "62",
+      "keeps": "14",
+      "first_ms": "1070",
+      "problem": "StateFlow, SharedFlow or Channel for one-time UI events?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "Why use repeatOnLifecycle to collect a Flow?",
+      "say": "It ties collection to the screen's lifecycle. When the screen goes to the background, collection stops, so we don't keep doing work nobody sees. When it comes back, collection starts again, so the UI always gets fresh data. Without it, a collector on the Activity keeps running and can leak or crash.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer explains collection stops in the background and restarts on return, avoiding background work/UI updates and leaks. It doesn't mention launchWhenStarted, but the criterion lists that as an example, and at least two points are covered correctly with nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 591,
+     "them": "What survives process death? How do you restore the screen?",
+     "settle_s": 3.9,
+     "first_ms": "800",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "67",
+      "keeps": "15",
+      "first_ms": "800",
+      "problem": "What survives process death, and how do you restore the screen?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "8",
+      "written": "false",
+      "heard": "What survives process death, how to restore the screen",
+      "say": "Only saved state survives. I'd keep the screen's input in `SavedStateHandle`, so the ViewModel gets it back after the process is killed. The list of day cards I'd reload from the server, or from a local cache if we had one. Then the screen rebuilds from that state instead of starting empty.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 66->67 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 Android 基础",
+     "at": 595,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "67",
+      "keeps": "15",
+      "first_ms": "800",
+      "problem": "What survives process death, and how do you restore the screen?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "8",
+      "written": "false",
+      "heard": "What survives process death, how to restore the screen",
+      "say": "Only saved state survives. I'd keep the screen's input in `SavedStateHandle`, so the ViewModel gets it back after the process is killed. The list of day cards I'd reload from the server, or from a local cache if we had one. Then the screen rebuilds from that state instead of starting empty.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer correctly states only saved state survives, uses SavedStateHandle for the ViewModel to recover input after process death, and restores by reloading day cards from server/cache — covering the required points without claiming the ViewModel survives."
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 647,
+     "them": "Let's switch gears to some live coding. Write a function that takes a Flow of String of SSE text chunks and emits complete events. A chunk can cut an event anywhere.",
+     "settle_s": 4.9,
+     "first_ms": "1049",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "72",
+      "keeps": "15",
+      "first_ms": "1049",
+      "problem": "Write a function that takes a Flow of String SSE chunks and emits complete events",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "9",
+      "written": "false",
+      "heard": "live coding — Flow of SSE chunks to complete events",
+      "say": "Okay, I'll write a function that takes the chunk flow and returns a flow of complete events. I'll keep a buffer for the partial text, split on the blank line between events, and emit only the parts that are complete.",
+      "type": "add@parseSseEvents: fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { ⏎     val buffer = StringBuilder() ⏎     chunks.collect { chunk -> ⏎         buffer.append(chunk) ⏎         while (true) { ⏎             val end = buffer.indexOf(\"\\n\\n\") ⏎             if (end == -1) break ⏎             val event = buffer.substring(0, end) ⏎             buffer.delete(0, end + 2) ⏎             emit(event) ⏎         } ⏎     } ⏎ }",
+      "then": "Next I'd handle the leftover buffer at the end of the stream, and the case where a chunk splits the \"\\n\\n\" itself.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 71->72 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 652,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "72",
+      "keeps": "15",
+      "first_ms": "1049",
+      "problem": "Write a function that takes a Flow of String SSE chunks and emits complete events",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "9",
+      "written": "false",
+      "heard": "live coding — Flow of SSE chunks to complete events",
+      "say": "Okay, I'll write a function that takes the chunk flow and returns a flow of complete events. I'll keep a buffer for the partial text, split on the blank line between events, and emit only the parts that are complete.",
+      "type": "add@parseSseEvents: fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { ⏎     val buffer = StringBuilder() ⏎     chunks.collect { chunk -> ⏎         buffer.append(chunk) ⏎         while (true) { ⏎             val end = buffer.indexOf(\"\\n\\n\") ⏎             if (end == -1) break ⏎             val event = buffer.substring(0, end) ⏎             buffer.delete(0, end + 2) ⏎             emit(event) ⏎         } ⏎     } ⏎ }",
+      "then": "Next I'd handle the leftover buffer at the end of the stream, and the case where a chunk splits the \"\\n\\n\" itself.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "9"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states the approach — keeping a buffer for partial text, splitting on the blank line between events, and emitting only complete parts — which covers the required points and stays on the new coding problem."
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 708,
+     "card": {
+      "mode": "true",
+      "busy": "true",
+      "failed": "false",
+      "phase": "say",
+      "requests": "75",
+      "keeps": "15",
+      "first_ms": "652",
+      "problem": "Write a function that takes a Flow of String SSE chunks and emits complete events",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "9",
+      "written": "false",
+      "heard": "live coding — Flow of SSE chunks to complete events",
+      "say": "A chunk can split the blank line itself, so the buffer has to keep the leftover text until the next chunk arrives.",
+      "type": "replace@parseSseEvents: fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { ⏎     val buffer = StringBuilder() ⏎     chunks.collect { chunk -> ⏎         buffer.append(chunk) ⏎         var end = buffer.indexOf(\"\\n\\n\") ⏎         while (end != -1) { ⏎             emit(buffer.substring(0, end)) ⏎             buffer.delete(0, end + 2) ⏎             end = buffer.indexOf(\"\\n\\n\") ⏎         } ⏎     } ⏎     if (buffer.isNotEmpty()) emit(buffer.toString()) ⏎ }.flowOn(Dispatchers.Default)",
+      "then": "Next I'd test it with a chunk that splits the \"\\n\\n\" across two pieces.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The card explains the buffer/tail handling and corrects the split to \"\\n\\n\" while keeping the existing structure, without restarting or contradicting the board."
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 726,
+     "them": "How do you test it?",
+     "settle_s": 4.4,
+     "first_ms": "792",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "77",
+      "keeps": "15",
+      "first_ms": "792",
+      "problem": "How do you test parseSseEvents?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "10",
+      "written": "false",
+      "heard": "How do you test it?",
+      "say": "I'd test it at three levels. First, unit tests with fake chunks: one event in one chunk, one event split across two chunks, and the blank line itself split. Second, a chunk with two events plus a partial third. Third, the end of the stream, where I check the leftover is flushed once and not twice. I'd also run it on `Dispatchers.Default` to confirm the order stays the same.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 76->77 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 731,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "77",
+      "keeps": "15",
+      "first_ms": "792",
+      "problem": "How do you test parseSseEvents?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "10",
+      "written": "false",
+      "heard": "How do you test it?",
+      "say": "I'd test it at three levels. First, unit tests with fake chunks: one event in one chunk, one event split across two chunks, and the blank line itself split. Second, a chunk with two events plus a partial third. Third, the end of the stream, where I check the leftover is flushed once and not twice. I'd also run it on `Dispatchers.Default` to confirm the order stays the same.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers unit tests with fake chunks split mid-event, the delimiter split across chunks, multiple events in one chunk, and end-of-stream flush, all on the SSE parser."
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 781,
+     "them": "What if the server sends an event with no newline at the end?",
+     "settle_s": 3.9,
+     "first_ms": "722",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "83",
+      "keeps": "15",
+      "first_ms": "722",
+      "problem": "How do you test parseSseEvents?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "10",
+      "written": "false",
+      "heard": "event with no newline at the end",
+      "say": "Right now the leftover buffer is flushed at the end, so that event is emitted. But I'd check one thing: if the stream is cancelled, the flush never runs. So I'd only flush on normal completion, and drop the partial event on cancel.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 82->83 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "4 现场写代码",
+     "at": 785,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "83",
+      "keeps": "15",
+      "first_ms": "722",
+      "problem": "How do you test parseSseEvents?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "10",
+      "written": "false",
+      "heard": "event with no newline at the end",
+      "say": "Right now the leftover buffer is flushed at the end, so that event is emitted. But I'd check one thing: if the stream is cancelled, the flush never runs. So I'd only flush on normal completion, and drop the partial event on cancel.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states the leftover buffer is flushed at the end so the event is emitted, and notes flushing only on normal completion (dropping partial on cancel), staying on the parser."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 849,
+     "them": "Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+     "settle_s": 5.5,
+     "first_ms": "650",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "87",
+      "keeps": "15",
+      "first_ms": "650",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT",
+      "say": "Before I design, let me confirm the scope. The client covers chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web. I'll focus on the Android client and the API contract with the backend. Out of scope for now: model training and the web client itself.",
+      "type": "draw@design canvas: Boxes: ⏎ [Chat screen] -> [ChatViewModel] -> [ChatRepository] ⏎ [ChatRepository] -> [SSE client] -> backend /chat (stream) ⏎ [ChatRepository] -> [Room DB: conversations, messages]  (single source of truth) ⏎ [ChatRepository] -> [Upload API] -> object storage ⏎ [Voice mode] -> [AudioRecord + STT stream] ⏎ [History sync] -> [Sync API] -> Room",
+      "then": "Next I'd walk through the message flow: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 86->87 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 854,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "87",
+      "keeps": "15",
+      "first_ms": "650",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "design the Android app for ChatGPT",
+      "say": "Before I design, let me confirm the scope. The client covers chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web. I'll focus on the Android client and the API contract with the backend. Out of scope for now: model training and the web client itself.",
+      "type": "draw@design canvas: Boxes: ⏎ [Chat screen] -> [ChatViewModel] -> [ChatRepository] ⏎ [ChatRepository] -> [SSE client] -> backend /chat (stream) ⏎ [ChatRepository] -> [Room DB: conversations, messages]  (single source of truth) ⏎ [ChatRepository] -> [Upload API] -> object storage ⏎ [Voice mode] -> [AudioRecord + STT stream] ⏎ [History sync] -> [Sync API] -> Room",
+      "then": "Next I'd walk through the message flow: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "draw@design canvas: Boxes: ⏎ [Chat screen] -> [ChatViewModel] -> [ChatRepository] ⏎ [ChatRepository] -> [SSE client] -> "
+      },
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "11"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The SAY confirms scope (chat streaming, stop/regenerate, photo upload, voice mode, history sync), states focus on Android client and API contract, and names out-of-scope items before drawing; it stays on the ChatGPT app with no leftover SSE parser or resume talk."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 905,
+     "them": "Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+     "settle_s": 5.5,
+     "first_ms": "1032",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "92",
+      "keeps": "15",
+      "first_ms": "1032",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "Room is the single source of truth; the Repository is the only writer, the ViewModel reads from Room, and the UI observes the ViewModel",
+      "constraints": "[\"Client needs a stable answer id and a sequence number on stream pieces for stop, regenerate and ordering\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "draw the main layers, where the data lives",
+      "say": "I'd keep the layers simple. The Chat screen observes the ViewModel, and the ViewModel only reads from Room. The Repository is the only writer: it sends the request, reads the stream, and saves each piece into Room. So Room is the single source of truth, and the UI never talks to the network directly. History syncs by pulling the server's message list and merging it into Room.",
+      "type": "draw@the client layers diagram: Chat screen (Compose) ⏎    |  observes StateFlow ⏎ ViewModel ⏎    |  reads ⏎ Room  <-- single source of truth ⏎    ^  writes ⏎ Repository ⏎    |  sends request, reads stream ⏎ SSE client  -->  Backend API",
+      "then": "Next I'd walk through one message: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 91->92 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 911,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "92",
+      "keeps": "15",
+      "first_ms": "1032",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "Room is the single source of truth; the Repository is the only writer, the ViewModel reads from Room, and the UI observes the ViewModel",
+      "constraints": "[\"Client needs a stable answer id and a sequence number on stream pieces for stop, regenerate and ordering\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "draw the main layers, where the data lives",
+      "say": "I'd keep the layers simple. The Chat screen observes the ViewModel, and the ViewModel only reads from Room. The Repository is the only writer: it sends the request, reads the stream, and saves each piece into Room. So Room is the single source of truth, and the UI never talks to the network directly. History syncs by pulling the server's message list and merging it into Room.",
+      "type": "draw@the client layers diagram: Chat screen (Compose) ⏎    |  observes StateFlow ⏎ ViewModel ⏎    |  reads ⏎ Room  <-- single source of truth ⏎    ^  writes ⏎ Repository ⏎    |  sends request, reads stream ⏎ SSE client  -->  Backend API",
+      "then": "Next I'd walk through one message: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer describes the Chat screen (Compose) observing the ViewModel, the ViewModel reading from Room, the Repository as sole writer that sends requests and reads the stream, the SSE client to the backend API, and makes Room the single source of truth for messages — covering UI, ViewModel, repository, local DB, and remote streaming API with nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 972,
+     "them": "What is your single source of truth?",
+     "settle_s": 3.9,
+     "first_ms": "850",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "99",
+      "keeps": "18",
+      "first_ms": "850",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "Room is the single source of truth; the Repository is the only writer, the ViewModel reads from Room, and the UI observes the ViewModel",
+      "constraints": "[\"Client needs a stable answer id and a sequence number on stream pieces for stop, regenerate and ordering\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "What is your single source of truth?",
+      "say": "Room is the single source of truth. The Repository is the only writer, and it saves each streamed piece into Room as it arrives. The ViewModel only reads from Room, and the Chat screen observes the ViewModel. So the UI never talks to the network directly, and a screen rebuild just reads the same data again.",
+      "type": "none",
+      "then": "Next I'd walk through one message: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 97->99 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 976,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "99",
+      "keeps": "18",
+      "first_ms": "850",
+      "problem": "Design the Android client for a ChatGPT-like app: streaming chat, stop/regenerate, photo upload, voice mode, history synced across phone and web; define what the client needs from the backend",
+      "adopted": "Room is the single source of truth; the Repository is the only writer, the ViewModel reads from Room, and the UI observes the ViewModel",
+      "constraints": "[\"Client needs a stable answer id and a sequence number on stream pieces for stop, regenerate and ordering\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "11",
+      "written": "false",
+      "heard": "What is your single source of truth?",
+      "say": "Room is the single source of truth. The Repository is the only writer, and it saves each streamed piece into Room as it arrives. The ViewModel only reads from Room, and the Chat screen observes the ViewModel. So the UI never talks to the network directly, and a screen rebuild just reads the same data again.",
+      "type": "none",
+      "then": "Next I'd walk through one message: send, stream, stop, regenerate.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "adopted_not_contains",
+       "pass": true,
+       "detail": "Room is the single source of truth; the Repository is the only writer, the ViewModel reads from Room, and the UI observes the ViewModel"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states Room is the single source of truth, the Repository writes streamed pieces into Room, and the ViewModel/UI only reads from Room, so the UI never talks to the network directly."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1019,
+     "them": "How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+     "settle_s": 4.4,
+     "first_ms": "550",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "104",
+      "keeps": "19",
+      "first_ms": "550",
+      "problem": "How does the answer appear word by word: SSE, WebSocket or polling, and why?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "12",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to client. It runs over plain HTTP, so it reconnects easily and works with our existing auth. WebSocket is better when both sides talk a lot, like voice mode later. Polling wastes requests and feels slow.",
+      "type": "none",
+      "then": "Next: how stop and regenerate work with the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 103->104 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1023,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "104",
+      "keeps": "19",
+      "first_ms": "550",
+      "problem": "How does the answer appear word by word: SSE, WebSocket or polling, and why?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "12",
+      "written": "false",
+      "heard": "SSE, WebSocket or polling, and why",
+      "say": "SSE, because the answer only flows one way, from server to client. It runs over plain HTTP, so it reconnects easily and works with our existing auth. WebSocket is better when both sides talk a lot, like voice mode later. Polling wastes requests and feels slow.",
+      "type": "none",
+      "then": "Next: how stop and regenerate work with the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The candidate's card answer picks SSE for one-way server-to-client streaming, cites plain HTTP, easy reconnect, and existing auth, and notes WebSocket fits two-way cases like voice mode; no code was pasted unasked."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1058,
+     "them": "What does one event look like? Show me the format.",
+     "settle_s": 4.9,
+     "first_ms": "1041",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "109",
+      "keeps": "19",
+      "first_ms": "1041",
+      "problem": "How does the answer appear word by word: SSE, WebSocket or polling, and why?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "12",
+      "written": "false",
+      "heard": "What does one event look like? Show me the format.",
+      "say": "Each event has an id, a type and the data. The id is the answer id plus a sequence number, so the client can order pieces and drop duplicates. The type tells the client if it's a text piece, the end of the answer, or an error.",
+      "type": "draw@SSE client --> Backend API: event: delta ⏎ id: ans_42:7 ⏎ data: {\"answerId\":\"ans_42\",\"seq\":7,\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ id: ans_42:8 ⏎ data: {\"answerId\":\"ans_42\",\"seq\":8,\"finishReason\":\"stop\"}",
+      "then": "Next: how stop and regenerate use that answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 108->109 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1063,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "109",
+      "keeps": "19",
+      "first_ms": "1041",
+      "problem": "How does the answer appear word by word: SSE, WebSocket or polling, and why?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "12",
+      "written": "false",
+      "heard": "What does one event look like? Show me the format.",
+      "say": "Each event has an id, a type and the data. The id is the answer id plus a sequence number, so the client can order pieces and drop duplicates. The type tells the client if it's a text piece, the end of the answer, or an error.",
+      "type": "draw@SSE client --> Backend API: event: delta ⏎ id: ans_42:7 ⏎ data: {\"answerId\":\"ans_42\",\"seq\":7,\"text\":\"Hello\"} ⏎  ⏎ event: done ⏎ id: ans_42:8 ⏎ data: {\"answerId\":\"ans_42\",\"seq\":8,\"finishReason\":\"stop\"}",
+      "then": "Next: how stop and regenerate use that answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer shows an event format with an id (answer id plus sequence number), a type (text piece, end, error), delta text in the data, and a done event with finishReason — covering message id, sequence, delta text, and end/error event. It's framed as a design proposal (\"The id is the answer id plus a sequence number, so the client can order pieces and drop duplicates\") rather than claiming to be an existing ChatGPT API, and nothing stated is wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1106,
+     "them": "Tokens arrive 50 times a second. How do you update the UI without lag?",
+     "settle_s": 4.3,
+     "first_ms": "1119",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "114",
+      "keeps": "20",
+      "first_ms": "1119",
+      "problem": "How do you update the UI without lag when tokens arrive 50 times a second?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "13",
+      "written": "false",
+      "heard": "Tokens arrive 50 times a second, how to update without lag",
+      "say": "I wouldn't update the UI on every token. I'd keep the growing text in the Repository and write it into Room in small batches, maybe every 50 to 100 milliseconds. The ViewModel reads from Room, so the screen only redraws a few times a second. The text still looks like it's typing, but the main thread isn't busy. I'd also keep the list stable, so only the last message item changes.",
+      "type": "none",
+      "then": "Next: how stop and regenerate use the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 112->114 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1111,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "114",
+      "keeps": "20",
+      "first_ms": "1119",
+      "problem": "How do you update the UI without lag when tokens arrive 50 times a second?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "13",
+      "written": "false",
+      "heard": "Tokens arrive 50 times a second, how to update without lag",
+      "say": "I wouldn't update the UI on every token. I'd keep the growing text in the Repository and write it into Room in small batches, maybe every 50 to 100 milliseconds. The ViewModel reads from Room, so the screen only redraws a few times a second. The text still looks like it's typing, but the main thread isn't busy. I'd also keep the list stable, so only the last message item changes.",
+      "type": "none",
+      "then": "Next: how stop and regenerate use the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer says not to update the UI per token, batches writes to Room every 50–100 ms, and keeps the list stable so only the last message item changes."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1164,
+     "them": "How do you render Markdown and code blocks while the text is still coming in?",
+     "settle_s": 4.9,
+     "first_ms": "724",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "120",
+      "keeps": "21",
+      "first_ms": "724",
+      "problem": "How do you render Markdown and code blocks while the text is still streaming in?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "14",
+      "written": "false",
+      "heard": "How do you render Markdown and code blocks while text is still coming in",
+      "say": "I'd parse Markdown off the main thread, in the Repository, and save the styled blocks into Room. The screen only draws finished blocks, and the last block keeps growing. So a half-written code fence shows as plain text until it closes.",
+      "type": "draw@Chat screen (Compose): Chat screen (Compose) ⏎    |  observes StateFlow ⏎ ViewModel ⏎    |  reads ⏎ Room  <-- single source of truth ⏎    ^  writes ⏎ Repository  -- parse Markdown on Dispatchers.Default ⏎    |  sends request, reads stream ⏎ SSE client  -->  Backend API",
+      "then": "Next: how stop and regenerate use the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 119->120 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1169,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "120",
+      "keeps": "21",
+      "first_ms": "724",
+      "problem": "How do you render Markdown and code blocks while the text is still streaming in?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "14",
+      "written": "false",
+      "heard": "How do you render Markdown and code blocks while text is still coming in",
+      "say": "I'd parse Markdown off the main thread, in the Repository, and save the styled blocks into Room. The screen only draws finished blocks, and the last block keeps growing. So a half-written code fence shows as plain text until it closes.",
+      "type": "draw@Chat screen (Compose): Chat screen (Compose) ⏎    |  observes StateFlow ⏎ ViewModel ⏎    |  reads ⏎ Room  <-- single source of truth ⏎    ^  writes ⏎ Repository  -- parse Markdown on Dispatchers.Default ⏎    |  sends request, reads stream ⏎ SSE client  -->  Backend API",
+      "then": "Next: how stop and regenerate use the answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer parses Markdown off the main thread (Dispatchers.Default in the Repository), treats an unclosed code fence as open (half-written fence shows as plain text until it closes), and only the last block keeps growing rather than re-parsing the whole message; it says nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1205,
+     "them": "The user taps Stop. What happens on the phone? What happens on the server?",
+     "settle_s": 3.8,
+     "first_ms": "458",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "124",
+      "keeps": "21",
+      "first_ms": "458",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "user taps Stop — phone and server",
+      "say": "On the phone, I cancel the stream job and keep the text already in Room. I mark the message as stopped, so the UI shows it as finished. Then I send a stop request with the answer id to the server. The server stops generating and saves what it has. If a late event still arrives, I drop it because the answer is already closed.",
+      "type": "none",
+      "then": "Next: how regenerate uses the same answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 123->124 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1208,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "124",
+      "keeps": "21",
+      "first_ms": "458",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "user taps Stop — phone and server",
+      "say": "On the phone, I cancel the stream job and keep the text already in Room. I mark the message as stopped, so the UI shows it as finished. Then I send a stop request with the answer id to the server. The server stops generating and saves what it has. If a late event still arrives, I drop it because the answer is already closed.",
+      "type": "none",
+      "then": "Next: how regenerate uses the same answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers cancelling the stream job on the phone, keeping partial text in Room, marking the message stopped, and sending an explicit stop request with the answer id to the server; it phrases server behaviour as a request (\"I send a stop request... The server stops generating\") rather than a guarantee, and nothing stated is wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1258,
+     "them": "The network drops in the middle of an answer. What does the user see?",
+     "settle_s": 4.4,
+     "first_ms": "962",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "130",
+      "keeps": "24",
+      "first_ms": "962",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "network drops mid-answer — what does the user see",
+      "say": "The user keeps the text already in Room, and the message shows a small \"connection lost\" state with a Retry button. Nothing is lost, because Room is still the source of truth. On Retry, I reconnect with the answer id and the last seq I saved, so the server continues from there instead of starting again. If retries keep failing, the message stays marked as incomplete, and the user can retry later or regenerate.",
+      "type": "none",
+      "then": "Next: how regenerate uses the same answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 129->130 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1262,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "130",
+      "keeps": "24",
+      "first_ms": "962",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "network drops mid-answer — what does the user see",
+      "say": "The user keeps the text already in Room, and the message shows a small \"connection lost\" state with a Retry button. Nothing is lost, because Room is still the source of truth. On Retry, I reconnect with the answer id and the last seq I saved, so the server continues from there instead of starting again. If retries keep failing, the message stays marked as incomplete, and the user can retry later or regenerate.",
+      "type": "none",
+      "then": "Next: how regenerate uses the same answer id.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer keeps partial text visible in Room, shows a \"connection lost\" state with Retry, reconnects using the answer id and last saved seq (consistent with the earlier sequence field), and falls back to retry/regenerate if retries keep failing."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1319,
+     "them": "The app is killed in the middle of an answer. The user opens it again. Now what?",
+     "settle_s": 4.4,
+     "first_ms": "837",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "135",
+      "keeps": "26",
+      "first_ms": "837",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "app killed mid-answer, user reopens",
+      "say": "When the app is killed, the stream job dies with it. The text already saved in Room is still there, so the user sees the answer up to the last saved seq. I'd mark that message as incomplete, with a Resume button. On Resume, the Repository reconnects with the answer id and the last seq, and the server continues from there. If the server can't continue, I'd show the partial answer and offer Regenerate instead.",
+      "type": "none",
+      "then": "Next: how Regenerate uses the same answer id, and what the server must guarantee.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 134->135 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1323,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "135",
+      "keeps": "26",
+      "first_ms": "837",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "app killed mid-answer, user reopens",
+      "say": "When the app is killed, the stream job dies with it. The text already saved in Room is still there, so the user sees the answer up to the last saved seq. I'd mark that message as incomplete, with a Resume button. On Resume, the Repository reconnects with the answer id and the last seq, and the server continues from there. If the server can't continue, I'd show the partial answer and offer Regenerate instead.",
+      "type": "none",
+      "then": "Next: how Regenerate uses the same answer id, and what the server must guarantee.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers resuming from the last saved seq and marking the message incomplete with a retry/resume option, and it correctly frames the stream job dying with the app (implying no foreground service is needed for streaming)."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1378,
+     "them": "The user taps Send twice by mistake. How do you avoid two messages?",
+     "settle_s": 4.4,
+     "first_ms": "786",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "141",
+      "keeps": "27",
+      "first_ms": "786",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "user taps Send twice by mistake",
+      "say": "I'd give each message a client-generated id, made once when the user taps Send. The Repository checks Room for that id before it writes or sends anything. So the second tap finds the message already there and does nothing. The server also needs to treat that id as a dedupe key, so a retried request can't create a second message.",
+      "type": "draw@Repository: send(messageId) -> if Room has messageId: ignore ⏎                    else: insert + send",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 140->141 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1383,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "141",
+      "keeps": "27",
+      "first_ms": "786",
+      "problem": "What happens on the phone and on the server when the user taps Stop?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "15",
+      "written": "false",
+      "heard": "user taps Send twice by mistake",
+      "say": "I'd give each message a client-generated id, made once when the user taps Send. The Repository checks Room for that id before it writes or sends anything. So the second tap finds the message already there and does nothing. The server also needs to treat that id as a dedupe key, so a retried request can't create a second message.",
+      "type": "draw@Repository: send(messageId) -> if Room has messageId: ignore ⏎                    else: insert + send",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers a client-generated id made once on Send, checks Room before writing/sending (write-before-send), and asks the backend to treat the id as a dedupe key as a contract (\"the server also needs to\"), without claiming it's guaranteed. The only listed example not covered is disabling the button while sending, but at least two are covered correctly and nothing is wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1429,
+     "them": "The user has 2,000 conversations. How do you load and sync them with the web?",
+     "settle_s": 4.9,
+     "first_ms": "941",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "146",
+      "keeps": "29",
+      "first_ms": "941",
+      "problem": "Load and sync 2,000 conversations with the web",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "16",
+      "written": "false",
+      "heard": "2,000 conversations, load and sync with web",
+      "say": "I'd page the conversation list, not load all 2,000. Room keeps the list, and the Repository asks the server for one page at a time, newest first. For sync, I'd pull only what changed since the last sync time, and merge it into Room by conversation id. The server would need to give me a cursor and an updated-at time on each conversation.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 145->146 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1434,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "146",
+      "keeps": "29",
+      "first_ms": "941",
+      "problem": "Load and sync 2,000 conversations with the web",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "16",
+      "written": "false",
+      "heard": "2,000 conversations, load and sync with web",
+      "say": "I'd page the conversation list, not load all 2,000. Room keeps the list, and the Repository asks the server for one page at a time, newest first. For sync, I'd pull only what changed since the last sync time, and merge it into Room by conversation id. The server would need to give me a cursor and an updated-at time on each conversation.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers paginated loading with a cursor, Room as the local store, and delta sync by updated-at time merged by conversation id, without repeating streaming details or saying anything wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1485,
+     "them": "Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+     "settle_s": 3.9,
+     "first_ms": "353",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "151",
+      "keeps": "30",
+      "first_ms": "353",
+      "problem": "Load and sync 2,000 conversations with the web",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "16",
+      "written": "false",
+      "heard": "voice mode, AI talking and user starts talking",
+      "say": "When the user starts talking, I'd stop the AI's audio right away and cancel its stream. Then I'd switch the microphone to the user, so the AI doesn't hear itself. The server needs to stop generating too, and it should keep the partial answer under the same answer id. I'd also tell the user clearly that the AI stopped, so they know they're being heard.",
+      "type": "none",
+      "then": "Next: echo cancellation and audio focus on the device.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 150->151 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1489,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "151",
+      "keeps": "30",
+      "first_ms": "353",
+      "problem": "Load and sync 2,000 conversations with the web",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "16",
+      "written": "false",
+      "heard": "voice mode, AI talking and user starts talking",
+      "say": "When the user starts talking, I'd stop the AI's audio right away and cancel its stream. Then I'd switch the microphone to the user, so the AI doesn't hear itself. The server needs to stop generating too, and it should keep the partial answer under the same answer id. I'd also tell the user clearly that the AI stopped, so they know they're being heard.",
+      "type": "none",
+      "then": "Next: echo cancellation and audio focus on the device.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers stopping playback immediately, cancelling the server-side stream while keeping the partial answer under the same answer id, switching the mic to the user, and mentions the AI not hearing itself (echo cancellation); it also acknowledges voice mode was parked earlier and is now in scope."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1536,
+     "them": "A phone call comes in during voice mode. What happens?",
+     "settle_s": 4.4,
+     "first_ms": "568",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "156",
+      "keeps": "31",
+      "first_ms": "568",
+      "problem": "A phone call comes in during voice mode",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "17",
+      "written": "false",
+      "heard": "phone call comes in during voice mode",
+      "say": "I'd pause voice mode right away and stop the AI's audio. The microphone stops too, so the call stays private. When the call ends, I'd show a clear \"Voice paused\" state with a Resume button, and the user decides when to continue. I'd also handle audio focus, so the assistant never talks over the call.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 155->156 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1540,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "156",
+      "keeps": "31",
+      "first_ms": "568",
+      "problem": "A phone call comes in during voice mode",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "17",
+      "written": "false",
+      "heard": "phone call comes in during voice mode",
+      "say": "I'd pause voice mode right away and stop the AI's audio. The microphone stops too, so the call stays private. When the call ends, I'd show a clear \"Voice paused\" state with a Resume button, and the user decides when to continue. I'd also handle audio focus, so the assistant never talks over the call.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers pausing voice mode, stopping AI audio and microphone (recording/playback), a clear paused state with Resume (clean resume), and audio focus handling; it does not mention the foreground service with microphone type, but the criterion's examples are satisfied at least two correctly with nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1585,
+     "them": "The user uploads a 10 MB photo on a slow network. Walk me through it.",
+     "settle_s": 5.0,
+     "first_ms": "890",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "161",
+      "keeps": "33",
+      "first_ms": "890",
+      "problem": "The user uploads a 10 MB photo on a slow network",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "18",
+      "written": "false",
+      "heard": "10 MB photo on a slow network",
+      "say": "I'd save the photo to app storage first and show it in the chat right away with a small \"sending\" state. Then I'd upload it with WorkManager, so it keeps going if the app goes to the background. The upload uses a chunked or resumable request, so a drop continues from the last byte instead of starting again. The server returns a file id, and the Repository saves that id on the message in Room. If the upload fails, the message stays marked as failed with a Retry button.",
+      "type": "none",
+      "then": "Next: what the server needs to accept a resumed upload.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 160->161 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1590,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "161",
+      "keeps": "33",
+      "first_ms": "890",
+      "problem": "The user uploads a 10 MB photo on a slow network",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "18",
+      "written": "false",
+      "heard": "10 MB photo on a slow network",
+      "say": "I'd save the photo to app storage first and show it in the chat right away with a small \"sending\" state. Then I'd upload it with WorkManager, so it keeps going if the app goes to the background. The upload uses a chunked or resumable request, so a drop continues from the last byte instead of starting again. The server returns a file id, and the Repository saves that id on the message in Room. If the upload fails, the message stays marked as failed with a Retry button.",
+      "type": "none",
+      "then": "Next: what the server needs to accept a resumed upload.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers showing a local preview right away, background upload with WorkManager, resumable/chunked upload, retry on failure, and saving the returned file id on the message in Room — at least two of the listed points, with nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1654,
+     "them": "How do you know this feature works well in production? Which numbers do you watch?",
+     "settle_s": 4.4,
+     "first_ms": "880",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "167",
+      "keeps": "33",
+      "first_ms": "880",
+      "problem": "The user uploads a 10 MB photo on a slow network",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "18",
+      "written": "false",
+      "heard": "how do you know this feature works in production, which numbers",
+      "say": "I'd watch four numbers. First, upload success rate and how many retries each upload needs. Second, the time from tapping send to the photo showing in the chat. Third, the share of uploads that fail on slow networks. Fourth, crash-free rate and ANR rate, because a big upload can hurt both.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 166->167 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1659,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "167",
+      "keeps": "33",
+      "first_ms": "880",
+      "problem": "The user uploads a 10 MB photo on a slow network",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "18",
+      "written": "false",
+      "heard": "how do you know this feature works in production, which numbers",
+      "say": "I'd watch four numbers. First, upload success rate and how many retries each upload needs. Second, the time from tapping send to the photo showing in the chat. Third, the share of uploads that fail on slow networks. Fourth, crash-free rate and ANR rate, because a big upload can hurt both.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The answer names upload success/retry, send-to-display latency, slow-network failure share, and crash/ANR rates, but it omits time to first token, stream completion/error rates, stop/retry rates, and frame drops while streaming — and it's framed around photo upload rather than the streaming chat feature."
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1701,
+     "them": "If you had only two weeks, what would you build first, and what would you cut?",
+     "settle_s": 4.4,
+     "first_ms": "1469",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "173",
+      "keeps": "37",
+      "first_ms": "1469",
+      "problem": "If you had only two weeks, what would you build first and what would you cut?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "19",
+      "written": "false",
+      "heard": "two weeks, what to build first and what to cut",
+      "say": "In two weeks I'd ship text chat only: streaming answers, Stop, and history in Room. I'd cut photo upload, voice mode, and web sync. I'd also skip regenerate at first, because Stop plus a new message covers most of it. The one thing I wouldn't cut is the answer id and seq, because resume and dedupe depend on them.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 172->173 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "5 系统设计：ChatGPT 移动端",
+     "at": 1706,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "173",
+      "keeps": "37",
+      "first_ms": "1469",
+      "problem": "If you had only two weeks, what would you build first and what would you cut?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "19",
+      "written": "false",
+      "heard": "two weeks, what to build first and what to cut",
+      "say": "In two weeks I'd ship text chat only: streaming answers, Stop, and history in Room. I'd cut photo upload, voice mode, and web sync. I'd also skip regenerate at first, because Stop plus a new message covers most of it. The one thing I wouldn't cut is the answer id and seq, because resume and dedupe depend on them.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer ships text chat with streaming, Stop, and history in Room, and cuts photo, voice, and web sync, matching the agreed core scope; it also keeps answer id/seq for resume and dedupe, which supports basic error handling."
+      }
+     ]
+    },
+    {
+     "segment": "6 候选人提问",
+     "at": 1751,
+     "them": "Okay, we're almost out of time. Do you have any questions for me?",
+     "settle_s": 3.8,
+     "first_ms": "1140",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "178",
+      "keeps": "37",
+      "first_ms": "1140",
+      "problem": "Do you have any questions for me?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "20",
+      "written": "false",
+      "heard": "any questions for me",
+      "say": "Yes, two quick ones. What would you like the new Android engineer to achieve in the first three months? And how do Android, backend and ML work together when a streaming answer breaks?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 177->178 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "6 候选人提问",
+     "at": 1755,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "178",
+      "keeps": "37",
+      "first_ms": "1140",
+      "problem": "Do you have any questions for me?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "20",
+      "written": "false",
+      "heard": "any questions for me",
+      "say": "Yes, two quick ones. What would you like the new Android engineer to achieve in the first three months? And how do Android, backend and ML work together when a streaming answer breaks?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer asks two thoughtful questions—about first-three-month goals and cross-team collaboration on streaming failures—and does not keep designing or mention evaluation."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Hi, thanks for joining. I'm one of the Android engineers here. Let's start easy: tell me about yourself in two minutes.",
+    "Candidate: Good morning, I'm Jianhui.",
+    "Candidate: I have ten years of experience in software development, mainly working on Android apps.",
+    "Candidate: Over the past three years, I've also been working on AI products, from development to launch.",
+    "Candidate: My most recent job was at KKday, a travel platform in Asia.",
+    "Candidate: I worked on the main features of the Android app and made the app run faster.",
+    "Candidate: For example, I fixed the lag when users switched between product options.",
+    "Candidate: At the same time, I was the technical lead for an AI trip planning project.",
+    "Candidate: I was responsible for the technical plan, the agent architecture, and the main backend development.",
+    "Candidate: With this feature, users could plan their trips with AI directly in the app.",
+    "Candidate: After we launched it, the system handled about 300,000 trip planning requests every day.",
+    "Candidate: Before KKday, I worked at Kezhi Technology, an AI education startup.",
+    "Candidate: I was the only Android engineer there.",
+    "Candidate: I built the Android app and worked with my team to launch the first version in just four weeks.",
+    "Candidate: That's also when I started working on AI features myself.",
+    "Candidate: I built the whole Android app myself, from zero to launch.",
+    "Candidate: Before that, I worked on Android apps at Debon Securities, and I also spent six years on Android apps at Ping An.",
+    "Candidate: I'm interested in ActAI because you're bringing AI into everyday communication.",
+    "Candidate: I also have my own app, Cabinet AI, which explores when AI should act on its own and when it should ask first.",
+    "Interviewer: What did you build most recently on Android?",
+    "Candidate: The most recent Android work is the Android version of Cabinet AI.",
+    "Candidate: I wrote it in Kotlin and Compose, and I built the base framework myself.",
+    "Candidate: I used AI coding tools for the simple screens, and it isn't on Google Play yet.",
+    "Interviewer: Walk me through the SSE itinerary feature at KKday, from server to screen.",
+    "Candidate: Sure.",
+    "Candidate: The user sends a destination, a budget and a number of days.",
+    "Candidate: The backend agent picks places and bookable products, then streams the plan back as SSE events, one day at a time.",
+    "Candidate: On Android, I read that stream and show each day card as it arrives, so Day 1 appears while the rest is still being made.",
+    "Candidate: If the connection drops mid-stream, I resume from the last fully received day rather than restarting, and I cap retries so a persistent failure surfaces as an error instead of looping silently.",
+    "Interviewer: What exactly did you write on Android, and what did your team write?",
+    "Candidate: On Android, I wrote the SSE client myself.",
+    "Candidate: That means the stream reading, the day card list, and the resume and retry logic.",
+    "Candidate: I also wrote the code that checks each card before it shows.",
+    "Candidate: The backend agent, the product tools and the personalization data layer were my design, but the backend team wrote most of that code.",
+    "Candidate: The app team built the screens around my cards.",
+    "Interviewer: The crash rate went down 90% at Debon. What was the hardest crash?",
+    "Candidate: The hardest one was a WebView crash on certain phone models.",
+    "Candidate: It only happened on a few devices, so it was hard to reproduce.",
+    "Candidate: I got the model list from Bugly and found a pattern.",
+    "Candidate: Then I fixed it group by group, starting with the most common one.",
+    "Candidate: Most of our crashes were null pointers, out-of-memory errors and WebView problems.",
+    "Interviewer: Tell me about a device-specific bug. How did you find it?",
+    "Candidate: At Debon, one crash only happened on a few old phone models.",
+    "Candidate: I couldn't reproduce it on my own phone.",
+    "Candidate: So I grouped the crashes by phone model in Bugly.",
+    "Candidate: The pattern showed it was an old WebView version.",
+    "Candidate: I added a version check, a simpler page for those phones, and a fallback.",
+    "Interviewer: Okay, let's move on to some Android fundamentals. What happens when a child coroutine fails? When do you use SupervisorJob?",
+    "Candidate: When a child coroutine fails, it cancels its parent.",
+    "Candidate: The parent then cancels all its other children, and the failure goes up to the scope.",
+    "Candidate: So one failed request can kill unrelated work in the same scope.",
+    "Candidate: I use SupervisorJob when the children should fail independently, like separate requests on one screen.",
+    "Candidate: One failure then doesn't cancel the others.",
+    "Interviewer: StateFlow, SharedFlow, Channel: which one for one-time UI events?",
+    "Candidate: For one-time UI events, I'd use a Channel.",
+    "Candidate: A StateFlow always keeps the latest value, so a new collector gets an old event again.",
+    "Candidate: A SharedFlow with no replay can drop an event when nobody is collecting.",
+    "Candidate: A Channel delivers each event once, to one collector.",
+    "Candidate: I'd receive it with `receiveAsFlow` and collect it with `repeatOnLifecycle`, so events aren't lost when the screen is in the background.",
+    "Interviewer: Why do we use repeatOnLifecycle to collect a Flow?",
+    "Candidate: It ties collection to the screen's lifecycle.",
+    "Candidate: When the screen goes to the background, collection stops, so we don't keep doing work nobody sees.",
+    "Candidate: When it comes back, collection starts again, so the UI always gets fresh data.",
+    "Candidate: Without it, a collector on the Activity keeps running and can leak or crash.",
+    "Interviewer: What survives process death? How do you restore the screen?",
+    "Candidate: Only saved state survives.",
+    "Candidate: I'd keep the screen's input in `SavedStateHandle`, so the ViewModel gets it back after the process is killed.",
+    "Candidate: The list of day cards I'd reload from the server, or from a local cache if we had one.",
+    "Candidate: Then the screen rebuilds from that state instead of starting empty.",
+    "Interviewer: Let's switch gears to some live coding. Write a function that takes a Flow of String of SSE text chunks and emits complete events. A chunk can cut an event anywhere.",
+    "Candidate: Okay, I'll write a function that takes the chunk flow and returns a flow of complete events.",
+    "Candidate: I'll keep a buffer for the partial text, split on the blank line between events, and emit only the parts that are complete.",
+    "[board] fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { |     val buffer = StringBuilder() |     chunks.collect { chunk -> |         buffer.append(chunk) |         while (true) { |             val end = buffer.indexOf(\" |  | \") |             if (end == -1) break |             val event = buffer.substring(0, end) |             buffer.delete(0, end + 2) |             emit(event) |         } |     } |     if (buffer.isNotEmpty()) emit(buffer.toString()) | }.flowOn(Dispatchers.Default)",
+    "Candidate: A chunk can split the blank line itself, so the buffer has to keep the leftover text until the next chunk arrives.",
+    "[board] fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { |     val buffer = StringBuilder() |     chunks.collect { chunk -> |         buffer.append(chunk) |         while (true) { |             val end = buffer.indexOf(\" |  | \") |             if (end == -1) break |             val event = buffer.substring(0, end) |             buffer.delete(0, end + 2) |             emit(event) |         } |     } |     if (buffer.isNotEmpty()) emit(buffer.toString()) | }.flowOn(Dispatchers.Default)",
+    "Interviewer: How do you test it?",
+    "Candidate: I'd test it at three levels.",
+    "Candidate: First, unit tests with fake chunks: one event in one chunk, one event split across two chunks, and the blank line itself split.",
+    "Candidate: Second, a chunk with two events plus a partial third.",
+    "Candidate: Third, the end of the stream, where I check the leftover is flushed once and not twice.",
+    "Candidate: I'd also run it on `Dispatchers.Default` to confirm the order stays the same.",
+    "Interviewer: What if the server sends an event with no newline at the end?",
+    "Candidate: Right now the leftover buffer is flushed at the end, so that event is emitted.",
+    "Candidate: But I'd check one thing: if the stream is cancelled, the flush never runs.",
+    "Candidate: So I'd only flush on normal completion, and drop the partial event on cancel.",
+    "[board] fun parseSseEvents(chunks: Flow<String>): Flow<String> = flow { |     val buffer = StringBuilder() |     chunks.collect { chunk -> |         buffer.append(chunk) |         while (true) { |             val end = buffer.indexOf(\" |  | \") |             if (end == -1) break |             val event = buffer.substring(0, end) |             buffer.delete(0, end + 2) |             emit(event) |         } |     } |     if (buffer.isNotEmpty()) emit(buffer.toString()) | }.flowOn(Dispatchers.Default)",
+    "Interviewer: Great. For the rest of the time, a new problem: design the Android app for ChatGPT. Users chat with the AI and see answers stream in. They can stop or regenerate an answer, upload a photo, use voice mode, and see their history on phone and web. Focus on the client. Tell me what you need from the backend.",
+    "Candidate: Before I design, let me confirm the scope.",
+    "Candidate: The client covers chat with streaming answers, stop and regenerate, photo upload, voice mode, and history synced across phone and web.",
+    "Candidate: I'll focus on the Android client and the API contract with the backend.",
+    "Candidate: Out of scope for now: model training and the web client itself.",
+    "Interviewer: Let's keep text chat, streaming, stop and history as the core. Photo and voice come later. Draw the main layers of the app. Where does the data live?",
+    "Candidate: I'd keep the layers simple.",
+    "Candidate: The Chat screen observes the ViewModel, and the ViewModel only reads from Room.",
+    "Candidate: The Repository is the only writer: it sends the request, reads the stream, and saves each piece into Room.",
+    "Candidate: So Room is the single source of truth, and the UI never talks to the network directly.",
+    "Candidate: History syncs by pulling the server's message list and merging it into Room.",
+    "[board] Chat screen (Compose) |    |  observes StateFlow | ViewModel |    |  reads | Room  <-- single source of truth |    ^  writes | Repository |    |  sends request, reads stream | SSE client  -->  Backend API",
+    "Interviewer: What is your single source of truth?",
+    "Candidate: Room is the single source of truth.",
+    "Candidate: The Repository is the only writer, and it saves each streamed piece into Room as it arrives.",
+    "Candidate: The ViewModel only reads from Room, and the Chat screen observes the ViewModel.",
+    "Candidate: So the UI never talks to the network directly, and a screen rebuild just reads the same data again.",
+    "Interviewer: How does the answer appear word by word? SSE, WebSocket, or polling? Why?",
+    "Candidate: SSE, because the answer only flows one way, from server to client.",
+    "Candidate: It runs over plain HTTP, so it reconnects easily and works with our existing auth.",
+    "Candidate: WebSocket is better when both sides talk a lot, like voice mode later.",
+    "Candidate: Polling wastes requests and feels slow.",
+    "Interviewer: What does one event look like? Show me the format.",
+    "Candidate: Each event has an id, a type and the data.",
+    "Candidate: The id is the answer id plus a sequence number, so the client can order pieces and drop duplicates.",
+    "Candidate: The type tells the client if it's a text piece, the end of the answer, or an error.",
+    "[board] Chat screen (Compose) |    |  observes StateFlow | ViewModel |    |  reads | Room  <-- single source of truth |    ^  writes | Repository |    |  sends request, reads stream | SSE client  -->  Backend API | event: delta | id: ans_42:7 | data: {\"answerId\":\"ans_42\",\"seq\":7,\"text\":\"Hello\"} |  | event: done | id: ans_42:8 | data: {\"answerId\":\"ans_42\",\"seq\":8,\"finishReason\":\"stop\"}",
+    "Interviewer: Tokens arrive 50 times a second. How do you update the UI without lag?",
+    "Candidate: I wouldn't update the UI on every token.",
+    "Candidate: I'd keep the growing text in the Repository and write it into Room in small batches, maybe every 50 to 100 milliseconds.",
+    "Candidate: The ViewModel reads from Room, so the screen only redraws a few times a second.",
+    "Candidate: The text still looks like it's typing, but the main thread isn't busy.",
+    "Candidate: I'd also keep the list stable, so only the last message item changes.",
+    "Interviewer: How do you render Markdown and code blocks while the text is still coming in?",
+    "Candidate: I'd parse Markdown off the main thread, in the Repository, and save the styled blocks into Room.",
+    "Candidate: The screen only draws finished blocks, and the last block keeps growing.",
+    "Candidate: So a half-written code fence shows as plain text until it closes.",
+    "Interviewer: The user taps Stop. What happens on the phone? What happens on the server?",
+    "Candidate: On the phone, I cancel the stream job and keep the text already in Room.",
+    "Candidate: I mark the message as stopped, so the UI shows it as finished.",
+    "Candidate: Then I send a stop request with the answer id to the server.",
+    "Candidate: The server stops generating and saves what it has.",
+    "Candidate: If a late event still arrives, I drop it because the answer is already closed.",
+    "Interviewer: The network drops in the middle of an answer. What does the user see?",
+    "Candidate: The user keeps the text already in Room, and the message shows a small \"connection lost\" state with a Retry button.",
+    "Candidate: Nothing is lost, because Room is still the source of truth.",
+    "Candidate: On Retry, I reconnect with the answer id and the last seq I saved, so the server continues from there instead of starting again.",
+    "Candidate: If retries keep failing, the message stays marked as incomplete, and the user can retry later or regenerate.",
+    "Interviewer: The app is killed in the middle of an answer. The user opens it again. Now what?",
+    "Candidate: When the app is killed, the stream job dies with it.",
+    "Candidate: The text already saved in Room is still there, so the user sees the answer up to the last saved seq.",
+    "Candidate: I'd mark that message as incomplete, with a Resume button.",
+    "Candidate: On Resume, the Repository reconnects with the answer id and the last seq, and the server continues from there.",
+    "Candidate: If the server can't continue, I'd show the partial answer and offer Regenerate instead.",
+    "Interviewer: The user taps Send twice by mistake. How do you avoid two messages?",
+    "Candidate: I'd give each message a client-generated id, made once when the user taps Send.",
+    "Candidate: The Repository checks Room for that id before it writes or sends anything.",
+    "Candidate: So the second tap finds the message already there and does nothing.",
+    "Candidate: The server also needs to treat that id as a dedupe key, so a retried request can't create a second message.",
+    "Interviewer: The user has 2,000 conversations. How do you load and sync them with the web?",
+    "Candidate: I'd page the conversation list, not load all 2,000.",
+    "Candidate: Room keeps the list, and the Repository asks the server for one page at a time, newest first.",
+    "Candidate: For sync, I'd pull only what changed since the last sync time, and merge it into Room by conversation id.",
+    "Candidate: The server would need to give me a cursor and an updated-at time on each conversation.",
+    "Interviewer: Now voice mode, which we parked earlier. The AI is talking and the user starts talking. What happens?",
+    "Candidate: When the user starts talking, I'd stop the AI's audio right away and cancel its stream.",
+    "Candidate: Then I'd switch the microphone to the user, so the AI doesn't hear itself.",
+    "Candidate: The server needs to stop generating too, and it should keep the partial answer under the same answer id.",
+    "Candidate: I'd also tell the user clearly that the AI stopped, so they know they're being heard.",
+    "Interviewer: A phone call comes in during voice mode. What happens?",
+    "Candidate: I'd pause voice mode right away and stop the AI's audio.",
+    "Candidate: The microphone stops too, so the call stays private.",
+    "Candidate: When the call ends, I'd show a clear \"Voice paused\" state with a Resume button, and the user decides when to continue.",
+    "Candidate: I'd also handle audio focus, so the assistant never talks over the call.",
+    "Interviewer: The user uploads a 10 MB photo on a slow network. Walk me through it.",
+    "Candidate: I'd save the photo to app storage first and show it in the chat right away with a small \"sending\" state.",
+    "Candidate: Then I'd upload it with WorkManager, so it keeps going if the app goes to the background.",
+    "Candidate: The upload uses a chunked or resumable request, so a drop continues from the last byte instead of starting again.",
+    "Candidate: The server returns a file id, and the Repository saves that id on the message in Room.",
+    "Candidate: If the upload fails, the message stays marked as failed with a Retry button.",
+    "Interviewer: How do you know this feature works well in production? Which numbers do you watch?",
+    "Candidate: I'd watch four numbers.",
+    "Candidate: First, upload success rate and how many retries each upload needs.",
+    "Candidate: Second, the time from tapping send to the photo showing in the chat.",
+    "Candidate: Third, the share of uploads that fail on slow networks.",
+    "Candidate: Fourth, crash-free rate and ANR rate, because a big upload can hurt both.",
+    "Interviewer: If you had only two weeks, what would you build first, and what would you cut?",
+    "Candidate: In two weeks I'd ship text chat only: streaming answers, Stop, and history in Room.",
+    "Candidate: I'd cut photo upload, voice mode, and web sync.",
+    "Candidate: I'd also skip regenerate at first, because Stop plus a new message covers most of it.",
+    "Candidate: The one thing I wouldn't cut is the answer id and seq, because resume and dedupe depend on them.",
+    "Interviewer: Okay, we're almost out of time. Do you have any questions for me?",
+    "Candidate: Yes, two quick ones.",
+    "Candidate: What would you like the new Android engineer to achieve in the first three months?",
+    "Candidate: And how do Android, backend and ML work together when a streaming answer breaks?"
+   ]
+  }
+ ]
+}
