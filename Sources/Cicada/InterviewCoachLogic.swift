@@ -340,6 +340,17 @@ enum CoachPrompt {
 
     static let personalFactsReminderChinese = "硬事实（公司、项目和工具归属、时间、团队规模、汇报关系、薪资、离职原因、数字）只能来自 <knowledge>，各自留在自己的公司和平台下；可以在它们周围加入自然的故事和细节。用口语化的中文短句。"
 
+    /// The model has no clock: the 2026-11-18 founder run opened at 1 pm with the talk track's "Good morning".
+    static func localTime(_ now: Date = Date(), calendar: Calendar = .current, language: CoachLanguage) -> String {
+        let c = calendar.dateComponents([.hour, .minute], from: now)
+        let hour = c.hour ?? 12, time = String(format: "%02d:%02d", hour, c.minute ?? 0)
+        let english = hour < 5 || hour >= 18 ? "Good evening" : hour < 12 ? "Good morning" : "Good afternoon"
+        let chinese = hour < 5 || hour >= 18 ? "晚上好" : hour < 12 ? "早上好" : "下午好"
+        return language == .english
+            ? "Local time now: \(time). Any greeting, including one in a prepared talk track, says \"\(english)\"."
+            : "现在是当地时间 \(time)。问候语（包括预制话术里的）说“\(chinese)”。"
+    }
+
     static func personalFacts(_ language: CoachLanguage) -> String {
         language == .english ? personalFactsReminder : personalFactsReminderChinese
     }

@@ -25,6 +25,12 @@
         "text": "以前每来一句话都要把所有会议重新搜一遍，卡片要等几十秒才出完；现在只搜有变化的那场会议。"
       },
       {
+        "kind": "fix",
+        "platforms": ["mac"],
+        "title": "面试教练的问候语跟着当前时间走。",
+        "text": "下午不会再照着预制自我介绍说“Good morning”，会改成“Good afternoon”或“Good evening”。"
+      },
+      {
         "kind": "new",
         "platforms": ["mac"],
         "title": "面试教练支持中文面试。",

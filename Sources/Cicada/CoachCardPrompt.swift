@@ -195,7 +195,7 @@ enum CoachCardPrompt {
         if let hint = focusHint(memory: c.memory, latest: c.newLines.last(where: { $0.role == "interviewer" })?.text) {
             parts.append(hint)
         }
-        parts.append("Trigger: \(c.trigger). Write the next card now. " + CoachPrompt.personalFactsReminder)
+        parts.append("Trigger: \(c.trigger). Write the next card now. " + CoachPrompt.personalFactsReminder + " " + CoachPrompt.localTime(language: .english))
         return parts.joined(separator: "\n\n")
     }
 
