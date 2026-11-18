@@ -148,7 +148,7 @@ struct CoachCardTests {
         #expect(early.ops.isEmpty)
         let card = try #require(try CoachCard.parse(raw, finished: true))
         #expect(card.heard == "rename cat to dog")
-        #expect(card.edit == CoachCard.Edit(action: "replace", at: "val cat", language: "kotlin", code: "val dog = 1\n    .let { it }"))
+        #expect(card.edit == CoachCard.Edit(action: "replace", at: "val cat", language: "kotlin", code: "val dog = 1\n    .let { it }", closed: true))
         #expect(card.then == "Next, I'll add the retry logic.")
         #expect(card.reason == "(optional) Shorter names read better.")
         #expect(card.ops == [CoachCaseOp(op: "adopt", text: "val dog = 1", evidence: ["I2"])])

@@ -225,8 +225,11 @@ final class CoachCards: ObservableObject {
                    !latest.text.trimmingCharacters(in: .whitespaces).hasSuffix("?"), !Self.checksNewProblem(card, line: latest.text) {
                     card.say = Self.withoutRecital(card.say, of: latest.text)
                 }
-                // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question).
-                if boardID == nil, card.edit?.action == "draw" { card.edit = nil }
+                // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question),
+                // unless the interviewer asked for a diagram: then the candidate needs it before opening a board.
+                if boardID == nil, card.edit?.action == "draw",
+                   !((newLines.last(where: { $0.role == "interviewer" })?.text
+                      ?? input.turns.last(where: { $0.role == "interviewer" })?.text).map(Self.asksToDraw) ?? false) { card.edit = nil }
                 // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows; NF-05
                 // and ME-10 typed code for "walk me through the API" and "explain the difference").
                 if card.edit != nil, let latest = input.turns.last(where: { $0.role == "interviewer" }),
@@ -503,8 +506,14 @@ final class CoachCards: ObservableObject {
         let change = t.range(of: #"\b(draw|sketch|add|write|implement|code|change|update|extend)\b"#, options: .regularExpression) != nil
         return explain && !change
     }
+    /// "Draw the flow", "sketch the architecture", "can you show the sequence diagram": a diagram is wanted.
+    nonisolated static func asksToDraw(_ text: String) -> Bool {
+        text.range(of: #"(?i)\b(draw|sketch|diagram|flow ?chart)"#, options: .regularExpression) != nil
+    }
     nonisolated private static let keywords: Set<String> = ["val", "var", "fun", "class", "return", "private", "override", "data",
-        "import", "package", "object", "true", "false", "null", "this", "when", "else", "suspend", "public", "internal"]
+        "import", "package", "object", "true", "false", "null", "this", "when", "else", "suspend", "public", "internal",
+        // Mermaid words never written on a whiteboard.
+        "flowchart", "graph", "sequenceDiagram", "participant", "actor", "alt", "end", "opt", "loop"]
     /// Share of the step's identifiers visible on the board.
     nonisolated static func coverage(of code: String, in board: [String]) -> Double {
         let names = Set(code.split { !($0.isLetter || $0.isNumber || $0 == "_") }.map(String.init)

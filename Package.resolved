@@ -1,0 +1,15 @@
+{
+  "originHash" : "6353e1fc66b698b3779b3c01d235ace16aac8552879e5e3b1be92d1aad5b7f10",
+  "pins" : [
+    {
+      "identity" : "mermaidkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/2389-research/MermaidKit.git",
+      "state" : {
+        "revision" : "8556a1b80a1f624d35a4c6e13dcb7a5d427f65c3",
+        "version" : "2.10.2"
+      }
+    }
+  ],
+  "version" : 3
+}

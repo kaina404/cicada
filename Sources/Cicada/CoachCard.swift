@@ -10,6 +10,16 @@ struct CoachCard: Equatable {
         var at: String
         var language: String = ""
         var code: String = ""
+        /// The fence has closed: the code is complete. A diagram is drawn only then (half a Mermaid source
+        /// would draw the wrong picture); until then its text shows.
+        var closed = false
+        /// A Mermaid flowchart or sequence diagram the card draws as a picture for the candidate to copy.
+        var isDiagram: Bool { language.lowercased() == "mermaid" }
+        /// The diagram as the card draws it: top to bottom, since a left-to-right chain of boxes shrinks to
+        /// unreadable text in the narrow card (seen live: nine boxes in a row).
+        var diagramSource: String {
+            code.replacingOccurrences(of: #"^(\s*(?:flowchart|graph))\s+(?:LR|RL)\b"#, with: "$1 TD", options: .regularExpression)
+        }
     }
     var keep = false
     var heard = ""
@@ -45,7 +55,8 @@ struct CoachCard: Equatable {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("```") {
                 if section == "TYPE" {
-                    if !fenced, card.edit != nil { card.edit?.language = String(trimmed.dropFirst(3)) }
+                    if !fenced, card.edit != nil { card.edit?.language = String(trimmed.dropFirst(3)).trimmingCharacters(in: .whitespaces) }
+                    if fenced { card.edit?.closed = true }
                     fenced.toggle(); continue
                 }
             }

@@ -1,4 +1,5 @@
 import SwiftUI
+import MermaidRender
 
 /// Walkthrough card chrome around the reading script (docs/walkthrough-coach-plan.md §7):
 /// above it the problem, what was heard and a correction mark; below it the step to type or draw,
@@ -105,7 +106,10 @@ private struct CoachEditCard: View {
                 if seen { Text("屏幕上已看到").font(.system(size: 11)).foregroundStyle(Palette.tertiary) }
                 else if writing { Text("现在写").font(.system(size: 11, weight: .medium)).foregroundStyle(Palette.accent) }
             }
-            if !edit.code.isEmpty {
+            if edit.isDiagram, edit.closed, !edit.code.isEmpty {
+                // The picture to copy onto the board; MermaidView falls back to the source text if it can't parse.
+                CoachDiagram(source: edit.diagramSource)
+            } else if !edit.code.isEmpty {
                 // Wrapped, not a horizontal scroller: the panel never takes focus, and snippets are short.
                 let code = Text(verbatim: edit.code).font(.system(size: max(12, fontSize * 0.65), design: .monospaced))
                     .foregroundStyle(Palette.ink)
@@ -116,5 +120,23 @@ private struct CoachEditCard: View {
         .padding(10)
         .background(Palette.ground, in: RoundedRectangle(cornerRadius: 8))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(writing ? Palette.accent.opacity(0.6) : Palette.line))
+    }
+}
+
+/// A walkthrough diagram filling the card's width. MermaidView keeps a chart at its natural size, which
+/// read as a few tiny boxes in the card (seen live); this draws larger text and lets the picture grow.
+private struct CoachDiagram: View {
+    var source: String
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        if let image = MermaidRenderer.image(source: source, theme: DiagramTheme(prefersDark: scheme == .dark),
+                                             spacing: .init(textScale: 1.6)) {
+            Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+                .frame(maxWidth: image.size.width * 1.5, maxHeight: 560)
+                .frame(maxWidth: .infinity)
+        } else {
+            MermaidView(source)  // its own fallback: the source as text
+        }
     }
 }

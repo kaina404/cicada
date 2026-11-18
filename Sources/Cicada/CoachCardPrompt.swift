@@ -29,6 +29,13 @@ enum CoachCardPrompt {
     Comparison and design questions without a request to code get no code TYPE. Use draw only when
     the candidate should ADD something to a diagram now (one box, arrow or label group); never redraw what the
     board already shows, and never draw ASCII mockups of a whole screen.
+    Diagrams: every draw puts Mermaid in a ```mermaid fence; the app shows it as a picture to copy. When the
+    interviewer asks to draw or sketch a flow, the architecture or a sequence and the board does not show
+    that diagram yet, the draw is the WHOLE small diagram at once (the candidate cannot draw from words):
+    `flowchart TD` for components and data flow (top to bottom: the card is narrow), `sequenceDiagram` for calls in order over time.
+    At most 8 boxes or participants, short English labels, plain arrows with short labels; no styling,
+    classDef, subgraphs or notes. A later draw on that diagram has only the new boxes and arrows, reusing
+    the ids of the boxes they connect to. SAY walks through the diagram in drawing order.
     THEN: one line: what comes after this step, or "Wait for the interviewer." when the question is covered.
     HEARD: the interviewer instruction you act on, in a few words, when the card follows one.
     FIX: only when the sentence the candidate is reading now has become wrong: one natural correcting sentence.
@@ -166,7 +173,7 @@ enum CoachCardPrompt {
             "New board text since the last card (already-seen text removed): " + (c.newBoard.isEmpty ? "none" : json(c.newBoard)),
         ]
         if let id = c.boardID { parts.append("The latest screen keyframe is board id \(id).") }
-        else { parts.append("No whiteboard has been seen in this interview: do not use TYPE draw.") }
+        else { parts.append("No whiteboard has been seen in this interview: use TYPE draw only when the interviewer asks to draw or sketch a diagram.") }
         // Put the candidate's own recent words where they cannot be missed (AC-13: points were repeated).
         let said = c.said.isEmpty ? c.newLines.filter { $0.role == "candidate" }.map(\.text) : c.said
         if !said.isEmpty {

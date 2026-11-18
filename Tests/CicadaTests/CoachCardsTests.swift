@@ -63,6 +63,55 @@ struct CoachCardsTests {
         #expect(!request.contains("Write the COMPLETE remaining"))
     }
 
+    /// "Draw the flow" with an empty screen gets the whole diagram as a picture; a concept question does not.
+    @Test @MainActor func aRequestedDiagramIsKeptWithoutAWhiteboardAndDrawnOnceComplete() async throws {
+        let reply = { (heard: String, say: String) in """
+        <<<CICADA_CARD>>>
+        HEARD: \(heard)
+        SAY:
+        \(say)
+        TYPE: draw at="new diagram"
+        ```mermaid
+        flowchart LR
+          UI[Feed UI] --> VM[ViewModel]
+          VM --> Repo[Repository]
+          Repo --> Cache[(Room cache)]
+          Repo --> API[Feed API]
+        ```
+        THEN: Wait for the interviewer.
+        """ }
+        let model = Model([reply("draw the flow", "The app asks the repository, which checks the cache first and falls back to the API."),
+                           reply("what is a repository", "A repository hides where the data comes from behind one interface.")])
+        let engine = coach(model)
+        defer { engine.endMeeting() }
+        engine.observe(lines: [line("q", "them", "Can you draw the data flow for loading the feed?")], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        let edit = try #require(engine.cards.card?.edit)
+        #expect(edit.action == "draw" && edit.isDiagram && edit.closed)
+        #expect(edit.code.hasPrefix("flowchart LR"))
+        #expect(edit.diagramSource.hasPrefix("flowchart TD\n  UI[Feed UI] --> VM[ViewModel]"))
+        #expect(text(model.asked[0]).contains("```mermaid"))
+
+        engine.observe(lines: [line("q2", "them", "What is a repository in this design?", t: 10)], now: 10)
+        for t in stride(from: 10.0, through: 14, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        #expect(engine.cards.card?.heard == "what is a repository")
+        #expect(engine.cards.card?.edit == nil)
+    }
+
+    @Test func aStreamingDiagramStaysTextUntilItsFenceCloses() throws {
+        let head = "<<<CICADA_CARD>>>\nSAY: The client calls the API.\nTYPE: draw at=\"new\"\n```mermaid\nsequenceDiagram\n  App->>API: GET /feed\n"
+        let partial = try #require(try CoachCard.parse(head, finished: false))
+        #expect(partial.edit?.isDiagram == true && partial.edit?.closed == false)
+        let done = try #require(try CoachCard.parse(head + "  API-->>App: items\n```\nTHEN: Wait for the interviewer.", finished: true))
+        #expect(done.edit?.closed == true)
+        #expect(done.edit?.code == "sequenceDiagram\n  App->>API: GET /feed\n  API-->>App: items")
+        #expect(CoachCards.asksToDraw("Sketch the sequence for a login."))
+        #expect(CoachCards.asksToDraw("Show me a flowchart of the upload."))
+        #expect(!CoachCards.asksToDraw("What happens on process death?"))
+    }
+
     @Test @MainActor func keepLeavesTheCardAndChineseKeepsTheFullAnswerPath() async throws {
         let model = Model(["<<<CICADA_CARD>>>\nSAY:\nFirst, the scope.\nCASE: []", "<<<CICADA_CARD>>>\nKEEP"])
         let engine = coach(model)
