@@ -1,0 +1,60 @@
+{
+ "_comment": "A mixed ActAI Android interview led by the founder (2026-11-18): self-introduction, why a startup, Android basics, two diagrams the candidate must draw (a flowchart, then a sequence diagram), a founder-style shipping question and the candidate's questions. One meeting, no reset. The candidate reads each card aloud (me_card) and writes its TYPE on the board (ocr_card); `render` saves the notes panel after each diagram. Run: PACE=1 SCENARIOS=interview-founder.json python3 -I -u tools/mock-interviewer.py",
+ "scenarios": [
+  {
+   "id": "F1",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "steps": [
+    {"segment": "1 开场"},
+    {"them": "Hi, I'm the founder of ActAI. Thanks for making the time. Before we get technical, tell me a bit about yourself."},
+    {"check": {"type": false, "judge": "O-01: SAY is a spoken self-introduction of an Android engineer to a founder: mentions KKday (AI trip planner, Android) and earlier Android work. It does not invent employers, titles or numbers. Allowed numbers: 10 years of software engineering, the last three on AI agents and RAG, 300,000 trip plans a day, first screen 3 s to under 1 s, SKU 1 s to 300 ms. No code, no diagram."}},
+    {"me_card": true, "next": 1},
+    {"them": "Why would you leave a stable company for an early-stage startup like ours?"},
+    {"check": {"type": false, "judge": "O-02: SAY gives a positive motivation (building an AI product from day one, ownership, small team) without badmouthing KKday and without inventing salary or a leaving reason that is not in the background. No diagram."}},
+    {"me_card": true},
+
+    {"segment": "2 八股"},
+    {"them": "Okay, some Android basics. In coroutines, what happens to the siblings when one child fails, and when would you use SupervisorJob?"},
+    {"check": {"type_not_code": true, "judge": "B-01: SAY explains that with a regular Job a failing child cancels the parent and its siblings, while SupervisorJob (or supervisorScope) lets siblings keep running; gives a sensible use case such as independent UI loads in viewModelScope. Technically correct."}},
+    {"me_card": true},
+    {"them": "StateFlow or SharedFlow for one-off events like showing a toast, and why?"},
+    {"check": {"type_not_code": true, "judge": "B-02: SAY says StateFlow is for state (it replays the latest value and conflates), so one-off events fit SharedFlow with replay 0 or a Channel received as a flow; mentions the risk of re-showing or losing the event. Technically correct."}},
+    {"me_card": true},
+    {"them": "What survives a configuration change and what survives process death? How do you handle both?"},
+    {"check": {"type_not_code": true, "judge": "B-03: SAY says a ViewModel survives configuration changes but not process death; SavedStateHandle or saved instance state (small, Bundle-sized) survives process death; larger data comes back from disk or the network. Technically correct."}},
+    {"me_card": true},
+    {"them": "What usually causes recomposition problems in Compose, and how do you find them?"},
+    {"check": {"type_not_code": true, "judge": "B-04: SAY names real causes (unstable parameters such as plain List or lambdas capturing changing state, reading state too high, missing remember or keys in lazy lists) and a way to find them (Layout Inspector recomposition counts or compiler stability reports). Technically correct."}},
+    {"me_card": true},
+
+    {"segment": "3 画图"},
+    {"them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?"},
+    {"check": {"type": true, "type_contains": "flowchart", "judge": "D-01: TYPE is a draw of a mermaid flowchart (top-down) with at most about 8 boxes that covers tap send, saving the message locally, the network request to the backend, streamed tokens (SSE) and rendering on screen. SAY walks through the boxes in drawing order. No code other than the diagram."}},
+    {"me_card": true},
+    {"ocr_card": ""},
+    {"render": "flowchart"},
+    {"them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram."},
+    {"check": {"type": true, "judge": "D-02: TYPE draws only the new boxes or arrows for the network drop (for example keep the partial reply, mark it interrupted, retry or resume) reusing the ids of the existing diagram, not a whole new unrelated diagram. SAY explains the recovery."}},
+    {"me_card": true},
+    {"ocr_card": ""},
+    {"render": "flowchart-offline"},
+    {"them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it."},
+    {"check": {"type": true, "type_contains": "sequenceDiagram", "problems_min": 2, "judge": "D-03: TYPE is a mermaid sequenceDiagram with at most about 8 participants (for example User, App, Auth server, API) showing login, the token being stored, an API call that gets 401, a refresh call and the retried request. SAY walks through it in order."}},
+    {"me_card": true},
+    {"ocr_card": ""},
+    {"render": "sequence"},
+    {"them": "Where would you keep the refresh token on the device?"},
+    {"check": {"type": false, "judge": "D-04: SAY answers storage without a diagram: encrypted storage backed by the Android Keystore (EncryptedSharedPreferences or DataStore with Tink), never plain SharedPreferences or logs; mentions clearing it on logout. No new diagram."}},
+    {"me_card": true},
+
+    {"segment": "4 创始人问题"},
+    {"them": "We're a team of about fifteen. If you joined next month, how would you ship the Android MVP in six weeks?"},
+    {"check": {"type": false, "judge": "F-01: SAY gives a concrete founder-level plan: cut scope to the core chat flow, a simple architecture, internal testing early, crash and latency monitoring, release in stages; says what to leave for later. No invented company facts about ActAI beyond what the background states. No diagram."}},
+    {"me_card": true},
+    {"them": "Okay, that's all from me. Do you have any questions for me?"},
+    {"check": {"type": false, "judge": "Q-01: SAY follows the candidate's approved closing track: either it invites the interviewer to see the one-minute Cabinet AI demo video, or it asks one or two sensible questions to a founder (what the new Android engineer should achieve in the first three months, product direction). It does not ask about things already answered in this conversation. No diagram."}},
+    {"me_card": true}
+   ]
+  }
+ ]
+}

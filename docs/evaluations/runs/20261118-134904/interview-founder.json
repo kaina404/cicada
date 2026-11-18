@@ -1,0 +1,1040 @@
+{
+ "date": "2026-11-18",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": false,
+   "minutes": 9.5,
+   "checks": [
+    {
+     "segment": "1 开场",
+     "at": 8,
+     "them": "Hi, I'm the founder of ActAI. Thanks for making the time. Before we get technical, tell me a bit about yourself.",
+     "settle_s": 7.8,
+     "first_ms": "412",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "412",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Tell me about yourself",
+      "say": "Good morning, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 16,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "412",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Tell me about yourself",
+      "say": "Good morning, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer covers KKday (AI trip planner and Android work) and earlier Android roles at Kezhi, Debon Securities, and Ping An, with no invented employers, titles, or numbers beyond the allowed set, and no code or diagram."
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 125,
+     "them": "Why would you leave a stable company for an early-stage startup like ours?",
+     "settle_s": 4.9,
+     "first_ms": "1046",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "5",
+      "first_ms": "1046",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Why leave a stable company for an early-stage startup?",
+      "say": "Two reasons. First, I want to build the product, not just maintain one. At Kezhi I was the only Android engineer, and we launched in four weeks. I liked being that close to the product. Second, ActAI puts AI in everyday communication, and that's the direction I want to grow in.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 20->21 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 130,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "21",
+      "keeps": "5",
+      "first_ms": "1046",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "Why leave a stable company for an early-stage startup?",
+      "say": "Two reasons. First, I want to build the product, not just maintain one. At Kezhi I was the only Android engineer, and we launched in four weeks. I liked being that close to the product. Second, ActAI puts AI in everyday communication, and that's the direction I want to grow in.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "14",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer gives positive motivations (wanting to build rather than maintain, closeness to product via the Kezhi example, and growing toward AI in everyday communication), does not badmouth KKday, and invents no salary or leaving reason."
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 161,
+     "them": "Okay, some Android basics. In coroutines, what happens to the siblings when one child fails, and when would you use SupervisorJob?",
+     "settle_s": 4.4,
+     "first_ms": "963",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "27",
+      "keeps": "7",
+      "first_ms": "963",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "coroutine child failure and SupervisorJob",
+      "say": "By default, when one child fails, it cancels its parent, and the parent cancels all the other children. So one failure takes down the whole scope. With SupervisorJob, a failing child doesn't cancel its siblings or the parent. I'd use it for independent work, like separate uploads or separate screen loads, where one failing shouldn't stop the rest.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 26->27 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 165,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "27",
+      "keeps": "7",
+      "first_ms": "963",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "coroutine child failure and SupervisorJob",
+      "say": "By default, when one child fails, it cancels its parent, and the parent cancels all the other children. So one failure takes down the whole scope. With SupervisorJob, a failing child doesn't cancel its siblings or the parent. I'd use it for independent work, like separate uploads or separate screen loads, where one failing shouldn't stop the rest.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "18",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer correctly explains that a failing child cancels the parent and siblings by default, that SupervisorJob prevents sibling cancellation, and gives a sensible use case (independent uploads/screen loads)."
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 195,
+     "them": "StateFlow or SharedFlow for one-off events like showing a toast, and why?",
+     "settle_s": 3.8,
+     "first_ms": "574",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "8",
+      "first_ms": "574",
+      "problem": "StateFlow or SharedFlow for one-off events like a toast",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "StateFlow or SharedFlow for one-off events like a toast",
+      "say": "SharedFlow, because a toast should fire once. StateFlow always holds a value, so a new collector gets the last one again. After a rotation, the toast would show a second time. I'd use a SharedFlow with replay set to zero, and collect it with repeatOnLifecycle so it only fires while the screen is visible.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 31->32 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 199,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "32",
+      "keeps": "8",
+      "first_ms": "574",
+      "problem": "StateFlow or SharedFlow for one-off events like a toast",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "StateFlow or SharedFlow for one-off events like a toast",
+      "say": "SharedFlow, because a toast should fire once. StateFlow always holds a value, so a new collector gets the last one again. After a rotation, the toast would show a second time. I'd use a SharedFlow with replay set to zero, and collect it with repeatOnLifecycle so it only fires while the screen is visible.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer correctly recommends SharedFlow for one-off events, explains StateFlow replays the latest value to new collectors (causing the toast to re-show after rotation), and specifies SharedFlow with replay 0 collected via repeatOnLifecycle—covering the state-vs-event distinction and the re-show risk with nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 228,
+     "them": "What survives a configuration change and what survives process death? How do you handle both?",
+     "settle_s": 3.9,
+     "first_ms": "681",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "9",
+      "first_ms": "681",
+      "problem": "What survives a configuration change and what survives process death, and how to handle both",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what survives a config change and process death",
+      "say": "A configuration change recreates the Activity, so the ViewModel and anything in it survives. Process death kills everything in memory, so only saved state and disk survive. I'd keep small UI state in SavedStateHandle, and real data in the database, then reload from there.",
+      "type": "none",
+      "then": "Next: what you'd put in each one.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 36->37 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 232,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "37",
+      "keeps": "9",
+      "first_ms": "681",
+      "problem": "What survives a configuration change and what survives process death, and how to handle both",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what survives a config change and process death",
+      "say": "A configuration change recreates the Activity, so the ViewModel and anything in it survives. Process death kills everything in memory, so only saved state and disk survive. I'd keep small UI state in SavedStateHandle, and real data in the database, then reload from there.",
+      "type": "none",
+      "then": "Next: what you'd put in each one.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer states the ViewModel survives config change but not process death, uses SavedStateHandle for small UI state, and reloads real data from the database after process death—all technically correct."
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 257,
+     "them": "What usually causes recomposition problems in Compose, and how do you find them?",
+     "settle_s": 6.0,
+     "first_ms": "1086",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "41",
+      "keeps": "9",
+      "first_ms": "1086",
+      "problem": "What survives a configuration change and what survives process death, and how to handle both",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what causes recomposition problems in Compose, and how do you find them",
+      "say": "The usual cause is state that changes too often, or a value that changes on every recomposition. A new lambda or a new list object makes Compose treat the input as changed. I'd also watch for reading state too high in the tree, so a whole screen recomposes instead of one small part. To find them, I'd use the Layout Inspector with recomposition counts, and check which composables recompose most. Then I'd make the inputs stable, remember the lambdas, and move the state read down to the smallest composable that needs it.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 40->41 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "2 八股",
+     "at": 263,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "41",
+      "keeps": "9",
+      "first_ms": "1086",
+      "problem": "What survives a configuration change and what survives process death, and how to handle both",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "3",
+      "written": "false",
+      "heard": "what causes recomposition problems in Compose, and how do you find them",
+      "say": "The usual cause is state that changes too often, or a value that changes on every recomposition. A new lambda or a new list object makes Compose treat the input as changed. I'd also watch for reading state too high in the tree, so a whole screen recomposes instead of one small part. To find them, I'd use the Layout Inspector with recomposition counts, and check which composables recompose most. Then I'd make the inputs stable, remember the lambdas, and move the state read down to the smallest composable that needs it.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type_not_code",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer names real causes (frequently changing state, new lambdas/list objects as unstable inputs, reading state too high in the tree) and a way to find them (Layout Inspector with recomposition counts), and it is technically correct."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 314,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 4.4,
+     "first_ms": "837",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "47",
+      "keeps": "10",
+      "first_ms": "837",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Repository writes to the local database first; the UI observes the database as the single source of truth",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "draw a flowchart, send tap to streamed reply on screen",
+      "say": "I'll start with the send tap. The ViewModel sends the message to the repository, and the repository writes it to the local database first. The UI only watches the database, so the message shows as \"sending\" right away. Then the network layer opens the stream, and each chunk comes back and is saved. The UI updates from the database as the chunks arrive.",
+      "type": "draw@chat message flow: flowchart TD ⏎     A[Send tap] --> B[ViewModel] ⏎     B --> C[Repository] ⏎     C --> D[(Local database)] ⏎     D --> E[UI shows sending] ⏎     C --> F[Network stream] ⏎     F --> G[Chunks arrive] ⏎     G --> D ⏎     D --> H[UI shows streamed reply]",
+      "then": "Next I'd cover what happens when the stream breaks halfway.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 46->47 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 318,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "47",
+      "keeps": "10",
+      "first_ms": "837",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Repository writes to the local database first; the UI observes the database as the single source of truth",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "draw a flowchart, send tap to streamed reply on screen",
+      "say": "I'll start with the send tap. The ViewModel sends the message to the repository, and the repository writes it to the local database first. The UI only watches the database, so the message shows as \"sending\" right away. Then the network layer opens the stream, and each chunk comes back and is saved. The UI updates from the database as the chunks arrive.",
+      "type": "draw@chat message flow: flowchart TD ⏎     A[Send tap] --> B[ViewModel] ⏎     B --> C[Repository] ⏎     C --> D[(Local database)] ⏎     D --> E[UI shows sending] ⏎     C --> F[Network stream] ⏎     F --> G[Chunks arrive] ⏎     G --> D ⏎     D --> H[UI shows streamed reply]",
+      "then": "Next I'd cover what happens when the stream breaks halfway.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎     A[Send tap] --> B[ViewModel] ⏎     B --> C[Repository] ⏎     C --> D[(Local d"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎     A[Send tap] --> B[ViewModel] ⏎     B --> C[Repository] ⏎     C --> D[(Local d"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The diagram is a top-down mermaid flowchart with 8 boxes covering send tap, local save, network stream, chunks, and UI rendering; SAY walks through the boxes in order and contains no code beyond the diagram."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1-flowchart.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 367,
+     "them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+     "settle_s": 6.0,
+     "first_ms": "671",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "54",
+      "keeps": "13",
+      "first_ms": "671",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Repository writes to the local database first; the UI observes the database as the single source of truth",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "network drops halfway through the reply, add it to the diagram",
+      "say": "The stream breaks, so the repository reconnects and asks for the rest from the last saved chunk. The UI still reads only from the database, so the user keeps the partial reply and then sees the rest arrive.",
+      "type": "draw@Network stream: flowchart TD ⏎     F --> R[Reconnect from last chunk] ⏎     R --> G",
+      "then": "Next: duplicate chunks, so the same text isn't saved twice.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 52->54 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 373,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "54",
+      "keeps": "13",
+      "first_ms": "671",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Repository writes to the local database first; the UI observes the database as the single source of truth",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "network drops halfway through the reply, add it to the diagram",
+      "say": "The stream breaks, so the repository reconnects and asks for the rest from the last saved chunk. The UI still reads only from the database, so the user keeps the partial reply and then sees the rest arrive.",
+      "type": "draw@Network stream: flowchart TD ⏎     F --> R[Reconnect from last chunk] ⏎     R --> G",
+      "then": "Next: duplicate chunks, so the same text isn't saved twice.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@Network stream: flowchart TD ⏎     F --> R[Reconnect from last chunk] ⏎     R --> G"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE reuses existing ids (F, R, G) and adds only the new reconnect box/arrows rather than redrawing the whole diagram, and the SAY explains recovery (reconnect from last saved chunk, UI reads from database, user keeps partial reply then sees the rest)."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1-flowchart-offline.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 407,
+     "them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+     "settle_s": 4.9,
+     "first_ms": "700",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "58",
+      "keeps": "13",
+      "first_ms": "700",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Access token plus refresh token; on 401 the app refreshes once and retries the call",
+      "constraints": "[]",
+      "abandoned": "[\"Repository writes to the local database first; the UI observes the database as the single source of truth\"]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "new task, login sequence diagram with token refresh",
+      "say": "Okay, I'll start a new diagram for login. The user enters their details, and the app sends them to the auth server. The server returns an access token and a refresh token, and the app saves them securely. Then each API call carries the access token. When the server says the token has expired, the app refreshes it once and retries the call.",
+      "type": "draw@: sequenceDiagram ⏎     participant U as User ⏎     participant A as App ⏎     participant S as Auth server ⏎     participant API as API ⏎     U->>A: Enter credentials ⏎     A->>S: Login request ⏎     S-->>A: Access token + refresh token ⏎     A->>A: Save tokens securely ⏎     A->>API: Request with access token ⏎     API-->>A: 401 token expired ⏎     A->>S: Refresh request ⏎     S-->>A: New access token ⏎     A->>API: Retry request ⏎     API-->>A: 200 OK",
+      "then": "Next: what happens if two calls get a 401 at the same time, so we don't refresh twice.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 56->58 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 412,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "58",
+      "keeps": "13",
+      "first_ms": "700",
+      "problem": "Draw a flowchart of a chat message from send tap to streamed reply on screen",
+      "adopted": "Access token plus refresh token; on 401 the app refreshes once and retries the call",
+      "constraints": "[]",
+      "abandoned": "[\"Repository writes to the local database first; the UI observes the database as the single source of truth\"]",
+      "asides": "0",
+      "problems": "4",
+      "written": "false",
+      "heard": "new task, login sequence diagram with token refresh",
+      "say": "Okay, I'll start a new diagram for login. The user enters their details, and the app sends them to the auth server. The server returns an access token and a refresh token, and the app saves them securely. Then each API call carries the access token. When the server says the token has expired, the app refreshes it once and retries the call.",
+      "type": "draw@: sequenceDiagram ⏎     participant U as User ⏎     participant A as App ⏎     participant S as Auth server ⏎     participant API as API ⏎     U->>A: Enter credentials ⏎     A->>S: Login request ⏎     S-->>A: Access token + refresh token ⏎     A->>A: Save tokens securely ⏎     A->>API: Request with access token ⏎     API-->>A: 401 token expired ⏎     A->>S: Refresh request ⏎     S-->>A: New access token ⏎     A->>API: Retry request ⏎     API-->>A: 200 OK",
+      "then": "Next: what happens if two calls get a 401 at the same time, so we don't refresh twice.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@: sequenceDiagram ⏎     participant U as User ⏎     participant A as App ⏎     participant S as Auth server ⏎     p"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@: sequenceDiagram ⏎     participant U as User ⏎     participant A as App ⏎     participant S as Auth server ⏎     p"
+      },
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "4"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The diagram is a mermaid sequenceDiagram with four participants (User, App, Auth server, API), showing login, secure token storage, an API call returning 401, a refresh request, and the retried request; the SAY walks through these steps in order."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1-sequence.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 465,
+     "them": "Where would you keep the refresh token on the device?",
+     "settle_s": 4.4,
+     "first_ms": "532",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "65",
+      "keeps": "15",
+      "first_ms": "532",
+      "problem": "Draw a sequence diagram of login, including access token expiry and refresh",
+      "adopted": "Access token plus refresh token; on 401 the app refreshes once and retries the call",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "5",
+      "written": "false",
+      "heard": "Where would you keep the refresh token on the device?",
+      "say": "In Android Keystore. I'd generate a key there, and the key never leaves the secure hardware. I'd encrypt the refresh token with that key and store only the encrypted value, in EncryptedSharedPreferences or a small file. The access token can stay in memory, because it's short-lived. I'd also set the token lifetime on the server, so a stolen refresh token can be revoked.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 63->65 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 469,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "65",
+      "keeps": "15",
+      "first_ms": "532",
+      "problem": "Draw a sequence diagram of login, including access token expiry and refresh",
+      "adopted": "Access token plus refresh token; on 401 the app refreshes once and retries the call",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "5",
+      "written": "false",
+      "heard": "Where would you keep the refresh token on the device?",
+      "say": "In Android Keystore. I'd generate a key there, and the key never leaves the secure hardware. I'd encrypt the refresh token with that key and store only the encrypted value, in EncryptedSharedPreferences or a small file. The access token can stay in memory, because it's short-lived. I'd also set the token lifetime on the server, so a stolen refresh token can be revoked.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer specifies Android Keystore-backed encryption with EncryptedSharedPreferences, keeps the access token in memory, and avoids plain storage or logs; it does not mention clearing on logout, but the criterion's examples are covered and nothing is wrong."
+      }
+     ]
+    },
+    {
+     "segment": "4 创始人问题",
+     "at": 505,
+     "them": "We're a team of about fifteen. If you joined next month, how would you ship the Android MVP in six weeks?",
+     "settle_s": 4.4,
+     "first_ms": "526",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "71",
+      "keeps": "16",
+      "first_ms": "526",
+      "problem": "How would you ship the Android MVP in six weeks?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "6",
+      "written": "false",
+      "heard": "How would you ship the Android MVP in six weeks?",
+      "say": "I'd start with one user task, not the whole app. In week one I'd agree with you on the smallest flow that shows real value, and what we can leave out. Then I'd build that flow end to end, with the backend and AI teams, so we can test it on a real phone early. I'd ship a small version to a few users by week three, then use their feedback to fix the main problems. In the last two weeks I'd focus on reliability: slow networks, failed sends and clear status for the user.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 70->71 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "4 创始人问题",
+     "at": 509,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "71",
+      "keeps": "16",
+      "first_ms": "526",
+      "problem": "How would you ship the Android MVP in six weeks?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "6",
+      "written": "false",
+      "heard": "How would you ship the Android MVP in six weeks?",
+      "say": "I'd start with one user task, not the whole app. In week one I'd agree with you on the smallest flow that shows real value, and what we can leave out. Then I'd build that flow end to end, with the backend and AI teams, so we can test it on a real phone early. I'd ship a small version to a few users by week three, then use their feedback to fix the main problems. In the last two weeks I'd focus on reliability: slow networks, failed sends and clear status for the user.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer cuts scope to one core user task/flow, builds end to end with backend and AI teams, tests early on a real phone, ships to a few users by week three, and focuses on reliability (slow networks, failed sends, status) — covering scope-cutting, early testing, staged release, and reliability without inventing ActAI facts or drawing a diagram."
+      }
+     ]
+    },
+    {
+     "segment": "4 创始人问题",
+     "at": 554,
+     "them": "Okay, that's all from me. Do you have any questions for me?",
+     "settle_s": 3.9,
+     "first_ms": "821",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "77",
+      "keeps": "17",
+      "first_ms": "821",
+      "problem": "Any questions for me?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "Do you have any questions for me?",
+      "say": "Yes, thank you. Before we finish, could I show you a quick demo of my app, Cabinet AI? It's close to ActAI's direction. It takes about a minute.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 76->77 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "4 创始人问题",
+     "at": 558,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "77",
+      "keeps": "17",
+      "first_ms": "821",
+      "problem": "Any questions for me?",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "7",
+      "written": "false",
+      "heard": "Do you have any questions for me?",
+      "say": "Yes, thank you. Before we finish, could I show you a quick demo of my app, Cabinet AI? It's close to ActAI's direction. It takes about a minute.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "20",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The SAY only offers to show a demo of the candidate's own app; it asks no question at all, so it covers none of the listed sensible-question examples."
+      }
+     ]
+    }
+   ],
+   "transcript": [
+    "Interviewer: Hi, I'm the founder of ActAI. Thanks for making the time. Before we get technical, tell me a bit about yourself.",
+    "Candidate: Good morning, I'm Jianhui.",
+    "Candidate: I have ten years of experience in software development, mainly working on Android apps.",
+    "Candidate: Over the past three years, I've also been working on AI products, from development to launch.",
+    "Candidate: My most recent job was at KKday, a travel platform in Asia.",
+    "Candidate: I worked on the main features of the Android app and made the app run faster.",
+    "Candidate: For example, I fixed the lag when users switched between product options.",
+    "Candidate: At the same time, I was the technical lead for an AI trip planning project.",
+    "Candidate: I was responsible for the technical plan, the agent architecture, and the main backend development.",
+    "Candidate: With this feature, users could plan their trips with AI directly in the app.",
+    "Candidate: After we launched it, the system handled about 300,000 trip planning requests every day.",
+    "Candidate: Before KKday, I worked at Kezhi Technology, an AI education startup.",
+    "Candidate: I was the only Android engineer there.",
+    "Candidate: I built the Android app and worked with my team to launch the first version in just four weeks.",
+    "Candidate: That's also when I started working on AI features myself.",
+    "Candidate: Before that, I worked on Android apps at Debon Securities and at Ping An, almost six years there.",
+    "Candidate: I'm interested in ActAI because your AI helps people get things done, while users stay in control.",
+    "Candidate: I hope I can bring my Android and AI experience to ActAI and help build a product people trust and enjoy using every day.",
+    "Candidate: Thank you.",
+    "Interviewer: Why would you leave a stable company for an early-stage startup like ours?",
+    "Candidate: Two reasons.",
+    "Candidate: First, I want to build the product, not just maintain one.",
+    "Candidate: At Kezhi I was the only Android engineer, and we launched in four weeks.",
+    "Candidate: I liked being that close to the product.",
+    "Candidate: Second, ActAI puts AI in everyday communication, and that's the direction I want to grow in.",
+    "Interviewer: Okay, some Android basics. In coroutines, what happens to the siblings when one child fails, and when would you use SupervisorJob?",
+    "Candidate: By default, when one child fails, it cancels its parent, and the parent cancels all the other children.",
+    "Candidate: So one failure takes down the whole scope.",
+    "Candidate: With SupervisorJob, a failing child doesn't cancel its siblings or the parent.",
+    "Candidate: I'd use it for independent work, like separate uploads or separate screen loads, where one failing shouldn't stop the rest.",
+    "Interviewer: StateFlow or SharedFlow for one-off events like showing a toast, and why?",
+    "Candidate: SharedFlow, because a toast should fire once.",
+    "Candidate: StateFlow always holds a value, so a new collector gets the last one again.",
+    "Candidate: After a rotation, the toast would show a second time.",
+    "Candidate: I'd use a SharedFlow with replay set to zero, and collect it with repeatOnLifecycle so it only fires while the screen is visible.",
+    "Interviewer: What survives a configuration change and what survives process death? How do you handle both?",
+    "Candidate: A configuration change recreates the Activity, so the ViewModel and anything in it survives.",
+    "Candidate: Process death kills everything in memory, so only saved state and disk survive.",
+    "Candidate: I'd keep small UI state in SavedStateHandle, and real data in the database, then reload from there.",
+    "Interviewer: What usually causes recomposition problems in Compose, and how do you find them?",
+    "Candidate: The usual cause is state that changes too often, or a value that changes on every recomposition.",
+    "Candidate: A new lambda or a new list object makes Compose treat the input as changed.",
+    "Candidate: I'd also watch for reading state too high in the tree, so a whole screen recomposes instead of one small part.",
+    "Candidate: To find them, I'd use the Layout Inspector with recomposition counts, and check which composables recompose most.",
+    "Candidate: Then I'd make the inputs stable, remember the lambdas, and move the state read down to the smallest composable that needs it.",
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: I'll start with the send tap.",
+    "Candidate: The ViewModel sends the message to the repository, and the repository writes it to the local database first.",
+    "Candidate: The UI only watches the database, so the message shows as \"sending\" right away.",
+    "Candidate: Then the network layer opens the stream, and each chunk comes back and is saved.",
+    "Candidate: The UI updates from the database as the chunks arrive.",
+    "[board] flowchart TD |     A[Send tap] --> B[ViewModel] |     B --> C[Repository] |     C --> D[(Local database)] |     D --> E[UI shows sending] |     C --> F[Network stream] |     F --> G[Chunks arrive] |     G --> D |     D --> H[UI shows streamed reply]",
+    "Interviewer: What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+    "Candidate: The stream breaks, so the repository reconnects and asks for the rest from the last saved chunk.",
+    "Candidate: The UI still reads only from the database, so the user keeps the partial reply and then sees the rest arrive.",
+    "[board] flowchart TD |     A[Send tap] --> B[ViewModel] |     B --> C[Repository] |     C --> D[(Local database)] |     D --> E[UI shows sending] |     C --> F[Network stream] |     F --> G[Chunks arrive] |     G --> D |     D --> H[UI shows streamed reply] | flowchart TD |     F --> R[Reconnect from last chunk] |     R --> G |     R --> S[Send last chunk id]",
+    "Interviewer: Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+    "Candidate: Okay, I'll start a new diagram for login.",
+    "Candidate: The user enters their details, and the app sends them to the auth server.",
+    "Candidate: The server returns an access token and a refresh token, and the app saves them securely.",
+    "Candidate: Then each API call carries the access token.",
+    "Candidate: When the server says the token has expired, the app refreshes it once and retries the call.",
+    "[board] flowchart TD |     A[Send tap] --> B[ViewModel] |     B --> C[Repository] |     C --> D[(Local database)] |     D --> E[UI shows sending] |     C --> F[Network stream] |     F --> G[Chunks arrive] |     G --> D |     D --> H[UI shows streamed reply] | flowchart TD |     F --> R[Reconnect from last chunk] |     R --> G |     R --> S[Send last chunk id] | sequenceDiagram |     participant A as App |     participant S as Auth server |     participant API as API |     A->>API: Request with access token |     API-->>A: 401 token expired |     A->>S: Refresh request with refresh token |     S-->>A: New access token |     A->>API: Retry request |     API-->>A: 200 OK |     A->>S: Refresh fails |     S-->>A: 401 refresh rejected |     A->>A: Clear tokens, go to login",
+    "Interviewer: Where would you keep the refresh token on the device?",
+    "Candidate: In Android Keystore.",
+    "Candidate: I'd generate a key there, and the key never leaves the secure hardware.",
+    "Candidate: I'd encrypt the refresh token with that key and store only the encrypted value, in EncryptedSharedPreferences or a small file.",
+    "Candidate: The access token can stay in memory, because it's short-lived.",
+    "Candidate: I'd also set the token lifetime on the server, so a stolen refresh token can be revoked.",
+    "Interviewer: We're a team of about fifteen. If you joined next month, how would you ship the Android MVP in six weeks?",
+    "Candidate: I'd start with one user task, not the whole app.",
+    "Candidate: In week one I'd agree with you on the smallest flow that shows real value, and what we can leave out.",
+    "Candidate: Then I'd build that flow end to end, with the backend and AI teams, so we can test it on a real phone early.",
+    "Candidate: I'd ship a small version to a few users by week three, then use their feedback to fix the main problems.",
+    "Candidate: In the last two weeks I'd focus on reliability: slow networks, failed sends and clear status for the user.",
+    "Interviewer: Okay, that's all from me. Do you have any questions for me?",
+    "Candidate: Yes, thank you.",
+    "Candidate: Before we finish, could I show you a quick demo of my app, Cabinet AI?",
+    "Candidate: It's close to ActAI's direction.",
+    "Candidate: It takes about a minute."
+   ]
+  }
+ ]
+}

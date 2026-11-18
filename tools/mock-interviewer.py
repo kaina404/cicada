@@ -9,6 +9,7 @@ DeepSeek. Text injection is repeatable but skips ASR, endpointing by sound and r
   python3 -I tools/mock-interviewer.py [AC-05 ...]   # all scenarios, or the named ones
   FRAMES=<dir of P0 frames> for AC-08.  Writes docs/evaluations/walkthrough-acceptance-<date>.json
   Injected lines count as heard speech, so long runs no longer end themselves after 10 silent minutes.
+  `render: <name>` saves the notes panel to <run dir>/<id>-<name>.png (diagram cards).
   PACE=1 plays at speaking speed (interviewer lines and `me_card` read at ~150 words a minute); default 0.
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.request
@@ -17,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LSCTL = os.path.join(HERE, "lsctl")
 KEY_FILE = os.path.expanduser("~/Library/Application Support/LiveSubs Dev/ai-key-deepseek")
 PACE = float(os.environ.get("PACE", "0"))
+RUN_DIR = os.path.join(HERE, "..", "docs", "evaluations", "runs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
 
 def speak_time(text):
@@ -182,6 +184,11 @@ def run(scenario):
         elif "board" in step:
             path = step["board"].replace("$FRAMES", os.environ.get("FRAMES", ""))
             transcript.append("[board image] " + os.path.basename(path)); lsctl("coachBoard:" + path); time.sleep(2)
+        elif "render" in step:
+            # Saves the notes panel as it looks now (a diagram card renders as a picture) next to the results.
+            os.makedirs(RUN_DIR, exist_ok=True)
+            png = os.path.join(RUN_DIR, f'{scenario["id"]}-{step["render"]}.png')
+            lsctl("assistantRender:" + png, timeout=15); steps.append({"segment": segment, "render": os.path.basename(png), "results": []})
         elif "wait" in step:
             time.sleep(step["wait"])
         elif "next" in step:
@@ -218,7 +225,7 @@ def main():
     lsctl("stop")
     # basename: an absolute SCENARIOS path made the results overwrite the script itself.
     stem = "walkthrough-acceptance" if name == "walkthrough-scenarios.json" else os.path.splitext(os.path.basename(name))[0]
-    run_dir = os.path.join(HERE, "..", "docs", "evaluations", "runs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    run_dir = RUN_DIR
     os.makedirs(run_dir, exist_ok=True)
     out = os.path.join(run_dir, f"{stem}.json")
     json.dump({"date": str(datetime.date.today()), "method": "lsctl text injection into the dev build; DeepSeek judge",
