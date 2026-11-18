@@ -2530,8 +2530,9 @@ final class AppModel: ObservableObject {
         case "watchState": debugLog("watch: \(watchControl?.status ?? "unavailable")")
         case "assistantRender":
             // ImageRenderer cannot lay out the interactive scroll view and native controls reliably.
+            // Natural height, not a fixed 680: the fixed frame squeezed a resizable diagram to 0 high.
             let view = CoachSnapshot(engine: candidate, microphoneName: coachMicName)
-                .frame(width: 420, height: 680).padding(20).background(Palette.surface)
+                .frame(width: 420).fixedSize(horizontal: false, vertical: true).padding(20).background(Palette.surface)
             let renderer = ImageRenderer(content: view.environment(\.colorScheme, NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
             renderer.scale = 2
             if let image = renderer.nsImage, let tiff = image.tiffRepresentation,

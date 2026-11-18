@@ -1,0 +1,292 @@
+{
+ "date": "2026-11-19",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1d",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": false,
+   "minutes": 2.3,
+   "checks": [
+    {
+     "segment": "3 画图",
+     "at": 12,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 4.9,
+     "first_ms": "655",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "655",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "Local database is the source of truth; UI observes it and the stream writes into it",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart from tapping send to the streamed reply on screen",
+      "say": "Sure. I'll keep it simple: the app sends the message, the server streams the reply back, and the screen updates as each piece arrives. The local database is the source of truth, so the UI only reads from it.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Local DB: save message] ⏎ C --> D[Repository sends request] ⏎ D --> E[Server] ⏎ E --> F[SSE stream back] ⏎ F --> G[Repository parses chunks] ⏎ G --> C ⏎ C --> H[UI observes DB] ⏎ H --> I[Reply shows on screen]",
+      "then": "Next I'd explain what happens when the stream breaks.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 17,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "655",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "Local database is the source of truth; UI observes it and the stream writes into it",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart from tapping send to the streamed reply on screen",
+      "say": "Sure. I'll keep it simple: the app sends the message, the server streams the reply back, and the screen updates as each piece arrives. The local database is the source of truth, so the UI only reads from it.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Local DB: save message] ⏎ C --> D[Repository sends request] ⏎ D --> E[Server] ⏎ E --> F[SSE stream back] ⏎ F --> G[Repository parses chunks] ⏎ G --> C ⏎ C --> H[UI observes DB] ⏎ H --> I[Reply shows on screen]",
+      "then": "Next I'd explain what happens when the stream breaks.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Local DB: save message] ⏎ C --> D[Re"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Local DB: save message] ⏎ C --> D[Re"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE is a top-down mermaid flowchart with 8 boxes covering tap send, local DB save, repository request to server, SSE stream, chunk parsing, DB update, and UI rendering; the SAY walks through the flow in order (app sends, server streams, screen updates, DB as source of truth) and contains no code beyond the diagram."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 56,
+     "them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+     "settle_s": 5.4,
+     "first_ms": "835",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "6",
+      "keeps": "1",
+      "first_ms": "835",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "Local database is the source of truth; UI observes it and the stream writes into it",
+      "constraints": "[\"Network can drop halfway through the streamed reply\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "network drops halfway through the reply",
+      "say": "Okay, I'll add the failure path to the diagram. If the connection drops, the stream just stops, so the repository marks the message as incomplete in the database. The UI already reads from the database, so it shows a \"not finished\" state and a retry button. On retry, the app asks the server to continue from the last chunk it saved, so we don't get the same text twice.",
+      "type": "draw@chat-stream flow: flowchart TD ⏎ F[SSE stream back] --> K{Connection lost?} ⏎ K -->|yes| L[Mark message incomplete in DB] ⏎ L --> C[Local DB: save message] ⏎ C --> H[UI observes DB] ⏎ H --> M[Show retry button] ⏎ M --> D[Repository sends request]",
+      "then": "Next: what the server needs to do so a retry doesn't duplicate text.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 4->6 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 61,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "6",
+      "keeps": "1",
+      "first_ms": "835",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "Local database is the source of truth; UI observes it and the stream writes into it",
+      "constraints": "[\"Network can drop halfway through the streamed reply\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "network drops halfway through the reply",
+      "say": "Okay, I'll add the failure path to the diagram. If the connection drops, the stream just stops, so the repository marks the message as incomplete in the database. The UI already reads from the database, so it shows a \"not finished\" state and a retry button. On retry, the app asks the server to continue from the last chunk it saved, so we don't get the same text twice.",
+      "type": "draw@chat-stream flow: flowchart TD ⏎ F[SSE stream back] --> K{Connection lost?} ⏎ K -->|yes| L[Mark message incomplete in DB] ⏎ L --> C[Local DB: save message] ⏎ C --> H[UI observes DB] ⏎ H --> M[Show retry button] ⏎ M --> D[Repository sends request]",
+      "then": "Next: what the server needs to do so a retry doesn't duplicate text.",
+      "fix": "",
+      "past": "4",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat-stream flow: flowchart TD ⏎ F[SSE stream back] --> K{Connection lost?} ⏎ K -->|yes| L[Mark message incomplete "
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE reuses existing ids (F, C, H, D) and adds only new nodes/edges for the drop (K, L, M), and the SAY explains recovery—marking incomplete, UI showing not-finished/retry, and resuming from the last saved chunk to avoid duplication."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart-offline.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 101,
+     "them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+     "settle_s": 5.4,
+     "first_ms": "799",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "11",
+      "keeps": "3",
+      "first_ms": "799",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "App logs in, gets access and refresh tokens, and on a 401 refreshes once then retries the original request",
+      "constraints": "[\"Network can drop halfway through the streamed reply\"]",
+      "abandoned": "[\"Local database is the source of truth; UI observes it and the stream writes into it\"]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "new task — sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. I'll show the app calling login, getting an access token and a refresh token, then using the access token on later calls. When a call comes back 401, the app refreshes once and retries the original request.",
+      "type": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Auth ⏎ participant API ⏎ App->>Auth: login(user, password) ⏎ Auth-->>App: access token + refresh token ⏎ App->>API: request with access token ⏎ API-->>App: 401 token expired ⏎ App->>Auth: refresh(refresh token) ⏎ Auth-->>App: new access token ⏎ App->>API: retry original request ⏎ API-->>App: 200 OK",
+      "then": "Next, I'd cover what happens when the refresh itself fails, and how we stop many calls refreshing at the same time.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 10->11 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 107,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "11",
+      "keeps": "3",
+      "first_ms": "799",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "App logs in, gets access and refresh tokens, and on a 401 refreshes once then retries the original request",
+      "constraints": "[\"Network can drop halfway through the streamed reply\"]",
+      "abandoned": "[\"Local database is the source of truth; UI observes it and the stream writes into it\"]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "new task — sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. I'll show the app calling login, getting an access token and a refresh token, then using the access token on later calls. When a call comes back 401, the app refreshes once and retries the original request.",
+      "type": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Auth ⏎ participant API ⏎ App->>Auth: login(user, password) ⏎ Auth-->>App: access token + refresh token ⏎ App->>API: request with access token ⏎ API-->>App: 401 token expired ⏎ App->>Auth: refresh(refresh token) ⏎ Auth-->>App: new access token ⏎ App->>API: retry original request ⏎ API-->>App: 200 OK",
+      "then": "Next, I'd cover what happens when the refresh itself fails, and how we stop many calls refreshing at the same time.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Auth ⏎ participant API ⏎ App->>Auth: login(user, pa"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Auth ⏎ participant API ⏎ App->>Auth: login(user, pa"
+      },
+      {
+       "check": "problems_min",
+       "pass": false,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The diagram is a mermaid sequenceDiagram with three participants (App, Auth, API), showing login, tokens returned, an API call getting 401, a refresh call, and the retried request; SAY walks through it in order. The criterion's \"token being stored\" is not explicitly shown, but the listed examples are covered at least two correctly and nothing is stated wrongly."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-sequence.png",
+     "results": []
+    }
+   ],
+   "transcript": [
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: Sure.",
+    "Candidate: I'll keep it simple: the app sends the message, the server streams the reply back, and the screen updates as each piece arrives.",
+    "Candidate: The local database is the source of truth, so the UI only reads from it.",
+    "[board] flowchart TD | A[User taps Send] --> B[ViewModel] | B --> C[Local DB: save message] | C --> D[Repository sends request] | D --> E[Server] | E --> F[SSE stream back] | F --> G[Repository parses chunks] | G --> C | C --> H[UI observes DB] | H --> I[Reply shows on screen]",
+    "Interviewer: What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+    "Candidate: Okay, I'll add the failure path to the diagram.",
+    "Candidate: If the connection drops, the stream just stops, so the repository marks the message as incomplete in the database.",
+    "Candidate: The UI already reads from the database, so it shows a \"not finished\" state and a retry button.",
+    "Candidate: On retry, the app asks the server to continue from the last chunk it saved, so we don't get the same text twice.",
+    "[board] flowchart TD | A[User taps Send] --> B[ViewModel] | B --> C[Local DB: save message] | C --> D[Repository sends request] | D --> E[Server] | E --> F[SSE stream back] | F --> G[Repository parses chunks] | G --> C | C --> H[UI observes DB] | H --> I[Reply shows on screen]",
+    "Interviewer: Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+    "Candidate: Okay, a new diagram for login.",
+    "Candidate: I'll show the app calling login, getting an access token and a refresh token, then using the access token on later calls.",
+    "Candidate: When a call comes back 401, the app refreshes once and retries the original request.",
+    "[board] flowchart TD | A[User taps Send] --> B[ViewModel] | B --> C[Local DB: save message] | C --> D[Repository sends request] | D --> E[Server] | E --> F[SSE stream back] | F --> G[Repository parses chunks] | G --> C | C --> H[UI observes DB] | H --> I[Reply shows on screen] | sequenceDiagram | participant App | participant Auth | participant API | App->>Auth: login(user, password) | Auth-->>App: access token + refresh token | App->>API: request with access token | API-->>App: 401 token expired | App->>Auth: refresh(refresh token) | Auth-->>App: new access token | App->>API: retry original request | API-->>App: 200 OK"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,293 @@
+{
+ "date": "2026-11-19",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1d",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": false,
+   "minutes": 2.3,
+   "checks": [
+    {
+     "segment": "3 画图",
+     "at": 12,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 5.4,
+     "first_ms": "736",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "736",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart, user taps send → streamed reply on screen",
+      "say": "I'll draw it top to bottom. The user taps send, and the ViewModel sends the message to the backend. The backend streams the reply back over SSE. Each piece goes into the ViewModel, then into StateFlow, and the screen collects it and shows the text as it arrives.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps send] --> B[ViewModel] ⏎ B --> C[Backend] ⏎ C -->|SSE stream| D[ViewModel] ⏎ D --> E[StateFlow] ⏎ E --> F[Screen shows text]",
+      "then": "Next, I can explain what happens if the connection drops mid-stream.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->3 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 17,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "3",
+      "keeps": "0",
+      "first_ms": "736",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart, user taps send → streamed reply on screen",
+      "say": "I'll draw it top to bottom. The user taps send, and the ViewModel sends the message to the backend. The backend streams the reply back over SSE. Each piece goes into the ViewModel, then into StateFlow, and the screen collects it and shows the text as it arrives.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps send] --> B[ViewModel] ⏎ B --> C[Backend] ⏎ C -->|SSE stream| D[ViewModel] ⏎ D --> E[StateFlow] ⏎ E --> F[Screen shows text]",
+      "then": "Next, I can explain what happens if the connection drops mid-stream.",
+      "fix": "",
+      "past": "2",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps send] --> B[ViewModel] ⏎ B --> C[Backend] ⏎ C -->|SSE stream| D[ViewM"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps send] --> B[ViewModel] ⏎ B --> C[Backend] ⏎ C -->|SSE stream| D[ViewM"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The diagram omits saving the message locally, which the criterion requires, and the SAY does not mention it either."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 53,
+     "them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+     "settle_s": 8.2,
+     "first_ms": "878",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "9",
+      "keeps": "3",
+      "first_ms": "878",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders",
+      "constraints": "[\"If the network drops mid-reply, the ViewModel keeps received text, marks it incomplete, reconnects and continues from the last piece\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what happens if the network drops mid-reply, add it to the diagram",
+      "say": "If the stream breaks, the ViewModel keeps the text it already has and marks the reply as incomplete. Then it reconnects and asks the backend to continue from the last piece it received. The screen shows a small \"reconnecting\" state, so the user knows the answer is still coming.",
+      "type": "draw@flowchart: flowchart TD ⏎ D[ViewModel] -->|stream breaks| G[Mark reply incomplete] ⏎ G --> H[Reconnect with last piece] ⏎ H -->|continue| C[Backend]",
+      "then": "Next, I can explain how the backend avoids sending the same piece twice after a reconnect.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 8->9 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 61,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "9",
+      "keeps": "3",
+      "first_ms": "878",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders",
+      "constraints": "[\"If the network drops mid-reply, the ViewModel keeps received text, marks it incomplete, reconnects and continues from the last piece\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "what happens if the network drops mid-reply, add it to the diagram",
+      "say": "If the stream breaks, the ViewModel keeps the text it already has and marks the reply as incomplete. Then it reconnects and asks the backend to continue from the last piece it received. The screen shows a small \"reconnecting\" state, so the user knows the answer is still coming.",
+      "type": "draw@flowchart: flowchart TD ⏎ D[ViewModel] -->|stream breaks| G[Mark reply incomplete] ⏎ G --> H[Reconnect with last piece] ⏎ H -->|continue| C[Backend]",
+      "then": "Next, I can explain how the backend avoids sending the same piece twice after a reconnect.",
+      "fix": "",
+      "past": "5",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@flowchart: flowchart TD ⏎ D[ViewModel] -->|stream breaks| G[Mark reply incomplete] ⏎ G --> H[Reconnect with last pi"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE reuses existing ids (D, C) and adds only new boxes/arrows for the drop (mark incomplete, reconnect with last piece), and the SAY explains keeping partial text, marking incomplete, reconnecting/resuming, and a reconnecting UI state."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart-offline.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 98,
+     "them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+     "settle_s": 5.5,
+     "first_ms": "839",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "14",
+      "keeps": "5",
+      "first_ms": "839",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "App logs in, gets access and refresh tokens, sends the access token, refreshes once on 401 and retries",
+      "constraints": "[\"If the network drops mid-reply, the ViewModel keeps received text, marks it incomplete, reconnects and continues from the last piece\"]",
+      "abandoned": "[\"ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders\"]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "now a different one: sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. The app sends the credentials to the backend, and the backend returns an access token and a refresh token. The app stores them and uses the access token on later calls. When a call comes back as expired, the app refreshes the token once and retries the call.",
+      "type": "draw@: sequenceDiagram ⏎ participant App ⏎ participant API ⏎ participant Auth ⏎ App->>Auth: login (credentials) ⏎ Auth-->>App: access token + refresh token ⏎ App->>API: request with access token ⏎ API-->>App: 401 token expired ⏎ App->>Auth: refresh (refresh token) ⏎ Auth-->>App: new access token ⏎ App->>API: retry request with new token ⏎ API-->>App: 200 response",
+      "then": "Next, I can explain how the app makes sure only one refresh runs when several calls fail at once.",
+      "fix": "",
+      "past": "8",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 13->14 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 104,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "14",
+      "keeps": "5",
+      "first_ms": "839",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "App logs in, gets access and refresh tokens, sends the access token, refreshes once on 401 and retries",
+      "constraints": "[\"If the network drops mid-reply, the ViewModel keeps received text, marks it incomplete, reconnects and continues from the last piece\"]",
+      "abandoned": "[\"ViewModel sends the message, backend streams over SSE, ViewModel updates StateFlow, screen collects and renders\"]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "now a different one: sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. The app sends the credentials to the backend, and the backend returns an access token and a refresh token. The app stores them and uses the access token on later calls. When a call comes back as expired, the app refreshes the token once and retries the call.",
+      "type": "draw@: sequenceDiagram ⏎ participant App ⏎ participant API ⏎ participant Auth ⏎ App->>Auth: login (credentials) ⏎ Auth-->>App: access token + refresh token ⏎ App->>API: request with access token ⏎ API-->>App: 401 token expired ⏎ App->>Auth: refresh (refresh token) ⏎ Auth-->>App: new access token ⏎ App->>API: retry request with new token ⏎ API-->>App: 200 response",
+      "then": "Next, I can explain how the app makes sure only one refresh runs when several calls fail at once.",
+      "fix": "",
+      "past": "8",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@: sequenceDiagram ⏎ participant App ⏎ participant API ⏎ participant Auth ⏎ App->>Auth: login (credentials) ⏎ Auth--"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@: sequenceDiagram ⏎ participant App ⏎ participant API ⏎ participant Auth ⏎ App->>Auth: login (credentials) ⏎ Auth--"
+      },
+      {
+       "check": "problems_min",
+       "pass": false,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The diagram is a mermaid sequenceDiagram with three participants (App, API, Auth), showing login, token return, an API call getting 401, a refresh call, and the retried request; SAY walks through the flow in order."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-sequence.png",
+     "results": []
+    }
+   ],
+   "transcript": [
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: I'll draw it top to bottom.",
+    "Candidate: The user taps send, and the ViewModel sends the message to the backend.",
+    "Candidate: The backend streams the reply back over SSE.",
+    "Candidate: Each piece goes into the ViewModel, then into StateFlow, and the screen collects it and shows the text as it arrives.",
+    "[board] flowchart TD | A[User taps send] --> B[ViewModel] | B --> C[Backend] | C -->|SSE stream| D[ViewModel] | D --> E[StateFlow] | E --> F[Screen shows text]",
+    "Interviewer: What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+    "Candidate: If the stream breaks, the ViewModel keeps the text it already has and marks the reply as incomplete.",
+    "Candidate: Then it reconnects and asks the backend to continue from the last piece it received.",
+    "Candidate: The screen shows a small \"reconnecting\" state, so the user knows the answer is still coming.",
+    "[board] flowchart TD | A[User taps send] --> B[ViewModel] | B --> C[Backend] | C -->|SSE stream| D[ViewModel] | D --> E[StateFlow] | E --> F[Screen shows text] | flowchart TD | D[ViewModel] -->|stream breaks| G[Mark reply incomplete] | G --> H[Reconnect with last piece] | H -->|continue| C[Backend]",
+    "Interviewer: Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+    "Candidate: Okay, a new diagram for login.",
+    "Candidate: The app sends the credentials to the backend, and the backend returns an access token and a refresh token.",
+    "Candidate: The app stores them and uses the access token on later calls.",
+    "Candidate: When a call comes back as expired, the app refreshes the token once and retries the call.",
+    "[board] flowchart TD | A[User taps send] --> B[ViewModel] | B --> C[Backend] | C -->|SSE stream| D[ViewModel] | D --> E[StateFlow] | E --> F[Screen shows text] | flowchart TD | D[ViewModel] -->|stream breaks| G[Mark reply incomplete] | G --> H[Reconnect with last piece] | H -->|continue| C[Backend] | sequenceDiagram | participant App | participant API | participant Auth | App->>Auth: login (credentials) | Auth-->>App: access token + refresh token | App->>API: request with access token | API-->>App: 401 token expired | App->>Auth: refresh (refresh token) | Auth-->>App: new access token | App->>API: retry request with new token | API-->>App: 200 response"
+   ]
+  }
+ ]
+}

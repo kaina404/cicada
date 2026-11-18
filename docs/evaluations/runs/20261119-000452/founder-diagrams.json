@@ -1,0 +1,291 @@
+{
+ "date": "2026-11-19",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1d",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": false,
+   "minutes": 1.8,
+   "checks": [
+    {
+     "segment": "3 画图",
+     "at": 12,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 1.1,
+     "first_ms": "695",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "695",
+      "problem": "none",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "0",
+      "written": "false",
+      "heard": "\"how\" — too short to resolve",
+      "say": "Could you repeat the full question, please?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 13,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "695",
+      "problem": "none",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "0",
+      "written": "false",
+      "heard": "\"how\" — too short to resolve",
+      "say": "Could you repeat the full question, please?",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": false,
+       "detail": "none"
+      },
+      {
+       "check": "type_contains",
+       "pass": false,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The candidate only asked for the question to be repeated and produced no diagram, so none of the required flowchart content or walkthrough is present."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 25,
+     "them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+     "settle_s": 11.3,
+     "first_ms": "624",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "0",
+      "first_ms": "624",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "unclear line, no new request",
+      "say": "Okay, I'll keep going with the network drop. When the connection breaks, the stream stops and the ViewModel keeps the text it already has. It shows a short \"connection lost\" state with a retry button, and the retry asks the server to continue from the last chunk we received.",
+      "type": "draw@chat-stream-flow: flowchart TD ⏎     A[User taps send] --> B[ViewModel sends request] ⏎     B --> C[Server streams chunks] ⏎     C --> D[Parse chunk, update StateFlow] ⏎     D --> E[UI shows text] ⏎     C --> F[Network drops] ⏎     F --> G[Keep received text, show retry] ⏎     G --> H[Retry from last chunk] ⏎     H --> C",
+      "then": "Next, I'd say what the server needs to do so a retry doesn't repeat text.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 2->7 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 36,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "7",
+      "keeps": "0",
+      "first_ms": "624",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "unclear line, no new request",
+      "say": "Okay, I'll keep going with the network drop. When the connection breaks, the stream stops and the ViewModel keeps the text it already has. It shows a short \"connection lost\" state with a retry button, and the retry asks the server to continue from the last chunk we received.",
+      "type": "draw@chat-stream-flow: flowchart TD ⏎     A[User taps send] --> B[ViewModel sends request] ⏎     B --> C[Server streams chunks] ⏎     C --> D[Parse chunk, update StateFlow] ⏎     D --> E[UI shows text] ⏎     C --> F[Network drops] ⏎     F --> G[Keep received text, show retry] ⏎     G --> H[Retry from last chunk] ⏎     H --> C",
+      "then": "Next, I'd say what the server needs to do so a retry doesn't repeat text.",
+      "fix": "",
+      "past": "6",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat-stream-flow: flowchart TD ⏎     A[User taps send] --> B[ViewModel sends request] ⏎     B --> C[Server streams "
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE reuses the existing flow ids (A–E) and adds only the new network-drop boxes/arrows (F–H: keep received text, show retry, retry from last chunk), and the SAY explains recovery—stream stops, partial text kept, \"connection lost\" state with retry, resume from last chunk."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart-offline.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 68,
+     "them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+     "settle_s": 6.5,
+     "first_ms": "696",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "14",
+      "keeps": "1",
+      "first_ms": "696",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "new question — sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. The app sends the credentials to the auth endpoint, and the server returns an access token and a refresh token. The app stores both, then calls the API with the access token. When the API returns 401, the app sends the refresh token once, gets a new access token, and retries the original call. If the refresh also fails, the app clears the tokens and sends the user back to login.",
+      "type": "draw@login-sequence: sequenceDiagram ⏎     participant App ⏎     participant Auth ⏎     participant API ⏎     App->>Auth: login (credentials) ⏎     Auth-->>App: access token + refresh token ⏎     App->>API: request with access token ⏎     API-->>App: 401 expired ⏎     App->>Auth: refresh token ⏎     Auth-->>App: new access token ⏎     App->>API: retry request ⏎     API-->>App: 200 OK",
+      "then": "Next, I'd say what happens when the refresh call itself fails.",
+      "fix": "",
+      "past": "10",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 10->14 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 74,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "14",
+      "keeps": "1",
+      "first_ms": "696",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply showing on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "new question — sequence diagram of login with token refresh",
+      "say": "Okay, a new diagram for login. The app sends the credentials to the auth endpoint, and the server returns an access token and a refresh token. The app stores both, then calls the API with the access token. When the API returns 401, the app sends the refresh token once, gets a new access token, and retries the original call. If the refresh also fails, the app clears the tokens and sends the user back to login.",
+      "type": "draw@login-sequence: sequenceDiagram ⏎     participant App ⏎     participant Auth ⏎     participant API ⏎     App->>Auth: login (credentials) ⏎     Auth-->>App: access token + refresh token ⏎     App->>API: request with access token ⏎     API-->>App: 401 expired ⏎     App->>Auth: refresh token ⏎     Auth-->>App: new access token ⏎     App->>API: retry request ⏎     API-->>App: 200 OK",
+      "then": "Next, I'd say what happens when the refresh call itself fails.",
+      "fix": "",
+      "past": "10",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@login-sequence: sequenceDiagram ⏎     participant App ⏎     participant Auth ⏎     participant API ⏎     App->>Auth"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@login-sequence: sequenceDiagram ⏎     participant App ⏎     participant Auth ⏎     participant API ⏎     App->>Auth"
+      },
+      {
+       "check": "problems_min",
+       "pass": false,
+       "detail": "1"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE is a mermaid sequenceDiagram with 3 participants (App, Auth, API) showing login, token return, API call with 401, refresh call, and retried request; SAY walks through it in order and adds the refresh-failure fallback."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-sequence.png",
+     "results": []
+    }
+   ],
+   "transcript": [
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: Could you repeat the full question, please?",
+    "[board] ",
+    "Interviewer: What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+    "Candidate: Okay, I'll keep going with the network drop.",
+    "Candidate: When the connection breaks, the stream stops and the ViewModel keeps the text it already has.",
+    "Candidate: It shows a short \"connection lost\" state with a retry button, and the retry asks the server to continue from the last chunk we received.",
+    "[board] ",
+    "Interviewer: Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+    "Candidate: Okay, a new diagram for login.",
+    "Candidate: The app sends the credentials to the auth endpoint, and the server returns an access token and a refresh token.",
+    "Candidate: The app stores both, then calls the API with the access token.",
+    "Candidate: When the API returns 401, the app sends the refresh token once, gets a new access token, and retries the original call.",
+    "Candidate: If the refresh also fails, the app clears the tokens and sends the user back to login.",
+    "[board] "
+   ]
+  }
+ ]
+}

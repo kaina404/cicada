@@ -34,7 +34,7 @@ PACE=1 SCENARIOS=interview-founder.json python3 -I -u tools/mock-interviewer.py
 
 - **画图**：两轮都画出 `flowchart TD`（7 个框以内）和 `sequenceDiagram`（第 2 轮带 User / App / Auth server / API）。断网追问只补新框，复用原 id（第 1 轮 `add`，第 2 轮 `draw` 只含新边）。refresh token 存储题没有画图。三张图单独渲染核对过，结构正确、可照着画。
 - **反问 FAIL 不是缺陷**：用户确认过的收尾话术（`knowledge/04_talk_tracks.md`，2026-11-16）要求先邀请看演示，再问前三个月目标。判据已按话术改。
-- **面板截图里图是空框**：`assistantRender` 固定 420×680、不滚动，图被压成 0 高；真实窗口在 ScrollView 里。已知限制，不是渲染失败。
+- **面板截图里图是空框**：`assistantRender` 固定 420×680、不滚动，图被压成 0 高；真实窗口在 ScrollView 里。已修：截图改为按内容自然高度（见下方复测）。
 
 ## 发现并修复：记录窗口搜索拖慢卡片
 
@@ -46,5 +46,16 @@ PACE=1 SCENARIOS=interview-founder.json python3 -I -u tools/mock-interviewer.py
 
 ## 其他观察
 
-- 自我介绍以“Good morning”开头，当时是下午 1 点。模型不知道当前时间，影响很小。
 - 新增日志 `coach: card stream done s=… raw_chars=…`，以后区分是模型慢还是主线程慢。
+
+## 复测修复（23:35）
+
+- **问候语**：“Good morning”来自用户预制自我介绍（`04_talk_tracks.md`），模型不知道时间。现在出卡和完整回答的请求末尾都带当地时间和该用的问候语（`CoachPrompt.localTime`，测试 `CoachLocalTimeTests`）。23:35 复测开场为“Good evening”，判卷通过。
+- **截图里的图**：`assistantRender` 去掉固定高度，按内容撑开；复测截图 [F1v-flowchart.png](../evaluations/runs/20261118-233504/F1v-flowchart.png) 能看到完整 8 框流程图。截图里底部按钮显示成黄色禁止图标，是 `ImageRenderer` 画不了原生按钮，不影响真实窗口。
+- 复测里流程图判卷 FAIL：这次的图没有“本地保存消息”这一框（前两轮都有）。属于模型这次的取舍，没有改提示词；记录在 [runs/20261118-233504](../evaluations/runs/20261118-233504/founder-verify.json)。
+
+## 复测修复（11-19 00:05–00:27）
+
+- **测试脚本**：截图移到画图卡出来之后、候选人照着画之前（原来画完才截，卡片已换成下一张）。发问前一刻才记卡片数：之前等“面试官说话”的 8 秒里，系统声音里冒出的 “how” 先触发了一张卡，被当成了这道题的回答。
+- **登录时序图记成了流程图那道题**：四轮（含前两轮完整场景）都是这样，时序图卡片的标题还是 “Draw a flowchart…”。原因是提示词规定“同一个产品的问题都留在原设计题里”。修复：规则里补一句“换一张别的流程的图是新题”；`newQuestionPattern` 认出 “a different one: draw…” / “another diagram”，模型漏了 newProblem 时由 app 补上（测试 `aDifferentDiagramOpensANewProblem`）。只改提示词那次还漏了（新题到 22 s 后的下一张卡才记上），所以加了代码兜底。
+- 画图段连跑两轮全过：[runs/20261119-002414](../evaluations/runs/20261119-002414/)、[runs/20261119-002650](../evaluations/runs/20261119-002650/)，题目数 2，时序图卡片标题是登录。

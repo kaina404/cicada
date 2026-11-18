@@ -1,0 +1,200 @@
+{
+ "date": "2026-11-18",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 0,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1v",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": false,
+   "minutes": 2.2,
+   "checks": [
+    {
+     "segment": "1 开场",
+     "at": 8,
+     "them": "Hi, I'm the founder of ActAI. Thanks for making the time. Before we get technical, tell me a bit about yourself.",
+     "settle_s": 7.6,
+     "first_ms": "784",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "784",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "founder intro, tell me about yourself",
+      "say": "Good evening, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 0->1 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "1 开场",
+     "at": 16,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "1",
+      "keeps": "0",
+      "first_ms": "784",
+      "problem": "Tell me about yourself",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "founder intro, tell me about yourself",
+      "say": "Good evening, I'm Jianhui. I have ten years of experience in software development, mainly working on Android apps. Over the past three years, I've also been working on AI products, from development to launch. My most recent job was at KKday, a travel platform in Asia. I worked on the main features of the Android app and made the app run faster. For example, I fixed the lag when users switched between product options. At the same time, I was the technical lead for an AI trip planning project. I was responsible for the technical plan, the agent architecture, and the main backend development. With this feature, users could plan their trips with AI directly in the app. After we launched it, the system handled about 300,000 trip planning requests every day. Before KKday, I worked at Kezhi Technology, an AI education startup. I was the only Android engineer there. I built the Android app and worked with my team to launch the first version in just four weeks. That's also when I started working on AI features myself.",
+      "type": "none",
+      "then": "Wait for the interviewer.",
+      "fix": "",
+      "past": "0",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "none"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The answer opens with \"Good evening,\" which matches the late-evening local time, and it is a spoken self-introduction with no incorrect greeting."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 101,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 4.3,
+     "first_ms": "973",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "16",
+      "keeps": "4",
+      "first_ms": "973",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "draw a flowchart, send to streamed reply",
+      "say": "Sure. I'll keep it simple: the app sends the message, the backend streams the reply back, and the screen shows each piece as it arrives. I'll draw the main path first, then we can add the failure cases.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Repository] ⏎ C --> D[Backend API] ⏎ D --> E[SSE stream] ⏎ E --> F[Repository] ⏎ F --> G[StateFlow] ⏎ G --> H[Compose UI]",
+      "then": "Next I'd add what happens when the stream breaks or a message arrives twice.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 15->16 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 106,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "16",
+      "keeps": "4",
+      "first_ms": "973",
+      "problem": "Draw a flowchart of a chat message from tapping send to the streamed reply on screen",
+      "adopted": "none",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "draw a flowchart, send to streamed reply",
+      "say": "Sure. I'll keep it simple: the app sends the message, the backend streams the reply back, and the screen shows each piece as it arrives. I'll draw the main path first, then we can add the failure cases.",
+      "type": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Repository] ⏎ C --> D[Backend API] ⏎ D --> E[SSE stream] ⏎ E --> F[Repository] ⏎ F --> G[StateFlow] ⏎ G --> H[Compose UI]",
+      "then": "Next I'd add what happens when the stream breaks or a message arrives twice.",
+      "fix": "",
+      "past": "11",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Repository] ⏎ C --> D[Backend API] ⏎"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@chat message flow: flowchart TD ⏎ A[User taps Send] --> B[ViewModel] ⏎ B --> C[Repository] ⏎ C --> D[Backend API] ⏎"
+      },
+      {
+       "check": "judge",
+       "pass": false,
+       "detail": "FAIL: The flowchart omits saving the message locally, and the SAY does not walk through the boxes in drawing order."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1v-flowchart.png",
+     "results": []
+    }
+   ],
+   "transcript": [
+    "Interviewer: Hi, I'm the founder of ActAI. Thanks for making the time. Before we get technical, tell me a bit about yourself.",
+    "Candidate: Good evening, I'm Jianhui.",
+    "Candidate: I have ten years of experience in software development, mainly working on Android apps.",
+    "Candidate: Over the past three years, I've also been working on AI products, from development to launch.",
+    "Candidate: My most recent job was at KKday, a travel platform in Asia.",
+    "Candidate: I worked on the main features of the Android app and made the app run faster.",
+    "Candidate: For example, I fixed the lag when users switched between product options.",
+    "Candidate: At the same time, I was the technical lead for an AI trip planning project.",
+    "Candidate: I was responsible for the technical plan, the agent architecture, and the main backend development.",
+    "Candidate: With this feature, users could plan their trips with AI directly in the app.",
+    "Candidate: After we launched it, the system handled about 300,000 trip planning requests every day.",
+    "Candidate: Before KKday, I worked at Kezhi Technology, an AI education startup.",
+    "Candidate: I was the only Android engineer there.",
+    "Candidate: I built the Android app and worked with my team to launch the first version in just four weeks.",
+    "Candidate: That's also when I started working on AI features myself.",
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: Sure.",
+    "Candidate: I'll keep it simple: the app sends the message, the backend streams the reply back, and the screen shows each piece as it arrives.",
+    "Candidate: I'll draw the main path first, then we can add the failure cases.",
+    "[board] flowchart TD | A[User taps Send] --> B[ViewModel] | B --> C[Repository] | C --> D[Backend API] | D --> E[SSE stream] | E --> F[Repository] | F --> G[StateFlow] | G --> H[Compose UI]"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,295 @@
+{
+ "date": "2026-11-19",
+ "method": "lsctl text injection into the dev build; DeepSeek judge",
+ "passed": 1,
+ "total": 1,
+ "scenarios": [
+  {
+   "id": "F1d",
+   "name": "Founder interview: intro, basics, flowchart, sequence diagram",
+   "pass": true,
+   "minutes": 2.7,
+   "checks": [
+    {
+     "segment": "3 画图",
+     "at": 12,
+     "them": "Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+     "settle_s": 5.5,
+     "first_ms": "793",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "793",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "Message saved locally and shown first, then a stream from the backend updates the screen piece by piece",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart, send tap to streamed reply on screen",
+      "say": "I'll draw the main path first. The user taps send, and the app saves the message locally and shows it right away. Then it opens a stream to the backend, and the AI reply comes back in pieces. Each piece updates the screen, and the final piece closes the stream.",
+      "type": "draw@chat send to streamed reply: flowchart TD ⏎ A[User taps send] --> B[Save message locally] ⏎ B --> C[Show message on screen] ⏎ C --> D[Open stream to backend] ⏎ D --> E[AI reply arrives in pieces] ⏎ E --> F[Update screen per piece] ⏎ F --> G[Stream ends]",
+      "then": "Next, I'd add what happens when the connection drops mid-stream.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 1->2 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 17,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "2",
+      "keeps": "0",
+      "first_ms": "793",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "Message saved locally and shown first, then a stream from the backend updates the screen piece by piece",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "draw a flowchart, send tap to streamed reply on screen",
+      "say": "I'll draw the main path first. The user taps send, and the app saves the message locally and shows it right away. Then it opens a stream to the backend, and the AI reply comes back in pieces. Each piece updates the screen, and the final piece closes the stream.",
+      "type": "draw@chat send to streamed reply: flowchart TD ⏎ A[User taps send] --> B[Save message locally] ⏎ B --> C[Show message on screen] ⏎ C --> D[Open stream to backend] ⏎ D --> E[AI reply arrives in pieces] ⏎ E --> F[Update screen per piece] ⏎ F --> G[Stream ends]",
+      "then": "Next, I'd add what happens when the connection drops mid-stream.",
+      "fix": "",
+      "past": "1",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@chat send to streamed reply: flowchart TD ⏎ A[User taps send] --> B[Save message locally] ⏎ B --> C[Show message on"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@chat send to streamed reply: flowchart TD ⏎ A[User taps send] --> B[Save message locally] ⏎ B --> C[Show message on"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE is a top-down mermaid flowchart with 7 boxes covering tap send, local save, showing on screen, opening a stream to the backend, reply arriving in pieces, per-piece screen updates, and stream end; the SAY walks through the boxes in drawing order and contains no code beyond the diagram."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 59,
+     "them": "What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+     "settle_s": 10.4,
+     "first_ms": "590",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "12",
+      "keeps": "4",
+      "first_ms": "590",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "Message saved locally and shown first, then a stream from the backend updates the screen piece by piece",
+      "constraints": "[\"If the network drops halfway through the reply, the diagram must show that path\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "network drops halfway through the reply",
+      "say": "Right, so the stream can end badly, not just cleanly. I'll add that path to the diagram. If the connection drops, the stream ends with an error, not a normal end. The app keeps the pieces it already saved, so the user still sees the partial reply. Then it shows a \"connection lost\" state with a retry button.",
+      "type": "replace@G[Stream ends]: flowchart TD ⏎ G[Stream ends] --> H{Network dropped?} ⏎ H -->|yes| I[Show connection lost + retry] ⏎ H -->|no| J[Reply complete] ⏎ I --> K[Retry from last saved piece]",
+      "then": "Next, I'd say where the partial reply is stored, so it survives the screen closing.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 9->12 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 70,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "12",
+      "keeps": "4",
+      "first_ms": "590",
+      "problem": "Draw a flowchart of a chat message from the user tapping send to the streamed reply showing on screen",
+      "adopted": "Message saved locally and shown first, then a stream from the backend updates the screen piece by piece",
+      "constraints": "[\"If the network drops halfway through the reply, the diagram must show that path\"]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "1",
+      "written": "false",
+      "heard": "network drops halfway through the reply",
+      "say": "Right, so the stream can end badly, not just cleanly. I'll add that path to the diagram. If the connection drops, the stream ends with an error, not a normal end. The app keeps the pieces it already saved, so the user still sees the partial reply. Then it shows a \"connection lost\" state with a retry button.",
+      "type": "replace@G[Stream ends]: flowchart TD ⏎ G[Stream ends] --> H{Network dropped?} ⏎ H -->|yes| I[Show connection lost + retry] ⏎ H -->|no| J[Reply complete] ⏎ I --> K[Retry from last saved piece]",
+      "then": "Next, I'd say where the partial reply is stored, so it survives the screen closing.",
+      "fix": "",
+      "past": "7",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "replace@G[Stream ends]: flowchart TD ⏎ G[Stream ends] --> H{Network dropped?} ⏎ H -->|yes| I[Show connection lost + retr"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE reuses the existing G id and adds only new boxes/arrows for the network-drop path (connection lost + retry, retry from last saved piece), and the SAY explains recovery—stream ends with error, partial reply kept, connection-lost state with retry."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-flowchart-offline.png",
+     "results": []
+    },
+    {
+     "segment": "3 画图",
+     "at": 114,
+     "them": "Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+     "settle_s": 6.0,
+     "first_ms": "556",
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "19",
+      "keeps": "5",
+      "first_ms": "556",
+      "problem": "Draw a sequence diagram of login, including what happens when the access token expires and the app refreshes it",
+      "adopted": "App logs in, stores access and refresh tokens, and on a 401 refreshes the token then retries the call once",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "new task — sequence diagram of login with token refresh",
+      "say": "Okay, that's a separate flow, so I'll start a new diagram. The app sends the login request, and the server returns an access token and a refresh token. The app saves both, then uses the access token on later calls. When a call comes back as expired, the app sends the refresh token, gets a new access token, and repeats the failed call once.",
+      "type": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Server ⏎ App->>Server: Login with credentials ⏎ Server-->>App: Access token + refresh token ⏎ App->>Server: API call with access token ⏎ Server-->>App: 401 token expired ⏎ App->>Server: Refresh with refresh token ⏎ Server-->>App: New access token ⏎ App->>Server: Retry the same API call ⏎ Server-->>App: 200 OK",
+      "then": "Next, I'd cover what happens if the refresh itself fails, and how two calls at once share one refresh.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "answered",
+       "pass": true,
+       "detail": "requests 18->19 busy=false failed=false"
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "at": 120,
+     "card": {
+      "mode": "true",
+      "busy": "false",
+      "failed": "false",
+      "phase": "say",
+      "requests": "19",
+      "keeps": "5",
+      "first_ms": "556",
+      "problem": "Draw a sequence diagram of login, including what happens when the access token expires and the app refreshes it",
+      "adopted": "App logs in, stores access and refresh tokens, and on a 401 refreshes the token then retries the call once",
+      "constraints": "[]",
+      "abandoned": "[]",
+      "asides": "0",
+      "problems": "2",
+      "written": "false",
+      "heard": "new task — sequence diagram of login with token refresh",
+      "say": "Okay, that's a separate flow, so I'll start a new diagram. The app sends the login request, and the server returns an access token and a refresh token. The app saves both, then uses the access token on later calls. When a call comes back as expired, the app sends the refresh token, gets a new access token, and repeats the failed call once.",
+      "type": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Server ⏎ App->>Server: Login with credentials ⏎ Server-->>App: Access token + refresh token ⏎ App->>Server: API call with access token ⏎ Server-->>App: 401 token expired ⏎ App->>Server: Refresh with refresh token ⏎ Server-->>App: New access token ⏎ App->>Server: Retry the same API call ⏎ Server-->>App: 200 OK",
+      "then": "Next, I'd cover what happens if the refresh itself fails, and how two calls at once share one refresh.",
+      "fix": "",
+      "past": "13",
+      "prepared": "false"
+     },
+     "results": [
+      {
+       "check": "type",
+       "pass": true,
+       "detail": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Server ⏎ App->>Server: Login with credentials ⏎ Ser"
+      },
+      {
+       "check": "type_contains",
+       "pass": true,
+       "detail": "draw@login sequence: sequenceDiagram ⏎ participant App ⏎ participant Server ⏎ App->>Server: Login with credentials ⏎ Ser"
+      },
+      {
+       "check": "problems_min",
+       "pass": true,
+       "detail": "2"
+      },
+      {
+       "check": "judge",
+       "pass": true,
+       "detail": "PASS: The TYPE is a mermaid sequenceDiagram with 2 participants (App, Server) showing login, token return, API call, 401 expired, refresh call, new token, and retried call; SAY walks through it in order and says nothing wrong."
+      }
+     ]
+    },
+    {
+     "segment": "3 画图",
+     "render": "F1d-sequence.png",
+     "results": []
+    }
+   ],
+   "transcript": [
+    "Interviewer: Let's do something visual. Can you draw a flowchart of how a chat message goes from the user tapping send to the streamed reply showing on screen in our app?",
+    "Candidate: I'll draw the main path first.",
+    "Candidate: The user taps send, and the app saves the message locally and shows it right away.",
+    "Candidate: Then it opens a stream to the backend, and the AI reply comes back in pieces.",
+    "Candidate: Each piece updates the screen, and the final piece closes the stream.",
+    "[board] flowchart TD | A[User taps send] --> B[Save message locally] | B --> C[Show message on screen] | C --> D[Open stream to backend] | D --> E[AI reply arrives in pieces] | E --> F[Update screen per piece] | F --> G[Stream ends]",
+    "Interviewer: What happens in that flow if the network drops halfway through the reply? Add it to the diagram.",
+    "Candidate: Right, so the stream can end badly, not just cleanly.",
+    "Candidate: I'll add that path to the diagram.",
+    "Candidate: If the connection drops, the stream ends with an error, not a normal end.",
+    "Candidate: The app keeps the pieces it already saved, so the user still sees the partial reply.",
+    "Candidate: Then it shows a \"connection lost\" state with a retry button.",
+    "[board] flowchart TD | A[User taps send] --> B[Save message locally] | B --> C[Show message on screen] | C --> D[Open stream to backend] | D --> E[AI reply arrives in pieces] | E --> F[Update screen per piece] | F --> G[Stream ends] | flowchart TD | I[Show connection lost + retry] --> N[Retry from last saved piece] | N --> O[Cap at three attempts] | O --> P[Manual reconnect button]",
+    "Interviewer: Good. Now a different one: draw me a sequence diagram of login, including what happens when the access token expires and the app refreshes it.",
+    "Candidate: Okay, that's a separate flow, so I'll start a new diagram.",
+    "Candidate: The app sends the login request, and the server returns an access token and a refresh token.",
+    "Candidate: The app saves both, then uses the access token on later calls.",
+    "Candidate: When a call comes back as expired, the app sends the refresh token, gets a new access token, and repeats the failed call once.",
+    "[board] flowchart TD | A[User taps send] --> B[Save message locally] | B --> C[Show message on screen] | C --> D[Open stream to backend] | D --> E[AI reply arrives in pieces] | E --> F[Update screen per piece] | F --> G[Stream ends] | flowchart TD | I[Show connection lost + retry] --> N[Retry from last saved piece] | N --> O[Cap at three attempts] | O --> P[Manual reconnect button] | sequenceDiagram |     participant App |     participant Server |     App->>Server: Login request |     Server-->>App: Access token + refresh token |     App->>Server: API call with access token |     Server-->>App: 401 token expired |     App->>Server: Refresh token |     Server-->>App: New access token |     App->>Server: Retry API call once |     Server-->>App: 200 OK"
+   ]
+  }
+ ]
+}

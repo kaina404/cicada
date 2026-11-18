@@ -147,6 +147,9 @@ def run(scenario):
             print(f'  -- {segment} @ {int(time.time() - t0)}s'); continue
         if "them" in step:
             time.sleep(speak_time(step["them"]))
+            # Count again after the pause: real system audio during it ("how") had started a card,
+            # and that stray card was taken as the answer.
+            before = int((card_state() or {}).get("requests", 0) or 0)
             transcript.append("Interviewer: " + step["them"]); lsctl("themSaid:" + step["them"]); asked = time.time()
             s = settle(before)
             steps.append({"segment": segment, "at": int(asked - t0), "them": step["them"],
