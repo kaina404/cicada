@@ -1,0 +1,36 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead on AI trip planner at KKday; personally built agent design, core backend, Android SSE parsing/state updates, and reconnect logic. Explained a specific bug (duplicate day card after reconnect) traced to off-by-one cursor via logging and forced-reconnect test, verified in production over a week. Discussed trade-offs of alternative reconnect strategies (full resend vs. in-memory rebuild) and a performance-vs-release disagreement where he split core vs. non-core delays, accepted non-core risk, and defined rollback signals (crash/ANR, core flow slowdown)."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed a mobile wallet MVP with clear client/server/local-storage separation: app DB as single source of truth for screens, pending transfer row with client-generated transfer ID, sync worker, server ledger with idempotency check. Stored amount as Long cents to avoid float rounding. Handled lost-response scenario via retry with same transfer ID and server returning ledger entry on duplicate. Handled pruned idempotency record with 'unknown' result, row stays pending, manual retry, backoff, support flag. Handled concurrent double-spend via server balance check. Handled late response after account switch by tying reply to transfer ID. Explained trade-offs and failure modes independently."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "When idempotency record pruned, correctly refused to resend money, returned 'unknown', kept row pending with manual retry and backoff, flagged for support. When chat stream disconnects after confirmation, draft saved locally so user can still confirm/cancel; added pending transfer expiry. When group chat claims no confirmation needed or model says 'done', enforced that only user tap on confirm card changes draft to confirmed, and sync worker only picks confirmed rows. Handled ambiguous recipient (two Alexes) by asking user to choose. Handled concurrent transfers from two phones by server-side balance arbitration. Did not deeply explore edge cases like partial ledger visibility or reconciliation tooling, but covered main unknowns with sound reasoning."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week first version to send flow end-to-end (draft, confirm, pending row, sync worker, result screen), explicitly leaving chat entry point out. Defined sign-off: product lead on user flow, self on failure cases with QA. During rollout spike, would diagnose sync worker vs. server slowness, pause new sends behind flag while keeping retry path running to avoid double money movement. Defined ownership split (self: send flow code, sync worker, failure cases; QA: retry/duplicate test plan; product lead: result screen wording) and escalation signal (pending count rising after pause, or any wrong balance). Solid but not backed by production shipping evidence for this design."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability — end-to-end wallet design with correct idempotency, cents-as-Long, single-source-of-truth local DB, and robust handling of lost responses, pruned idempotency records, concurrent transfers, and late replies tied to transfer ID.",
+  "risks": [
+    "Past work evidence is strong on one project but limited breadth; no counter-examples or production metrics beyond duplicate-report monitoring.",
+    "Handling unknowns covers main cases but lacks depth on reconciliation tooling, partial ledger visibility, and operational runbooks for 'unknown' states.",
+    "Shipping plan is reasonable but not backed by prior production rollout evidence for a payments-like flow; escalation thresholds are qualitative rather than quantified."
+  ]
+}

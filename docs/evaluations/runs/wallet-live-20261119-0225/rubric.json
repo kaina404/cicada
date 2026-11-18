@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned AI trip planner end-to-end: agent design, core backend, Android SSE client. Fixed SKU calculation performance (1s→300ms) via prebuilt index, Dispatchers.Default, StateFlow. Debugged ID comparison bug ('0123' vs '123') with replay and test. Chose on-device index over caching or backend calc with clear trade-offs. Post-release validation was manual, not data-driven."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Solid Android architecture: ViewModel, Repository, local DB as cache, StateFlow. Correctly handled session generation to prevent cross-account response leakage. Understood idempotency via client transfer ID and pending row persistence across process death. Designed server-authoritative ledger with transactional balance checks. Missed proactive mention of blocking duplicate sends until prompted, and post-release validation lacked metrics."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Correctly identified dangerous double-send case with new client ID and proposed blocking retry with same ID. Handled concurrent transfers from two phones with transactional balance check and clear failure on losing phone. Handled chat stream drop by decoupling confirmation from chat and using server record for status. Handled prompt injection ('no confirmation needed') by ignoring chat authorization. Did not proactively cover all edge cases without prompting."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week MVP to send/result/history with pending row and status lookup. Identified sign-off chain (tech lead, product owner, founder). For rollout spike, outlined triage (real rise vs slow responses) and escalation criteria (money wrong or can't determine transfer status within half hour). Delivery risk example at Debon Securities showed early PM notification with options, but post-release monitoring was manual flow checks, not data-driven."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Handling unknowns: correctly identified and mitigated double-send risk, concurrent transfer race, process death recovery, cross-account response leakage, and chat-based authorization bypass. Demonstrated strong idempotency and server-authoritative design thinking.",
+  "risks": "Post-release validation relies on manual checks rather than metrics or monitoring; did not proactively block duplicate sends until prompted; delivery risk example lacked data-driven rollback signals; some edge cases required interviewer prompting to surface."
+}

@@ -1,0 +1,36 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead for a 5-person team on KKday AI trip planner; personally built agent design, core backend, and Android SSE stream parsing. Described a hard duplicate-day-card bug, root-caused it to client reconnect logic, and built a repeatable debug switch to verify the fix. Explained trade-offs of server resend vs. full re-fetch. Identified a broken back button risk, escalated to PM with two options, and monitored Bugly crash reports and support tickets post-release. Some gaps: did not quantify impact or provide production metrics."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed a mobile wallet MVP with clear client/server/local-storage ownership. Correctly specified server-side ledger transaction with row lock for concurrent transfers, idempotent transfer IDs, pending-record persistence across process death, status lookup on reconnect, and session-generation tagging to prevent stale responses crossing accounts. Handled not-found lookup and retry with same transfer ID. Explained why chat text cannot authorize payments and bound authorization to payer, recipient, amount, and expiry. Minor gap: did not discuss server-side idempotency key storage details or timeout/retry backoff."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Adapted flow when response is lost and process is killed: app reopens pending record, queries same transfer ID, shows server record. Handled not-found by showing 'not sent' with retry using same ID. Handled concurrent 80-dollar transfers with row lock and clear per-phone results. Handled account switch mid-flight with session generation tagging. Handled ambiguous chat entry with two Alexes and no amount by asking clarifying questions before native confirm. Ignored group-chat claim that confirmation is unnecessary. Did not deeply explore edge cases like server timeout during status lookup or partial ledger failure."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week v1 to P2P transfer only, with cached reads for history and balance, excluding top-ups, withdrawals, and multi-currency. Defined sign-off: tech lead and self on Android, product on flow. On pending-transfer spike, would pause new submissions first, own Android pending record/status lookup/result screen, need backend owner and QA, and escalate to founder if unexplained within an hour or if money looks wrong. Lacked detail on rollout metrics, canary strategy, or specific monitoring dashboards."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: strong end-to-end wallet design with correct idempotency, concurrency, and stale-response handling",
+  "risks": [
+    "Limited quantification of past project impact and production metrics",
+    "Rollout and monitoring plan lacks specific metrics, canary thresholds, and dashboard details",
+    "Some edge cases (server timeout during status lookup, partial ledger failure) not explored"
+  ]
+}

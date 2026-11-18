@@ -1,0 +1,35 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead on KKday AI trip planner; personally built agent design, core backend, and Android streaming UI. Described a concrete race condition bug (Day 2 before Day 1), diagnosed it via event logging, fixed with sorting by day number, and validated with repeated replays plus injected delays. Explained trade-offs vs. waiting for full plan or polling. Also described a delivery risk disagreement where he proposed a one-week delay with three options, owned a safe fallback, and defined rollback signals (failure rate, user edits)."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed a mobile wallet with clear client/server/local storage ownership: Screen → ViewModel → Repository → Local DB (single source for UI) and Repository → Wallet API → Ledger (server truth). Sequence diagram for A sending B $80 with client transfer ID, single-transaction debit/credit, and success only from server record. Handled in-flight state via pending row written before request, surviving rotation/process death. Addressed lost response + process kill with lookup by client transfer ID and idempotent server behavior (same ID returns original status; mismatched amount/recipient rejected). Handled concurrent double-spend (second transfer fails balance check, phone shows real balance from failure response). Handled stale response after account switch via account + session generation tagging. Chat-initiated draft flow with no auto-filled amount/person, server-bound single-use authorization with expiry, and recipient-change rejection."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified requirements before designing (user types, where money lives, offline behavior, send/receive symmetry, amount limits). Under ambiguity (two Alexes, no reliable amount), constrained the chat message to open a draft only, required explicit user selection and amount entry, and added server-bound authorization with expiry so stale drafts can't be sent. When lookup finds nothing, kept state as unknown rather than guessing, disabled send for that contact, offered 'Check again' resending same client transfer ID, and surfaced support contact with the ID. Acknowledged one replay doesn't prove a race and made the race easy to hit."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week first version to send path only (pick contact, amount, confirm, result states), deferring history/details since ledger exists. Named sign-offs (tech lead, product owner), small pilot group, and one test per failure mode before release. Defined personal ownership (Android send path, pending rows, lookup by client transfer ID, failure dashboard) and required partners (backend owner, support). Escalation triggers: unknown rate rising after pausing new sends, or ledger/app balance disagreement. Earlier: owned fallback and monitored failure rate and post-plan edit rate with rollback criteria."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "End-to-end ownership of the send path with correct distributed-systems reasoning: idempotent client transfer IDs, pending-row persistence across process death, lost-response recovery via server lookup, concurrent double-spend handling, and stale-response isolation by account/session generation — all tied to concrete Android mechanics (StateFlow, background dispatcher, local DB as single UI source).",
+  "risks": [
+    "Past-work evidence is strong on the streaming/race-condition fix but thinner on breadth of mobile ownership beyond that feature; model training and product decisions were explicitly out of scope.",
+    "Some answers were repeated verbatim (e.g., MVP path, 'Still checking' UI), suggesting possible rehearsed responses rather than fully adaptive reasoning.",
+    "Rollout plan is reasonable but light on quantitative thresholds (e.g., specific unknown-rate or failure-rate numbers that trigger pause/rollback).",
+    "No explicit discussion of security/authentication beyond server-bound authorization, or of accessibility, localization, or performance

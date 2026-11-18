@@ -1,0 +1,21 @@
+{
+  "play_exit": 0,
+  "seconds_including_playback": 16.3,
+  "coach_card": "coach card: mode=true busy=false failed=false phase=say requests=1 keeps=0 first_ms=841 problem=Recover an $80 transfer the server committed but the app never got a response for, after Android kills the app process adopted=none constraints=[\"The server already committed the $80 transfer\", \"The app never received a response\", \"Android killed the app process\"] abandoned=[] asides=0 problems=1 written=false heard=server committed an $80 transfer, app got no response, process killed — how to recover say=The key is that the transfer already happened on the server, so the app must not send it again. I'd give every transfer a client-generated idempotency key and save it in the local database before the request goes out. When the app restarts, it reads that record, sees the state is \"unknown\", and asks the server for the result by that key. The server returns the original transfer, so the user sees it once, not twice. type=none then=Next: what the local record looks like, and how the retry is safe. fix= past=0 prepared=false",
+  "app_state": {
+    "id": "99a69ee3",
+    "log": [
+      "debug command: assistantState",
+      "coach: state=ready response_id=none first_ms=-1000 sentence_ms=-1000 committed=0 pending_words=78 acoustic=true generations=0 reviews=0 frames=0 paragraphs=0 mic=hui的AirPods Pro candidate_asr=gemma candidate_asr_failed=false reading=gemma cursor=0 sentence=0 reading_failed=false"
+    ],
+    "ok": true
+  },
+  "events": [
+    "2026-11-18 16:49:47 +0000 transcriber started recognizer=analyzer locale=en-US format=<AVAudioFormat 0xac4b9b840:  1 ch,  16000 Hz, Int16>",
+    "2026-11-18 16:49:48 +0000 coach: ScreenCaptureKit system audio started",
+    "2026-11-18 16:50:00 +0000 diag: them recognize=0.72 translate=1.02 queue=0.00 via=ling",
+    "2026-11-18 16:50:05 +0000 diag: them recognize=0.96 translate=0.99 queue=0.00 via=ling",
+    "2026-11-18 16:50:05 +0000 coach: deepseek request_first_token_ms=789",
+    "2026-11-18 16:50:07 +0000 coach: card stream done s=2.8 raw_chars=1331"
+  ]
+}

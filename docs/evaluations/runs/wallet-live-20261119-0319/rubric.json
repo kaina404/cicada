@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Described KKday agent project: built agent design, core backend, Android SSE parsing; led 5-person team. Explained a specific bug (day order) with reproduction and fix, and a delivery risk with options and rollback plan. Clear ownership boundaries."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed mobile wallet MVP with clear client/server/local storage ownership. Sequence diagram for transfer with idempotency, pending row, status lookup, and four result states. Handled lost response, process kill, not-found, concurrent transfers, and session switching. Explained trade-offs (sorting vs. keying by day, waiting vs. streaming)."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified requirements before design. Handled ambiguous chat entry (two Alexes, no amount) by asking and never guessing. Locked recipient/amount to transfer ID. Addressed chat disconnect and late resolution. For incident, proposed pausing sends, reconciling pending transfers, and escalating with clear ownership."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week MVP to one path with pending row, status lookup, four result states. Identified sign-offs (tech lead for API, product for states). Incident response: pause sends, keep reads, reconcile, escalate with count and plan. Showed awareness of rollout risk and rollback."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: solid mobile wallet design with idempotency, offline pending state, and failure handling; clear ownership and trade-off reasoning.",
+  "risks": "Limited evidence of level 4 (counter-examples, tests, production metrics) across dimensions; some answers repeated points; incident escalation timing could be more precise."
+}

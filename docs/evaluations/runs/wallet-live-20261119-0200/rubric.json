@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Led a 5-person team on KKday AI trip planner; personally built agent design, core backend, and Android SSE stream reader. Owned SKU price/stock index change: flattened config, built index once, moved work to Dispatchers.Default, used StateFlow, version-checked index rebuild. Diagnosed stale-index bug via version-number log comparison and forced rebuild. Chose version check over rebuild-on-tap or timer refresh, explaining trade-offs. Post-release monitored crash/ANR and version logs. At Debon, surfaced back-button risk same day, gave two options, PM decided to defer change, and he personally watched Bugly crash reports and asked QA to verify old pages."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed wallet MVP with clear scope, non-functional requirements (no lost/duplicate money, always know outcome), and timeout-as-unknown framing. Drew client/server/local-storage flowchart with clear ownership: app never decides money moved; server owns ledger, balances, limits. Sequence diagram for A→B $80 with pending row, transfer ID, single-transaction ledger debit/credit, result from server record. Persisted transferId, payer, payee, amountCents, status, createdAt before network call; reuses ID on retry after process death. Handled lost-response/process-kill with 'still checking' state, GET by transferId, no false failure. Reused pending ID on repeat send. Concurrent transfers resolved server-side with one success and one clear insufficient-balance failure. Session-generation tagging to drop stale responses after account switch. Chat-entry flow resolves ambiguous payee and missing amount before unchanged confirm gate. Chat text cannot approve payment; only native confirm tap plus server-bound approval. Two-week plan scoped send flow, confirm, pending row, status lookup; pause-new-sends incident response with escalation criteria."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Explicitly framed timeout as unknown outcome, not failure. On lost response and process death, showed 'still checking' rather than success or failure, then status lookup by same transfer ID; if lookup finds nothing, state stays unknown because request may still be in flight. Reused pending transfer ID on retry to avoid duplicate sends. Handled concurrent duplicate transfers by letting server serialize and return clear insufficient-balance failure. Handled account-switch race with session generation tagging. Handled ambiguous chat entry (two Alexes, no amount) by asking user before confirm. Handled prompt-injection-style chat claim by keeping confirm gate and server-bound approval. Incident response: pause new sends, keep reads/status working, escalate when spike grows or money-movement is unclear."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week v1 to send flow, confirm screen, pending row, status lookup; history/details next. Named sign-offs: tech lead, product, founder for scope. Incident plan: check whether status lookup or server is slow, pause new sends, keep reads/status working, tell team. Personally owns Android send flow, pending row, status lookup, pause switch, pre-release checks; needs backend engineer for ledger/status endpoint and QA for failure cases. Escalates to founder when spike grows after pause or money movement is unclear. Past release risk handled with same-day PM notification, two options, deferred change, post-release Bugly monitoring and QA verification."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Wallet failure handling: pending-row persistence with stable transfer ID, unknown-outcome UX, status lookup after process death, duplicate-send prevention, and server-authoritative ledger with clear concurrent-transfer outcomes.",
+  "risks": [
+    "Past-work evidence is solid but mostly single-team/single-project depth; limited counter-examples or production metrics beyond crash/ANR and version-log checks.",

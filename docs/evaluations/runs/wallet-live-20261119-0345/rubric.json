@@ -1,0 +1,37 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned SKU calculation, price/stock index, off-main-thread work, StateFlow, caching, skeleton screens on KKday product page. Debugged double-tap price bug with version check and 10x repro. Gave two alternatives (mutex, cancel-and-restart) with trade-offs. Raised back-button risk to PM with two options, fixed it himself. Watched Bugly crash rate and QA/support reports post-release. Lacks counter-examples or production metrics beyond crash rate."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Clear MVVM layering (Screen/ViewModel/Repository/Local DB/Server/Ledger) with ownership stated. Sequence diagram for transfer includes client transfer ID, pending row before request, server-side idempotency, success only from server record. Handles lost response + process death via restart lookup by client ID. Handles account switch with session generation. Handles concurrent transfers via server ledger serialization. Identifies not-found ambiguity and proposes server-side expiry. Solid but not backed by production evidence or counter-examples."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified users, balance location, offline behavior before designing. Handled ambiguous chat entry ('pay Alex') by requiring native confirm screen, showing both Alexes, never guessing amount, binding authorization to payer/recipient/amount/expiry. Handled chat stream disconnect by keeping pending row and 'still checking'. Handled 'send to other Alex' by requiring fresh confirm with new client ID. Handled not-found ambiguity by keeping unknown state and proposing server expiry. Good trade-off reasoning but no explicit counter-examples or tests for these edge cases."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Two-week plan scopes P2P path only, defers chat entry until confirm screen and expiry tested. Names sign-offs (product lead for flow, tech lead for ledger/idempotency). Incident response: check server vs app, pause new transfers, keep reads/status, backend reconciles by client ID, QA checks app path, escalate if pending rises or balance wrong. Owns client side personally. Lacks concrete metrics, rollback criteria, or production evidence."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: clear layered architecture with idempotent transfer flow, pending-row persistence, restart lookup, session generation, and server-authoritative ledger",
+  "risks": [
+    "No production metrics or counter-examples backing claims (e.g., latency improvement, crash reduction)",
+    "Incident response lacks concrete thresholds and rollback criteria",
+    "Not-found ambiguity resolved only by proposed server expiry, not tested",
+    "Chat entry deferred without a concrete validation plan for confirm screen and expiry"
+  ]
+}
