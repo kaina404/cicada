@@ -458,7 +458,9 @@ final class CoachCards: ObservableObject {
     }
     // "This is a new problem: design the chat cache" shares "cache" with the feed cache and was merged into it (ME-08).
     // "Do you have any questions for me?" ends the design; it was filed under its last question (the 40-minute run, P2-7).
-    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this)|questions for (me|us))\b"#
+    /// "Now a different one: draw me a sequence diagram of login" (founder runs 2026-11-18/19) is a new
+    /// problem too; DeepSeek kept it inside the chat flowchart's design problem.
+    nonisolated static let newQuestionPattern = #"\b((new|next|different|another) question|(new|different) (problem|topic)|next topic|let'?s move on|moving on|switch(ing)? gears|let'?s pause (that|this)|questions for (me|us)|(different|another) one\W+(can you |could you |please )?(draw|sketch)|(a |one )?(new|different|another|second) (diagram|chart))\b"#
 
     /// The interviewer plainly opens a new question or returns to an earlier one, and the card's CASE did
     /// not record it (AC-10): the app records it from the interviewer's own line. Applied before the

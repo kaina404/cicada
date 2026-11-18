@@ -31,6 +31,12 @@
         "text": "下午不会再照着预制自我介绍说“Good morning”，会改成“Good afternoon”或“Good evening”。"
       },
       {
+        "kind": "fix",
+        "platforms": ["mac"],
+        "title": "面试官换一张图让你画时，讲题卡片会当成新题。",
+        "text": "比如画完聊天流程图又要登录时序图，后面的追问不会再拿错上一张图的上下文。"
+      },
+      {
         "kind": "new",
         "platforms": ["mac"],
         "title": "面试教练支持中文面试。",

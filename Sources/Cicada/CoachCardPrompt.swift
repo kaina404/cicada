@@ -102,7 +102,8 @@ enum CoachCardPrompt {
     format, stop, network loss, process death, sync, voice, photo, metrics, what to build first) stays in the
     design problem. Only between separate knowledge questions (no design or code open) is a question about a
     different concept its own newProblem (StateFlow, then repeatOnLifecycle). "Any questions for me?" is a
-    newProblem.
+    newProblem. So is a request for a different diagram of another flow ("now a different one: draw login"),
+    even about the same app; adding to the diagram on screen stays in its problem.
     adopt records the problem's main approach (for a design, its data flow and source of truth) as soon as the
     candidate's own line chooses it, citing that line; smaller choices are spoken points.
     ops: newProblem (text = goal; optional "id"), switch ("id" of an earlier problem), constraint,

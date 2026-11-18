@@ -358,6 +358,19 @@ struct CoachCardsTests {
         #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "How do you test it?") == nil)
     }
 
+    // Founder runs 2026-11-18/19: a second, different diagram stayed inside the first diagram's problem.
+    @Test func aDifferentDiagramOpensANewProblem() {
+        var memory = CoachCase()
+        memory.apply([CoachCaseOp(op: "newProblem", text: "Draw a flowchart of a chat message", evidence: ["t1"])],
+                     evidence: CoachEvidence(interviewer: ["t1"]), at: 0)
+        let login = CoachTurn(id: "t9", seconds: 90, role: "interviewer", text: "Good. Now a different one: draw me a sequence diagram of login.")
+        let ops = CoachCards.missingProblemOps([CoachCaseOp(op: "implemented", text: "Login drawn")], newLines: [login], memory: memory)
+        #expect(ops.first?.op == "newProblem")
+        let drop = CoachTurn(id: "t5", seconds: 60, role: "interviewer", text: "What happens if the network drops? Add it to the diagram.")
+        #expect(CoachCards.missingProblemOps([], newLines: [drop], memory: memory).isEmpty)
+        #expect(CoachCardPrompt.rules.contains("different diagram of another flow"))
+    }
+
     // The 40-minute run, P2-7: "Do you have any questions for me?" stayed under the two-week trade-off.
     @Test func questionsForTheInterviewerOpenANewProblem() {
         var memory = CoachCase()
