@@ -89,3 +89,29 @@ enum RecordList {
         return base == "zh" ? (code.contains("Hant") || code.hasSuffix("TW") || code.hasSuffix("HK") ? "zh-TW" : "zh-CN") : base
     }
 }
+
+/// The records search, remembered per meeting. The window's body runs on every live line, and searching
+/// every line of every meeting each time froze the main thread for 5–10 s with 800 meetings (the founder
+/// interview run, 2026-11-18), which also held back the coach cards streaming on the main actor. A meeting
+/// is searched again only when the query changes or its title, line count or last line does: in practice
+/// only the live meeting. Rewriting an older line keeps its old result until the query changes.
+final class RecordSearch {
+    private var query = ""
+    private var hits: [String: (key: String, hit: Bool)] = [:]
+    private(set) var searched = 0
+
+    func filter(_ sessions: [Session], query: String) -> [Session] {
+        guard !query.isEmpty else { return sessions }
+        if query != self.query { self.query = query; hits = [:] }
+        return sessions.filter { s in
+            let last = s.lines.last
+            let key = "\(s.displayTitle)|\(s.lines.count)|\(last?.shown ?? "")|\(last?.dst ?? "")"
+            if let cached = hits[s.id], cached.key == key { return cached.hit }
+            searched += 1
+            let hit = s.displayTitle.localizedCaseInsensitiveContains(query)
+                || s.lines.contains { $0.shown.localizedCaseInsensitiveContains(query) || ($0.dst ?? "").localizedCaseInsensitiveContains(query) }
+            hits[s.id] = (key, hit)
+            return hit
+        }
+    }
+}

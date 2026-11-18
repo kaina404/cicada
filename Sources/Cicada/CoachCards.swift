@@ -171,6 +171,7 @@ final class CoachCards: ObservableObject {
                     else { self.card = partial.withOps(self.card?.ops ?? []); self.onSay?(Self.spoken(partial), false) }
                 }
                 guard !Task.isCancelled, self.token == tok else { return }
+                debugLog("coach: card stream done s=\(String(format: "%.1f", Date().timeIntervalSince(started))) raw_chars=\(raw.count)")
                 guard var card = try CoachCard.parse(raw, finished: true) else { throw URLError(.cannotParseResponse) }
                 // Seen live: asked about the API, DeepSeek copied the card already on screen word for word.
                 // A new question gets one retry that names it; anything else just keeps the card.

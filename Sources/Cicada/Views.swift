@@ -817,13 +817,8 @@ struct MainWindowView: View {
     private var sideBySide: Bool { showQuotes && wideEnough }
     private var wideEnough: Bool { detailWidth >= 940 }
 
-    private var filtered: [Session] {
-        guard !query.isEmpty else { return store.sessions }
-        return store.sessions.filter { s in
-            s.displayTitle.localizedCaseInsensitiveContains(query)
-                || s.lines.contains { $0.shown.localizedCaseInsensitiveContains(query) || ($0.dst ?? "").localizedCaseInsensitiveContains(query) }
-        }
-    }
+    @State private var search = RecordSearch()
+    private var filtered: [Session] { search.filter(store.sessions, query: query) }
 
     private var current: Session? { store.session(selection ?? store.sessions.first?.id) }
 
