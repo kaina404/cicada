@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design and core backend for KKday AI trip planner; wrote Android SSE stream reader and day-card UI state; agreed response format with app team. Debugged half-price card bug by logging raw stream on slow network, proved root cause via replay with buffer on/off, added regression test, confirmed production error reports stopped. Chose custom buffer over SSE library and backend change with clear trade-offs (control vs. server release dependency). Debon navigation risk: flagged broken back button same day, gave PM two options, PM deferred change, candidate finished fix and joint testing, watched Bugly crash/error reports with threshold for rollback. Strong ownership and evidence, but scope limited to one project and some work shared with app team."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed wallet with clear client layers (Screen, ViewModel, Repository, Local DB), server ledger as source of truth, single-transaction debit/credit, idempotent client transfer ID, Room insert on Dispatchers.IO awaited before network call, four result states (success, clear failure, processing, unknown). Handled lost response + process kill via open intent lookup by client ID, disabled resend while unknown, server rejects same client ID with different amount/recipient. Handled concurrent transfers via row lock/conditional update, second fails cleanly with insufficient funds. Handled account switch with session generation tagging and stale response dropping, including reads. Handled chat entry with native confirm screen, user picks recipient and types amount, server binds authorization to payer/recipient/amount/expiry, chat cannot skip confirm or raise limits. Two-week plan with four failure tests, pause switch, reconciliation, escalation criteria. Solid core workable design with trade-offs explained, but not backed by production evidence for this design."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified requirements before designing (balance custody, currencies, offline behavior, server as source of truth). Handled unknown outcome state explicitly: on reopen shows 'still checking', looks up by client ID, stays unknown if lookup finds nothing, resends only within idempotency window, otherwise relies on lookup and reconciliation. Disabled send while unknown, only 'Check again'. Considered idempotency record expiry and kept transfer record for lookup. Escalation plan: pause new submissions, keep reads working, reconcile with backend owner, resume when queue normal and ledger matches; escalate if pending keeps rising after pause or ledger mismatch within two hours, same-day if status endpoint failing, hourly written updates. Covers main cases independently with trade-offs, but some edge cases (e.g., support path for permanently unknown, exact idempotency window handling) are described at a high level rather than proven."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Defined MVP scope clearly (balance, send to contact, history, details, native confirm, unknown state with Check again; top-up/withdrawal/multi-currency out). Identified sign-off (tech lead, product owner) and personal ownership (Android side). Pre-release test plan covers four critical failure cases: lost reply + process kill, replay same ID, two transfers at once, account switch. Incident response: pause new submissions first, keep reads working, reconcile pending against ledger, resume when queue normal and ledger matches. Escalation criteria and hourly updates. Strong shipping mindset, but no direct production evidence for this wallet design and rollout plan is not yet executed."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Past work debugging and root-cause discipline (half-price card bug: logged raw stream, proved cause with buffer on/off, added regression test, confirmed production reports stopped) plus clear ownership of risk communication on Debon navigation release.",
+  "risks": "Wallet design is strong on paper but lacks production evidence; some areas (idempotency window expiry, support path for permanently unknown transfers, exact reconciliation mechanics) are described at a high level. Past work evidence is concentrated in one project and some responsibilities were shared with app/backend teams."
+}
