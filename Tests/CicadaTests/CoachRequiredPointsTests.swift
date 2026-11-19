@@ -126,3 +126,14 @@ struct CoachRequiredPointsTests {
         #expect(CoachRequiredPoints.missing(question: "How did the assistant stream cards to the app?", goal: "KKday AI trip planner", say: "Over SSE.", said: []).isEmpty)
     }
 }
+
+/// Wallet run 2144: the opener ("an agent-first app… then design a fictional mobile wallet") was merged into P1's
+/// turn, and the project intro got three chat-payment sentences.
+@Test func aProjectQuestionAfterTheWalletOpenerGetsNoWalletPoints() {
+    let turn = "Hi, I'm the founder of ActAI. We're building an agent-first mobile communication app. Today we'll start with a project you really owned, then design a fictional mobile wallet together. Pick the one project that best shows your mobile skills. Who used it, what problem did it solve, and where did your responsibility start and end?"
+    let say = "The project that best shows my mobile skills is the AI trip planner at KKday."
+    #expect(CoachRequiredPoints.missing(question: turn, heard: "pick the project, who used it, problem, my responsibility",
+                                        goal: "Tell the project that best shows mobile skills: users, problem, responsibility", say: say, said: []).isEmpty)
+    #expect(!CoachRequiredPoints.missing(question: "Now the assistant can start a payment from chat. What changes?",
+                                         goal: "Design a mobile wallet: core mobile experience, backend system and failure handling", say: "It opens a confirm screen.", said: []).isEmpty)
+}

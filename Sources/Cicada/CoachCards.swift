@@ -465,6 +465,9 @@ final class CoachCards: ObservableObject {
     /// A line asking several things gets up to two sentences for each, at most eight: P3's five-sentence cap cut
     /// "who decided" and "what did you finish yourself" off a four-part question (strict wallet run 2026-11-19).
     nonisolated static let multiPartLimit = 8
+    /// A story ("tell me about a time…") needs its setup before the parts asked: wallet run 2144, P3's eight
+    /// sentences ended on the options, and "who decided" and "what I finished" were cut again.
+    nonisolated static let storyLimit = 12
     nonisolated static func sentenceLimit(for line: String) -> Int {
         // Recognition punctuates badly ("…already exist. What? In the first version, who signs off, and if …"), so
         // the question words in the turn count too (real-audio run 6, W7).
@@ -477,6 +480,8 @@ final class CoachCards: ObservableObject {
         // would you define as the MVP?") did not fit five sentences, and the MVP was left out.
         let clarifies = parts >= 1 && line.range(of: #"(?i)\bclarif(y|ying)\b"#, options: .regularExpression) != nil
         if clarifies { return max(base, 6) }
+        let story = line.range(of: #"(?i)\b(tell me about a time|give me an example|walk me through a time|describe a time)\b"#, options: .regularExpression) != nil
+        if story && parts > 1 { return max(base, min(storyLimit, parts * 3)) }
         return parts > 1 ? max(base, min(multiPartLimit, parts * 2)) : base
     }
     nonisolated static func capped(_ say: String, limit: Int = sentenceLimit) -> String {

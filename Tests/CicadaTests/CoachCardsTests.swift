@@ -435,7 +435,8 @@ struct CoachCardsTests {
             == ["What happens to each one", "what do the phones show"])
         #expect(CoachCardPrompt.questionParts("How do you test it?").count == 1)
         let risk = "Tell me about a time the team disagreed. When did you tell whom, how many options did you give, who decided, and what did you finish yourself?"
-        #expect(CoachCards.sentenceLimit(for: risk) == 8)
+        #expect(CoachCards.sentenceLimit(for: risk) == CoachCards.storyLimit)
+        #expect(CoachCards.sentenceLimit(for: "When did you tell whom, how many options did you give, who decided?") == 6)
         #expect(CoachCards.sentenceLimit(for: "How do you test it?") == CoachCards.sentenceLimit)
         #expect(CoachCards.sentenceLimit(for: "Start by clarifying the requirements. Which user path would you define as the MVP?") == 6)
         // Real recognition ended the question with a full stop.

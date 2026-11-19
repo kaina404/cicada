@@ -117,7 +117,7 @@ enum CoachRequiredPoints {
         var made = ([say] + said).joined(separator: "\n")
         let topic = question + " " + heard + " " + (goal ?? "")
         var out: [String] = []
-        for rule in rules where matches(asked, rule.asks) && (rule.topic.map { matches(topic, $0) } ?? true) {
+        for rule in rules where matches(asked, rule.asks) && applies(rule, topic: topic, goal: goal) {
             let open = rule.points.filter { !matches(made, $0.covered) }
             let clauses = open.filter(\.clause).map(\.sentence)
             if !clauses.isEmpty {
@@ -136,9 +136,19 @@ enum CoachRequiredPoints {
     /// (1339: asked the chat change, DeepSeek answered the account switch again and stayed there 96 s).
     static func answersAnotherQuestion(question: String, heard: String, goal: String?) -> Bool {
         let topic = question + " " + heard + " " + (goal ?? "")
-        let kinds = { (text: String) in Set(rules.indices.filter { matches(text, rules[$0].asks) && (rules[$0].topic.map { matches(topic, $0) } ?? true) }) }
+        let kinds = { (text: String) in Set(rules.indices.filter { matches(text, rules[$0].asks) && applies(rules[$0], topic: topic, goal: goal) }) }
         let fromHeard = kinds(heard), fromQuestion = kinds(question)
         return !fromHeard.isEmpty && !fromQuestion.isEmpty && fromHeard.isDisjoint(with: fromQuestion)
+    }
+
+    /// A topic rule belongs to a design exercise, never to a question about the candidate's own work: wallet run
+    /// 2144 merged the opener ("an agent-first app… then design a fictional mobile wallet") into P1's turn, and
+    /// the project intro got three chat-payment sentences.
+    private static func applies(_ rule: Rule, topic: String, goal: String?) -> Bool {
+        guard let pattern = rule.topic else { return true }
+        let goal = goal ?? ""
+        if matches(goal, CoachCardPrompt.pastGoal), !matches(goal, CoachCardPrompt.designGoal) { return false }
+        return matches(topic, pattern)
     }
 
     private static func matches(_ text: String, _ pattern: String) -> Bool {
