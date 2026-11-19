@@ -157,6 +157,11 @@ final class CoachCards: ObservableObject {
         // A self-introduction keeps its longer limit while the candidate pages through it with "next".
         let limit = Self.sentenceLimit(for: CoachCardPrompt.interviewerTurn(input.turns) ?? "")
         busy = true; failed = false; requests += 1; firstToken = nil
+        // Request size, to keep the knowledge trim honest (the full folder is about 60,000 tokens).
+        let chars = messages.reduce(0) { sum, m in
+            sum + ((m["content"] as? String)?.count ?? ((m["content"] as? [[String: Any]]) ?? []).reduce(0) { $0 + (($1["text"] as? String)?.count ?? 0) })
+        }
+        debugLog("coach: card request chars=\(chars) talk_tracks=\(((messages.first?["content"] as? String) ?? "").contains("<talk_tracks>"))")
         let started = Date()
         emit("cardRequest", text: "\(trigger)")
         task = Task { [weak self] in

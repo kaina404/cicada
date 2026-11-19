@@ -161,11 +161,35 @@ enum CoachCardPrompt {
         var said: [String] = []
     }
 
+    /// Personal questions, which the prepared answers in <talk_tracks> are for: HR, resume and project
+    /// stories, "why", and the closing "any questions for me" (its approved answer lives there too).
+    static let personal = #"(?i)\b(tell me about (yourself|a time)|introduce yourself|walk me through your|your (project|projects|team|role|background|experience|career|resume|cv|strengths?|weakness(es)?|manager|salary|expectations?)|you (personally|built|made|owned|led|shipped|worked on|left|chose|joined|learned)|why (do|did|are|were|would|should) (you|we)|have you (ever )?(worked|built|used|led|had|dealt)|in your (last|previous|current|past)|a time (when )?you|notice period|questions (do you have )?for me|what questions do you have)\b"#
+    /// A design exercise: the problem's goal asks to design, draw or build something, and is not a past project
+    /// ("Walk through a project the candidate really owned", "the system you built").
+    static let designGoal = #"(?i)\b(design|draw|sketch)\b|^\W*(build|implement|architect)\b"#
+    static let pastGoal = #"(?i)\b(project|owned|candidate|your|you|past|previous)\b"#
+
+    /// The knowledge to send. <talk_tracks> is four fifths of it (about 48,000 of 60,000 tokens) and serves
+    /// only personal questions, so a design exercise leaves it out (the Codex run on 2026-11-19 sent it with
+    /// every wallet card). Anything unclear keeps the whole folder: a missing approved answer costs more.
+    static func knowledge(_ background: String, turns: [CoachTurn], memory: CoachCase) -> String {
+        let latest = interviewerTurn(turns) ?? ""
+        guard let goal = memory.problem?.goal, goal.range(of: designGoal, options: .regularExpression) != nil,
+              goal.range(of: pastGoal, options: .regularExpression) == nil,
+              latest.range(of: personal, options: .regularExpression) == nil,
+              let start = background.range(of: "<talk_tracks>"),
+              let end = background.range(of: "</talk_tracks>", range: start.upperBound..<background.endIndex) else { return background }
+        var trimmed = background
+        trimmed.removeSubrange(start.lowerBound..<end.upperBound)
+        return trimmed.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+    }
+
     static func request(_ c: Context) -> [[String: Any]] {
-        var messages = CoachPrompt.request(turns: c.turns, background: c.background, frames: Array(c.frames.suffix(2)),
+        let background = knowledge(c.background, turns: c.turns, memory: c.memory)
+        var messages = CoachPrompt.request(turns: c.turns, background: background, frames: Array(c.frames.suffix(2)),
                                            audio: nil, committed: c.script.spokenText, stage: c.stage, language: .english)
         messages[0] = ["role": "system", "content": CoachPrompt.instructions(
-            background: c.background, rules: c.stage.instruction(for: .english) + "\n\n" + rules, language: .english)]
+            background: background, rules: c.stage.instruction(for: .english) + "\n\n" + rules, language: .english)]
         var content = messages[1]["content"] as? [[String: Any]] ?? []
         // Replace the full-answer task; keep the speech, story ledger and keyframes.
         if !content.isEmpty { content.removeLast() }
@@ -382,7 +406,7 @@ enum CoachCardPrompt {
     """
     static func prepareRequest(_ c: Context) -> [[String: Any]] {
         var messages = request(c)
-        messages[0] = ["role": "system", "content": CoachPrompt.instructions(background: c.background, rules: prepareRules, language: .english)]
+        messages[0] = ["role": "system", "content": CoachPrompt.instructions(background: knowledge(c.background, turns: c.turns, memory: c.memory), rules: prepareRules, language: .english)]
         var content = messages[1]["content"] as? [[String: Any]] ?? []
         // Text only: images cost time and the drafts are hints.
         content.removeAll { $0["type"] as? String == "image_url" }
