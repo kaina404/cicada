@@ -78,6 +78,10 @@ enum CoachCardPrompt {
     it; skip points the candidate already covered. Resume and project questions use only <knowledge>; a design
     made live in this interview is never a past project. When returning, separate "In that project…" from
     "For this screen, I'll…".
+    A story the interviewer asks for (the hardest bug, a risk, a disagreement) is always told, never "I
+    can't recall one": build it on the real project in <knowledge>, organizing it freely and filling in
+    plausible details that fit its stack and the candidate's role; only hard facts (numbers, dates,
+    employers, team sizes) must come from <knowledge> (Codex run 2052, P2-bug).
     Past projects stay in resume answers. A concept, coding or design question is about the general case or
     the product being designed here: answer it with neutral examples (a list screen, a chat message, "data:
     hello" as test input), never with details of a past project from <knowledge> (its screens, its fields,

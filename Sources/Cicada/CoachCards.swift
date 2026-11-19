@@ -194,6 +194,24 @@ final class CoachCards: ObservableObject {
                     // A copy that already streamed onto the screen left the old card in the history twice.
                     if card.keep, shown, self.past.last?.card.say == current { self.past.removeLast() }
                 }
+                // 1339: asked the chat change, DeepSeek answered the account switch again (its HEARD said so) and the
+                // card stayed on it for 96 s, since nothing new was asked. One retry that names the new question.
+                if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }) {
+                    let turn = CoachCardPrompt.interviewerTurn(input.turns) ?? latest.text
+                    if CoachRequiredPoints.answersAnotherQuestion(question: turn, heard: card.heard, goal: self.memory.problem?.goal) {
+                        debugLog("coach: card answered another question, heard=\(card.heard)")
+                        var retry = ""
+                        for try await piece in self.stream(Self.appending("Your draft answered an earlier question (\"\(card.heard)\"). The interviewer just asked: \"\(turn)\". Answer that new question now; HEARD names it.", to: messages), CoachPrompt.model) {
+                            guard !Task.isCancelled, self.token == tok else { return }
+                            retry += piece
+                        }
+                        if let again = try CoachCard.parse(retry, finished: true), !again.keep,
+                           !CoachRequiredPoints.answersAnotherQuestion(question: turn, heard: again.heard, goal: self.memory.problem?.goal) {
+                            card = again; shown = false
+                            if let previousSay, self.past.last?.card.say == previousSay { self.past.removeLast() }
+                        }
+                    }
+                }
                 // "Could we use Flow?" still sometimes got "Yes, Flow fits better, I'll switch" (AC-04): retry once
                 // with the rule spelled out.
                 if !card.keep, trigger == .interviewer, let latest = newLines.last(where: { $0.role == "interviewer" }),
@@ -238,6 +256,19 @@ final class CoachCards: ObservableObject {
                 // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows; NF-05
                 // and ME-10 typed code for "walk me through the API" and "explain the difference").
                 if card.edit != nil, Self.asksToExplain(request) { card.edit = nil }
+                // 1413 W6: "Draw the new entry flow as a flowchart" got a card with no TYPE at all. Ask once for the
+                // diagram alone and keep the SAY already on screen.
+                if !card.keep, trigger == .interviewer, card.edit == nil, Self.asksToDraw(request), !Self.asksToExplain(request) {
+                    var retry = ""
+                    for try await piece in self.stream(Self.appending("The interviewer asked for a diagram: \"\(request)\". Your draft has no TYPE. Write the same card with TYPE draw and the Mermaid diagram they asked for.", to: messages), CoachPrompt.model) {
+                        guard !Task.isCancelled, self.token == tok else { return }
+                        retry += piece
+                    }
+                    if let again = try CoachCard.parse(retry, finished: true), let edit = again.edit, edit.action == "draw" {
+                        card.edit = edit
+                        debugLog("coach: diagram added on retry")
+                    }
+                }
                 // DeepSeek keeps restating what the candidate just said in their own words, even when told
                 // not to; a short focused edit removes it (AC-13). Only for cards not already on screen.
                 if !shown, !card.keep, !said.isEmpty, trigger != .interviewer {
@@ -250,8 +281,32 @@ final class CoachCards: ObservableObject {
                     if !fresh.isEmpty { card.say = fresh }
                     else if trigger == .check { card.keep = true }
                 }
+                // A "next" card repeated the card just read, the added required point included (1413 W6).
+                if !card.keep, trigger == .manual, let previousSay {
+                    let fresh = Self.withoutSaid(card.say, said: [previousSay])
+                    if !fresh.isEmpty { card.say = fresh }
+                }
+                // Numbers in a past-work answer come from <knowledge> or the talk (1413 P2: "two failed attempts").
+                if !card.keep {
+                    let kept = CoachNumbers.withoutInvented(card.say, question: request, sources: [input.background] + input.turns.map(\.text))
+                    if !kept.isEmpty, kept != card.say { debugLog("coach: dropped a sentence with an unsourced number"); card.say = kept }
+                    else if kept.isEmpty, trigger == .check { card.keep = true }
+                }
                 card.sentenceLimit = limit
                 card.say = Self.capped(card.say, limit: limit)
+                // Graded points the model keeps leaving out, added after the cap so they always fit
+                // (strict wallet runs 2026-11-19: W6, W7 and P2 missed them every round).
+                // Only what was said on this question: across the interview, W3's "reconciliation" and "resumes on
+                // next launch" counted as W7's spike plan (1233).
+                if !card.keep {
+                    let history = input.turns.filter { $0.role == "candidate" && $0.seconds >= asked }.map(\.text)
+                    let added = CoachRequiredPoints.missing(question: request, heard: card.heard, goal: self.memory.problem?.goal, say: card.say, said: history)
+                    if !added.isEmpty {
+                        card.say += " " + added.joined(separator: " ")
+                        card.sentenceLimit = limit + added.count
+                        debugLog("coach: added \(added.count) required point(s)")
+                    }
+                }
                 card.ops = Self.withoutSubtaskProblems(card.ops, newLines: newLines, memory: self.memory)
                 card.ops = Self.withoutAgendaProblem(card.ops, newLines: newLines, memory: self.memory)
                 card.ops = Self.missingProblemOps(card.ops, newLines: newLines, memory: self.memory) + card.ops
