@@ -425,6 +425,106 @@ struct CoachCardsTests {
         #expect(CoachCards.missingProblemOps([], newLines: [what], memory: memory).map(\.op) == ["newProblem"])
     }
 
+    /// Wallet run 2026-11-19 03:45 under the strict judge: parts of multi-part questions were dropped (P2, W1),
+    /// W4 named no locking, W7 had no checks and no resume.
+    @Test func multiPartQuestionsAndWalletNotesNameEveryPart() {
+        let alt = CoachCardPrompt.questionParts("What other options did you have, why didn't you pick them, and after release how did you know the change worked?")
+        #expect(alt.count == 3)
+        #expect(alt.last?.hasPrefix("after release how") == true)
+        #expect(CoachCardPrompt.questionParts("Separate scenario. A still has 100 dollars. What happens to each one and what do the phones show?")
+            == ["What happens to each one", "what do the phones show"])
+        #expect(CoachCardPrompt.questionParts("How do you test it?").count == 1)
+        let risk = "Tell me about a time the team disagreed. When did you tell whom, how many options did you give, who decided, and what did you finish yourself?"
+        #expect(CoachCards.sentenceLimit(for: risk) == 8)
+        #expect(CoachCards.sentenceLimit(for: "How do you test it?") == CoachCards.sentenceLimit)
+        #expect(CoachCards.sentenceLimit(for: "Start by clarifying the requirements. Which user path would you define as the MVP?") == 6)
+        // Real recognition ended the question with a full stop.
+        #expect(CoachCards.sentenceLimit(for: "The system behind it and how it handles failures. Start by clarifying the requirements. Which user path would you define as the MVP.") == 6)
+        #expect(CoachCardPrompt.questionParts("What other options did you have. Why didn't you pick them. And after release, how did you know the change worked.").count == 3)
+        #expect(CoachCardPrompt.questionParts("Draw the client and tell me what each part owns.").isEmpty)
+        let hint = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "What other options did you have, why didn't you pick them, and after release how did you know the change worked?") ?? ""
+        #expect(hint.contains("asks 3 things"))
+        #expect(hint.contains("one limit of it"))
+        #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "Tell me about a time you saw a delivery risk and the team disagreed.")?.contains("name the company") == true)
+        let scope = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "Design a mobile wallet from scratch. Start by clarifying the requirements. Which user path would you define as the MVP?") ?? ""
+        #expect(scope.contains("propose one MVP path"))
+        #expect(scope.contains("currencies"))
+        let race = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "On two phones A approves two 80 dollar transfers at almost the same time. What happens?") ?? ""
+        #expect(race.contains("conditional update"))
+        let release = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "What's in the first version, who signs off, and if transfers spike during the rollout, what do you do?") ?? ""
+        #expect(release.contains("replay of the same ID"))
+        #expect(release.contains("condition to resume"))
+    }
+
+    @Test func aShortMisheardLineDoesNotReplaceTheRequestBeforeIt() {
+        let draw = CoachTurn(id: "t1", seconds: 0, role: "interviewer", text: "Draw the client, the server and local storage as a flowchart, and tell me what each part owns.")
+        let noise = CoachTurn(id: "t2", seconds: 9, role: "interviewer", text: "Who do you remote?")
+        #expect(CoachCardPrompt.misheardNote([draw, noise])?.contains("Draw the client") == true)
+        #expect(CoachCardPrompt.misheardNote([noise]) == nil)
+        #expect(CoachCardPrompt.misheardNote([noise, draw]) == nil)
+    }
+
+    @Test func sentencesAlreadyReadAreDroppedFromTheNextCard() {
+        let said = ["The server checks and debits A in one transaction, with a row lock on A's balance or a conditional update.",
+                    "The second finds only 20 dollars left, so it fails cleanly and B stays at 80."]
+        let next = "The second request is rejected, because the balance check and the debit happen in one transaction. The second finds only 20 dollars left, so it fails and B stays at 80. Each request carries its own client transfer ID, so they are two intents."
+        let kept = CoachCards.withoutSaid(next, said: said)
+        #expect(!kept.contains("only 20 dollars left"))
+        #expect(kept.contains("own client transfer ID"))
+        #expect(CoachCards.withoutSaid("The second finds only 20 dollars left, so it fails cleanly and B stays at 80.", said: said).isEmpty)
+    }
+
+    @Test func aQuestionCutByRecognitionIsReadAsOneTurn() {
+        let lines = [CoachTurn(id: "c1", seconds: 0, role: "candidate", text: "That's the account switch."),
+                     CoachTurn(id: "t1", seconds: 1, role: "interviewer", text: "You have two weeks, and log in plus a usable ledger already exist."),
+                     CoachTurn(id: "t2", seconds: 4, role: "interviewer", text: "What's in the first version? Who signs off? And if transfers suddenly spike during the rollout, what do you?"),
+                     CoachTurn(id: "t3", seconds: 9, role: "interviewer", text: "Do in the next half hour.")]
+        let turn = CoachCardPrompt.interviewerTurn(lines) ?? ""
+        #expect(turn.hasPrefix("You have two weeks") && turn.hasSuffix("half hour."))
+        #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: turn)?.contains("Release answer") == true)
+        #expect(CoachCards.sentenceLimit(for: turn) >= 6)
+        #expect(CoachCards.sentenceLimit(for: "You have two weeks, and log in plus a usable ledger already exist. What? In the first version, who signs off, and if transfers suddenly spike during the rollout, what do you do in the next half hour? The.") >= 6)
+        #expect(CoachCardPrompt.finishesShownQuestion(lines, newLines: [lines[3]]))
+        #expect(!CoachCardPrompt.finishesShownQuestion(lines, newLines: Array(lines[1...])))
+        let reading = lines + [CoachTurn(id: "c2", seconds: 12, role: "candidate", text: "For the first version, I'd ship balance and transfer.")]
+        #expect(CoachCardPrompt.interviewerTurn(reading) == turn)
+        // A draw request cut before "tell me what each part owns" is still a draw request.
+        let cut = [CoachTurn(id: "t4", seconds: 20, role: "interviewer", text: "Has one hundred dollars, and B has zero. Draw the client, the server,"),
+                   CoachTurn(id: "t5", seconds: 22, role: "interviewer", text: "and local storage as a flow. And tell me what each part owns.")]
+        let whole = CoachCardPrompt.interviewerTurn(cut) ?? ""
+        #expect(CoachCards.asksToDraw(whole))
+        #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: whole)?.contains("four separate boxes") == true)
+        #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "Now draw a sequence diagram of the app sending 80 dollars.")?.contains("four separate boxes") != true)
+        #expect(!CoachCards.asksToExplain(whole))
+    }
+
+    @Test func aBareAcknowledgementIsNotAQuestion() {
+        for ack in ["Oh.", "Okay.", "Mm-hm, right.", "I see.", "Got it", "Great."] { #expect(CoachCards.isBackchannel(ack), "\(ack)") }
+        for line in ["Okay, why?", "Right, now draw it.", "Oh, and what about offline mode", "Good. Next question."] { #expect(!CoachCards.isBackchannel(line), "\(line)") }
+    }
+
+    /// Wallet run 2026-11-19 03:45: the agenda's "design a fictional mobile wallet" became the first problem.
+    @Test func theFirstProblemIsTheQuestionNotTheAgenda() {
+        let agenda = CoachTurn(id: "t1", seconds: 1, role: "interviewer", text: "Today we'll start with a project you really owned, then design a fictional mobile wallet together.")
+        let ask = CoachTurn(id: "t2", seconds: 9, role: "interviewer", text: "Pick the one project that best shows your mobile skills. Who used it?")
+        let wallet = [CoachCaseOp(op: "newProblem", text: "Design a fictional mobile wallet")]
+        let fixed = CoachCards.withoutAgendaProblem(wallet, newLines: [agenda, ask], memory: CoachCase())
+        #expect(fixed.first?.evidence == ["t2"])
+        #expect(fixed.first?.text?.hasPrefix("Pick the one project") == true)
+        // Citing the question, or a problem already open, leaves the card's goal alone.
+        let project = [CoachCaseOp(op: "newProblem", text: "The KKday product page project", evidence: ["t2"])]
+        #expect(CoachCards.withoutAgendaProblem(project, newLines: [agenda, ask], memory: CoachCase()) == project)
+        var open = CoachCase()
+        open.apply([CoachCaseOp(op: "newProblem", text: "Resume project")], evidence: CoachEvidence(), at: 0)
+        #expect(CoachCards.withoutAgendaProblem(wallet, newLines: [agenda, ask], memory: open) == wallet)
+        // The agenda's own card opens nothing; a plain task in the future tense still does.
+        #expect(CoachCards.withoutAgendaProblem(wallet, newLines: [agenda], memory: CoachCase()).isEmpty)
+        let task = CoachTurn(id: "t3", seconds: 1, role: "interviewer", text: "Now we'll design a chat app. Draw the architecture.")
+        #expect(CoachCards.withoutAgendaProblem(wallet, newLines: [task], memory: CoachCase()) == wallet)
+        // Without an agenda line nothing changes.
+        #expect(CoachCards.withoutAgendaProblem(wallet, newLines: [ask], memory: CoachCase()) == wallet)
+    }
+
     @Test func aSubtaskOfTheCurrentProblemIsNotANewProblem() {
         var memory = CoachCase()
         memory.apply([CoachCaseOp(op: "newProblem", text: "Design a ChatGPT-style chat screen on Android")], evidence: CoachEvidence(), at: 0)

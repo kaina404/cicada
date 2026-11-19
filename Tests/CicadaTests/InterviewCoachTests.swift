@@ -720,6 +720,27 @@ struct InterviewCoachTests {
         streams.forEach { $0.finish() }
     }
 
+    /// Strict wallet run 2026-11-19: other sound kept the VAD voiced and the card waited 37 s.
+    @Test @MainActor func voiceWithoutNewWordsHoldsTheTurnAtMostMaxHold() async throws {
+        var streams: [AsyncThrowingStream<String, Error>.Continuation] = []
+        let engine = InterviewCoach { _, _ in AsyncThrowingStream { streams.append($0) } }
+        engine.start(background: "", available: true, prepare: { true })
+        engine.acoustic.onEvent?(.init(kind: "ready", role: "interviewer"))
+        engine.speech("How would you design offline chat?", role: "interviewer", now: 0)
+        for t in stride(from: 0.5, through: 3.5, by: 0.5) {
+            engine.acoustic.onEvent?(.init(kind: "vad", role: "interviewer", now: t, voiced: true))
+            engine.tick(now: t)
+        }
+        for _ in 0..<100 { await Task.yield() }
+        #expect(engine.generationCount == 0)
+        engine.acoustic.onEvent?(.init(kind: "vad", role: "interviewer", now: CoachEndpoint.maxHold, voiced: true))
+        engine.tick(now: CoachEndpoint.maxHold)
+        for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
+        #expect(engine.generationCount == 1)
+        engine.endMeeting()
+        streams.forEach { $0.finish() }
+    }
+
     @Test @MainActor func translationsAndAIRecordsCannotTriggerInference() {
         let engine = InterviewCoach { _, _ in AsyncThrowingStream { $0.finish() } }
         engine.start(background: "", available: true, prepare: { true })

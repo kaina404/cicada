@@ -175,6 +175,8 @@ struct CoachScript: Equatable {
 
 /// Conservative text endpoint fallback. Model-based acoustic endpoints remain a separate capability.
 enum CoachEndpoint {
+    /// Longest wait after the interviewer's last new words, whatever the voice detector says.
+    static let maxHold = 4.0
     static func delay(_ text: String) -> Double {
         let words = CoachScript.words(text)
         guard words.count >= 3 else { return 1.5 }

@@ -210,6 +210,9 @@ final class InterviewCoach: ObservableObject {
         // Draft/final punctuation and casing revisions do not change the question. In particular,
         // a late final must not cancel a useful answer that has already started streaming.
         guard words != lastInterviewerWords else { return }
+        // "Oh." while the candidate reads a card replaced a full answer with one that skipped half the
+        // question (strict wallet run 2026-11-19, P2): a bare acknowledgement is heard, not answered.
+        if cardMode, cards.card != nil, CoachCards.isBackchannel(text) { emit("interviewerAck", text: text); return }
         lastInterviewerWords = words
         interviewerRevision = UUID()
         lastInterviewerAt = now
@@ -271,11 +274,17 @@ final class InterviewCoach: ObservableObject {
         if state == .generating || state == .loading { state = .ready }
     }
 
+    /// When the interviewer's turn counts as over. Voice with no new words cannot hold it past
+    /// `CoachEndpoint.maxHold`: in the strict wallet run (2026-11-19) other sound on the Mac kept the VAD
+    /// "voiced" and the design question's card waited 37 s. A speaker still talking brings new words,
+    /// and each one moves `lastInterviewerAt`.
+    private var heardEnd: Double { min(endpoint, lastInterviewerAt + CoachEndpoint.maxHold) }
+
     func tick(now: Double) {
         guard state != .idle, state != .setup else { return }
         clock = now
         acoustic.tick(now: now)
-        if speculative, now >= endpoint {
+        if speculative, now >= heardEnd {
             speculative = false; publish()
             if finishedSpeculation { finish(interrupted: false); state = .ready }
         }
@@ -283,13 +292,13 @@ final class InterviewCoach: ObservableObject {
         if cardMode {
             cards.tick(now: now, script: script)
             // A finished interviewer turn is the one event that replaces a running card request.
-            guard dirty, now >= due, now >= endpoint || !lastInterviewerAt.isFinite else { return }
+            guard dirty, now >= due, now >= heardEnd || !lastInterviewerAt.isFinite else { return }
             dirty = false
             if lastInterviewerAt.isFinite { cards.receive(.interviewer, now: now) }
             return
         }
         guard state == .ready, dirty, now >= due, task == nil else { return }
-        guard now >= endpoint || !lastInterviewerAt.isFinite else { return }
+        guard now >= heardEnd || !lastInterviewerAt.isFinite else { return }
         if script.pending.isEmpty { generate(speculate: false) }
         else { review() }
     }

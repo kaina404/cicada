@@ -141,7 +141,10 @@ final class CoachCards: ObservableObject {
         // right after they spoke moves the base, and a manual "next" then repeated them (AC-13).
         // "I have not explained the data flow yet" covers nothing: as a point already made it got the data flow
         // edited out of the card (ME-03).
-        let said = input.turns.filter { $0.role == "candidate" && ($0.seconds >= cardShownAt || newLines.contains($0)) }
+        // Since the interviewer's latest line too: a check can swap the card mid-answer, and "next" then saw nothing
+        // said and restated the lines just read (strict wallet run 2026-11-19, W3/W4/W6).
+        let asked = input.turns.last(where: { $0.role == "interviewer" })?.seconds ?? cardShownAt
+        let said = input.turns.filter { $0.role == "candidate" && ($0.seconds >= min(cardShownAt, asked) || newLines.contains($0)) }
             .map(\.text).filter { !Self.saysNotCovered($0) }
         let messages = CoachCardPrompt.request(.init(
             turns: input.turns, background: input.background, frames: input.frames, script: input.script,
@@ -152,7 +155,7 @@ final class CoachCards: ObservableObject {
         // first be checked against the candidate's words waits for that check (AC-13).
         let live = trigger == .interviewer || card == nil || (trigger == .manual && said.isEmpty)
         // A self-introduction keeps its longer limit while the candidate pages through it with "next".
-        let limit = Self.sentenceLimit(for: input.turns.last(where: { $0.role == "interviewer" })?.text ?? "")
+        let limit = Self.sentenceLimit(for: CoachCardPrompt.interviewerTurn(input.turns) ?? "")
         busy = true; failed = false; requests += 1; firstToken = nil
         let started = Date()
         emit("cardRequest", text: "\(trigger)")
@@ -228,23 +231,29 @@ final class CoachCards: ObservableObject {
                 }
                 // Without any whiteboard there is nothing to draw on (AC-01 drew a diagram for a concept question),
                 // unless the interviewer asked for a diagram: then the candidate needs it before opening a board.
-                if boardID == nil, card.edit?.action == "draw",
-                   !((newLines.last(where: { $0.role == "interviewer" })?.text
-                      ?? input.turns.last(where: { $0.role == "interviewer" })?.text).map(Self.asksToDraw) ?? false) { card.edit = nil }
+                // The whole turn: recognition cut "Draw the client, the server, / and local storage as a flow. And tell
+                // me what each part owns." in two, and the last piece alone read as explain-only (real-audio run 5).
+                let request = CoachCardPrompt.interviewerTurn(input.turns) ?? ""
+                if boardID == nil, card.edit?.action == "draw", !Self.asksToDraw(request) { card.edit = nil }
                 // "Walk me through this" asks to explain the board, not to change it (AC-08 redrew arrows; NF-05
                 // and ME-10 typed code for "walk me through the API" and "explain the difference").
-                if card.edit != nil, let latest = input.turns.last(where: { $0.role == "interviewer" }),
-                   Self.asksToExplain(latest.text) { card.edit = nil }
+                if card.edit != nil, Self.asksToExplain(request) { card.edit = nil }
                 // DeepSeek keeps restating what the candidate just said in their own words, even when told
                 // not to; a short focused edit removes it (AC-13). Only for cards not already on screen.
                 if !shown, !card.keep, !said.isEmpty, trigger != .interviewer {
                     let revised = try await self.withoutRepeats(card.say, said: said)
                     guard !Task.isCancelled, self.token == tok else { return }
                     if !revised.isEmpty { card.say = revised }
+                    // The edit still let whole sentences through (strict wallet run 2026-11-19: W3, W4 and W6's
+                    // next cards restated what had just been read): drop those here.
+                    let fresh = Self.withoutSaid(card.say, said: said)
+                    if !fresh.isEmpty { card.say = fresh }
+                    else if trigger == .check { card.keep = true }
                 }
                 card.sentenceLimit = limit
                 card.say = Self.capped(card.say, limit: limit)
                 card.ops = Self.withoutSubtaskProblems(card.ops, newLines: newLines, memory: self.memory)
+                card.ops = Self.withoutAgendaProblem(card.ops, newLines: newLines, memory: self.memory)
                 card.ops = Self.missingProblemOps(card.ops, newLines: newLines, memory: self.memory) + card.ops
                 // Also when the card's own adopt cites nothing usable (seen live: dropped as an alternative).
                 if let latest = newLines.last(where: { $0.role == "interviewer" }),
@@ -393,9 +402,22 @@ final class CoachCards: ObservableObject {
     nonisolated static let sentenceLimit = 5
     /// "Tell me about yourself in two minutes" got five sentences, about 30 seconds (the 40-minute run, O-01).
     nonisolated static let introductionLimit = 14
+    /// A line asking several things gets up to two sentences for each, at most eight: P3's five-sentence cap cut
+    /// "who decided" and "what did you finish yourself" off a four-part question (strict wallet run 2026-11-19).
+    nonisolated static let multiPartLimit = 8
     nonisolated static func sentenceLimit(for line: String) -> Int {
-        line.range(of: #"(?i)\b(tell me (a bit |a little )?about yourself|introduce yourself|self-introduction|(give|do) (me |us )?(a |an )?(quick |short |brief )?introduction(?! (to|of|on|for)\b)|walk me through your (background|resume|cv|career))\b"#,
+        // Recognition punctuates badly ("…already exist. What? In the first version, who signs off, and if …"), so
+        // the question words in the turn count too (real-audio run 6, W7).
+        let asked = (try? NSRegularExpression(pattern: #"(?i)\b(what|why|how|who|which|when|where)\b"#))?
+            .numberOfMatches(in: line, range: NSRange(line.startIndex..., in: line)) ?? 0
+        let parts = max(CoachCardPrompt.questionParts(line).count, min(asked, 4))
+        let base = line.range(of: #"(?i)\b(tell me (a bit |a little )?about yourself|introduce yourself|self-introduction|(give|do) (me |us )?(a |an )?(quick |short |brief )?introduction(?! (to|of|on|for)\b)|walk me through your (background|resume|cv|career))\b"#,
                    options: .regularExpression) != nil ? introductionLimit : sentenceLimit
+        // Clarifying questions plus a direct answer (W1: "Start by clarifying the requirements. Which user path
+        // would you define as the MVP?") did not fit five sentences, and the MVP was left out.
+        let clarifies = parts >= 1 && line.range(of: #"(?i)\bclarif(y|ying)\b"#, options: .regularExpression) != nil
+        if clarifies { return max(base, 6) }
+        return parts > 1 ? max(base, min(multiPartLimit, parts * 2)) : base
     }
     nonisolated static func capped(_ say: String, limit: Int = sentenceLimit) -> String {
         let sentences = CoachScript.sentences(say)
@@ -455,6 +477,47 @@ final class CoachCards: ObservableObject {
             let shared = contentWords(goal).intersection(contentWords(current.goal)).subtracting(generic)
             return shared.isEmpty && !continues
         }
+    }
+    /// The founder's agenda ("Today we'll start with a project you owned, then design a fictional mobile
+    /// wallet") came just before the first question, and the first card filed the wallet as the problem
+    /// (wallet run 2026-11-19 03:45, P1). With nothing open yet, a newProblem taken from an announcement of
+    /// what comes later is the question just asked.
+    nonisolated static func withoutAgendaProblem(_ ops: [CoachCaseOp], newLines: [CoachTurn], memory: CoachCase) -> [CoachCaseOp] {
+        guard memory.problem == nil else { return ops }
+        let interviewer = newLines.filter { $0.role == "interviewer" }
+        guard let latest = interviewer.last else { return ops }
+        // The agenda alone (its own card before the first question): nothing has been asked yet.
+        if isAgenda(latest.text) { return ops.filter { $0.op != "newProblem" } }
+        let agenda = interviewer.dropLast().filter { isAgenda($0.text) }
+        guard !agenda.isEmpty, CoachCardPrompt.asks(latest.text) else { return ops }
+        return ops.map { op in
+            guard op.op == "newProblem", let goal = op.text, !(op.evidence ?? []).contains(latest.id) else { return op }
+            let words = contentWords(goal)
+            let fromAgenda = agenda.contains { (op.evidence ?? []).contains($0.id) || words.intersection(contentWords($0.text)).count > words.intersection(contentWords(latest.text)).count }
+            return fromAgenda ? CoachCaseOp(op: "newProblem", text: String(latest.text.prefix(120)), id: op.id, evidence: [latest.id]) : op
+        }
+    }
+    /// Drops every sentence that mostly repeats one the candidate already said (60 % of its content words).
+    nonisolated static func withoutSaid(_ say: String, said: [String]) -> String {
+        let spoken = said.flatMap { CoachScript.sentences($0) }.map(contentWords).filter { $0.count >= 3 }
+        return CoachScript.sentences(say).filter { sentence in
+            let words = contentWords(sentence)
+            guard words.count >= 3 else { return true }
+            return !spoken.contains { Double(words.intersection($0).count) / Double(words.count) >= 0.6 }
+        }.map { $0.trimmingCharacters(in: .whitespaces) }.joined(separator: " ")
+    }
+    /// A bare acknowledgement: "Oh.", "Okay.", "Mm-hm, right.", "I see." Nothing to answer.
+    nonisolated static func isBackchannel(_ text: String) -> Bool {
+        let filler: Set<String> = ["oh", "ok", "okay", "mm", "mhm", "hmm", "hm", "uh", "huh", "um", "ah", "right", "yeah",
+                                   "yes", "yep", "sure", "i", "see", "got", "it", "great", "good", "cool", "nice", "alright", "interesting"]
+        let words = text.lowercased().split { !($0.isLetter || $0 == "'") }.flatMap { $0.split(separator: "-") }.map(String.init)
+        return !text.contains("?") && !words.isEmpty && words.count <= 3 && words.allSatisfy(filler.contains)
+    }
+    /// "Today we'll start with …, then design …": what comes later, in order, with no question in it.
+    nonisolated static func isAgenda(_ line: String) -> Bool {
+        !line.contains("?")
+            && line.range(of: #"(?i)\b(we'?ll|we will|we'?re going to|we are going to)\b"#, options: .regularExpression) != nil
+            && line.range(of: #"(?i)\b(start with|begin with|then|after that|later|at the end|leave time)\b"#, options: .regularExpression) != nil
     }
     // "This is a new problem: design the chat cache" shares "cache" with the feed cache and was merged into it (ME-08).
     // "Do you have any questions for me?" ends the design; it was filed under its last question (the 40-minute run, P2-7).
