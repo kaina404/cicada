@@ -59,9 +59,20 @@ final class CoachCards: ObservableObject {
 
     func receive(_ trigger: CoachCardSchedule.Trigger, now: Double) {
         clock = now
+        // Wallet run 2327, W7: the card request restarted every second for 45 s with no new interviewer words,
+        // and only half a sentence ever showed. A turn the running request already read does not restart it.
+        if trigger == .interviewer, schedule.running == .interviewer, let heard = runningHeard, heard == Self.lastInterviewer(input?()?.turns ?? []) {
+            debugLog("coach: interviewer trigger with no new words, running request kept")
+            return
+        }
         if trigger >= .manual { held = nil }
         prepTask?.cancel(); prepTask = nil
         act(schedule.receive(trigger, now: now))
+    }
+    /// The interviewer's last line (id and text) the running request was built from.
+    private var runningHeard: String?
+    nonisolated static func lastInterviewer(_ turns: [CoachTurn]) -> String? {
+        turns.last(where: { $0.role == "interviewer" }).map { $0.id + "\u{1F}" + $0.text }
     }
 
     func frame(_ frame: CoachFrame, now: Double) {
@@ -119,13 +130,14 @@ final class CoachCards: ObservableObject {
         switch action {
         case .none: return
         case .start(let trigger): run(trigger)
-        case .restart(let trigger): task?.cancel(); task = nil; run(trigger)
+        case .restart(let trigger): debugLog("coach: card request restarted by \(trigger)"); task?.cancel(); task = nil; run(trigger)
         }
     }
 
     private func run(_ trigger: CoachCardSchedule.Trigger) {
         guard let input = input?() else { finish(); return }
         let tok = UUID(); token = tok
+        runningHeard = Self.lastInterviewer(input.turns)
         let newLines = base.newLines(input.turns)
         let newBoard = base.newBoard(boardLines)
         let usedBoard = boardLines
@@ -305,7 +317,8 @@ final class CoachCards: ObservableObject {
                 // next launch" counted as W7's spike plan (1233).
                 if !card.keep {
                     let history = input.turns.filter { $0.role == "candidate" && $0.seconds >= asked }.map(\.text)
-                    let added = CoachRequiredPoints.missing(question: request, heard: card.heard, goal: self.memory.problem?.goal, say: card.say, said: history)
+                    let added = CoachRequiredPoints.missing(question: request, heard: card.heard, goal: self.memory.problem?.goal, say: card.say, said: history,
+                                                            last: input.turns.last(where: { $0.role == "interviewer" })?.text)
                     if !added.isEmpty {
                         card.say += " " + added.joined(separator: " ")
                         card.sentenceLimit = limit + added.count

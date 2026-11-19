@@ -137,3 +137,19 @@ struct CoachRequiredPointsTests {
     #expect(!CoachRequiredPoints.missing(question: "Now the assistant can start a payment from chat. What changes?",
                                          goal: "Design a mobile wallet: core mobile experience, backend system and failure handling", say: "It opens a confirm screen.", said: []).isEmpty)
 }
+
+/// Run 2327: P1 came before any problem was recorded, so only the last interviewer line may set the topic.
+@Test func theFirstProjectQuestionWithNoProblemYetGetsNoWalletPoints() {
+    let p1 = "Pick the one project that best shows your mobile skills. Who used it, and where did your responsibility start and end?"
+    let turn = "Today we'll start with a project you really owned, then design a fictional mobile wallet together. " + p1
+    #expect(CoachRequiredPoints.missing(question: turn, heard: "the project and my responsibility", goal: nil,
+                                        say: "The AI trip planner at KKday, with an agent tool call per step.", said: [], last: p1).isEmpty)
+}
+
+/// Runs 2232 and 2327, W2-seq: the sequence of a named amount never said it travels in cents.
+@Test func aNamedAmountTravelsInCents() {
+    let q = "Now draw a sequence diagram of A sending B 80 dollars: confirmation, request, ledger and the result screen."
+    let goal = "Design a mobile wallet: core mobile experience, backend system and failure handling"
+    #expect(CoachRequiredPoints.missing(question: q, goal: goal, say: "A confirms, the server moves the money.", said: []).contains { $0.contains("cents") })
+    #expect(CoachRequiredPoints.missing(question: q, goal: goal, say: "A sends 8000 cents.", said: []).allSatisfy { !$0.contains("cents") })
+}

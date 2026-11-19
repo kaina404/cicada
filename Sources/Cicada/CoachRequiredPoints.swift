@@ -83,6 +83,12 @@ enum CoachRequiredPoints {
                 Point(covered: #"(?i)\b(tool|function)( call)?\b.{0,80}\b(same|original|that|one)\b.{0,20}\b(intent|client( transfer)? ID|ID)\b|\b(again|twice|repeat(ed)?|retr(y|ies|ied))\b.{0,60}\b(same|original)\b.{0,20}\b(intent|client( transfer)? ID|ID)\b"#,
                       sentence: "If the model calls the payment tool again, that call maps to the same intent and client ID, so it can never create a second transfer."),
              ]),
+        // W2-seq (runs 2232, 2327): the sequence of "A sending B 80 dollars" never said the amount travels in cents.
+        Rule(asks: #"(?i)\b(send(s|ing)?|transfer(s|ring)?|pay(s|ing)?)\b[^.?]{0,30}\b\d+ (dollars?|usd)\b"#,
+             topic: money, points: [
+                Point(covered: #"(?i)\bcents?\b|\bminor units?\b"#,
+                      sentence: "The amount travels as a Long in cents, never a floating-point number."),
+             ]),
         // W7 (every strict run): paused, but kept no reads, named no reconciliation and never said when to resume.
         Rule(asks: #"(?i)\b(spike[sd]?|surge[sd]?|jump(s|ed)?|pil(e|es|ing) up|backlog)\b"#,
              topic: money, points: [
@@ -112,10 +118,12 @@ enum CoachRequiredPoints {
     /// The question is the one the card says it answers (`heard`); the interviewer's latest turn only when
     /// `heard` matches no rule. 1339: asked W6, DeepSeek answered W5 again, and the chat point from the
     /// interviewer's turn landed on an account-switch answer.
-    static func missing(question: String, heard: String = "", goal: String?, say: String, said: [String]) -> [String] {
+    static func missing(question: String, heard: String = "", goal: String?, say: String, said: [String], last: String? = nil) -> [String] {
         let asked = rules.contains(where: { matches(heard, $0.asks) }) ? heard : question
         var made = ([say] + said).joined(separator: "\n")
-        let topic = question + " " + heard + " " + (goal ?? "")
+        // The last interviewer line, not the whole turn: run 2327's P1 came before any problem was recorded, and
+        // the agenda merged into its turn ("…design a fictional mobile wallet") still made it a money question.
+        let topic = (last ?? question) + " " + heard + " " + (goal ?? "")
         var out: [String] = []
         for rule in rules where matches(asked, rule.asks) && applies(rule, topic: topic, goal: goal) {
             let open = rule.points.filter { !matches(made, $0.covered) }

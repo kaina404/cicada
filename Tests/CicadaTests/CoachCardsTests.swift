@@ -615,6 +615,24 @@ struct CoachCardsTests {
         #expect(!CoachCards.asksToExplain("Explain it and add the cache box."))
     }
 
+    /// Wallet run 2327, W7: the request restarted every second with no new interviewer words. A repeated
+    /// interviewer trigger for the turn the running request read keeps it; a new line still replaces it.
+    @Test @MainActor func anInterviewerTriggerWithNoNewWordsKeepsTheRunningRequest() async throws {
+        var open: [AsyncThrowingStream<String, Error>.Continuation] = []
+        let cards = CoachCards { _, _ in AsyncThrowingStream { open.append($0) } }
+        var turns = [CoachTurn(id: "t1", seconds: 0, role: "interviewer", text: "What's in the first version?")]
+        cards.input = { .init(turns: turns, background: "", frames: [], script: CoachScript(), stage: .general) }
+        cards.receive(.interviewer, now: 1)
+        for _ in 0..<50 { await Task.yield() }
+        #expect(cards.requests == 1)
+        cards.receive(.interviewer, now: 2)
+        #expect(cards.requests == 1)
+        turns.append(CoachTurn(id: "t2", seconds: 2, role: "interviewer", text: "And who signs off?"))
+        cards.receive(.interviewer, now: 3)
+        #expect(cards.requests == 2)
+        open.forEach { $0.finish() }
+    }
+
     /// RT-08: a new meeting starts its reading cursor at zero; the cursor left from the last meeting must not
     /// stop the candidate's first own-words line in the new one from checking the card.
     @Test @MainActor func aNewMeetingChecksTheFirstOwnWordsLine() async throws {
@@ -640,3 +658,30 @@ struct CoachCardsTests {
 }
 
 private extension CoachCards { var say: String? { card?.say } }
+
+/// Wallet run 2144 scored every rubric dimension 3 of 4 for lack of evidence: design answers get one concrete
+/// proof, project answers one measured result from <knowledge>; neither goes where it does not belong.
+@Test func designAndProjectAnswersAskForEvidence() {
+    var wallet = CoachCase()
+    wallet.apply([CoachCaseOp(op: "newProblem", text: "Design a mobile wallet", evidence: ["t1"])],
+                 evidence: CoachEvidence(interviewer: ["t1"]), at: 0)
+    #expect(CoachCardPrompt.focusHint(memory: wallet, latest: "Two phones send at once. What happens?")?.contains("ONE concrete proof") == true)
+    #expect(CoachCardPrompt.focusHint(memory: wallet, latest: "Tell me about a time you disagreed with your manager.")?.contains("ONE concrete proof") != true)
+    let project = CoachCardPrompt.focusHint(memory: CoachCase(), latest: "Pick the one project that best shows your mobile skills. Who used it?")
+    #expect(project?.contains("measured result") == true)
+    #expect(project?.contains("ONE concrete proof") != true)
+    #expect(CoachCardPrompt.focusHint(memory: CoachCase(), latest: "How do you test it?") == nil)
+}
+
+/// Run 2232: the agenda ("…then design a fictional mobile wallet") merged into P1's turn gave the project answer
+/// the money notes, and its updates went on to design the wallet.
+@Test func theWalletAgendaGivesTheProjectAnswerNoMoneyNotes() {
+    let agenda = "Today we'll start with a project you really owned, then design a fictional mobile wallet together."
+    let p1 = "Pick the one project that best shows your mobile skills. Who used it, what problem did it solve?"
+    let hint = CoachCardPrompt.focusHint(memory: CoachCase(), latest: agenda + " " + p1, last: p1)
+    #expect(hint?.contains("Money points") != true)
+    var project = CoachCase()
+    project.apply([CoachCaseOp(op: "newProblem", text: "Tell the project that best shows mobile skills", evidence: ["t1"])],
+                  evidence: CoachEvidence(interviewer: ["t1"]), at: 0)
+    #expect(CoachCardPrompt.focusHint(memory: project, latest: "Which balance did the payment screen show?")?.contains("Money points") != true)
+}

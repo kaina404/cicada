@@ -103,13 +103,17 @@ enum CoachCardPrompt {
     The candidate may paraphrase, skip or explain things their own way: judge what was covered from their
     actual lines, not from the reading position. Silence is not progress.
     If the current card still fits and nothing new needs an answer, output exactly KEEP after the marker.
+    A later card in the same question only adds points that agree with what the candidate already said; it
+    never reverses one (run 2232: "a lookup with no record is an error" right before "it stays unknown").
 
     CASE: one line, a JSON array of changes to the walkthrough state, each {"op":…, "text":…, "evidence":[ids]}.
     A constraint is only a requirement someone actually stated, citing that line; never your own idea. A
     request for what to do next ("draw the layers", "show me the format", "walk me through it") is not a
     constraint.
     An agenda ("today we'll start with your project, then design a wallet") only announces later questions:
-    the first problem is the question actually asked, not the agenda.
+    the first problem is the question actually asked, not the agenda. Never start a later agenda item before
+    the interviewer asks it: once the asked question is answered, output KEEP (run 2232: P1's updates went on to
+    design the wallet).
     newProblem only when the interviewer moves to a different question. Implementing, extending or asking
     about part of the current problem ("now write the ViewModel", "why StateFlow there?", "how do you test
     it?", "what if the input has no newline?") stays in it, and so does a line that points back with it,
@@ -239,7 +243,7 @@ enum CoachCardPrompt {
         if c.trigger == .interviewer, let latest = interviewerTurn(c.newLines), !asks(latest) {
             parts.append("The interviewer's latest line gives information rather than asking a question. Acknowledge it in ONE short sentence without repeating its details, then move the design forward.")
         }
-        if let hint = focusHint(memory: c.memory, latest: interviewerTurn(c.newLines)) {
+        if let hint = focusHint(memory: c.memory, latest: interviewerTurn(c.newLines), last: c.newLines.last(where: { $0.role == "interviewer" })?.text) {
             parts.append(hint)
         }
         parts.append("Trigger: \(c.trigger). Write the next card now. " + CoachPrompt.personalFactsReminder + " " + CoachPrompt.localTime(language: .english))
@@ -314,7 +318,7 @@ enum CoachCardPrompt {
     /// source of truth, one run still answered "keep the text in the ViewModel" for 50 tokens a second
     /// (D-06), and voice and phone-call answers left out echo cancellation and the foreground service
     /// (D-13, D-14) although the rules list them.
-    static func focusHint(memory: CoachCase, latest: String?) -> String? {
+    static func focusHint(memory: CoachCase, latest: String?, last: String? = nil) -> String? {
         var notes: [String] = []
         // Wallet runs 2026-11-19: "What questions do you have for me?" came before the app recorded the new
         // problem, so the old problem's money note pulled the card back to the release question.
@@ -334,7 +338,10 @@ enum CoachCardPrompt {
         }
         // Wallet run 2026-11-19: amounts, the atomic ledger, "reject the duplicate" and a chat-flow
         // confirmation kept only on the phone were missed although the interviewer graded them.
-        let topic = (latest ?? "") + " " + (problem?.goal ?? "")
+        // The last line, not the whole turn: run 2232 merged the agenda ("…then design a fictional mobile wallet")
+        // into P1, and the project answer got the money notes. A past-work problem never gets them.
+        let pastProblem = problem.map { $0.goal.range(of: pastGoal, options: .regularExpression) != nil && $0.goal.range(of: designGoal, options: .regularExpression) == nil } ?? false
+        let topic = pastProblem ? "" : (last ?? latest ?? "") + " " + (problem?.goal ?? "")
         if topic.range(of: #"(?i)\b(wallet|pay(s|ing|ment)?|transfer(s|red)?|balance|ledger|dollars?|refund)\b"#, options: .regularExpression) != nil {
             notes.append("Money points (one clause each, only those this question needs; a transfer of a named amount always gets the first three: its amount in cents, both final balances as numbers (\"A goes from 100 to 20 dollars, B from 0 to 80\"), the result screen's states, and the user's confirm step before the request; a lost response always gets: the intent saved before sending, the lookup by account and client ID after restart, a resend of that same ID only as the server's idempotency contract allows, never a new ID, and the server answering that repeat with the original transfer's status, so the ledger has one transfer; a payment started from a chat or by the model always gets: the user picks the recipient and amount on a trusted native confirmation, the server binds the authorization to payer, recipient, amount and expiry, and a repeated tool call or retry maps to the original intent's ID): amounts as a Long in minor units (80 dollars = 8000 cents); when the interviewer gave balances and an amount, say both balances after the transfer in numbers; the result screen's states: success, clear failure, processing, and outcome unknown (still checking); the server checks and debits the payer and credits the payee in ONE database transaction (row lock or conditional update), so a balance never goes negative; the client saves the transfer intent with its client transfer ID locally BEFORE sending it; a lost response or timeout is an unknown outcome, not a failure: after a restart, query the server by account and the same client transfer ID, and resend only that ID, only as the server's idempotency contract allows; a lookup that finds nothing does not prove no money moved (the request may still be in flight or the read may lag), so the state stays unknown; the server answers a repeat of that ID with the same parameters with the original transfer's current status (not an error) and rejects it with different parameters; after the user confirms on a trusted native screen, the server binds the authorization to payer, recipient, amount and expiry, so chat or model text never authorizes a payment or reports its success; a repeated tool call or retry from the model maps to the original intent's ID, never a second transfer, and when the chat drops the app reads the status from the payment service by that ID; the app shows success only from the server's transfer record.")
         }
@@ -354,7 +361,8 @@ enum CoachCardPrompt {
         }
         // P2 (strict wallet runs 2026-11-19): "how did you know it worked" got the metric but never its limits.
         if let latest, latest.range(of: #"(?i)\bhow (did|do|would) you know\b|\bknow (that )?(the|it|your) (change|fix)?\s*worked\b"#, options: .regularExpression) != nil {
-            notes.append("Evidence: name where the result came from (a metric, a test, a ticket or user feedback) and one limit of it, what it cannot prove (for example: crash rate only counts reported crashes; a test covers only the cases we wrote).")
+            // Run 2232: "honestly, I didn't have production proof… likely, not proven" cost past work its level 4.
+            notes.append("Evidence: lead with the proof itself, as <knowledge> gives it (a metric before and after, a regression test, fewer tickets or user reports); then one limit of it in a clause, what it cannot prove (for example: crash rate only counts reported crashes; a test covers only the cases we wrote), and the extra check that covered that limit. Never call the result unproven or \"likely\".")
         }
         // W4: "the server handles them one at a time" named no mechanism.
         if let latest, latest.range(of: #"(?i)\b(same time|at once|concurrent(ly)?|simultaneous(ly)?|two phones|race|in parallel)\b"#, options: .regularExpression) != nil {
@@ -366,6 +374,17 @@ enum CoachCardPrompt {
         if let latest, latest.range(of: #"(?i)\b(ship|release|roll ?out|first version|first users|go live)\b"#, options: .regularExpression) != nil {
             // W7 (wallet run 03:45): the card gave scope, sign-off and a pause, but no checks and no resume.
             notes.append("Release answer, in this order: the first version's scope (for a wallet: balance, internal transfer, history, the confirmation step and recoverable pending or unknown states) and what waits; who signs off; the pre-release checks, each failure case already discussed in this problem named in one sentence (for a wallet: lost response plus process kill, replay of the same ID, two concurrent transfers, account switch); on a spike, pause new submissions while reads and status keep working, who owns the fix and the reconciliation, and the condition to resume. If it does not fit this card, end with a THEN that continues, and say the rest on the next card.")
+        }
+        // Wallet run 2144: every dimension scored 3 of 4 ("strong on paper, no evidence"); the 1413 run scored 4
+        // when its answers carried a failure test, a counter-example and numeric thresholds.
+        let personalLine = latest?.range(of: personal, options: .regularExpression) != nil
+        if let goal = problem?.goal, goal.range(of: designGoal, options: .regularExpression) != nil,
+           goal.range(of: pastGoal, options: .regularExpression) == nil, !personalLine {
+            notes.append("Evidence: back this answer's main decision with ONE concrete proof in one sentence: the failure test that checks it (kill the process right after the request leaves, replay the same ID, two phones sending at once), the case that would break it and its guard (a reinstall loses the local client ID; the idempotency record expires), or a number you set and would watch (a counter, an alert after 30 minutes pending). Phrase such a number as part of the plan (\"I'd alert after 30 minutes pending\"), with no disclaimer about where it came from (run 2232: \"that number is my own choice, not a measured result\" read as unproven).")
+        }
+        if let latest, latest.range(of: #"(?i)\bprojects?\b"#, options: .regularExpression) != nil,
+           personalLine || latest.range(of: #"(?i)\b(you|your)\b"#, options: .regularExpression) != nil {
+            notes.append("Project evidence: include one measured result with its number exactly as <knowledge> states it (its scale, a metric before and after), or none if <knowledge> gives none.")
         }
         return notes.isEmpty ? nil : notes.joined(separator: "\n")
     }
