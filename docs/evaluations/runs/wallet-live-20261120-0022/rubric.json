@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 4,
+      "score": 20,
+      "evidence": "Led a 5-person AI trip planner at KKday handling ~300k daily requests; personally wrote agent design, core backend, SSE stream reader, plan validation, personalization layer, and day-card rendering. Diagnosed a subtle ordering bug via logs and connection IDs, added regression tests, and monitored production drop logs. Also described a Debon Securities release risk with a feature switch, rollback plan, and post-release monitoring thresholds."
+    },
+    {
+      "name": "current ability",
+      "level": 4,
+      "score": 30,
+      "evidence": "Designed a mobile wallet with clear client/server/local-storage ownership, idempotent transfers via client IDs, server-authoritative ledger, row locking plus conditional updates, unique index on client ID, same-transaction ledger and idempotency writes, and explicit handling of lost responses, process death, account switching, and concurrent sends. Explained trade-offs and failure modes with concrete tests."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 4,
+      "score": 25,
+      "evidence": "Clarified requirements before designing; handled ambiguous chat-initiated payments by requiring native confirmation and server-bound approval; addressed model-generated 'sent' messages as unconfirmed; covered reinstall, expired idempotency windows, not-found ambiguity, and late responses after navigation. Proposed backoff, retry caps, and reconciliation."
+    },
+    {
+      "name": "shipping product",
+      "level": 4,
+      "score": 25,
+      "evidence": "Scoped a two-week MVP with balance, send, history, details, and pending/unknown states; defined sign-off with tech lead, product owner, and QA; listed pre-release failure tests; described a half-hour incident response with pause, reconciliation, clear ownership, escalation cap, and user-facing honesty."
+    }
+  ],
+  "total": 100,
+  "decision": "strong yes",
+  "strongest": "Deep, production-grounded mobile and backend ownership: idempotent payment design, concurrency control, failure handling, and incident response all backed by concrete mechanisms, tests, and trade-offs.",
+  "risks": "Some answers are very detailed and may over-index on edge cases; the two-week MVP scope and cross-team coordination could still be tight. The candidate's experience is strong but the interview did not probe people management or broader product strategy."
+}

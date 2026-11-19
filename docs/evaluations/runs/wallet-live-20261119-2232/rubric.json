@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead for AI trip planner at KKday (team of 5); built agent design, core backend, SSE stream reader, personalization data layer; ~300k daily requests. SKU page: flattened config, built price/stock index, fixed stale-result race with request-id tagging and ViewModel dropping old results; added repro test. Debon Securities: identified back-button risk, gave two options, PM chose to defer, candidate finished fix and testing. Explicitly acknowledged lack of production proof for the race fix and proposed staged rollout, counters, and thresholds. Strong ownership and trade-off reasoning, but production evidence for the hardest bug is absent."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Solid Android architecture: four-layer client, repository as sole network/DB gateway, ViewModel observes single intent row, no money logic in UI. Room insert on Dispatchers.IO with blocking commit before network call; enum state transitions; request/account/session-generation tagging to prevent cross-account leakage. Sequence diagrams for happy path, lost response, and unknown state. Two-phone concurrent transfer handled via server row lock and balance check. Some minor repetition and a few unresolved edge cases (not-found lookup policy left as an open question), but covers main cases independently with clear trade-offs."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Explicitly separates known from unknown: four result states, 'still checking' with saved timestamp, send button locked, no retry until definite server status. Idempotency record with retention window, expiry resolution, reinstall gap acknowledged. 30-minute cap flagged as own design choice, configurable per rail, with logging to tune from data. Kill test, replay test, two-phone test, account-switch test proposed. Chat entry: model never holds payment tool; one-time token bound to payer/recipient/amount/expiry; repeat tool call maps to same intent ID. Acknowledges limits of evidence (repro only proves possibility; production proof would need staged rollout and counters). Does not fully resolve the not-found-forever policy, but surfaces it as a decision point."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Two-week MVP scoped: balance, send to contact, history, details, confirm step, pending/unknown states; top-up/withdrawal/multi-currency deferred. Sign-off from tech lead and product owner, security review requested. Four failure tests before release. Rollout spike playbook: pause new submissions via server-side flag, keep reads/status checks, reconcile by client ID, resume when pending count normal and ledger matches. Escalation criteria to founder defined (pending rising after pause, unexplained ledger transfer). Personal ownership and cross-team dependencies (backend owner, QA) clearly stated. Lacks explicit success metrics for the MVP and a concrete rollout percentage/canary plan, but operationally sound."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Handling unknowns: rigorous idempotency design (client ID persisted before send, server dedupe, expiry resolution, reinstall gap acknowledged), four-state UI with locked send, and a concrete kill-test/replay/two-phone/account-switch test plan. Also strong on past work ownership and trade-off reasoning (request-id race fix, Debon risk escalation).",
+  "risks": "No production evidence for the hardest past bug (race fix) — candidate honestly calls it 'likely, not proven'; would need staged rollout and counters to confirm. Not-found lookup policy left unresolved (unknown vs. clear failure) and 30-minute cap is an unvalidated design choice. MVP lacks explicit success metrics and a canary/rollout percentage. Some repetition and minor diagram inconsistencies (e.g., 'blocking commit' phrasing) suggest communication could be tightened."
+}

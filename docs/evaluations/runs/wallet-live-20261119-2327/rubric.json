@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 4,
+      "score": 20,
+      "evidence": "Technical lead on KKday AI trip planner: designed agent, connected product/order data, built core backend, wrote Android SSE stream reader with reconnect and retention-window trade-off, validated responses with retries and safe fallback, ~300k planning tasks/day. Also led Debon Securities modularization/MVVM migration, surfaced back-button risk, gave PM two options, finished fix and testing, added release checklist note. Product page SKU optimization: flattened config, built price/stock index, moved work off main thread, 1s→300ms, handled stale price race with index swap and UI re-check, added mid-tap swap test and correction-rate monitoring. Hardest bug: distinguished stale tap vs screen not re-reading via version logging, fixed UI-side re-check, identified remaining gap for background/split-screen screens. Explicitly noted no conversion numbers."
+    },
+    {
+      "name": "current ability",
+      "level": 4,
+      "score": 30,
+      "evidence": "Strong Android depth: SSE parsing, partial state, reconnect with retention window, StateFlow/repeatOnLifecycle, Dispatchers.IO/Default, SavedStateHandle for process death, Room WAL durable insert before network call, idempotency key, account+session generation tagging to drop stale responses across account switches, four result states (success, clear failure, processing, outcome unknown), never treating not-found as failure, retry caps with backoff and manual review, idempotent rejection records with payload hash, ledger row locking/conditional debit for concurrent transfers. Design covers client/server/local storage ownership and sequence diagram updates. Minor gap: index rebuild still on main thread today, acknowledged and planned fix."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 4,
+      "score": 25,
+      "evidence": "Clarified users, custody, currencies, offline scope before designing. Treated lost response as unknown outcome, not failure; persisted intent before send; status lookup by client ID; not-found stays unknown with retry/backoff and manual review; alert after 30 min pending; idempotency window longer than offline period with logging on misses; server-side intent storage for reinstall gap; keyed on account+ID and rejects same ID with different payload. Handled chat entry with ambiguous recipient/amount: draft only, native confirm, server-bound approval to payer/recipient/amount/expiry, chat drop reads status by intent ID, new recipient requires new confirmation, old approval expires. Identified split-screen focus gap and process-death restore. Escalation signals: pending >1% for an hour or any unknown past 30 min."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week v1: balance, send to contact, history, confirm step, pending/unknown states; top-up/withdrawal/multi-currency deferred. Named personal ownership (Android confirm screen, local intent row, status lookup, four result states), needed backend engineer for ledger/idempotency and QA for failure tests, PM to agree rollback trigger. Concrete escalation thresholds to founder. Failure test defined: kill process after request leaves, replay same ID, ledger has one transfer. Past delivery: surfaced risk same day, gave two options, PM decided, shipped rest on time, added checklist. Gap: v1 answer was cut off mid-sentence and required a follow-up prompt to complete ownership/team/escalation details; no explicit rollout plan, metrics dashboard, or staged rollout mechanics beyond escalation thresholds."
+    }
+  ],
+  "total": 93.75,
+  "decision": "strong yes",
+  "strongest": "Exceptional handling of unknown outcomes and idempotency across client, server and local storage: durable intent before send, status lookup by client ID, not-found treated as unknown rather than failure, account+generation tagging to drop stale responses, and chat-entry approval binding that prevents model text from authorizing payments.",
+  "risks": "Shipping plan was incomplete on first pass and needed a follow-up prompt; no explicit staged rollout, dashboard or on-call plan beyond escalation thresholds. Index rebuild still runs on main thread today (acknowledged). No conversion/business-impact numbers for the trip planner. Some answers are repetitive and could be more concise."
+}
