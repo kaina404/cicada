@@ -13,6 +13,7 @@ DeepSeek. Text injection is repeatable but skips ASR, endpointing by sound and r
   PACE=1 plays at speaking speed (interviewer lines and `me_card` read at ~150 words a minute); default 0.
 """
 import datetime, json, os, re, subprocess, sys, time, urllib.request
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LSCTL = os.path.join(HERE, "lsctl")
@@ -78,25 +79,51 @@ def settle(before_requests, timeout=40):
     return card_state()
 
 
-def judge(transcript, card, criterion, more=()):
+def judge(transcript, card, criterion, more=(), strict=False):
     key = open(KEY_FILE).read().strip()
     shown = "HEARD: {heard}\nSAY: {say}\nTYPE: {type}\nTHEN: {then}".format(**card)
     # The candidate pages on with "next": the follow-up cards are part of the same answer (R-01 was graded
     # on its first card only).
     for i, say in enumerate(more):
         shown += f"\n\nNext card {i + 1} (read right after):\nSAY: {say}"
-    prompt = ("You grade an interview-coaching answer against one criterion. Reply with PASS or FAIL, a colon, "
-              "and a short reason. The answer is spoken in a few short sentences, so a list of points in the "
-              "criterion gives examples: PASS when the answer covers at least two of them correctly (all of "
-              "them if fewer than two are listed) and says nothing wrong. Every \"does not\" condition must "
-              "hold.\n\nConversation so far:\n" + "\n".join(transcript) +
+    if strict:
+        # The wallet runs passed W7 with half its release checklist: "at least two" let one point stand for a list.
+        rule = ("First list every required point of the criterion, one line each, naming the point in a few "
+                "words and then yes or no (for example `- final balances: no`); at most 12 lines. Points after \"such as\", \"for example\" or \"e.g.\" are examples: one correct example "
+                "covers that point. Every other point is required, each part of a list included (\"A, B and C\" "
+                "is three points). \"Either A or B\" is one point, covered by either. The same amount in other units counts (2000 cents is 20 dollars). Then reply on the last line with PASS or FAIL, a colon, and the missing "
+                "points. PASS only when every required point is yes and the answer says nothing wrong. Every "
+                "\"does not\" condition must hold. Count a point only when the answer states it plainly.")
+    else:
+        rule = ("Reply with PASS or FAIL, a colon, and a short reason. The answer is spoken in a few short "
+                "sentences, so a list of points in the criterion gives examples: PASS when the answer covers at "
+                "least two of them correctly (all of them if fewer than two are listed) and says nothing wrong. "
+                "Every \"does not\" condition must hold.")
+    if strict:
+        # The candidate's real resume: "about 1 s" and Bugly come from it, and were failed as invented without it.
+        resume = json.load(open(Path(__file__).with_name("copilot-interview-background.json"))).get("candidate_resume")
+        rule += "\n\nThe candidate's real background (facts from it are not invented):\n" + json.dumps(resume, ensure_ascii=False)
+        # The dev build's knowledge (profile, past companies, projects) holds facts the candidate approved, such as
+        # "about 300,000 trip planning requests a day", which the resume alone doesn't have.
+        folder = Path.home() / "Library/Application Support/LiveSubs Dev/knowledge"
+        approved = [(folder / n).read_text() for n in ("00_profile.md", "02_companies_past.md", "03_projects.md") if (folder / n).exists()]
+        if approved:
+            rule += "\n\nFacts the candidate approved (not invented either):\n" + "\n\n".join(approved)
+    prompt = ("You grade an interview-coaching answer against one criterion. " + rule +
+              "\n\nConversation so far:\n" + "\n".join(transcript) +
               "\n\nCard shown to the candidate:\n" + shown + "\n\nCriterion: " + criterion)
-    body = {"model": "deepseek-flash", "temperature": 0, "max_tokens": 120, "thinking": {"type": "disabled"},
+    body = {"model": "deepseek-flash", "temperature": 0, "max_tokens": 500 if strict else 120, "thinking": {"type": "disabled"},
             "messages": [{"role": "user", "content": prompt}]}
     req = urllib.request.Request("https://api.deepseek.com/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         text = json.load(r)["choices"][0]["message"]["content"].strip()
+    if strict:
+        verdict = next((l.strip() for l in reversed(text.splitlines()) if re.match(r"\W*(PASS|FAIL)\b", l.strip(), re.I)), "FAIL: no verdict")
+        # The verdict line once read "PASS: FAIL: …" over a point marked no: a point marked no always fails.
+        missing = [l.strip() for l in text.splitlines() if re.match(r"\s*-\s.*:\s*no\b", l, re.I)]
+        ok = re.match(r"\W*PASS(?!\W*FAIL)", verdict, re.I) is not None and not missing
+        return ok, ("PASS" if ok else "FAIL") + ": " + verdict + "\n" + text
     return text.upper().startswith("PASS"), text
 
 
