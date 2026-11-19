@@ -1,0 +1,25 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned technical plan, agent design, product/order tools, core backend, and Android SSE reader/card display for KKday trip planner. Clearly delineated responsibility boundaries (product decisions and launch not his). Debugged duplicate-card bug via raw event logging, identified reconnect re-reading stream, implemented last-event-id resume with server contract confirmation and client-side dedupe. Tested resume by toggling network mid-stream. Considered alternatives (full restart, full re-send) and chose smallest change. Post-release monitored logs and manual slow-network testing. Debon Securities navigation risk: flagged broken back button same day, gave PM two options, PM decided to keep old pages, he fixed remaining pages himself, monitored Bugly crash reports and user feedback with rollback signal defined. Covers main cases independently with trade-offs, but lacks counter-examples or production metrics beyond logs/QA."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed mobile wallet client/server/local storage ownership clearly: server owns ledger, client caches, local storage never decides transfers. Sequence diagram for A→B $80 with idempotent clientTransferId, single transaction debit/credit, result screen four states (success, clear failure, processing, outcome unknown). Handled lost response + process kill by writing pending intent row before send, querying by client ID after restart, updating row from server record. Handled not-found as unknown with backoff and manual refresh, only marking failed after server says not exist and enough time passed. Handled concurrent transfers via row lock/conditional update, one success one clear failure. Handled account switch with session generation tagging and dropping stale responses. Handled chat-initiated payment with native confirmation binding payer/recipient/amount/expiry, conflict on recipient change. Two-week scope and rollout spike plan with pause submissions, reconcile, cap pending queue, alert. Strong core workable with trade-offs, but some gaps: no explicit discussion of server-side idempotency key storage schema, no mention of client-side encryption or secure storage for intent rows, no discussion of how pending queue cap interacts with user experience, and no counter-examples or production evidence for the wallet design."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Asked clarifying questions before design (balance custody, currencies, offline, scope). Defined MVP path clearly. Handled lost response and process kill with pending intent row and server query by client ID. Handled not-found as unknown with backoff and manual refresh, only marking failed after server says not exist and enough time passed. Handled concurrent transfers with row lock/conditional update. Handled account switch with session generation. Handled chat stream disconnect after confirmation by reading status from payment service by intent ID, staying on unknown if timeout. Handled recipient change after confirmation as conflict requiring re-confirmation. Rollout spike plan: pause submissions, keep reads/status checks, reconcile stuck intents, cap pending queue per account, alert on pending count. Escalation criteria defined (pending count keeps rising after pause, or disagreement on reconciliation ownership). Covers main cases independently and explains trade-offs, but lacks counter-examples or production evidence for unknown handling."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Two-week plan: balance, internal transfer, history, native confirmation, pending/unknown states; top-up/withdrawal/multi-currency deferred. Sign-off: product owner on scope, tech lead on ledger and idempotency contract. Pre-release tests: lost response + process kill, replay same ID, two transfers at once, account switch. Rollout spike response: pause new submissions, keep reads/status checks, reconcile stuck intents, resume when pending count normal, cap pending queue per account, alert on pending count. Personal ownership: Android native confirmation, intent row before send, result screen four states, client-side stale response checks. Team needs: backend owner for id

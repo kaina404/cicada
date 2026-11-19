@@ -1,0 +1,31 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead for AI trip planner in team of five; owned technical plan, agent design, core backend, and Android SSE client. Described a concrete bug (duplicate day cards on slow networks), traced it to reconnect via event-id logging, fixed with client-side dedupe and bounded ID set. Explained three options (client dedupe, server cursor, restart plan) and trade-offs, chose client dedupe for shippability. Post-release validation: duplicate reports stopped and manual network-cut test passed. Also described Debon release risk: found broken back button, escalated same day with two options, recommended delaying change, PM decided, candidate finished fix and testing. Evidence is solid but mostly single-project and lacks broader counter-examples or production metrics beyond qualitative signals."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Clear end-to-end ownership of Android SSE reading, parsing off main thread, StateFlow UI updates, fallback on failed checks. Explained exact pieces built vs app team. In design exercise, correctly drew client/server/local storage flowchart, sequence diagram for transfer, pending-transfer table with client transfer ID, status states (pending, success, failure, processing, unknown), idempotent server contract, conflict rejection on same ID with different amount/recipient, and session-generation check to prevent stale responses crossing accounts. Handled concurrent double-spend with row lock/conditional update. Answers were coherent and technically sound, though some repetition and minor diagram inconsistencies (e.g., balance math 'A ends at 2000 cents' after sending 80 from 100 is correct, but repeated lines suggest minor disorganization)."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Asked clarifying questions before design (custody of balance, currencies, offline behavior). Handled injected conditions well: lost reply + process kill → pending row persists, lookup by client ID, unknown not failed; disabled send button and ID reuse to prevent duplicate transfer; account switch mid-flight → session generation tagging and dropping stale responses; chat stream disconnect after confirm → status lookup by client ID, show Processing/Unknown; malicious group message claiming no confirmation needed → native confirm screen ignores chat, empty recipient/amount fields, server binds approval with expiry, cancel voids approval. Consistently distinguished unknown from failure and avoided guessing. Did not deeply explore edge cases like server-side expiry race or multi-device same-account concurrency beyond the two-phone scenario, but covered main unknowns independently with trade-offs."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Two-week plan scoped to balance, internal transfer, history, confirm screen, pending/unknown states; deferred top-up, withdrawal, multi-currency. Identified sign-offs (tech lead, product owner, backend owner for idempotency contract). Pre-release test plan covered lost reply + process kill, replay same ID, concurrent transfers, account switch. Rollout spike response: pause new submissions, keep reads/status checks working, own client fix, backend owns reconciliation, watch unknown-transfer count and duplicate-ID rejections, diagnose client vs server before re-enabling. Escalation criteria defined (rising unknowns/duplicates after client fix, or contract change needed). Solid operational thinking but lacked concrete metrics/thresholds and timeline specifics for the half-hour response."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "handling unknowns — consistently distinguished unknown from failure, prevented duplicate transfers via idempotent client IDs and disabled send, handled account-switch stale responses with session generations, and refused chat-based authorization in favor of a bound native confirm screen.",
+  "risks": "Past work evidence is concentrated in one project with qualitative post-release signals rather than hard metrics; design answers showed some repetition and minor diagram inconsistencies; rollout plan lacked concrete numeric thresholds and a precise half-hour incident timeline; limited evidence of cross-team influence beyond one escalation example."

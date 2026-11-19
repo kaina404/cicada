@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design, tools, backend, and Android SSE stream for trip planner; fixed SKU price race with request IDs, cancellation, and regression test; handled delivery risk at Debon Securities by escalating with options and accepting only a delay to his own change."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed wallet client/server/local DB split, idempotent transfer intent with client ID, cold-start status lookup, four result states, account-tagged results to prevent cross-account leaks, and native confirmation for chat-initiated payments."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified users, balance ownership, and offline behavior before designing; handled lost response, process death, duplicate taps, concurrent transfers, account switching, chat stream disconnect, and chat text claiming no confirmation; kept unknown state rather than false failure."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week MVP to confirm screen, intent persistence, status lookup, and four states; identified tech lead and product sign-offs; proposed rollout monitoring, escalation criteria, and needed backend and QA partners."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Handling unknowns: consistently distinguished unknown from failed, designed idempotent retries, cold-start recovery, and prevented duplicate or cross-account transfers under realistic failure conditions.",
+  "risks": "Some answers repeated points and the design exercise lacked explicit production evidence or counter-examples beyond the described scenarios; rollout ownership and escalation were reasonable but not deeply tested."
+}

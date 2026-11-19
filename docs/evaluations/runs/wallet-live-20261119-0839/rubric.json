@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead for a 5-person team on KKday AI trip planner; personally designed the agent, wrote core backend and Android SSE stream reader; clearly delineated team ownership. Debugged a duplicate day-card bug by logging event IDs and arrival times, disproving his initial backend hypothesis, and fixed it with client-side idempotency and resume-from-last-ID. Explained trade-offs (whole-plan vs streaming, client vs server dedup) and validated post-release with crash-free/ANR rates and duplicate-rate logs. Missing counter-examples or production metrics beyond qualitative claims."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Solid Android architecture: Compose/ViewModel/Repository/Room/API layering, StateFlow with Dispatchers.IO, SSE parsing. Designed a wallet MVP with clear ownership per component, a sequence diagram for A→B transfer, and a four-state result model (success/failure/processing/unknown). Handled process death by persisting a pending row with client transfer ID and reconciling on restart. Handled account-switch race with session generation tagging. Handled concurrent transfers via row locking/conditional update. Handled chat-entry ambiguity (two Alexes, no amount) with native confirm and server-bound authorization. Two-week scoping and rollout pause plan are workable. Lacks deeper production evidence or counter-examples for these designs."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Explicitly treats lost responses and empty lookups as 'unknown' rather than failure, and keeps the send button disabled to prevent double-spend. Resends the same client transfer ID on retry so the server returns the original outcome. On restart, reads pending row first and queries by client transfer ID. Recognizes that a chat edit after confirm cannot mutate a bound authorization and spawns a new intent. During a pending-spike incident, pauses submissions while keeping reads/lookups live, splits causes (latency vs ledger rejection), and escalates to the founder if the ledger is wrong or resume slips. Good but not backed by production incident evidence or counter-examples."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped a two-week v1 (balance, internal transfer with native confirm, history, pending/unknown states) and deferred top-up/withdrawal/multi-currency. Named sign-offs (tech lead, PM, risk owner) and pre-release test cases (lost response + process kill, replay, concurrent transfers, account switch). Defined a 30-minute incident response: pause new submissions, post one team message in 10 minutes, split spike by cause, raise capacity if latency, keep paused and notify risk owner if ledger rejects. Owns client pause switch, pending/unknown rows, status lookups, and reconciliation report; knows when to escalate. Lacks quantified rollout metrics or prior shipped-product evidence with counter-examples."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability — end-to-end wallet design with correct handling of process death, idempotent retries, concurrent transfers, account-switch races, and ambiguous chat entry, all with clear component ownership.",
+  "risks": "Evidence is largely design-level and self-reported; no quantified production outcomes or counter-examples to validate claims. Past-work impact metrics are qualitative. Incident response and rollout plan are sound but untested in production."
+}

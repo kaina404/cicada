@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design, product/order tools, and core backend for KKday trip planner handling ~300k requests/day; wrote SSE stream reading, parsing, StateFlow, and fallback with capped retries; fixed stale price bug via version logging and index rebuild; considered alternatives (rebuild on every edit vs. no index) and explained trade-offs; validated fix manually but lacked timing logs or user data."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed mobile wallet with clear client/server/local storage ownership; specified Room suspend insert for durable intent before network call; used client transfer ID scoped per account; server-side transactional debit/credit with row locking; handled concurrent transfers and session generation to prevent cross-account response leakage; identified risks and mitigations independently."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified requirements before designing (balance custody, currencies, offline behavior); handled lost response with pending intent and status lookup by client ID; kept unknown state when lookup finds nothing and offered 'check again' without new ID; bound chat-initiated approval to payer/recipient/amount/expiry; addressed recipient change after confirmation with new intent and expiry."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Identified delivery risk, escalated same day to PM with two options, PM decided to keep old pages; finished fix and testing personally; defined MVP scope (one currency, one rail, read-only offline); specified sign-off roles (tech lead, product owner, risk/compliance); incident response: pause submissions, keep reads working, own client fix, backend reconciliation, hard cap on pending transfers, escalation signals."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: clear ownership boundaries, durable intent before network, server-authoritative ledger with transactional integrity, and robust handling of concurrency and session isolation.",
+  "risks": "Limited production evidence for past work (manual validation only, no timing logs or user data); some repeated answers suggest possible communication or recall gaps; incident response ownership split with backend could create ambiguity under pressure."
+}

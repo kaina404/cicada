@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design, core backend, and Android SSE parsing for KKday travel planner. Debugged a merge bug by replaying saved plans and comparing model output, saved plan, and post-merge plan; fixed by keying stops by ID and added cross-day ID check with retry. Released with replay validation and monitored repeat stop changes, though no formal A/B test. Handled retry-rule disagreement by presenting two options with real failure examples to lead and product owner."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed wallet sequence with client transfer ID, server-side transactional debit/credit, idempotent resend, processing/unknown states, local persistence, and status polling by client ID. Handled concurrent transfers with row lock/conditional update, account-switch data leak via session generation tagging, and ambiguous chat intent with native confirm and single-use confirm token. Explained trade-offs (new ID risks double payment, chat text cannot skip confirm)."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified scope before designing (user types, ledger authority, offline behavior). Handled lost response plus process kill by reading local state and polling by same client ID, never showing success from memory. Addressed 'no confirmation needed' chat claim by treating it as suggestion and requiring server-validated confirm token. For pending spike, proposed pausing submissions, setting stuck threshold, distinguishing real spike from ledger lag, and escalation criteria (30 min unresolved or possible double payment)."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Defined two-week MVP scope (balance, transfer, history, native confirm, pending/unknown states) with clear exclusions. Identified sign-offs (tech lead, product). Pre-rollout checks for four failure cases. Owned Android side and pause decision; identified needed team roles (backend owner, server logs/metrics, QA). Escalation criteria to founder stated. Lacked explicit rollout metrics or staged rollout plan beyond pausing."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: consistently designed correct, idempotent, and failure-aware wallet flows with clear ownership boundaries and trade-off reasoning.",
+  "risks": "Limited evidence of formal production metrics or A/B testing; some answers were incomplete or required re-asking; demo offer at end may indicate slight misalignment with interview closure."
+}

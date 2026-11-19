@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design, core backend, and Android SSE streaming for KKday AI planning; diagnosed and fixed a race condition with a regression test and buffer cap; handled a delivery risk at Debon Securities by escalating with options and accepting only his own change slipping."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Clear Android architecture (ViewModel, Repository, StateFlow, Dispatchers.Default); solid wallet design with server-authoritative ledger, client transfer ID, pending/unknown states, idempotency, and session generation checks; explained trade-offs like sequence number vs buffer."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Asked clarifying questions before designing; handled lost response, process death, idempotency expiry, concurrent transfers, account switch mid-flight, and chat disconnection with explicit unknown states and no guessing; acknowledged replay test only covers two-event order."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Defined MVP scope, sign-off owners, pre-release test cases, rollout monitoring (crash-free rate, error logs, price mismatch), pause switch, escalation criteria, and post-incident note; showed ownership of Android side and dashboard."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Handling unknowns: consistently distinguished unknown from failure, designed idempotent client transfer IDs, pending rows, and safe resolution paths without guessing.",
+  "risks": "Limited evidence of level 4 (counter-examples, production metrics, or broader system ownership); replay test only covers observed two-event order; backend and product decisions largely owned by others."
+}
