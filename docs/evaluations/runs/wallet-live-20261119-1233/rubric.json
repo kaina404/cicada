@@ -1,0 +1,36 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead on AI trip planner at KKday; owned agent design, core backend, and Android stream reader; explained latency trade-off (streaming vs. gating final itinerary); described a hard duplicate-day bug with root cause (client reconnect without last-day), fix (track last day, requestId), and production measurement (duplicate count zero, reconnect rate stable); gave a delivery risk example at Debon Securities with options, PM decision, and personal follow-up."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed a mobile wallet with clear client/server/local storage ownership; used Long cents, client transfer ID, local intent persistence, idempotent retries, four result states (success, clear failure, processing, unknown); correctly handled lost response with process kill via lookup by client ID; handled concurrent transfers with conditional updates; prevented cross-account data leak with account/session tagging; integrated chat-initiated payment with native confirmation and server binding to payer, recipient, amount, expiry."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Asked clarifying questions before design (balance custody, currencies, offline behavior); adapted to new conditions (chat entry, stream disconnect, idempotency window expiry, two Alex contacts, recipient change after confirm); explained what the binding stops and what it cannot stop (user picking wrong Alex); proposed reconciliation for expired idempotency window; identified escalation signals (pending count growing after pause, ledger debit without matching record)."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped two-week first version (balance, transfer, history, native confirm, pending/unknown states); identified sign-off owners (tech lead, product owner, risk/compliance); listed pre-release tests (lost response with process kill, replay, concurrent transfers, account switch); proposed incident response (pause submissions, keep reads, cap pending per account, find cause, resume in stages); defined resume criteria (pending flat or falling for an hour, backend owner confirms stuck transfers, reconciliation owner signs off)."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability: wallet design with idempotency, local intent persistence, and correct handling of lost responses, concurrent transfers, and account switching.",
+  "risks": [
+    "Production evidence for the duplicate-day fix is limited to logged sessions and manual replay; no broader device/network coverage.",
+    "Incident response plan is solid but lacks concrete monitoring thresholds or dashboards beyond pending count and crash rate.",
+    "Some answers repeated points (e.g., native confirm binding, client ID reuse) without adding new depth, suggesting occasional redundancy rather than deeper trade-off analysis."
+  ]
+}

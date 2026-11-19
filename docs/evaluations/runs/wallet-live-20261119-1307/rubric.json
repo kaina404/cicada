@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned agent design, tools, core backend, and Android SSE stream reader for KKday AI trip planner; agreed card format with app team; clearly delineated team ownership. Debugged a StateFlow race with recorded stream replay and added logging; considered mutex and Channel alternatives with trade-offs. Debon navigation risk: surfaced broken back button early, gave PM two options, finished fix and testing. Watched crash/ANR/tickets post-release with pre-agreed thresholds and rollback switch. Lacks counter-examples or production metrics proving impact beyond the described fixes."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed wallet MVP with clear client layers (Screen, ViewModel, Repository, Room, API) and server ledger as source of truth. Sequence diagram for A→B $80 with client transfer ID persisted before network call, idempotent server record, and status resolution on reopen. Handled lost response + process kill with pending/unknown states and lookup by client ID. Addressed concurrent transfers with row lock/conditional update preventing negative balance. Account-switch race mitigated with session generation tags persisted across process death. Chat entry flow requires native confirmation bound to payer/recipient/amount/expiry; recipient re-resolution rejected. Two-week plan includes core loop, pending/unknown states, test cases, pause switch, reconciliation, and escalation criteria. Solid but not backed by production evidence or extensive counter-examples."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Clarified requirements before design (custodial vs rail, currencies, offline, ledger authority). Handled ambiguous chat entry with two Alexes and no reliable amount by requiring native confirmation and server binding. Addressed 'not found' during in-flight request by keeping pending, blocking new ID, and repeating lookup. Considered idempotency window expiry and reconciliation. Escalation criteria defined (queue not clearing, ledger mismatch). Did not deeply explore edge cases like partial failures in multi-step server operations or clock skew, but covered main unknowns independently with trade-offs."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Two-week plan scoped to core loop (balance, send, history, native confirm) plus pending/unknown states; deferred top-up/withdrawal/multi-currency. Named sign-offs (tech lead, product owner), pre-agreed numbers, test cases (lost response + kill, replay, concurrent transfers, account switch). Rollout pause plan: keep reads working, reconcile pending with backend owner, resume when queue normal and ledger matches, escalate if window exceeded. Owns client-side pending/unknown, lookup, pause switch; needs backend owner, tech lead, support. Clear but lacks evidence of having shipped under similar constraints or quantified outcomes."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability",
+  "risks": "Limited production evidence or counter-examples for past work and shipped outcomes; some edge cases (e.g., idempotency window expiry handling, multi-step server partial failures) not fully explored; reliance on team for backend reconciliation and sign-off may slow execution."
+}

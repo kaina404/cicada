@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 4,
+      "score": 20,
+      "evidence": "Owned agent design, core backend, Android SSE stream reader, plan checks with retry/fallback, and versioned contract for a 300k plans/day AI trip planner. Diagnosed a production duplicate-card bug via raw chunk logs, fixed buffer parsing, added proxy replay regression test, and monitored crash-free/ANR rates post-release. Explicitly acknowledged limits of testing and proposed event-id dedupe and buffer caps as guards."
+    },
+    {
+      "name": "current ability",
+      "level": 4,
+      "score": 30,
+      "evidence": "Designed a mobile wallet MVP with clear client/server ownership, local DB for intents and cached reads, idempotency via client ID, conditional debit with row lock, unique constraint on client ID, and four result states including unknown. Correctly handled lost responses, process death, concurrent transfers, account switching, and chat-initiated payments with disambiguation and server-bound confirmation. Explained trade-offs and failure modes with production-grade detail."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 4,
+      "score": 25,
+      "evidence": "Asked clarifying questions on users, source of truth, and lost-response behavior. Proposed idempotency keys, retention windows, reconciliation, and conflict handling. Identified risks like client ID reuse after retention window, reinstall losing local ID, and chat stream disconnect. Proposed escalation thresholds, runbook, and incident communication. Acknowledged uncertainty and proposed counters and guards rather than assuming correctness."
+    },
+    {
+      "name": "shipping product",
+      "level": 4,
+      "score": 25,
+      "evidence": "Scoped a two-week first version with balance, send, history, and confirm states. Defined sign-off by tech lead and product owner. Planned pre-release failure tests. Proposed pausing new sends during a pending spike while keeping reads and status checks, reconciling by client ID, escalating after 30 minutes or one hour stuck, and posting updates every 15 minutes. Owned Android pause switch, still-checking screen, and runbook."
+    }
+  ],
+  "total": 100,
+  "decision": "strong yes",
+  "strongest": "End-to-end ownership of a production AI trip planner with a concrete, evidence-backed bug diagnosis and fix, plus a wallet design that correctly handles idempotency, lost responses, concurrency, and account switching with clear client/server ownership and failure states.",
+  "risks": "Some answers were repetitive and occasionally restated points; the candidate asked for repetition twice, which may indicate attention or hearing issues in a live setting. The wallet design was strong but mostly verbal; the flowchart and sequence diagram were minimal, so diagramming clarity under time pressure is less proven. No direct evidence of leading a team beyond technical lead scope or of cross-functional influence at a senior level."
+}

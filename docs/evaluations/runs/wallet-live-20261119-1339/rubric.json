@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Technical lead on a 5-person KKday AI trip planner; personally built agent design, product/order tools, core backend, and Android SSE stream reader. Explained ownership boundaries, a hard bug (duplicate day after reconnect) traced via logs to a saved-position bug, fixed by saving after render plus a corrupt-position guard. Gave two rejected alternatives (server-side resume point, full reload) with trade-offs. Acknowledged test/log coverage limits and staged rollout. Lacks quantified production impact or counter-examples beyond the one bug."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Clean layered design (Screen/ViewModel/Repository/DB/API/ledger), intent persisted with client transfer ID before request, cents as Long, four result states including unknown, idempotent lookup by client ID, server ledger as source of truth. Correctly handled concurrent double-spend via row lock and balance check, and session-generation tagging to prevent late responses leaking across accounts. Explains trade-offs but no production evidence for the wallet design."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Strong on lost-response/killed-process: pending row survives restart, lookup by client ID, stays unknown rather than guessing success, respects idempotency window and falls back to reconciliation. Handles model claiming success before server answer by treating chat as non-authoritative and marking message unconfirmed. Could go deeper on reconciliation mechanics and expiry edge cases."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Scoped a two-week MVP (balance, transfer, history, confirm, recoverable pending/unknown), named sign-offs (Android lead, backend owner), and gave a concrete incident response: pause submissions, reconcile pending by client ID, resume when queue normal and ledger matches, escalate to founder when money movement is ambiguous. Clear ownership split. Lacks explicit metrics/thresholds for the pending spike and rollout success criteria."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "Handling of unknown outcomes and idempotency: intent persisted before send, lookup by client ID after restart, never showing success from a guess, and correct concurrent double-spend reasoning.",
+  "risks": "Limited quantified production evidence for past work; wallet design is untested; incident response lacks concrete thresholds/metrics for pausing and resuming; reconciliation depth beyond client-side lookup is thin."
+}

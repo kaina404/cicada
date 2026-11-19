@@ -1,0 +1,1164 @@
+{
+ "turns": [
+  {
+   "name": "P1-intro",
+   "kind": "handbook",
+   "question": "Pick the one project that best shows your mobile skills. Who used it, what problem did it solve, and where did your responsibility start and end?",
+   "fresh": true,
+   "seconds": 5.4,
+   "first_ms": "545",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "3",
+    "keeps": "0",
+    "first_ms": "545",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "pick one project, who used it, what problem, my part",
+    "say": "I'd pick the product page at KKday. It's the Android app for a travel platform, and travelers use it to book tours and activities. The problem was speed: when someone tapped a tour, the options and prices took about a second to appear. That's long enough to feel slow. My responsibility started with the Android side. I owned the SKU page features, where users choose packages and options.",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "2",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "I rebuilt how the price and stock were calculated, and I brought in Jetpack Compose for the screens. The backend and the product data were other teams' work. When something there was slow or wrong, I raised it with them and agreed on the fix. So my responsibility ended at the app, but I followed the whole flow through to release."
+   ],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- one real Android project: yes\n- users named: yes\n- problem stated: yes\n- own scope stated: yes\n- no invented employers: yes\n- no invented titles: yes\n- no invented numbers: yes\n\nPASS: none",
+    "criterion": "SAY introduces one real Android project from the candidate's background with its users, the problem and the candidate's own scope; no invented employers, titles or numbers."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS\n- one real Android project: yes\n- users named: yes\n- problem stated: yes\n- own scope stated: yes\n- no invented employers: yes\n- no invented titles: yes\n- no invented numbers: yes\n\nPASS"
+   },
+   "problem_check": {
+    "pass": true,
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended"
+   }
+  },
+  {
+   "name": "P1-dyn",
+   "kind": "dynamic",
+   "question": "On the KKday product page, you said you rebuilt how price and stock were calculated and brought in Jetpack Compose. Which of those did you personally build versus the team?",
+   "fresh": true,
+   "seconds": 4.4,
+   "first_ms": "437",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "15",
+    "keeps": "3",
+    "first_ms": "437",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "which of those did you personally build",
+    "say": "I built both myself. I rebuilt the price and stock calculation on the phone. I flattened the configuration and built a price and stock index ahead of time. I moved the work to Dispatchers.Default and sent results out through StateFlow. I also brought Compose in and rebuilt the screens with it.",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "11",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific rather than repeating: yes\n- consistent with earlier answers: yes\n- consistent with background: yes\n- technically correct: yes\n- invents no employer: yes\n- invents no title: yes\n- invents no metric: yes\n- invents no wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific rather than repeating: yes\n- consistent with earlier answers: yes\n- consistent with background: yes\n- technically correct: yes\n- invents no employer: yes\n- invents no title: yes\n- invents no metric: yes\n- invents no wallet rule: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "P2-change",
+   "kind": "handbook",
+   "question": "Pick a change you personally made. Walk me from one user action through the UI, data or network path. Which logic did you actually change?",
+   "fresh": true,
+   "seconds": 5.4,
+   "first_ms": "645",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "22",
+    "keeps": "6",
+    "first_ms": "645",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "pick a change you personally made, walk one user action through UI, data, network; which logic did you change",
+    "say": "I'll take one tap on a ticket type. The tap goes to the ViewModel, and it asks the price and stock index for that combination. The index was built once from the product data, so the lookup is just a map read. The result comes back on StateFlow, and Compose redraws only the price and stock text. The logic I changed is that calculation: before, every tap recalculated all combinations on the main thread and parsed the JSON again.",
+    "type": "none",
+    "then": "Next: what happens when the product data changes, or the user taps fast.",
+    "fix": "",
+    "past": "14",
+    "prepared": "false"
+   },
+   "more": [
+    "The index build runs off the main thread, and if the product data changes at runtime the index has to be rebuilt and swapped atomically so a tap never reads a half-updated map."
+   ],
+   "updates": [],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- one user action traced: yes\n- concrete layers named (UI, state, data/network): yes\n- says which logic changed: yes\n- separates own work from team's: yes\n- no invented numbers: yes\n\nPASS: none",
+    "criterion": "SAY traces one user action through concrete layers (UI, state, data or network) and says which logic the candidate changed; separates own work from the team's; no invented numbers."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- one user action traced: yes\n- concrete layers named (UI, state, data/network): yes\n- says which logic changed: yes\n- separates own work from team's: yes\n- no invented numbers: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "P2-bug",
+   "kind": "handbook",
+   "question": "What was the hardest bug to reproduce there? What did you suspect first, and which log, experiment or repro proved you wrong?",
+   "fresh": true,
+   "seconds": 5.5,
+   "first_ms": "597",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "30",
+    "keeps": "7",
+    "first_ms": "597",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "hardest bug to reproduce, what I suspected first, what proved me wrong",
+    "say": "The hardest one was a wrong price that only showed up on some dates. It never happened on my test data. I first suspected the index build, because it ran off the main thread. I added a log of the index key and the result for every tap. The log showed the key was right, but the stock value was stale. The real cause was the cache: I kept results in memory and never cleared them when the product data changed.",
+    "type": "none",
+    "then": "Next: how I'd test that case now, or the fast-tap case.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "The log showed the key was right, but the stock value was stale, so the index build wasn't the problem. The real cause was the cache: I kept results in memory and never cleared them when the product data changed. I fixed it by clearing the cache on every index swap, and I added a test with two dates that share the same product."
+   ],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- first suspicion stated: yes\n- evidence (log, experiment or repro) that overturned it: yes\n- root cause stated: yes\n- observation distinguished from conclusion: yes\n- timeline order (first suspicion → evidence → root cause): yes\n\nPASS: none",
+    "criterion": "SAY gives a timeline: first suspicion, the evidence (log, experiment or repro) that overturned it, and the root cause, distinguishing observation from conclusion."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- first suspicion stated: yes\n- evidence that overturned it: yes\n- root cause stated: yes\n- observation vs conclusion distinguished: yes\n- timeline order (suspicion → evidence → root cause): yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "P2-dyn",
+   "kind": "dynamic",
+   "question": "You said the log showed the key was right but the stock value was stale, and that pointed you to the cache. How did you confirm the stale value actually came from that cache and not from the product data itself being out of date?",
+   "fresh": true,
+   "seconds": 4.4,
+   "first_ms": "642",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "41",
+    "keeps": "14",
+    "first_ms": "642",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "log showed key right, stock stale — how did I confirm it was the cache, not the product data",
+    "say": "I checked the product data first. I logged the raw stock value from the backend response, and it was already the new number. So the data was fresh, and the stale value came from my cache. The same product on two dates returned the old stock, which matched the cache key.",
+    "type": "none",
+    "then": "Next: how I'd test that case now, or the fast-tap case.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The cache key didn't include the index version, so a swap left old entries reachable until they expired."
+   ],
+   "updates": [],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from candidate's prior answer: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers/background: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from candidate's prior answer: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers/background: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "P2-alt",
+   "kind": "handbook",
+   "question": "What other options did you have, why didn't you pick them, and after release how did you know the change worked?",
+   "fresh": true,
+   "seconds": 5.0,
+   "first_ms": "645",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "49",
+    "keeps": "18",
+    "first_ms": "645",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "other options, why not them, how I knew it worked",
+    "say": "I had three options. First, clear the cache on every index swap. Second, put the index version in the cache key. Third, drop the in-memory cache and read the index directly. I picked the version in the key. Clearing the cache was simple, but every swap threw away good entries.",
+    "type": "none",
+    "then": "Next: the fast-tap case, or how I'd watch this in production.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The version in the key also keeps the good entries, so a swap only makes the old ones unreachable. They get removed when they expire or when the size cap is reached. After release, I went through the booking flow myself on several dates for the same product. The stock matched the backend every time, and switching options felt smooth."
+   ],
+   "updates": [],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: limits of the result\n- real alternative named: yes\n- constraint that ruled it out: yes\n- source of result named: yes\n- limits of the result: no\n\nFAIL: limits of the result",
+    "criterion": "SAY names a real alternative and the constraint that ruled it out, and the source of the result (metric, test, ticket or feedback) with its limits."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: limits of the result\n- real alternative named: yes\n- constraint that ruled it out: yes\n- source of result named: yes\n- limits of the result: no\n\nFAIL: limits of the result"
+   }
+  },
+  {
+   "name": "P3-risk",
+   "kind": "handbook",
+   "question": "Tell me about a time you saw a delivery risk or a likely delay and the team disagreed. When did you tell whom, how many options did you give, who decided, and what did you finish yourself?",
+   "fresh": true,
+   "seconds": 6.0,
+   "first_ms": "962",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "62",
+    "keeps": "23",
+    "first_ms": "962",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "delivery risk, team disagreed — when, whom, how many options, who decided, what I finished",
+    "say": "At Debon Securities, I was moving the trading app to modules and MVVM while we kept shipping releases. During testing, I found some old pages had a broken back button with the new navigation. I hadn't checked every page yet, but it could already affect that week's release. So I told the project manager the same day. I gave him two options. First, keep the old pages and move my change to the next release. Second, ship it and accept the risk. I recommended the first one.",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "The two options were: keep the old pages and move my change to the next release, or ship it this week and test the rest after. He took the first option, so everything else shipped on time. I finished the fix and the testing myself, and my change went out in the next release.",
+    "I also told QA the same day, so they knew what to test first."
+   ],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: who decided; what candidate personally did\n- concrete case: yes\n- when told: yes\n- whom told: yes\n- options offered: yes\n- who decided: no\n- what candidate personally did: no\n- right company (Debon Securities): yes\n\nFAIL: who decided; what candidate personally did",
+    "criterion": "SAY describes one concrete case: when and whom the candidate told, the options offered, who had the decision, and what the candidate personally did; attributes the case to the right company."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS\n- concrete case: yes\n- when told: yes\n- whom told: yes\n- options offered: yes\n- who decided: yes\n- what candidate personally did: yes\n- right company (Debon): yes\n\nPASS"
+   }
+  },
+  {
+   "name": "P3-dyn",
+   "kind": "dynamic",
+   "question": "You said you recommended keeping the old pages and moving your change to the next release, so what risk were you still willing to accept in that week's release, and who watched the data afterward? What signal would have made you pause or roll back?",
+   "fresh": true,
+   "seconds": 6.6,
+   "first_ms": "795",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "75",
+    "keeps": "27",
+    "first_ms": "795",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "what risk I accepted, who watched the data, what signal would make me pause or roll back",
+    "say": "I was still willing to accept the risk on the old pages. They kept their old navigation, so the back button worked as before. The only risk was that a few pages I hadn't checked might still break. I told QA the same day, so they tested the old pages first. The project manager and I watched the release together. I checked the crash reports in Bugly after it went out.",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific, not repeating: yes\n- consistent with earlier answers: yes\n- consistent with background: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific, not repeating: yes\n- consistent with earlier answers: yes\n- consistent with background: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "W1-scope",
+   "kind": "handbook",
+   "question": "Let's switch to the design exercise. Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures. Start by clarifying the requirements. Which user path would you define as the MVP?",
+   "fresh": true,
+   "seconds": 5.0,
+   "first_ms": "412",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "82",
+    "keeps": "29",
+    "first_ms": "412",
+    "problem": "Pick one project that best shows your mobile skills: who used it, what problem it solved, and where my responsibility started and ended",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "1",
+    "written": "false",
+    "heard": "switch to design exercise — mobile wallet, clarify requirements, which user path is the MVP",
+    "say": "Before I design, I'd like to check a few things. Who are the users: one person sending money to friends, or a business paying customers? Does the balance sit in our own ledger, or does money move on a bank or card rail? Which currencies do we support? And what must work offline: viewing the balance and history, or also sending? Does that match what you have in mind?",
+    "type": "none",
+    "then": "Wait for the interviewer to confirm the scope.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "For the MVP, I'd pick one path: a person sends money to a friend, and the friend sees it arrive. That's the smallest loop that shows the whole system works. The other things I'd like to check: does the balance sit in our own ledger, or does money move on a bank or card rail? And what must work offline: viewing the balance and history, or also sending?"
+   ],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: proposes one MVP path\n- stored balance vs external rail: yes\n- currency: yes\n- offline behaviour: yes\n- authority of the ledger: yes\n- proposes one MVP path: no\n\nFAIL: proposes one MVP path",
+    "criterion": "SAY asks clarifying questions about scope (stored balance vs external rail, currency, offline behaviour, authority of the ledger) and proposes one MVP path such as send money to a contact."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- stored balance vs external rail: yes\n- currency: yes\n- offline behaviour: yes\n- authority of the ledger: yes\n- proposes one MVP path (send money to a contact): yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "W2-design",
+   "kind": "handbook",
+   "question": "Here are the rules: signed-in users, centralized balance accounts, single currency USD, internal peer-to-peer transfers, zero fees. Balance, transfer, history and details are in scope. Cached reads work offline; submitting money needs the network. The server owns the authoritative ledger and limits. Top-up, withdrawal and multi-currency are out of scope. A has 100 dollars and B has zero. Draw the client, the server and local storage as a flowchart, and tell me what each part owns.",
+   "fresh": true,
+   "seconds": 4.5,
+   "first_ms": "373",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "92",
+    "keeps": "37",
+    "first_ms": "373",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "rules given — draw client, server, local storage as a flow chart, say what each part owns",
+    "say": "Okay, the rules are clear. I'll draw the client as four layers, then the server and its ledger. The screen shows the balance and the send form. The ViewModel holds the screen state and sends the tap to the repository. The repository is the only way to the data.",
+    "type": "draw@wallet flow: flowchart TD ⏎   S[Screen] --> VM[ViewModel] ⏎   VM --> R[Repository] ⏎   R --> DB[(Local DB)] ⏎   R --> API[Wallet API] ⏎   API --> L[(Server ledger)]",
+    "then": "Next, I'd walk one transfer of 80 dollars from A to B through this flow.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The server ledger is the source of truth, and it applies each transfer once."
+   ],
+   "updates": [
+    "The ViewModel holds the send state and calls the repository. The repository is the only part that talks to the Wallet API, and it saves the transfer intent with its client ID before sending. The local database keeps the last known balance and history, so cached reads work offline. The server ledger is the source of truth, and it applies each transfer once."
+   ],
+   "snapshot": "W2-design.png",
+   "diagram": {
+    "want": "flowchart",
+    "pass": true,
+    "type": "draw@wallet flow: flowchart TD ⏎   S[Screen] --> VM[ViewModel] ⏎   VM --> R[Repo"
+   },
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: SAY says what each part owns\n- mermaid flowchart: yes\n- client UI: yes\n- ViewModel: yes\n- repository: yes\n- local database: yes\n- server: yes\n- server ledger: yes\n- SAY says what each part owns: no\n- server ledger is authority: yes\n\nFAIL: SAY says what each part owns",
+    "criterion": "TYPE is a mermaid flowchart of the Android client (UI, ViewModel, repository, local database), the server and its ledger; SAY says what each part owns and that the server ledger is the authority."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS\n- mermaid flowchart: yes\n- Android client UI: yes\n- ViewModel: yes\n- repository: yes\n- local database: yes\n- server: yes\n- server ledger: yes\n- SAY says what each part owns: yes\n- server ledger is the authority: yes\n\nPASS"
+   }
+  },
+  {
+   "name": "W2-seq",
+   "kind": "handbook",
+   "question": "Now draw a sequence diagram of A sending B 80 dollars: confirmation, request, ledger and the result screen.",
+   "fresh": true,
+   "seconds": 1.1,
+   "first_ms": "416",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "105",
+    "keeps": "41",
+    "first_ms": "416",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "what each part owns, in the flow chart",
+    "say": "The ledger checks the payer's balance and moves the money in one transaction, so a balance never goes negative. A timeout is an unknown outcome, not a failure.",
+    "type": "none",
+    "then": "Next, I'd walk one transfer of 80 dollars from A to B through this flow.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "I'll draw the sequence for one transfer of 80 dollars, which is 8000 cents. A confirms on the native screen, and the repository saves the intent with its client ID before the request goes out. The server checks and moves the money in one transaction, so A goes from 100 to 20 dollars and B from 0 to 80. The result screen shows success only from the server's transfer record."
+   ],
+   "updates": [],
+   "diagram": {
+    "want": "sequenceDiagram",
+    "pass": false,
+    "type": "none"
+   },
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: TYPE is a mermaid sequenceDiagram; confirm step; submit with client transfer ID; atomic server debit and credit; response step; result step\n- TYPE is a mermaid sequenceDiagram: no\n- confirm step: no\n- submit with client transfer ID: no\n- atomic server debit and credit: no\n- response step: no\n- result step: no\n- SAY amounts in cents: yes\n- SAY final balances A 20 dollars: yes\n- SAY final balances B 80 dollars: yes\n- SAY result states: yes\n\nFAIL: TYPE is a mermaid sequenceDiagram; confirm step; submit with client transfer ID; atomic server debit and credit; response step; result step",
+    "criterion": "TYPE is a mermaid sequenceDiagram covering confirm, submit with a client transfer ID, an atomic server debit and credit, the response and the result; SAY covers amounts in cents and the final balances (A 20 dollars, B 80) and the result states."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: TYPE is a mermaid sequenceDiagram; confirm step; submit with client transfer ID; atomic server debit and credit; response step; result step\n- TYPE is a mermaid sequenceDiagram: no\n- confirm step: no\n- submit with client transfer ID: no\n- atomic server debit and credit: no\n- response step: no\n- result step: no\n- SAY amounts in cents: yes\n- SAY final balances A 20 dollars: yes\n- SAY final balances B 80 dollars: yes\n- SAY result states: yes\n\nFAIL: TYPE is a mermaid sequenceDiagram; confirm step; submit with client transfer ID; atomic server debit and credit; response step; result step"
+   },
+   "regrade": {
+    "request": 109,
+    "more": [
+     114
+    ],
+    "card": {
+     "heard": "draw a sequence diagram of A sending B 80 dollars",
+     "say": "I'll draw the sequence for one transfer of 80 dollars, which is 8000 cents. A confirms on the native screen, and the repository saves the intent with its client ID before the request goes out. The server checks and moves the money in one transaction, so A goes from 100 to 20 dollars and B from 0 to 80. The result screen shows success only from the server's transfer record.",
+     "type": "draw@sequence diagram: sequenceDiagram ⏎   participant A as A's app ⏎   participant R as Repository ⏎   participant API as Wallet API ⏎   participant L as Server ledger ⏎   A->>R: Confirm send 8000 cents to B ⏎   R->>R: Save intent with client ID ⏎   R->>API: Transfer, client ID, 8000 cents ⏎   API->>L: Check balance and move money ⏎   L-->>API: One transfer, A 20, B 80 ⏎   API-->>R: Transfer status ⏎   R-->>A: Result screen",
+     "then": "Next, I'd cover the lost response: the app restarts and looks up that same client ID."
+    },
+    "pass": true,
+    "detail": "PASS: PASS\n- confirm step: yes\n- submit with client transfer ID: yes\n- atomic server debit and credit: yes\n- response: yes\n- result: yes\n- amounts in cents: yes\n- final balances A 20 dollars, B 80: yes\n- result states: yes\n\nPASS",
+    "note": "driver took a stale card from the previous turn; regraded on the app's real card for this question from the debug log",
+    "diagram_pass": true
+   }
+  },
+  {
+   "name": "W2-dyn",
+   "kind": "dynamic",
+   "question": "You said the repository saves the intent with its client ID before the request goes out. On Android, what exactly gets written to the local database at that moment, and how does that record change once the server responds?",
+   "fresh": true,
+   "seconds": 4.9,
+   "first_ms": "636",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "116",
+    "keeps": "44",
+    "first_ms": "636",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "what gets written, and how it changes after the server responds",
+    "say": "At that moment I write one row: the client transfer ID, the payer, the recipient, 8000 cents, and a status of pending. The row goes in before the request leaves, so a crash can't lose it. When the server responds, I update that same row to success or failed, and I store the server's transfer ID. The result screen reads only that row, so it never shows success before the server's record says so.",
+    "type": "none",
+    "then": "Next: what happens when the response is lost, or wait for the interviewer.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "The row also keeps the server's transfer ID once it comes back. If the response is lost, the row stays pending, so the app knows the outcome is unknown, not failed. After a restart, I look it up by account and client ID and ask the server for that transfer's status. I only resend the same ID, and the server answers with the original transfer, so the ledger still has one transfer."
+   ],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific, not repeating: yes\n- consistent with earlier answers: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from what candidate said: yes\n- adds something specific, not repeating: yes\n- consistent with earlier answers: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "W3-change1",
+   "kind": "plan-change",
+   "question": "You said a timeout is an unknown outcome and the row stays pending, but now the server committed and Android killed the process before any response arrived. When A reopens the app, what does the app show and what does it do with that pending row? Please update your sequence diagram.",
+   "fresh": true,
+   "seconds": 7.7,
+   "first_ms": "842",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "126",
+    "keeps": "49",
+    "first_ms": "842",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "server committed, process killed, what does A see and do on reopen",
+    "say": "When A reopens the app, the screen reads the local row, and that row is still pending. So the app shows \"still checking\", not success and not failed. Then it asks the server for that transfer by account and client ID. If the server has the record, the row becomes success, and the screen shows A at 20 dollars and B at 80. If the lookup finds nothing, the row stays unknown, because the request may still be in flight.",
+    "type": "replace@sequenceDiagram: sequenceDiagram ⏎   participant A as A's app ⏎   participant R as Repository ⏎   participant API as Wallet API ⏎   participant L as Server ledger ⏎   A->>R: Confirm send 8000 cents to B ⏎   R->>R: Save intent with client ID ⏎   R->>API: Transfer, client ID, 8000 cents ⏎   API->>L: Check balance and move money ⏎   L-->>API: One transfer, A 20, B 80 ⏎   API-->>R: Transfer status ⏎   R-->>A: Result screen ⏎   Note over A,R: Process killed, no response ⏎   A->>R: Reopen, read pending row ⏎   R->>API: Query by account and client ID ⏎   API->>L: Look up that transfer ⏎   L-->>API: Original transfer, A 20, B 80 ⏎   API-->>R: Status success ⏎   R->>R: Update same row to success ⏎   R-->>A: Show success, A 20, B 80",
+    "then": "Next, the retry path: resending the same client ID, and what the server does with a repeat.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "A retry of the same client ID must return the original result rather than create a second transfer, so the server keeps the client ID as an idempotency key."
+   ],
+   "updates": [],
+   "snapshot": "W3-change1.png",
+   "diagram": {
+    "want": "sequenceDiagram",
+    "pass": true,
+    "type": "replace@sequenceDiagram: sequenceDiagram ⏎   participant A as A's app ⏎   partic"
+   },
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: replay same intent only if idempotency contract allows\n- outcome unknown, not failed: yes\n- persist transfer intent ID before sending: yes\n- query server by account and ID after restart: yes\n- replay same intent only if idempotency contract allows: no\n- server returns original transfer status for repeat ID: yes\n- never a new ID: yes\n- ledger has one transfer: yes\n\nFAIL: replay same intent only if idempotency contract allows",
+    "criterion": "SAY and TYPE treat the outcome as unknown (not failed), persist the transfer intent ID before sending, query the server by account and that ID after restart, and replay the same intent only if the server's idempotency contract allows; the server returns the original transfer's status for a repeat of the same ID; never a new ID; ledger has one transfer."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: replay same intent only if idempotency contract allows\n- outcome unknown, not failed: yes\n- persist transfer intent ID before sending: yes\n- query server by account and ID after restart: yes\n- replay same intent only if idempotency contract allows: no\n- server returns original transfer status for repeat ID: yes\n- never a new ID: yes\n- ledger has one transfer: yes\n\nFAIL: replay same intent only if idempotency contract allows"
+   }
+  },
+  {
+   "name": "W3-dyn",
+   "kind": "dynamic",
+   "question": "You said if the lookup finds nothing the row stays unknown because the request may still be in flight — but what if the user, seeing \"still checking,\" taps send again while that first request is genuinely still in flight?",
+   "fresh": true,
+   "seconds": 6.1,
+   "first_ms": "875",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "137",
+    "keeps": "53",
+    "first_ms": "875",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "user taps send again while the first request is still in flight",
+    "say": "Right, so the second tap must not create a second transfer. The send button stays disabled while the row is pending, and the app shows \"still checking\". If the user taps again anyway, the repository reuses the same client ID, so the server answers with the original transfer. A repeat with a different amount or recipient is rejected.",
+    "type": "draw@: sequenceDiagram ⏎   participant A as A's app ⏎   participant R as Repository ⏎   participant API as Wallet API ⏎   participant L as Server ledger ⏎   A->>R: Tap send again, row pending ⏎   R->>R: Reuse same client ID ⏎   R->>API: Resend same ID, 8000 cents ⏎   API->>L: Repeat ID, same amount ⏎   L-->>API: Original transfer, A 20, B 80 ⏎   API-->>R: Status success ⏎   R->>R: Update same row to success ⏎   R-->>A: Show success, A 20, B 80",
+    "then": "Next, what the server does when the same ID arrives with a different amount.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The row shows a clear failure only after the server confirms the mismatch, so the UI never claims a rejection it hasn't verified."
+   ],
+   "updates": [],
+   "snapshot": "W3-dyn.png",
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS\n- follows from candidate's prior answer: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers/background: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule: yes\n\nPASS",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS\n- follows from candidate's prior answer: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers/background: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule: yes\n\nPASS"
+   }
+  },
+  {
+   "name": "W4-concurrency",
+   "kind": "handbook",
+   "question": "Separate scenario. A still has 100 dollars. On two phones A approves two independent 80 dollar transfers to B at almost the same time. What happens to each one and what do the phones show?",
+   "fresh": true,
+   "seconds": 1.1,
+   "first_ms": "435",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "145",
+    "keeps": "57",
+    "first_ms": "435",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "user taps send again while the first request is still in flight",
+    "say": "The result screen shows a clear failure only after the server rejects the mismatch. It never shows a rejection the app hasn't confirmed. The server keeps the client ID as an idempotency key for a limited time, so a late retry still maps to the original transfer. After that window, the app must not resend the old ID; it asks the user to start a new transfer.",
+    "type": "draw@sequence diagram: sequenceDiagram ⏎   participant R as Repository ⏎   participant API as Wallet API ⏎   participant L as Server ledger ⏎   R->>API: Same ID, different amount ⏎   API->>L: Check ID and parameters ⏎   L-->>API: Parameters differ, reject ⏎   API-->>R: Rejected, no new transfer",
+    "then": "Next, how long the server keeps the ID, and what the app does when the window has passed.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The ledger handles them one at a time. The first transfer takes A from 100 to 20 dollars and B from 0 to 80. The second one finds only 20 dollars left, so it fails and no money moves. If that response is lost, the row stays pending and the screen says \"still checking\"."
+   ],
+   "updates": [],
+   "snapshot": "W4-concurrency.png",
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update); one succeeds and one fails for insufficient funds; A ends at 20 dollars\n- two intents with separate IDs: no\n- checks and debits balance in one transaction (row lock or conditional update): no\n- one succeeds and one fails for insufficient funds: no\n- A ends at 20 dollars: no\n\nFAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update); one succeeds and one fails for insufficient funds; A ends at 20 dollars",
+    "criterion": "SAY treats them as two intents with separate IDs, checks and debits the balance in one transaction (row lock or conditional update), one succeeds and one fails for insufficient funds, A ends at 20 dollars."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update); one succeeds and one fails for insufficient funds; A ends at 20 dollars\n- two intents with separate IDs: no\n- checks and debits balance in one transaction (row lock or conditional update): no\n- one succeeds and one fails for insufficient funds: no\n- A ends at 20 dollars: no\n\nFAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update); one succeeds and one fails for insufficient funds; A ends at 20 dollars"
+   },
+   "regrade": {
+    "request": 150,
+    "more": [],
+    "card": {
+     "heard": "two phones, two independent 80-dollar transfers at the same time",
+     "say": "The ledger handles them one at a time. The first transfer takes A from 100 to 20 dollars and B from 0 to 80. The second one finds only 20 dollars left, so it fails and no money moves. If that response is lost, the row stays pending and the screen says \"still checking\".",
+     "type": "none",
+     "then": "Next, the server's contract for that repeat: same ID and same amount returns the original transfer, a different amount is rejected."
+    },
+    "pass": false,
+    "detail": "FAIL: FAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update)\n- two intents with separate IDs: no\n- checks and debits balance in one transaction (row lock or conditional update): no\n- one succeeds: yes\n- one fails for insufficient funds: yes\n- A ends at 20 dollars: yes\n\nFAIL: two intents with separate IDs; checks and debits balance in one transaction (row lock or conditional update)",
+    "note": "driver took a stale card from the previous turn; regraded on the app's real card for this question from the debug log"
+   }
+  },
+  {
+   "name": "W5-account",
+   "kind": "handbook",
+   "question": "Back to the first transfer. While A's request is in flight the user switches to account C, and then A's old response arrives. What could go wrong on Android and how do you prevent it?",
+   "fresh": true,
+   "seconds": 6.0,
+   "first_ms": "616",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "157",
+    "keeps": "63",
+    "first_ms": "616",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "A's request in flight, user switches to account C, then A's old response arrives — what could go wrong and how to prevent it",
+    "say": "Two things could go wrong. First, A's old response could land on C's screen and show C a balance that isn't theirs. Second, a late callback could write A's row while C is signed in. So I'd tag every request, cache write and callback with the account and a session generation. When a response comes back, I drop it if its session is no longer current.",
+    "type": "none",
+    "then": "Next: how the result screen shows the four states, and what the user sees while it's still checking.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The tag check also has to run inside the same transaction as the write, otherwise a stale generation can pass the check and commit just after the session rotates."
+   ],
+   "updates": [],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: A's committed transfer recovered from A's history after A signs in again\n- cache writes and UI scoped to account and session: yes\n- drops callbacks from a stale session: yes\n- C never sees A's data: yes\n- A's committed transfer recovered from A's history after A signs in again: no\n\nFAIL: A's committed transfer recovered from A's history after A signs in again",
+    "criterion": "SAY scopes cache writes and UI to account and session, drops callbacks from a stale session, C never sees A's data, and A's committed transfer is recovered from A's history after A signs in again."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: A's committed transfer recovered from A's history after A signs in again\n- cache writes and UI scoped to account and session: yes\n- drops callbacks from a stale session: yes\n- C never sees A's data: yes\n- A's committed transfer recovered from A's history after A signs in again: no\n\nFAIL: A's committed transfer recovered from A's history after A signs in again"
+   }
+  },
+  {
+   "name": "W6-change2",
+   "kind": "plan-change",
+   "question": "You said the result screen reads only the pending row, so how does that flow change when the entry point is a chat message naming one of two Alexes with no reliable amount, and the chat stream disconnects right after the user confirms? And right after the user confirms, the chat stream disconnects. Draw the new entry flow as a flowchart.",
+   "fresh": true,
+   "seconds": 7.6,
+   "first_ms": "560",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "167",
+    "keeps": "65",
+    "first_ms": "560",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\", \"Chat is only the entry point: the assistant suggests, but the user picks the recipient and amount on a trusted native confirm screen, and only that creates the intent and client ID\", \"Two contacts named Alex and no reliable amount in the chat: the app must not guess, so the user chooses the recipient and enters the amount on the confirm screen\", \"The chat stream can drop right after the user confirms: the payment still goes out, and the app reads its status from the payment service by the client ID, not from the chat\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "Chat entry point, two Alexes, no reliable amount, stream drops after confirm — draw the new flow",
+    "say": "The chat is only the entry point. The assistant can suggest a transfer, but it can't authorize one. So the chat shows a card with the recipient and the amount, and the user taps it to open a native confirm screen. There, the user picks which Alex and types the amount, because the chat has neither. Only that confirm screen creates the intent and the client ID.",
+    "type": "draw@new chat entry flow: flowchart TD ⏎   C[Chat message] --> S[Assistant suggests transfer] ⏎   S --> K[Card: pick recipient and amount] ⏎   K --> N[Native confirm screen] ⏎   N --> R[Repository saves intent with client ID] ⏎   R --> API[Payment service] ⏎   API --> L[(Server ledger)] ⏎   L --> API ⏎   API --> R ⏎   R --> DB[(Local DB)] ⏎   DB --> UI[Result screen]",
+    "then": "Next: what the server binds to the authorization, and how a repeated tool call maps to the same intent.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The server then binds the authorization to payer, recipient, amount and expiry. If the chat stream drops right after the confirm, the payment still goes out, and the app reads its status from the payment service by that client ID, not from the chat."
+   ],
+   "updates": [],
+   "snapshot": "W6-change2.png",
+   "diagram": {
+    "want": "flowchart",
+    "pass": true,
+    "type": "draw@new chat entry flow: flowchart TD ⏎   C[Chat message] --> S[Assistant sugge"
+   },
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: repeated tool call maps to same intent\n- chat is only entry point, assistant cannot authorize: yes\n- chat card shows recipient and amount: yes\n- user picks which Alex: yes\n- user types the amount: yes\n- native confirm screen creates intent and client ID: yes\n- server binds authorization to payer, recipient, amount and expiry: yes\n- repeated tool call maps to same intent: no\n- payment still goes out if chat drops after confirm: yes\n- status recovered from payment service by client ID, not chat: yes\n- TYPE is a mermaid flowchart of the entry flow: yes\n\nFAIL: repeated tool call maps to same intent",
+    "criterion": "SAY asks the user which Alex and what amount, shows a trusted native confirmation with recipient and amount, binds authorization to those parameters server-side, ties a repeated tool call to the original intent, and recovers status from the payment service when the chat drops; the model never authorizes. TYPE is a mermaid flowchart of that entry flow."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: repeated tool call maps to same intent\n- chat is only entry point, assistant cannot authorize: yes\n- chat card shows recipient and amount: yes\n- user picks which Alex: yes\n- user types the amount: yes\n- native confirm screen creates intent and client ID: yes\n- server binds authorization to payer, recipient, amount and expiry: yes\n- repeated tool call maps to same intent: no\n- payment still goes out if chat drops after confirm: yes\n- status recovered from payment service by client ID, not chat: yes\n- TYPE is a mermaid flowchart of the entry flow: yes\n\nFAIL: repeated tool call maps to same intent"
+   }
+  },
+  {
+   "name": "W6-dyn",
+   "kind": "dynamic",
+   "question": "You said the server binds authorization to payer, recipient, amount and expiry — so if the recipient changes after the user confirms on that native screen, what does the server compare against to reject it?",
+   "fresh": true,
+   "seconds": 5.5,
+   "first_ms": "1050",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "179",
+    "keeps": "70",
+    "first_ms": "1050",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\", \"Chat is only the entry point: the assistant suggests, but the user picks the recipient and amount on a trusted native confirm screen, and only that creates the intent and client ID\", \"Two contacts named Alex and no reliable amount in the chat: the app must not guess, so the user chooses the recipient and enters the amount on the confirm screen\", \"The chat stream can drop right after the user confirms: the payment still goes out, and the app reads its status from the payment service by the client ID, not from the chat\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "What does the server compare against to reject a changed recipient?",
+    "say": "The server compares the request against the authorization it stored at confirm time. That record holds the payer, the recipient, the amount in cents and an expiry. If the recipient or amount differs, or the expiry has passed, it rejects the request and no money moves. The chat text is never the thing it checks.",
+    "type": "none",
+    "then": "Next: how a repeated tool call from the model maps to the same intent ID.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "The authorization is bound to the conversation session, so a tool call from a different session can't reference it."
+   ],
+   "updates": [
+    "A single authorization can only be used once, so a replay of the same request is rejected too."
+   ],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from candidate's prior answers: yes\n- adds something specific, not just repetition: yes\n- consistent with earlier answers: yes\n- consistent with background: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from candidate's prior answers: yes\n- adds something specific, not just repetition: yes\n- consistent with earlier answers/background: yes\n- technically correct: yes\n- invents no employer/title/metric: yes\n- invents no wallet rule not given: yes\n\nPASS: none"
+   }
+  },
+  {
+   "name": "W7-release",
+   "kind": "handbook",
+   "question": "You have two weeks, and login plus a usable ledger already exist. What's in the first version, who signs off, and if transfers awaiting confirmation suddenly spike during the rollout, what do you do in the next half hour?",
+   "fresh": true,
+   "seconds": 8.8,
+   "first_ms": "1014",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "188",
+    "keeps": "72",
+    "first_ms": "1014",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\", \"Chat is only the entry point: the assistant suggests, but the user picks the recipient and amount on a trusted native confirm screen, and only that creates the intent and client ID\", \"Two contacts named Alex and no reliable amount in the chat: the app must not guess, so the user chooses the recipient and enters the amount on the confirm screen\", \"The chat stream can drop right after the user confirms: the payment still goes out, and the app reads its status from the payment service by the client ID, not from the chat\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "What's in v1, who signs off, and what to do if pending transfers spike",
+    "say": "For the first version, I'd ship balance, internal transfer, history, the native confirm step, and the pending and unknown states. Top-up, withdrawal and multi-currency wait. The product owner signs off on the user flow, and the tech lead signs off on the ledger and idempotency contract. I'd want both before rollout. Before release, I'd test the cases we already covered: lost response plus process kill, a replay of the same ID, two transfers at once, and an account switch mid-request. If pending transfers spike, I'd pause new submissions first.",
+    "type": "none",
+    "then": "Next, I'd say how we'd watch this after release.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [
+    "If pending transfers spike, I'd pause new submissions first, then check whether the ledger is slow or the status lookups are failing, watching the pending count and unknown-outcome rate and rolling back if they keep rising."
+   ],
+   "updates": [],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: FAIL: keep reads and status during spike; owners reconcile; then resume\n- scope cut to balance, internal transfer, history, confirmation, recoverable states: yes\n- pre-release checks: lost response plus kill: yes\n- pre-release checks: replay: yes\n- pre-release checks: concurrency: yes\n- pre-release checks: account switch: yes\n- spike: pause new submissions: yes\n- spike: keep reads and status: no\n- spike: owners reconcile: no\n- spike: then resume: no\n\nFAIL: keep reads and status during spike; owners reconcile; then resume",
+    "criterion": "SAY cuts scope to balance, internal transfer, history, confirmation and recoverable states; lists pre-release checks (lost response plus kill, replay, concurrency, account switch); on a spike pauses new submissions while keeping reads and status, owners reconcile, then resume."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: FAIL: keep reads and status during spike; owners reconcile; then resume\n- scope cut to balance, internal transfer, history, confirmation, recoverable states: yes\n- pre-release checks: lost response plus kill: yes\n- pre-release checks: replay: yes\n- pre-release checks: concurrency: yes\n- pre-release checks: account switch: yes\n- spike: pause new submissions: yes\n- spike: keep reads and status: no\n- spike: owners reconcile: no\n- spike: then resume: no\n\nFAIL: keep reads and status during spike; owners reconcile; then resume"
+   }
+  },
+  {
+   "name": "W7-dyn",
+   "kind": "dynamic",
+   "question": "You said you'd pause new submissions and watch the pending count and unknown-outcome rate — in that rollout, what would you personally own, who do you need on the team, and at what signal would you escalate to me?",
+   "fresh": true,
+   "seconds": 6.6,
+   "first_ms": "706",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "198",
+    "keeps": "77",
+    "first_ms": "706",
+    "problem": "Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures",
+    "adopted": "Sequence: A confirms on the native screen, the repository saves the intent with its client ID, the API calls the ledger, the ledger moves the money in one transaction, and the result screen shows the server's status",
+    "constraints": "[\"Start by clarifying the requirements; define which user path is the MVP\", \"Chat is only the entry point: the assistant suggests, but the user picks the recipient and amount on a trusted native confirm screen, and only that creates the intent and client ID\", \"Two contacts named Alex and no reliable amount in the chat: the app must not guess, so the user chooses the recipient and enters the amount on the confirm screen\", \"The chat stream can drop right after the user confirms: the payment still goes out, and the app reads its status from the payment service by the client ID, not from the chat\"]",
+    "abandoned": "[\"MVP is one person sending money to a friend, who sees it arrive; client layers are screen, ViewModel, repository and local database, with a wallet API and ledger behind\"]",
+    "asides": "0",
+    "problems": "2",
+    "written": "false",
+    "heard": "What would you personally do, who do you need, when do you escalate",
+    "say": "Personally, I'd open the status lookup first, because that's the part I own on Android. I'd check whether pending rows on the phones are rising while the server's pending count stays flat. If they are, the lookup is the problem, not the ledger. I'd keep submissions paused until the unknown-outcome rate comes back down. I'd need the backend owner for the ledger and idempotency contract, and the on-call engineer for the release. I'd escalate to you if the unknown-outcome rate keeps rising after the lookup fix, or if any balance looks wrong.",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [
+    "I'd need the backend owner for the ledger and idempotency contract, and the on-call engineer for the release. I'd escalate to you if the unknown-outcome rate keeps rising after the lookup fix, or if any balance looks wrong. A wrong balance is the one thing I'd never wait on."
+   ],
+   "judge": {
+    "pass": true,
+    "detail": "PASS: PASS: none\n- follows from candidate's statements: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS: none",
+    "criterion": "The answer follows from what the candidate said, adds something specific rather than repeating the previous answer, stays consistent with the candidate's earlier answers and background, is technically correct, and invents no employer, title, metric or wallet rule the interviewer did not give."
+   },
+   "judge_read": {
+    "pass": true,
+    "detail": "PASS: PASS\n- follows from candidate's prior answers: yes\n- adds something specific, not repetition: yes\n- consistent with earlier answers: yes\n- technically correct: yes\n- no invented employer/title/metric: yes\n- no invented wallet rule: yes\n\nPASS"
+   }
+  },
+  {
+   "name": "Q-close",
+   "kind": "handbook",
+   "question": "That's it from me. What questions do you have for me about the team or the role?",
+   "fresh": true,
+   "seconds": 4.4,
+   "first_ms": "848",
+   "card": {
+    "mode": "true",
+    "busy": "false",
+    "failed": "false",
+    "phase": "say",
+    "requests": "206",
+    "keeps": "82",
+    "first_ms": "848",
+    "problem": "Interviewer asks the candidate for questions about the team or the role",
+    "adopted": "none",
+    "constraints": "[]",
+    "abandoned": "[]",
+    "asides": "0",
+    "problems": "3",
+    "written": "false",
+    "heard": "That's it from me — what questions do you have?",
+    "say": "Yes, I have two. First, what would you like the new Android engineer to achieve in the first three months? Second, how do Android, backend and ML work together when a feature breaks?",
+    "type": "none",
+    "then": "Wait for the interviewer.",
+    "fix": "",
+    "past": "20",
+    "prepared": "false"
+   },
+   "more": [],
+   "updates": [],
+   "judge": {
+    "pass": false,
+    "detail": "FAIL: PASS\n- one acceptable closing: yes\n- invitation to one-minute Cabinet AI demo counts: no\n- one or two sensible questions to a founder: yes\n- questions not already answered in conversation: yes\n\nPASS",
+    "criterion": "SAY is one acceptable closing (a single point): an invitation to see the one-minute Cabinet AI demo, which is the candidate's approved closing, counts; so do one or two sensible questions to a founder that were not already answered in this conversation."
+   },
+   "judge_read": {
+    "pass": false,
+    "detail": "FAIL: PASS\n- one acceptable closing: yes\n- invitation to one-minute Cabinet AI demo counts: no\n- one or two sensible questions to a founder: yes\n- questions not already answered in conversation: yes\n\nPASS"
+   }
+  }
+ ],
+ "transcript": [
+  "Interviewer: Hi, I'm the founder of ActAI. We're building an agent-first mobile communication app, focused on how people talk, coordinate and work together every day. Today we'll start with a project you really owned, then design a fictional mobile wallet together. I'll add a few new conditions along the way, and leave time for your questions at the end.",
+  "Interviewer: Pick the one project that best shows your mobile skills. Who used it, what problem did it solve, and where did your responsibility start and end?",
+  "Candidate: I'd pick the product page at KKday.",
+  "Candidate: It's the Android app for a travel platform, and travelers use it to book tours and activities.",
+  "Candidate: The problem was speed: when someone tapped a tour, the options and prices took about a second to appear.",
+  "Candidate: That's long enough to feel slow.",
+  "Candidate: My responsibility started with the Android side.",
+  "Candidate: I owned the SKU page features, where users choose packages and options.",
+  "Candidate: I rebuilt how the price and stock were calculated, and I brought in Jetpack Compose for the screens.",
+  "Candidate: The backend and the product data were other teams' work.",
+  "Candidate: When something there was slow or wrong, I raised it with them and agreed on the fix.",
+  "Candidate: So my responsibility ended at the app, but I followed the whole flow through to release.",
+  "Interviewer: On the KKday product page, you said you rebuilt how price and stock were calculated and brought in Jetpack Compose. Which of those did you personally build versus the team?",
+  "Candidate: I built both myself.",
+  "Candidate: I rebuilt the price and stock calculation on the phone.",
+  "Candidate: I flattened the configuration and built a price and stock index ahead of time.",
+  "Candidate: I moved the work to Dispatchers.Default and sent results out through StateFlow.",
+  "Candidate: I also brought Compose in and rebuilt the screens with it.",
+  "Interviewer: Pick a change you personally made. Walk me from one user action through the UI, data or network path. Which logic did you actually change?",
+  "Candidate: I'll take one tap on a ticket type.",
+  "Candidate: The tap goes to the ViewModel, and it asks the price and stock index for that combination.",
+  "Candidate: The index was built once from the product data, so the lookup is just a map read.",
+  "Candidate: The result comes back on StateFlow, and Compose redraws only the price and stock text.",
+  "Candidate: The logic I changed is that calculation: before, every tap recalculated all combinations on the main thread and parsed the JSON again.",
+  "Candidate: The index build runs off the main thread, and if the product data changes at runtime the index has to be rebuilt and swapped atomically so a tap never reads a half-updated map.",
+  "Interviewer: What was the hardest bug to reproduce there? What did you suspect first, and which log, experiment or repro proved you wrong?",
+  "Candidate: The hardest one was a wrong price that only showed up on some dates.",
+  "Candidate: It never happened on my test data.",
+  "Candidate: I first suspected the index build, because it ran off the main thread.",
+  "Candidate: I added a log of the index key and the result for every tap.",
+  "Candidate: The log showed the key was right, but the stock value was stale.",
+  "Candidate: The real cause was the cache: I kept results in memory and never cleared them when the product data changed.",
+  "Candidate: The log showed the key was right, but the stock value was stale, so the index build wasn't the problem.",
+  "Candidate: I fixed it by clearing the cache on every index swap, and I added a test with two dates that share the same product.",
+  "Interviewer: You said the log showed the key was right but the stock value was stale, and that pointed you to the cache. How did you confirm the stale value actually came from that cache and not from the product data itself being out of date?",
+  "Candidate: I checked the product data first.",
+  "Candidate: I logged the raw stock value from the backend response, and it was already the new number.",
+  "Candidate: So the data was fresh, and the stale value came from my cache.",
+  "Candidate: The same product on two dates returned the old stock, which matched the cache key.",
+  "Candidate: The cache key didn't include the index version, so a swap left old entries reachable until they expired.",
+  "Interviewer: What other options did you have, why didn't you pick them, and after release how did you know the change worked?",
+  "Candidate: I had three options.",
+  "Candidate: First, clear the cache on every index swap.",
+  "Candidate: Second, put the index version in the cache key.",
+  "Candidate: Third, drop the in-memory cache and read the index directly.",
+  "Candidate: I picked the version in the key.",
+  "Candidate: Clearing the cache was simple, but every swap threw away good entries.",
+  "Candidate: The version in the key also keeps the good entries, so a swap only makes the old ones unreachable.",
+  "Candidate: They get removed when they expire or when the size cap is reached.",
+  "Candidate: After release, I went through the booking flow myself on several dates for the same product.",
+  "Candidate: The stock matched the backend every time, and switching options felt smooth.",
+  "Interviewer: Tell me about a time you saw a delivery risk or a likely delay and the team disagreed. When did you tell whom, how many options did you give, who decided, and what did you finish yourself?",
+  "Candidate: At Debon Securities, I was moving the trading app to modules and MVVM while we kept shipping releases.",
+  "Candidate: During testing, I found some old pages had a broken back button with the new navigation.",
+  "Candidate: I hadn't checked every page yet, but it could already affect that week's release.",
+  "Candidate: So I told the project manager the same day.",
+  "Candidate: I gave him two options.",
+  "Candidate: First, keep the old pages and move my change to the next release.",
+  "Candidate: Second, ship it and accept the risk.",
+  "Candidate: I recommended the first one.",
+  "Candidate: The two options were: keep the old pages and move my change to the next release, or ship it this week and test the rest after.",
+  "Candidate: He took the first option, so everything else shipped on time.",
+  "Candidate: I finished the fix and the testing myself, and my change went out in the next release.",
+  "Candidate: I also told QA the same day, so they knew what to test first.",
+  "Interviewer: You said you recommended keeping the old pages and moving your change to the next release, so what risk were you still willing to accept in that week's release, and who watched the data afterward? What signal would have made you pause or roll back?",
+  "Candidate: I was still willing to accept the risk on the old pages.",
+  "Candidate: They kept their old navigation, so the back button worked as before.",
+  "Candidate: The only risk was that a few pages I hadn't checked might still break.",
+  "Candidate: I told QA the same day, so they tested the old pages first.",
+  "Candidate: The project manager and I watched the release together.",
+  "Candidate: I checked the crash reports in Bugly after it went out.",
+  "Interviewer: Let's switch to the design exercise. Design a mobile wallet from scratch: the core mobile experience, the system behind it, and how it handles failures. Start by clarifying the requirements. Which user path would you define as the MVP?",
+  "Candidate: Before I design, I'd like to check a few things.",
+  "Candidate: Who are the users: one person sending money to friends, or a business paying customers?",
+  "Candidate: Does the balance sit in our own ledger, or does money move on a bank or card rail?",
+  "Candidate: Which currencies do we support?",
+  "Candidate: And what must work offline: viewing the balance and history, or also sending?",
+  "Candidate: Does that match what you have in mind?",
+  "Candidate: For the MVP, I'd pick one path: a person sends money to a friend, and the friend sees it arrive.",
+  "Candidate: That's the smallest loop that shows the whole system works.",
+  "Candidate: The other things I'd like to check: does the balance sit in our own ledger, or does money move on a bank or card rail?",
+  "Interviewer: Here are the rules: signed-in users, centralized balance accounts, single currency USD, internal peer-to-peer transfers, zero fees. Balance, transfer, history and details are in scope. Cached reads work offline; submitting money needs the network. The server owns the authoritative ledger and limits. Top-up, withdrawal and multi-currency are out of scope. A has 100 dollars and B has zero. Draw the client, the server and local storage as a flowchart, and tell me what each part owns.",
+  "Candidate: Okay, the rules are clear.",
+  "Candidate: I'll draw the client as four layers, then the server and its ledger.",
+  "Candidate: The screen shows the balance and the send form.",
+  "Candidate: The ViewModel holds the screen state and sends the tap to the repository.",
+  "Candidate: The repository is the only way to the data.",
+  "Candidate: The ViewModel holds the send state and calls the repository.",
+  "Candidate: The repository is the only part that talks to the Wallet API, and it saves the transfer intent with its client ID before sending.",
+  "Candidate: The local database keeps the last known balance and history, so cached reads work offline.",
+  "Candidate: The server ledger is the source of truth, and it applies each transfer once.",
+  "[board] flowchart TD |   S[Screen] --> VM[ViewModel] |   VM --> R[Repository] |   R --> DB[(Local DB)] |   R --> API[Wallet API] |   API --> L[(Server ledger)] |   L --> API",
+  "Candidate: The server ledger is the source of truth, and it applies each transfer once.",
+  "Interviewer: Now draw a sequence diagram of A sending B 80 dollars: confirmation, request, ledger and the result screen.",
+  "Candidate: The ledger checks the payer's balance and moves the money in one transaction, so a balance never goes negative.",
+  "Candidate: A timeout is an unknown outcome, not a failure.",
+  "Candidate: I'll draw the sequence for one transfer of 80 dollars, which is 8000 cents.",
+  "Candidate: A confirms on the native screen, and the repository saves the intent with its client ID before the request goes out.",
+  "Candidate: The server checks and moves the money in one transaction, so A goes from 100 to 20 dollars and B from 0 to 80.",
+  "Candidate: The result screen shows success only from the server's transfer record.",
+  "Interviewer: You said the repository saves the intent with its client ID before the request goes out. On Android, what exactly gets written to the local database at that moment, and how does that record change once the server responds?",
+  "Candidate: At that moment I write one row: the client transfer ID, the payer, the recipient, 8000 cents, and a status of pending.",
+  "Candidate: The row goes in before the request leaves, so a crash can't lose it.",
+  "Candidate: When the server responds, I update that same row to success or failed, and I store the server's transfer ID.",
+  "Candidate: The result screen reads only that row, so it never shows success before the server's record says so.",
+  "Candidate: The row also keeps the server's transfer ID once it comes back.",
+  "Candidate: If the response is lost, the row stays pending, so the app knows the outcome is unknown, not failed.",
+  "Candidate: After a restart, I look it up by account and client ID and ask the server for that transfer's status.",
+  "Candidate: I only resend the same ID, and the server answers with the original transfer, so the ledger still has one transfer.",
+  "Interviewer: You said a timeout is an unknown outcome and the row stays pending, but now the server committed and Android killed the process before any response arrived. When A reopens the app, what does the app show and what does it do with that pending row? Please update your sequence diagram.",
+  "Candidate: When A reopens the app, the screen reads the local row, and that row is still pending.",
+  "Candidate: So the app shows \"still checking\", not success and not failed.",
+  "Candidate: Then it asks the server for that transfer by account and client ID.",
+  "Candidate: If the server has the record, the row becomes success, and the screen shows A at 20 dollars and B at 80.",
+  "Candidate: If the lookup finds nothing, the row stays unknown, because the request may still be in flight.",
+  "[board] sequenceDiagram |   participant A as A's app |   participant R as Repository |   participant API as Wallet API |   participant L as Server ledger |   A->>R: Confirm send 8000 cents to B |   R->>R: Save intent with client ID |   R->>API: Transfer, client ID, 8000 cents |   API->>L: Check balance and move money |   L-->>API: One transfer, A 20, B 80 |   API-->>R: Transfer status |   R-->>A: Result screen |   Note over A,R: Process killed, no response |   A->>R: Reopen, read pending row |   R->>API: Query by account and client ID |   API->>L: Look up that transfer |   L-->>API: Original transfer, A 20, B 80 |   API-->>R: Status success |   R->>R: Update same row to success |   R-->>A: Show success, A 20, B 80",
+  "Candidate: A retry of the same client ID must return the original result rather than create a second transfer, so the server keeps the client ID as an idempotency key.",
+  "Interviewer: You said if the lookup finds nothing the row stays unknown because the request may still be in flight — but what if the user, seeing \"still checking,\" taps send again while that first request is genuinely still in flight?",
+  "Candidate: Right, so the second tap must not create a second transfer.",
+  "Candidate: The send button stays disabled while the row is pending, and the app shows \"still checking\".",
+  "Candidate: If the user taps again anyway, the repository reuses the same client ID, so the server answers with the original transfer.",
+  "Candidate: A repeat with a different amount or recipient is rejected.",
+  "[board] sequenceDiagram |   participant A as A's app |   participant R as Repository |   participant API as Wallet API |   participant L as Server ledger |   A->>R: Tap send again, row pending |   R->>R: Reuse same client ID |   R->>API: Resend same ID, 8000 cents |   API->>L: Repeat ID, same amount |   L-->>API: Original transfer, A 20, B 80 |   API-->>R: Status success |   R->>R: Update same row to success |   R-->>A: Show success, A 20, B 80",
+  "Candidate: The row shows a clear failure only after the server confirms the mismatch, so the UI never claims a rejection it hasn't verified.",
+  "Interviewer: Separate scenario. A still has 100 dollars. On two phones A approves two independent 80 dollar transfers to B at almost the same time. What happens to each one and what do the phones show?",
+  "Candidate: The result screen shows a clear failure only after the server rejects the mismatch.",
+  "Candidate: It never shows a rejection the app hasn't confirmed.",
+  "Candidate: The server keeps the client ID as an idempotency key for a limited time, so a late retry still maps to the original transfer.",
+  "Candidate: After that window, the app must not resend the old ID; it asks the user to start a new transfer.",
+  "[board] sequenceDiagram |   participant R as Repository |   participant API as Wallet API |   participant L as Server ledger |   R->>API: Same ID, different amount |   API->>L: Check ID and parameters |   L-->>API: Parameters differ, reject |   API-->>R: Rejected, no new transfer",
+  "Candidate: The ledger handles them one at a time.",
+  "Candidate: The first transfer takes A from 100 to 20 dollars and B from 0 to 80.",
+  "Candidate: The second one finds only 20 dollars left, so it fails and no money moves.",
+  "Candidate: If that response is lost, the row stays pending and the screen says \"still checking\".",
+  "Interviewer: Back to the first transfer. While A's request is in flight the user switches to account C, and then A's old response arrives. What could go wrong on Android and how do you prevent it?",
+  "Candidate: Two things could go wrong.",
+  "Candidate: First, A's old response could land on C's screen and show C a balance that isn't theirs.",
+  "Candidate: Second, a late callback could write A's row while C is signed in.",
+  "Candidate: So I'd tag every request, cache write and callback with the account and a session generation.",
+  "Candidate: When a response comes back, I drop it if its session is no longer current.",
+  "Candidate: The tag check also has to run inside the same transaction as the write, otherwise a stale generation can pass the check and commit just after the session rotates.",
+  "Interviewer: You said the result screen reads only the pending row, so how does that flow change when the entry point is a chat message naming one of two Alexes with no reliable amount, and the chat stream disconnects right after the user confirms? And right after the user confirms, the chat stream disconnects. Draw the new entry flow as a flowchart.",
+  "Candidate: The chat is only the entry point.",
+  "Candidate: The assistant can suggest a transfer, but it can't authorize one.",
+  "Candidate: So the chat shows a card with the recipient and the amount, and the user taps it to open a native confirm screen.",
+  "Candidate: There, the user picks which Alex and types the amount, because the chat has neither.",
+  "Candidate: Only that confirm screen creates the intent and the client ID.",
+  "[board] flowchart TD |   C[Chat message] --> S[Assistant suggests transfer] |   S --> K[Card: pick recipient and amount] |   K --> N[Native confirm screen] |   N --> R[Repository saves intent with client ID] |   R --> API[Payment service] |   API --> L[(Server ledger)] |   L --> API |   API --> R |   R --> DB[(Local DB)] |   DB --> UI[Result screen]",
+  "Candidate: The server then binds the authorization to payer, recipient, amount and expiry.",
+  "Candidate: If the chat stream drops right after the confirm, the payment still goes out, and the app reads its status from the payment service by that client ID, not from the chat.",
+  "Interviewer: You said the server binds authorization to payer, recipient, amount and expiry — so if the recipient changes after the user confirms on that native screen, what does the server compare against to reject it?",
+  "Candidate: The server compares the request against the authorization it stored at confirm time.",
+  "Candidate: That record holds the payer, the recipient, the amount in cents and an expiry.",
+  "Candidate: If the recipient or amount differs, or the expiry has passed, it rejects the request and no money moves.",
+  "Candidate: The chat text is never the thing it checks.",
+  "Candidate: A single authorization can only be used once, so a replay of the same request is rejected too.",
+  "Candidate: The authorization is bound to the conversation session, so a tool call from a different session can't reference it.",
+  "Interviewer: You have two weeks, and login plus a usable ledger already exist. What's in the first version, who signs off, and if transfers awaiting confirmation suddenly spike during the rollout, what do you do in the next half hour?",
+  "Candidate: For the first version, I'd ship balance, internal transfer, history, the native confirm step, and the pending and unknown states.",
+  "Candidate: Top-up, withdrawal and multi-currency wait.",
+  "Candidate: The product owner signs off on the user flow, and the tech lead signs off on the ledger and idempotency contract.",
+  "Candidate: I'd want both before rollout.",
+  "Candidate: Before release, I'd test the cases we already covered: lost response plus process kill, a replay of the same ID, two transfers at once, and an account switch mid-request.",
+  "Candidate: If pending transfers spike, I'd pause new submissions first.",
+  "Candidate: If pending transfers spike, I'd pause new submissions first, then check whether the ledger is slow or the status lookups are failing, watching the pending count and unknown-outcome rate and rolling back if they keep rising.",
+  "Interviewer: You said you'd pause new submissions and watch the pending count and unknown-outcome rate — in that rollout, what would you personally own, who do you need on the team, and at what signal would you escalate to me?",
+  "Candidate: Personally, I'd open the status lookup first, because that's the part I own on Android.",
+  "Candidate: I'd check whether pending rows on the phones are rising while the server's pending count stays flat.",
+  "Candidate: If they are, the lookup is the problem, not the ledger.",
+  "Candidate: I'd keep submissions paused until the unknown-outcome rate comes back down.",
+  "Candidate: I'd need the backend owner for the ledger and idempotency contract, and the on-call engineer for the release.",
+  "Candidate: I'd escalate to you if the unknown-outcome rate keeps rising after the lookup fix, or if any balance looks wrong.",
+  "Candidate: A wrong balance is the one thing I'd never wait on.",
+  "Interviewer: That's it from me. What questions do you have for me about the team or the role?",
+  "Candidate: Yes, I have two.",
+  "Candidate: First, what would you like the new Android engineer to achieve in the first three months?",
+  "Candidate: Second, how do Android, backend and ML work together when a feature breaks?"
+ ]
+}

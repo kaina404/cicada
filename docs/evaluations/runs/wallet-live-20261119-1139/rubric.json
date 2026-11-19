@@ -1,0 +1,32 @@
+{
+  "dimensions": [
+    {
+      "name": "past work",
+      "level": 3,
+      "score": 15,
+      "evidence": "Owned SKU page features on KKday Android app; rebuilt price/stock calculation using precomputed index, Dispatchers.Default, StateFlow; introduced Jetpack Compose. Debugged stale stock bug by logging raw backend data and cache keys, confirmed cache key missing index version. Chose versioned cache key over clearing cache, explaining trade-offs. Post-release verified booking flow across dates. Also at Debon Securities, surfaced navigation back-button risk, gave PM two options, recommended delaying change, finished fix and testing. Evidence is solid but lacks counter-examples or production metrics beyond manual verification."
+    },
+    {
+      "name": "current ability",
+      "level": 3,
+      "score": 22.5,
+      "evidence": "Designed mobile wallet with clear client layers (Screen, ViewModel, Repository, Local DB, API), server ledger as source of truth. Sequence diagram for transfer includes intent saved with client ID before request, idempotency key, pending/unknown states, status lookup on reopen, reuse of client ID on retry, rejection of mismatched parameters. Handled account switch mid-request with session generation tagging and transactional check. Chat entry point requires native confirm screen binding payer, recipient, amount, expiry; server compares against stored authorization. Covers main cases independently and explains trade-offs, but lacks production evidence or counter-examples for some edge cases."
+    },
+    {
+      "name": "handling unknowns",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "Treated timeout as unknown outcome, not failure; kept row pending, showed 'still checking', queried server by client ID on reopen. Prevented duplicate transfers by disabling send button and reusing same client ID. Handled concurrent transfers from two phones: ledger serializes, second fails due to insufficient balance. Account switch mid-request: tagged requests with account and session generation, dropped stale responses, checked tag inside transaction. Chat stream disconnect after confirm: payment still goes out, status read from payment service by client ID. Authorization bound to payer, recipient, amount, expiry, conversation session; replay rejected. Covers main unknowns independently with trade-offs, but no counter-examples or tests cited."
+    },
+    {
+      "name": "shipping product",
+      "level": 3,
+      "score": 18.75,
+      "evidence": "For two-week first version, scoped balance, internal transfer, history, native confirm, pending/unknown states; deferred top-up, withdrawal, multi-currency. Identified sign-offs: product owner for user flow, tech lead for ledger and idempotency contract. Planned tests for lost response + process kill, replay, concurrent transfers, account switch. Rollout spike response: pause new submissions, check ledger vs status lookups, watch pending count and unknown-outcome rate, roll back if rising. Personally owns status lookup on Android, would check pending rows on phones vs server pending count, escalate if unknown-outcome rate keeps rising or any balance looks wrong. Solid plan but lacks production evidence or counter-examples."
+    }
+  ],
+  "total": 75,
+  "decision": "yes",
+  "strongest": "current ability",
+  "risks": "Limited evidence of production metrics or counter-examples; some design details (e.g., idempotency key expiry window, authorization binding to conversation session) lack validation; no mention of testing strategy beyond manual checks for past work."
+}
