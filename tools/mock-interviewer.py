@@ -18,6 +18,9 @@ from pathlib import Path
 HERE = os.path.dirname(os.path.abspath(__file__))
 LSCTL = os.path.join(HERE, "lsctl")
 KEY_FILE = os.path.expanduser("~/Library/Application Support/LiveSubs Dev/ai-key-deepseek")
+# Founder lines and the judge: DeepSeek, or the local Codex login (GPT-6.1 Terra, reasoning off) with
+# MOCK_LLM=codex (each codex exec call carries about 18,000 tokens of its own instructions).
+MOCK_LLM = os.environ.get("MOCK_LLM", "deepseek")
 PACE = float(os.environ.get("PACE", "0"))
 RUN_DIR = os.path.join(HERE, "..", "docs", "evaluations", "runs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
@@ -79,8 +82,31 @@ def settle(before_requests, timeout=40):
     return card_state()
 
 
+def llm(prompt, max_tokens=200, temperature=0.4):
+    """One reply to `prompt` from the model named by MOCK_LLM."""
+    if MOCK_LLM == "deepseek":
+        body = {"model": "deepseek-flash", "temperature": temperature, "max_tokens": max_tokens,
+                "thinking": {"type": "disabled"}, "messages": [{"role": "user", "content": prompt}]}
+        req = urllib.request.Request("https://api.deepseek.com/chat/completions", data=json.dumps(body).encode(),
+                                     headers={"Authorization": "Bearer " + open(KEY_FILE).read().strip(),
+                                              "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.load(r)["choices"][0]["message"]["content"].strip()
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        out = os.path.join(tmp, "reply.txt")
+        cmd = ["codex", "exec", "-m", "gpt-6.1-terra", "-c", 'model_reasoning_effort="none"', "-c", "mcp_servers={}",
+               "-c", 'web_search="disabled"', "--disable", "shell_tool", "--disable", "unified_exec", "--disable", "plugins",
+               "--disable", "memories", "--ephemeral", "--skip-git-repo-check", "-s", "read-only", "-C", tmp, "-o", out, "-"]
+        for attempt in range(3):
+            done = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=180)
+            if done.returncode == 0 and os.path.exists(out) and open(out).read().strip():
+                return open(out).read().strip()
+            time.sleep(2)
+        raise RuntimeError("codex exec failed: " + done.stderr[-300:])
+
+
 def judge(transcript, card, criterion, more=(), strict=False):
-    key = open(KEY_FILE).read().strip()
     shown = "HEARD: {heard}\nSAY: {say}\nTYPE: {type}\nTHEN: {then}".format(**card)
     # The candidate pages on with "next": the follow-up cards are part of the same answer (R-01 was graded
     # on its first card only).
@@ -103,6 +129,11 @@ def judge(transcript, card, criterion, more=(), strict=False):
         # The candidate's real resume: "about 1 s" and Bugly come from it, and were failed as invented without it.
         resume = json.load(open(Path(__file__).with_name("copilot-interview-background.json"))).get("candidate_resume")
         rule += "\n\nThe candidate's real background (facts from it are not invented):\n" + json.dumps(resume, ensure_ascii=False)
+        # The user allows plausible stories (a bug, a risk, a disagreement) that the background doesn't record;
+        # the Codex judge failed run 2052's P3 for exactly that. Only hard facts must come from it.
+        rule += ("\n\nA story or detail the background doesn't record is fine when it is plausible for that employer "
+                 "and project. Count as wrong only hard facts that conflict with the background or are missing from "
+                 "it: numbers, dates, employers, titles, team sizes, salaries, or work moved to another employer.")
         # The dev build's knowledge (profile, past companies, projects) holds facts the candidate approved, such as
         # "about 300,000 trip planning requests a day", which the resume alone doesn't have.
         folder = Path.home() / "Library/Application Support/LiveSubs Dev/knowledge"
@@ -112,12 +143,7 @@ def judge(transcript, card, criterion, more=(), strict=False):
     prompt = ("You grade an interview-coaching answer against one criterion. " + rule +
               "\n\nConversation so far:\n" + "\n".join(transcript) +
               "\n\nCard shown to the candidate:\n" + shown + "\n\nCriterion: " + criterion)
-    body = {"model": "deepseek-flash", "temperature": 0, "max_tokens": 500 if strict else 120, "thinking": {"type": "disabled"},
-            "messages": [{"role": "user", "content": prompt}]}
-    req = urllib.request.Request("https://api.deepseek.com/chat/completions", data=json.dumps(body).encode(),
-                                 headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        text = json.load(r)["choices"][0]["message"]["content"].strip()
+    text = llm(prompt, max_tokens=500 if strict else 120, temperature=0)
     if strict:
         verdict = next((l.strip() for l in reversed(text.splitlines()) if re.match(r"\W*(PASS|FAIL)\b", l.strip(), re.I)), "FAIL: no verdict")
         # The verdict line once read "PASS: FAIL: …" over a point marked no: a point marked no always fails.
