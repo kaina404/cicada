@@ -75,27 +75,7 @@
 - 行为与多模态入参测试：`scripts/test.sh --filter InterviewCoachTests`。
 - 本机模型探针：先用 `say -v Samantha -o /tmp/cicada-coach-question.aiff 'For this Android interview, look at the slide. How would you keep messages reliable when the app goes offline, and what is the first visible token target?'` 生成合成题，再运行 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`。测试传原声音频、指标图片和候选人原文，报告在 `/tmp/cicada-interview-coach-benchmark.json`。
 - 模型探针与文字注入不替代真人麦克风、AirPods 热切换、实际共享窗口和长时间面试验收。设计及验证记录见 `docs/interview-coach-local.md`。
-- 旧 Candidate / Copilot / AnswerPlan / Qwen 工具保留作历史参考，未接入当前教练；旧云服务探针不会由教练调用。
-
-## Qwen Realtime 阶段 0 探针
-
-独立工具 `qwen-realtime-probe.swift`，不依赖或修改 App。联网需要北京或新加坡业务空间 ID，以及同区 DashScope Key 文件 `~/Library/Application Support/LiveSubs Dev/ai-key-dashscope`（0600）。当前面试教练设置页不再提供该云模型；历史探针可直接读取已有文件。不要通过命令行参数、聊天或 UserDefaults 传 Key。
-
-```bash
-# 离线检查解码/分包，不读 Key、不连接网络；不代表服务端验证通过。
-swift tools/qwen-realtime-probe.swift Resources/sample/sample.m4a --dry-run --seconds 1
-python3 -m unittest discover -s Tests -p test_qwen_realtime_probe.py -v
-# 联网：仅在提供真实业务空间和同区 Key 后运行。音频会上传百炼，可能产生费用。
-swift tools/qwen-realtime-probe.swift AndroidEngineerMockInterview.mp4 --workspace <WorkspaceId> --region cn-beijing --seconds 60
-```
-
-默认请求纯文字输出。`--audio-output` 显式请求文字与音频以做对照，会产生音频输出用量；收到的音频直接丢弃，绝不播放。`--seconds` 限制输入时长（默认 60 秒、最多 7200 秒），联网按真实时间推流，文件结束后补 5 秒静音并等待 15 秒回复。报告默认写入 `docs/evaluations/qwen-realtime-probe-<UTC时间>.json`，可用 `--report <path>` 指定；只包含事件时间、文字长度、数字用量，不保存 Key、音频、完整转写或台词。网络故障和缺 Key 也写失败报告。
-
-报告的首字时延从收到 `speech_stopped` 开始计算，**不包含服务端 VAD 判停耗时**，不能当作从面试官实际说完开始的端到端成绩。每次 `speech_started` 都显式发 cancel，因此不能据此推断服务端是否自动取消。连接最大时长、上下文上限、暂停误判和小时费用仍需对应的长会话、标注输入及价格数据；报告的 `pending` 保留这七项验证提醒。`--server-vad` 使用 900 ms 静音判停；不带此参数可对比 semantic_vad。旧链路仅在全部验收后删除。
-
-
-全文教练回归：`scripts/test.sh --filter InterviewCoachTests`、`scripts/test.sh --filter CoachScriptTests`；历史本机模型对照探针 `CICADA_TEST_COACH=1 scripts/test.sh --filter InterviewCoachModelTests`；声学模型测试 `~/.cicada-mlx/bin/python -m pytest -q Tests/test_coach_audio.py`（先在设置安装语音检测）。`meSaid` 验证实际发言入 committed；`themSaid:Okay` 会进行 AI 覆盖审查，keep 不增加正文生成次数；已被剩余稿件覆盖的追问同样保留原稿，未覆盖的要求才重新生成 pending。`assistantState` 的 reviews 为审查次数，generations 为正文生成次数。会议目录 `coach.jsonl` 保存过程事件及延迟，完整规格与限制见 `docs/interview-coach-local.md`。
-
+- 旧 Copilot / AnswerPlan 工具保留作历史参考，未接入当前教练。
 
 ## Gemma 原声跟读验证
 

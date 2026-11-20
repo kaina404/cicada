@@ -21,7 +21,7 @@ struct InterviewIntroductionTests {
             }
         }
         // Personal facts live only in the knowledge folder, never in the app's prompts.
-        for prompt in [CoachPrompt.system, InterviewIntroduction.instruction, CoachPrompt.reviewSystem, CandidatePrompt.make(background: "")] {
+        for prompt in [CoachPrompt.system, InterviewIntroduction.instruction, CoachPrompt.reviewSystem] {
             for name in ["Jianhui", "KKday", "Kezhi", "Debon", "Ping An", "ActAI"] { #expect(!prompt.contains(name)) }
         }
     }

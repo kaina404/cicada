@@ -101,16 +101,6 @@ final class AppSettings: ObservableObject {
     @Published var interviewStage: InterviewStage { didSet { save() } }
     @Published var coachLanguage: CoachLanguage { didSet { save() } }
     @Published var continuousAssistant: Bool { didSet { save() } }
-    @Published var realtimeRegion: String { didSet { save() } }
-    @Published var realtimeWorkspace: String { didSet { save() } }
-    @Published var realtimeModel: String { didSet { save() } }
-    // A short pause makes room for an interruption; each paragraph stays at 1–4 sentences.
-    static let candidateContinueDelay = 1.2
-    static let candidateMaxContinues = 8
-    var realtimeConfiguration: RealtimeConfiguration {
-        RealtimeConfiguration(workspace: realtimeWorkspace.trimmingCharacters(in: .whitespacesAndNewlines),
-                              region: realtimeRegion, model: realtimeModel.trimmingCharacters(in: .whitespacesAndNewlines))
-    }
     @Published var screenModel: String {
         didSet { save() }
     }
@@ -372,13 +362,8 @@ final class AppSettings: ObservableObject {
         interviewStage = InterviewStage(rawValue: defaults.string(forKey: "interviewStage") ?? "") ?? .general
         coachLanguage = CoachLanguage(rawValue: defaults.string(forKey: "coachLanguage") ?? "") ?? .english
         continuousAssistant = defaults.object(forKey: "continuousAssistant") as? Bool ?? true
-        // Import only non-secret configuration. The key stays in AIKey's 0600 file.
-        let configFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(DevBuild.supportFolder).appendingPathComponent("dashscope-config.json")
-        let imported = (try? Data(contentsOf: configFile)).flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
-        realtimeRegion = defaults.string(forKey: "realtimeRegion") ?? imported?["region"] as? String ?? "cn-beijing"
-        realtimeWorkspace = defaults.string(forKey: "realtimeWorkspace") ?? imported?["workspaceId"] as? String ?? ""
-        realtimeModel = defaults.string(forKey: "realtimeModel") ?? "qwen3.8-omni-flash-realtime"
+        // The old cloud interview model (qwen3.8-omni-flash-realtime) is gone: drop what it stored.
+        for key in ["realtimeRegion", "realtimeWorkspace", "realtimeModel"] { defaults.removeObject(forKey: key) }
         // Gemma 4 E4B, instruction-tuned, 4-bit QAT for MLX (mlx-community on Hugging Face).
         screenModel = defaults.string(forKey: "screenModel") ?? "mlx-community/gemma-4-E4B-it-qat-4bit"
         exportOn = defaults.bool(forKey: "exportOn")
@@ -469,9 +454,6 @@ final class AppSettings: ObservableObject {
         defaults.set(interviewStage.rawValue, forKey: "interviewStage")
         defaults.set(coachLanguage.rawValue, forKey: "coachLanguage")
         defaults.set(continuousAssistant, forKey: "continuousAssistant")
-        defaults.set(realtimeRegion, forKey: "realtimeRegion")
-        defaults.set(realtimeWorkspace, forKey: "realtimeWorkspace")
-        defaults.set(realtimeModel, forKey: "realtimeModel")
         defaults.set(screenModel, forKey: "screenModel")
         defaults.set(exportOn, forKey: "exportOn")
         defaults.set(exportFolder, forKey: "exportFolder")
