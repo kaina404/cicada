@@ -483,6 +483,31 @@ struct InterviewCoachTests {
         #expect(!engine.script.pending.contains("STALE"))
     }
 
+    /// An answer said with the talk key (Chinese in, English out) is used up: reading never follows it,
+    /// so the next question gets a fresh answer instead of a review of the old one.
+    @Test @MainActor func anAnswerSaidWithTheTalkKeyIsNotReviewedAgain() async throws {
+        var streams: [AsyncThrowingStream<String, Error>.Continuation] = []
+        let engine = InterviewCoach { _, _ in AsyncThrowingStream { streams.append($0) } }
+        engine.gloss.enabled = false
+        engine.start(background: "", available: true, prepare: { true })
+        let question = line("q", "them", "Why are you a strong fit for this Android role?")
+        engine.observe(lines: [question], now: 0)
+        engine.tick(now: 1)
+        for _ in 0..<1000 where streams.isEmpty { await Task.yield() }
+        try #require(streams.count == 1)
+        streams[0].yield(CoachAnswerResponse.marker + "\nI have built Android apps for ten years."); streams[0].finish()
+        for _ in 0..<1000 where engine.state != .ready { await Task.yield() }
+        let said = TranscriptLine(id: "m1", t: 3, speaker: "me", src: "我做了十年安卓", dst: "I have done Android for ten years.",
+                                  srcLang: "zh-CN", dstLang: "en", via: "key")
+        engine.observe(lines: [question, said], now: 4)
+        #expect(engine.talkedAnswerID == engine.script.answerID)
+        engine.speech("What changes if the Android process is killed?", role: "interviewer", now: 5)
+        engine.tick(now: 6)
+        for _ in 0..<1000 where streams.count < 2 { await Task.yield() }
+        #expect(engine.generationCount == 2)
+        #expect(engine.reviewCount == 0)
+    }
+
     @Test @MainActor func noisyReadingAndScreenUpdatesKeepTheVisibleAnswer() async throws {
         var streams: [AsyncThrowingStream<String, Error>.Continuation] = []
         let engine = InterviewCoach { _, _ in AsyncThrowingStream { streams.append($0) } }

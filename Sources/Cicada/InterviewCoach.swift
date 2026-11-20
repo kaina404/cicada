@@ -63,6 +63,11 @@ final class InterviewCoach: ObservableObject {
     private var speculative = false
     private var finishedSpeculation = false
     private var publishedCurrentAnswer = false
+    /// The answer the candidate already said with the talk key: reading cannot follow speech in
+    /// another language, so it counts as said and the next question gets a fresh answer.
+    private(set) var talkedAnswerID: String?
+    /// An answer still being read: a new question reviews it instead of starting over.
+    private var scriptOpen: Bool { !script.pending.isEmpty && script.answerID != talkedAnswerID }
     private(set) var generationCount = 0
     private(set) var reviewCount = 0
     var responseID: String? { current?.id ?? paragraphs.last?.id }
@@ -160,7 +165,10 @@ final class InterviewCoach: ObservableObject {
                 guard !wasSeen else { continue }
                 script.commit(id: turn.id, text: turn.text)
                 emit("committed", text: turn.text)
-                if cardMode { cards.candidateSpoke(script, now: now) }
+                if turn.talked == true {
+                    talkedAnswerID = script.answerID
+                    if cardMode { cards.candidateTalked(script, now: now) }
+                } else if cardMode { cards.candidateSpoke(script, now: now) }
             } else {
                 var recognition = turnRecognitions[turn.id] ?? CoachRecognition()
                 if !wasSeen {
@@ -220,7 +228,7 @@ final class InterviewCoach: ObservableObject {
         endpoint = max(now + CoachEndpoint.delay(text), acousticHoldUntil)
         // Coalesce drafts. Once an answer is visible, finish it and review coverage before
         // touching the script; a new interviewer utterance alone cannot invalidate an answer.
-        schedule(now: now, delay: 0.35, cancel: script.pending.isEmpty)
+        schedule(now: now, delay: 0.35, cancel: !scriptOpen)
         emit("interviewerUpdate", text: text)
     }
 
@@ -299,7 +307,7 @@ final class InterviewCoach: ObservableObject {
         }
         guard state == .ready, dirty, now >= due, task == nil else { return }
         guard now >= heardEnd || !lastInterviewerAt.isFinite else { return }
-        if script.pending.isEmpty { generate(speculate: false) }
+        if !scriptOpen { generate(speculate: false) }
         else { review() }
     }
     var canRefreshAnswer: Bool {
@@ -524,6 +532,7 @@ final class InterviewCoach: ObservableObject {
         turnRecognitions = [:]
         lastInterviewerAt = -.infinity
         lastInterviewerWords = []
+        talkedAnswerID = nil
         cards.reset()
     }
     func endMeeting() {

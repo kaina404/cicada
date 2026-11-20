@@ -7,11 +7,20 @@ struct CoachTurn: Codable, Equatable {
     var text: String
     /// Alternative recognitions of this utterance, never separate spoken questions.
     var recognitionAlternatives: [String]? = nil
+    /// Said with the talk key: spoken in my own language and translated into the room, so reading
+    /// along the script cannot follow it.
+    var talked: Bool? = nil
 
     static func spoken(_ lines: [TranscriptLine]) -> [CoachTurn] {
         lines.filter { $0.isSpoken && !$0.src.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .map { CoachTurn(id: $0.id, seconds: $0.t,
-                             role: $0.speaker == "me" || $0.via == "room" ? "candidate" : "interviewer", text: $0.src) }
+            .map { line in
+                // A talk-key line: the room heard its translation, not what I said.
+                let dst = line.dst?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let talked = line.via == "key" && !dst.isEmpty
+                return CoachTurn(id: line.id, seconds: line.t,
+                                 role: line.speaker == "me" || line.via == "room" ? "candidate" : "interviewer",
+                                 text: talked ? dst : line.src, talked: talked ? true : nil)
+            }
             .sorted { $0.seconds < $1.seconds }
     }
 }

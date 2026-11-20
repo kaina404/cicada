@@ -15,7 +15,8 @@ struct TranscriptLine: Codable, Identifiable, Equatable {
     var dstLang: String
     /// Which of the other side's voices said it (SpeakerID.swift); nil when unknown.
     var voice: Int? = nil
-    /// 电脑和会议室: "room" when the room mic heard it; absent for the Mac's audio (or older records).
+    /// 电脑和会议室: "room" when the room mic heard it; "key" for what I said with the talk key (`src`
+    /// mine, `dst` what the room heard); absent for the Mac's audio (or older records).
     var via: String? = nil
     /// 屏幕识别: a "screen" line is what the shared screen showed, not what was said; `shot` is its
     /// screenshot, relative to the meeting folder ("screens/0125.jpg").

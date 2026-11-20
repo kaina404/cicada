@@ -1458,7 +1458,9 @@ final class AppModel: ObservableObject {
             candidate.tick(now: coachTime)
         } else if candidate.state != .idle { candidate.stop() }
         // The guide voice is English Kokoro; a Chinese interview is read in the user's own language.
-        shadowReader.update(enabled: enabled && settings.shadowReading && settings.coachLanguage == .english,
+        // Quiet while the talk key speaks for me, and for an answer I already said with it.
+        let talking = speak.phase != .idle || candidate.talkedAnswerID == candidate.script.answerID
+        shadowReader.update(enabled: enabled && settings.shadowReading && settings.coachLanguage == .english && !talking,
                             script: candidate.script, finished: candidate.current == nil)
         candidate.fastFollow.update(enabled: enabled && settings.fastReadingFollow, script: candidate.script,
                                     lead: settings.fastReadingLead)
@@ -2256,7 +2258,7 @@ final class AppModel: ObservableObject {
         lineCounter += 1
         let t = max(0, Date().timeIntervalSince(start) - secondsAgo)
         store.append(TranscriptLine(id: "m\(lineCounter)", t: t, speaker: "me", src: src, dst: dst,
-                                    srcLang: from, dstLang: to))
+                                    srcLang: from, dstLang: to, via: "key"))
         heardWords()
     }
 

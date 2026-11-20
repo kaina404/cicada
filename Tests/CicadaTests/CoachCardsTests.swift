@@ -150,6 +150,51 @@ struct CoachCardsTests {
         #expect(engine.cards.memory.problem == nil)   // no problem was opened, so nothing to mark implemented
     }
 
+    /// The talk key speaks my Chinese into the room in English: the coach reads the English, and the
+    /// card counts as said (reading cannot follow it), so its code is next or the next card is asked for.
+    @Test func aTalkKeyLineIsTheTranslationTheRoomHeard() {
+        let key = TranscriptLine(id: "m1", t: 1, speaker: "me", src: "我会用 StateFlow", dst: "I'd use a StateFlow.", srcLang: "zh-CN", dstLang: "en", via: "key")
+        var room = key; room.id = "h2"; room.via = "room"; room.src = "I'd use a StateFlow."; room.dst = "我会用 StateFlow"
+        let turns = CoachTurn.spoken([key, room])
+        #expect(turns[0].text == "I'd use a StateFlow." && turns[0].talked == true && turns[0].role == "candidate")
+        #expect(turns[1].text == "I'd use a StateFlow." && turns[1].talked == nil)
+    }
+
+    @Test @MainActor func talkingACardWithCodeMovesToWritingIt() async throws {
+        let model = Model(["<<<CICADA_CARD>>>\nSAY:\nI'll keep the messages in a StateFlow. The ViewModel owns it.\nTYPE: add at=\"ChatViewModel\"\n```kotlin\nval messages = MutableStateFlow(emptyList<Message>())\n```\nCASE: []"])
+        let engine = coach(model)
+        defer { engine.endMeeting() }
+        let q = line("q", "them", "Write the ViewModel state.")
+        engine.observe(lines: [q], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        #expect(engine.cards.phase == .say)
+        let said = TranscriptLine(id: "m1", t: 5, speaker: "me", src: "我会把消息放在 StateFlow 里", dst: "I'll keep the messages in a StateFlow.", srcLang: "zh-CN", dstLang: "en", via: "key")
+        engine.observe(lines: [q, said], now: 5)
+        #expect(engine.cards.phase == .write)
+        #expect(engine.talkedAnswerID == engine.script.answerID)
+    }
+
+    @Test @MainActor func talkingACardAsksForTheNextOneWithWhatTheRoomHeard() async throws {
+        let model = Model(["<<<CICADA_CARD>>>\nSAY:\nA Bundle holds key value pairs. It survives recreation.\nCASE: []",
+                           "<<<CICADA_CARD>>>\nSAY:\nNext, the size limit.\nCASE: []"])
+        let engine = coach(model)
+        defer { engine.endMeeting() }
+        let q = line("q", "them", "Explain the Bundle.")
+        engine.observe(lines: [q], now: 0)
+        for t in stride(from: 0.0, through: 4, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        let said = TranscriptLine(id: "m1", t: 5, speaker: "me", src: "Bundle 存键值对", dst: "A Bundle stores key value pairs.", srcLang: "zh-CN", dstLang: "en", via: "key")
+        engine.observe(lines: [q, said], now: 5)
+        for t in stride(from: 5.0, through: 7, by: 0.5) { engine.tick(now: t) }
+        await settle(engine)
+        // The check (and its repeat filter) reads what the room heard, never the Chinese.
+        #expect(model.asked.count >= 2)
+        #expect(text(model.asked[1]).contains("Trigger: check"))
+        #expect(text(model.asked[1]).contains("A Bundle stores key value pairs."))
+        #expect(!model.asked.dropFirst().contains { text($0).contains("Bundle 存键值对") })
+    }
+
     @Test @MainActor func aNewQuestionCancelsTheRunningCardButCandidateSpeechDoesNot() async throws {
         let gate = AsyncStream<Void>.makeStream()
         var calls = 0

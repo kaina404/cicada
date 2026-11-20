@@ -52,6 +52,8 @@ final class CoachCards: ObservableObject {
     private var idleSince = 0.0
     /// Meeting time the current card appeared; candidate lines after it are their own words for this card.
     private var cardShownAt = Double.infinity
+    /// The candidate said the current card with the talk key: there is no sentence of it left to finish.
+    private var talked = false
 
     init(stream: @escaping InterviewCoach.Stream) { self.stream = stream }
 
@@ -91,9 +93,22 @@ final class CoachCards: ObservableObject {
         receive(.check, now: now)
     }
 
+    /// The candidate said something with the talk key (their own language, translated into the room).
+    /// Reading cannot follow that, so the card counts as said: its code is next, or the next card
+    /// follows what they actually said. A card held for a sentence end shows now.
+    func candidateTalked(_ script: CoachScript, now: Double) {
+        clock = now; lastCommitCursor = script.cursor
+        talked = true
+        if let held { self.held = nil; publish(held.card, now: now); return }
+        guard phase != .idle, let card else { return }
+        if phase == .say, card.edit != nil { phase = .write; emit("cardWrite"); return }
+        checkedCard = true
+        receive(.check, now: now)
+    }
+
     func tick(now: Double, script: CoachScript) {
         clock = now
-        if let held, Self.atSentenceStart(script) || now - held.since > 4 { self.held = nil; publish(held.card, now: now) }
+        if let held, talked || Self.atSentenceStart(script) || now - held.since > 4 { self.held = nil; publish(held.card, now: now) }
         // Typing and panning settle before the board is read again (plan §5).
         if boardPending, now - boardChangedAt >= 2 { boardPending = false; receive(.board, now: now) }
         if let card, !checkedCard {
@@ -118,7 +133,7 @@ final class CoachCards: ObservableObject {
         schedule = CoachCardSchedule(); base = CoachBase(); memory = CoachCase()
         card = nil; past = []; busy = false; failed = false; phase = .idle; held = nil; written = false
         boardCount = 0; boardLines = []; boardPending = false; prepared = ""; requests = 0; keeps = 0
-        cardShownAt = .infinity
+        cardShownAt = .infinity; talked = false
         // The next meeting's clock and reading cursor start at zero again: values left from this one kept
         // its first own-words line from being checked.
         clock = 0; boardChangedAt = -.infinity; checkedCard = false; lastCommitCursor = 0; idleSince = 0
@@ -359,7 +374,7 @@ final class CoachCards: ObservableObject {
                 emit("cardCase", text: String(decoding: data, as: UTF8.self))
             }
             if shown { self.card = card; onSay?(Self.spoken(card), false) }
-            else if trigger >= .manual || !card.fix.isEmpty || card.heard.isEmpty == false || Self.atSentenceStart(input.script) {
+            else if talked || trigger >= .manual || !card.fix.isEmpty || card.heard.isEmpty == false || Self.atSentenceStart(input.script) {
                 publish(card, now: clock)
             } else {
                 // Let the candidate finish the sentence they are reading (AC-14).
@@ -374,7 +389,7 @@ final class CoachCards: ObservableObject {
 
     private func adopt(_ partial: CoachCard, now: Double) {
         if let old = card { past.append(Past(id: UUID().uuidString, card: old, seconds: now)); past = Array(past.suffix(20)) }
-        card = partial; phase = .say; checkedCard = false; written = false; cardShownAt = now
+        card = partial; phase = .say; checkedCard = false; written = false; cardShownAt = now; talked = false
         onSay?(Self.spoken(partial), true)
     }
 
