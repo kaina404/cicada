@@ -67,3 +67,4 @@ AssistantSentenceControl/AssistantSentenceControl.xcodeproj/project.xcworkspace/
 __pycache__/
 /*.mp4
 /outputs/
+tools/qwen-live-web/node_modules/

@@ -127,7 +127,8 @@ enum VoiceCatalog {
 
 /// The recording Ming clones the user's voice from: `voice/reference.wav` (16 kHz mono, ≤ 30 s) and
 /// `voice/reference.txt` (what it says, as transcribed on this Mac) under Application Support. Never
-/// leaves the Mac except inside a speech request to Ling.
+/// leaves the Mac except inside a speech request to Ling, or when the user makes a 千问 voice from it
+/// (`QwenVoiceEnrollment`).
 enum VoiceReference {
     static var folder: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

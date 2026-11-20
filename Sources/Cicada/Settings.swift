@@ -41,6 +41,19 @@ final class AppSettings: ObservableObject {
     @Published var speakHandsFree: Bool {
         didSet { save() }
     }
+    /// How a press is interpreted: "" (Ming, or on-device + translation, after the key is let go)
+    /// or "qwen" (千问实时翻译: interpreted while I talk, `QwenLiveSession`).
+    @Published var speakInterpreter: String {
+        didSet { save() }
+    }
+    /// 千问实时翻译 speaks in my own voice, cloned as I talk (on by default), or its voice Tina.
+    @Published var speakQwenClone: Bool {
+        didSet { save() }
+    }
+    /// The voice made ahead from my recording for 千问实时翻译 (`QwenVoiceEnrollment`), "" = learn as I talk.
+    @Published var speakQwenVoice: String {
+        didSet { save() }
+    }
     /// Locale of the language I speak.
     @Published var speakFrom: String {
         didSet { save() }
@@ -334,6 +347,9 @@ final class AppSettings: ObservableObject {
         speakFrom = defaults.string(forKey: "speakFrom")
             ?? speakLocale(forLanguage: Cicada.myLanguage(systemLanguages: Locale.preferredLanguages))
         speakHandsFree = defaults.bool(forKey: "speakHandsFree")
+        speakInterpreter = defaults.string(forKey: "speakInterpreter") ?? ""
+        speakQwenClone = defaults.object(forKey: "speakQwenClone") as? Bool ?? true
+        speakQwenVoice = defaults.string(forKey: "speakQwenVoice") ?? ""
         speakTo = defaults.string(forKey: "speakTo") ?? "room"
         speakOutput = defaults.string(forKey: "speakOutput") ?? ""
         autoSystemMic = defaults.object(forKey: "autoSystemMic") as? Bool ?? true
@@ -429,6 +445,9 @@ final class AppSettings: ObservableObject {
         defaults.set(speakConfirmed, forKey: "speakConfirmed")
         defaults.set(speakFrom, forKey: "speakFrom")
         defaults.set(speakHandsFree, forKey: "speakHandsFree")
+        defaults.set(speakInterpreter, forKey: "speakInterpreter")
+        defaults.set(speakQwenClone, forKey: "speakQwenClone")
+        defaults.set(speakQwenVoice, forKey: "speakQwenVoice")
         defaults.set(speakTo, forKey: "speakTo")
         defaults.set(speakOutput, forKey: "speakOutput")
         defaults.set(autoSystemMic, forKey: "autoSystemMic")

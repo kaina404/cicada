@@ -156,6 +156,12 @@ final class SpeakEngine {
     /// Ming takes at most this much of a press (the talk key is meant for a sentence or two).
     private nonisolated static let pressLimit = 16_000 * 60
 
+    /// 千问实时翻译 (`speakInterpreter == "qwen"`): the press's session, fed from `micQueue`.
+    private var live: QwenLiveSession?
+    private nonisolated(unsafe) var liveSink: QwenLiveSession?
+    /// Plays the live session's voice while the key is still held.
+    private var liveVoice: Task<Bool, Never>?
+
     private let synth = AVSpeechSynthesizer()
     private var out = AVAudioEngine()
     private var player = AVAudioPlayerNode()
@@ -484,6 +490,7 @@ final class SpeakEngine {
         pressHandsFree = false
         phase = .listening
         onLive?(.listening, "", "")
+        startLive()
         startMic(format: format, input: input)
     }
 
@@ -491,6 +498,7 @@ final class SpeakEngine {
     func pressCancelled() {
         guard phase == .listening else { return }
         stopMic()
+        dropLive()
         if let input = utterance?.input { Task { await input.cancel() } }
         utterance = nil
         micQueue.sync { pressSamples = [] }
@@ -539,6 +547,7 @@ final class SpeakEngine {
         pressHandsFree = false
         phase = .listening
         onLive?(.listening, "", "")
+        startLive()
         let conv = PCMConverter()
         for buf in buffers {
             if let c = conv.convert(buf, to: format) {
@@ -632,9 +641,83 @@ final class SpeakEngine {
     }
 
     private nonisolated func keepForMing(_ buffer: AVAudioPCMBuffer) {
-        guard pressSamples.count < Self.pressLimit,
+        guard pressSamples.count < Self.pressLimit || liveSink != nil,
               let c = pressConverter.convert(buffer, to: Self.pressFormat), let p = c.int16ChannelData else { return }
-        pressSamples.append(contentsOf: UnsafeBufferPointer(start: p[0], count: Int(c.frameLength)))
+        let samples = UnsafeBufferPointer(start: p[0], count: Int(c.frameLength))
+        liveSink?.append(samples)
+        if pressSamples.count < Self.pressLimit { pressSamples.append(contentsOf: samples) }
+    }
+
+    // MARK: 千问实时翻译
+
+    /// Opens a live session for this press when 千问实时翻译 is chosen and has a key, and starts
+    /// playing its voice to the virtual mic as it comes. Hands-free sentences keep the usual path.
+    private func startLive() {
+        guard settings.speakInterpreter == "qwen" else { return }
+        // Chosen but unusable: say so, or the usual path passes for 千问 and only feels slow.
+        guard let key = AIKey.read(QwenLiveSession.keyService) else {
+            debugLog("qwen live: no key, this press goes the usual way")
+            onNotice?(L("千问没有 key，这句走默认翻译"))
+            return
+        }
+        let s = QwenLiveSession(key: key, target: targetCode, voice: !settings.speakQwenClone ? .builtin
+                                    : settings.speakQwenVoice.isEmpty ? .live : .custom(settings.speakQwenVoice))
+        s.onText = { [weak self] source, translation in
+            guard let self, self.live === s || self.phase == .speaking else { return }
+            self.onLive?(self.phase == .listening ? .listening : .speaking, source, translation)
+        }
+        // Failed before any voice (bad key, no network): the press goes the usual way when let go.
+        s.onFailed = { [weak self] why in
+            guard let self, self.live === s else { return }
+            debugLog("qwen live: failed (\(why)), this press falls back")
+            self.onNotice?(why == "HTTP 401" ? L("千问 key 无效，这句走默认翻译") : L("千问连不上，这句走默认翻译"))
+            self.dropLive()
+        }
+        live = s
+        micQueue.sync { liveSink = s }
+        let device = outputDevice()
+        liveVoice = Task { [weak self] in await self?.speakStream(s.audio, device: device) ?? false }
+    }
+
+    private func dropLive() {
+        guard let s = live else { return }
+        live = nil
+        micQueue.sync { liveSink = nil }
+        s.cancel()
+        liveVoice = nil
+    }
+
+    /// The key was let go of in a live press: the server translates what is left, and the press
+    /// ends when its voice has played. The texts go to the meeting record like any press.
+    private func finishLive(_ s: QwenLiveSession) {
+        live = nil
+        micQueue.sync { liveSink = nil; pressSamples = [] }
+        if let u = utterance { Task { await u.input.cancel() } }
+        utterance = nil
+        finals = []
+        volatile = ""
+        probe?.finish()
+        probe = nil
+        let released = releasedAt ?? Date()
+        releasedAt = nil
+        let from = settings.speakFromLang.code
+        let to = targetCode
+        let voice = liveVoice
+        liveVoice = nil
+        phase = .speaking
+        s.finish()
+        Task {
+            let spoke = await voice?.value ?? false
+            let (source, translation) = s.texts
+            if spoke, !translation.isEmpty {
+                contentLog("SPEAK [\(from)→\(to)] via=qwen-live \(source) => \(translation)")
+                onUtterance?(source, translation, from, to, Date().timeIntervalSince(pressStarted))
+                if let first = firstAudioAt { debugLog(String(format: "qwen live: first voice %.2f s after the press began", first.timeIntervalSince(pressStarted))) }
+            }
+            debugLog("qwen live: done spoke=\(spoke) \(source.count) → \(translation.count) chars, \(String(format: "%.1f", Date().timeIntervalSince(released))) s after release")
+            if phase == .speaking { phase = .idle }
+            onLive?(.idle, source, spoke ? translation : L("这句没翻译成 · 没有说出去"))
+        }
     }
 
     /// The press as a WAV file in memory (44-byte RIFF header + little-endian samples), and whether
@@ -678,6 +761,7 @@ final class SpeakEngine {
 
     private func finishUtterance() {
         stopMic()
+        if let s = live { finishLive(s); return }
         phase = .translating
         let probe = self.probe
         self.probe = nil

@@ -529,6 +529,7 @@ struct SettingsView: View {
                         model.objectWillChange.send()
                     }
                 }
+                LiveInterpreterRows(settings: settings)
                 VoiceSection(model: model, settings: settings, ling: model.ling)
             }
             if model.virtualMic != nil { micSettings }
@@ -812,5 +813,87 @@ struct SettingsView: View {
         .sheet(isPresented: $model.speakerLibraryShown) {
             SpeakerLibraryView(model: model)
         }
+    }
+}
+
+/// 翻译方式: the usual path (translated after the key is let go) or 千问实时翻译, which speaks while
+/// I am still talking (`QwenLiveSession`); its DashScope key lives in a 0600 file (`AIKey`).
+struct LiveInterpreterRows: View {
+    @ObservedObject var settings: AppSettings
+    @State private var draft = ""
+    @State private var hasKey = AIKey.read(QwenLiveSession.keyService) != nil
+    @State private var making = false
+    @State private var voiceError: String?
+
+    var body: some View {
+        SettingsRow(title: L("翻译方式"),
+                    detail: settings.speakInterpreter == "qwen" ? L("边说边翻译；不用按键时仍走默认") : nil) {
+            PillMenu(value: settings.speakInterpreter == "qwen" ? L("千问实时翻译") : L("默认"),
+                     options: [("", L("默认")), ("qwen", L("千问实时翻译"))]) { settings.speakInterpreter = $0 }
+        }
+        if settings.speakInterpreter == "qwen" {
+            SettingsRow(title: L("用我的声音"),
+                        detail: !settings.speakQwenClone ? L("千问的声音")
+                            : !settings.speakQwenVoice.isEmpty ? L("用专属音色，开口就是你的声音") : L("边说边学你的音色")) {
+                Toggle("用我的声音", isOn: $settings.speakQwenClone)
+                    .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+            }
+            if settings.speakQwenClone && hasKey {
+                // Made from the recording Ming clones from (下面的“我的声音”): more like me than learning as I talk.
+                SettingsRow(title: L("专属音色"),
+                            detail: voiceError ?? (making ? L("正在生成…")
+                                : !VoiceReference.exists ? L("先在下面录一段你的声音")
+                                : settings.speakQwenVoice.isEmpty ? L("用你的录音生成，比边说边学更像") : L("已生成，重新录音后可再生成"))) {
+                    if !settings.speakQwenVoice.isEmpty {
+                        SoftButton(L("移除"), action: removeVoice)
+                    }
+                    SoftButton(settings.speakQwenVoice.isEmpty ? L("生成") : L("重新生成"), action: makeVoice)
+                        .disabled(making || !VoiceReference.exists)
+                }
+            }
+            SettingsRow(title: L("百炼 API Key"), detail: hasKey ? nil : L("没有 key 时仍走默认")) {
+                if hasKey {
+                    SoftButton(L("移除")) { AIKey.remove(QwenLiveSession.keyService); hasKey = false }
+                } else {
+                    SecureField("sk-…", text: $draft)
+                        .textFieldStyle(.plain).font(.system(size: 13, design: .monospaced))
+                        .padding(.horizontal, 10).frame(width: 200, height: 28)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.white))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Palette.line, lineWidth: 1))
+                        .onSubmit(save)
+                    SoftButton(L("保存"), action: save)
+                }
+            }
+        }
+    }
+
+    private func makeVoice() {
+        guard let key = AIKey.read(QwenLiveSession.keyService), let ref = VoiceReference.reference() else { return }
+        making = true
+        voiceError = nil
+        let old = settings.speakQwenVoice
+        Task {
+            switch await QwenVoiceEnrollment.create(key: key, audioDataURI: ref.audio) {
+            case .success(let id):
+                settings.speakQwenVoice = id
+                if !old.isEmpty { await QwenVoiceEnrollment.delete(key: key, voice: old) }
+            case .failure(let why):
+                voiceError = L("没生成：\(why.description)")
+            }
+            making = false
+        }
+    }
+
+    private func removeVoice() {
+        let old = settings.speakQwenVoice
+        settings.speakQwenVoice = ""
+        if let key = AIKey.read(QwenLiveSession.keyService), !old.isEmpty { Task { await QwenVoiceEnrollment.delete(key: key, voice: old) } }
+    }
+
+    private func save() {
+        let key = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !key.isEmpty, AIKey.save(key, QwenLiveSession.keyService) else { return }
+        draft = ""
+        hasKey = true
     }
 }
