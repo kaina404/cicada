@@ -206,6 +206,8 @@ final class AppModel: ObservableObject {
     private var speakerSetting: AnyCancellable?
     private var speakerMemorySetting: AnyCancellable?
     private var handsFreeSetting: AnyCancellable?
+    private var ambienceSetting: AnyCancellable?
+    private lazy var ambienceRecorder = AmbienceRecorder()
     /// 开始听时打开麦克风 already opened it for this meeting's call.
     private var micAutoOpened = false
     var openOnboarding: (() -> Void)?
@@ -428,9 +430,14 @@ final class AppModel: ObservableObject {
                         guard let self else { return }
                         self.speak.handsFree = on && self.settings.speakEnabled && !self.settings.hearsRoom && self.running
                         self.speak.keepUnit = self.settings.speakEnabled && self.running
+                        self.speak.meetingOn = self.settings.speakEnabled && self.running
                         self.speak.refreshHandsFree()
                     }
                 }
+            }
+        ambienceSetting = Publishers.CombineLatest3(settings.$speakAmbience, settings.$speakAmbienceVolume, settings.$speakInterpreter)
+            .sink { [weak self] _, _, _ in
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.speak.refreshBed() } }
             }
         speakerSetting = settings.$speakerVoices.sink { [weak self] on in
             TranscriptExport.voices = on
@@ -2665,6 +2672,17 @@ final class AppModel: ObservableObject {
             openOnboarding?()
         case "step": onboardingStep = Int(arg) ?? 1
         case "samplePlay": ensureListening(); sample.play()
+        // 环境底噪: the switch, 录底噪 from the talk key's mic, or a file made into the loop the same way.
+        case "ambience": settings.speakAmbience = arg != "off"
+        case "ambienceRecord": ambienceRecorder.start(device: systemMic.recordingDevice, voiceMic: voiceMic)
+        case "ambienceFile":
+            guard let f = try? AVAudioFile(forReading: URL(fileURLWithPath: arg)),
+                  let b = AVAudioPCMBuffer(pcmFormat: f.processingFormat, frameCapacity: AVAudioFrameCount(f.length)),
+                  (try? f.read(into: b)) != nil, let c = PCMConverter().convert(b, to: Ambience.format) else { debugLog("ambience: can't read \(arg)"); break }
+            switch AmbienceLoop.make(Array(UnsafeBufferPointer(start: c.floatChannelData![0], count: Int(c.frameLength)))) {
+            case .success(let loop): try? Ambience.save(loop); debugLog("ambience: saved a \(String(format: "%.1f", Double(loop.count) / AmbienceLoop.rate)) s loop from \(arg)")
+            case .failure(let why): debugLog("ambience: \(why)")
+            }
         case "speakers": settings.speakerVoices = arg == "on"
         // 改正听错的词: switches, the word list, and the fixes of a meeting (live, or `<id>`).
         case "fixes": settings.fixMisheard = arg != "off"

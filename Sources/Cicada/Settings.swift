@@ -54,6 +54,14 @@ final class AppSettings: ObservableObject {
     @Published var speakQwenVoice: String {
         didSet { save() }
     }
+    /// 环境底噪: my recorded room (`Ambience`) loops under 千问实时翻译's voice while a meeting is listened to.
+    @Published var speakAmbience: Bool {
+        didSet { save() }
+    }
+    /// Its loudness, 0–1 (`Ambience.gain`: ±12 dB around −50 dBFS).
+    @Published var speakAmbienceVolume: Double {
+        didSet { save() }
+    }
     /// Locale of the language I speak.
     @Published var speakFrom: String {
         didSet { save() }
@@ -340,6 +348,8 @@ final class AppSettings: ObservableObject {
         speakInterpreter = defaults.string(forKey: "speakInterpreter") ?? ""
         speakQwenClone = defaults.object(forKey: "speakQwenClone") as? Bool ?? true
         speakQwenVoice = defaults.string(forKey: "speakQwenVoice") ?? ""
+        speakAmbience = defaults.bool(forKey: "speakAmbience")
+        speakAmbienceVolume = defaults.object(forKey: "speakAmbienceVolume") as? Double ?? 0.5
         speakTo = defaults.string(forKey: "speakTo") ?? "room"
         speakOutput = defaults.string(forKey: "speakOutput") ?? ""
         autoSystemMic = defaults.object(forKey: "autoSystemMic") as? Bool ?? true
@@ -433,6 +443,8 @@ final class AppSettings: ObservableObject {
         defaults.set(speakInterpreter, forKey: "speakInterpreter")
         defaults.set(speakQwenClone, forKey: "speakQwenClone")
         defaults.set(speakQwenVoice, forKey: "speakQwenVoice")
+        defaults.set(speakAmbience, forKey: "speakAmbience")
+        defaults.set(speakAmbienceVolume, forKey: "speakAmbienceVolume")
         defaults.set(speakTo, forKey: "speakTo")
         defaults.set(speakOutput, forKey: "speakOutput")
         defaults.set(autoSystemMic, forKey: "autoSystemMic")

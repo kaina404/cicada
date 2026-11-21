@@ -529,7 +529,7 @@ struct SettingsView: View {
                         model.objectWillChange.send()
                     }
                 }
-                LiveInterpreterRows(settings: settings)
+                LiveInterpreterRows(settings: settings, model: model)
                 VoiceSection(model: model, settings: settings, ling: model.ling)
             }
             if model.virtualMic != nil { micSettings }
@@ -820,6 +820,9 @@ struct SettingsView: View {
 /// I am still talking (`QwenLiveSession`); its DashScope key lives in a 0600 file (`AIKey`).
 struct LiveInterpreterRows: View {
     @ObservedObject var settings: AppSettings
+    let model: AppModel
+    @StateObject private var ambience = AmbienceRecorder()
+    @State private var hasAmbience = Ambience.exists
     @State private var draft = ""
     @State private var hasKey = AIKey.read(QwenLiveSession.keyService) != nil
     @State private var making = false
@@ -851,6 +854,7 @@ struct LiveInterpreterRows: View {
                         .disabled(making || !VoiceReference.exists)
                 }
             }
+            ambienceRows
             SettingsRow(title: L("百炼 API Key"), detail: hasKey ? nil : L("没有 key 时仍走默认")) {
                 if hasKey {
                     SoftButton(L("移除")) { AIKey.remove(QwenLiveSession.keyService); hasKey = false }
@@ -864,6 +868,42 @@ struct LiveInterpreterRows: View {
                     SoftButton(L("保存"), action: save)
                 }
             }
+        }
+    }
+
+    /// 环境底噪: my room's quiet under the voice (`Ambience`), recorded here once.
+    @ViewBuilder private var ambienceRows: some View {
+        SettingsRow(title: L("环境底噪"),
+                    detail: !settings.speakAmbience ? L("对方听到的声音更像在房间里")
+                        : hasAmbience ? L("听会议时一直铺在你的声音下面") : L("先录 15 秒房间的安静声音")) {
+            Toggle("环境底噪", isOn: $settings.speakAmbience)
+                .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+        }
+        .onChange(of: ambience.phase) { _, _ in hasAmbience = Ambience.exists }
+        if settings.speakAmbience {
+            SettingsRow(title: L("录底噪"), detail: ambienceDetail) {
+                if ambience.phase == .recording {
+                    SoftButton(L("停止")) { ambience.cancel() }
+                } else {
+                    SoftButton(hasAmbience ? L("重录") : L("录制")) {
+                        ambience.start(device: model.systemMic.recordingDevice, voiceMic: model.voiceMic)
+                    }
+                }
+            }
+            if hasAmbience {
+                SettingsRow(title: L("底噪音量")) {
+                    Slider(value: $settings.speakAmbienceVolume, in: 0...1).frame(width: 160).controlSize(.small)
+                }
+            }
+        }
+    }
+
+    private var ambienceDetail: String {
+        switch ambience.phase {
+        case .recording: return L("保持安静… \(max(0, Int(AmbienceRecorder.length - ambience.seconds)) + 1) 秒")
+        case .failed(let why): return why
+        case .saved: return L("已录好，接缝处已处理")
+        case .idle: return hasAmbience ? L("换了房间就重录一次") : L("录制时请保持安静")
         }
     }
 

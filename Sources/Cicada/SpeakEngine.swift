@@ -165,6 +165,13 @@ final class SpeakEngine {
     private let synth = AVSpeechSynthesizer()
     private var out = AVAudioEngine()
     private var player = AVAudioPlayerNode()
+    /// 环境底噪 (`Ambience`): loops under the voice on the same engine, so the virtual mic is never
+    /// digital silence between sentences.
+    private var bed = AVAudioPlayerNode()
+    private var bedBuffer: AVAudioPCMBuffer?
+    private var bedScheduled = false
+    private var bedFade: Timer?
+    private var ambienceObserver: NSObjectProtocol?
     private var outObserver: NSObjectProtocol?
     private var outFormat: AVAudioFormat?
     /// Where the output was last pointed, to wire a replaced engine the same way.
@@ -179,6 +186,14 @@ final class SpeakEngine {
         self.settings = settings
         self.voiceMic = voiceMic
         wireOutput()
+        ambienceObserver = NotificationCenter.default.addObserver(forName: Ambience.changed, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.bedBuffer = nil
+                self.stopBed()
+                self.refreshBed()
+            }
+        }
     }
 
     // MARK: Hands-free
@@ -343,6 +358,7 @@ final class SpeakEngine {
 
     private func wireOutput() {
         out.attach(player)
+        out.attach(bed)
         // Pointing the output at a device (the first sentence, BlackHole installed, headphones
         // plugged in) stops the engine, and the player stays silent until it is wired up again.
         outObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: out, queue: .main) { [weak self] _ in
@@ -363,13 +379,16 @@ final class SpeakEngine {
         }
         if let outObserver { NotificationCenter.default.removeObserver(outObserver) }
         player.stop()
+        stopBed()
         out.stop()
         out = AVAudioEngine()
         player = AVAudioPlayerNode()
+        bed = AVAudioPlayerNode()
         outFormat = nil
         outDeviceUID = nil
         wireOutput()
         debugLog("voice output: new engine after the voice mic changed")
+        refreshBed()
     }
 
     var targetCode: String {
@@ -803,7 +822,7 @@ final class SpeakEngine {
         // Pick the voice and ready its output while the sentence is translated: the device switch
         // (and the engine restart it causes) is then over before the first sound.
         let route = route?(to) ?? .system(nil)
-        if case .stream = route, let device = outputDevice() { configureOutput(format: Self.streamFormat, device: device); try? out.start() }
+        if case .stream = route, let device = outputDevice() { configureOutput(format: Self.streamFormat, device: device); try? startOutput() }
         // Ming hears the audio while the on-device transcriber finishes, so its fallback costs nothing.
         // A quiet press waits for the transcriber first: most are nobody speaking, not worth a call.
         let interpret = self.interpret
@@ -977,7 +996,7 @@ final class SpeakEngine {
         let device = override ?? outputDevice()
         configureOutput(format: first.format, device: device)
         do {
-            if !out.isRunning { try out.start() }
+            if !out.isRunning { try startOutput() }
         } catch {
             debugLog("voice output failed: \(error)")
             return
@@ -1005,6 +1024,8 @@ final class SpeakEngine {
         var carry = Data()
         var count = 0
         var firstAt: TimeInterval?
+        // Debug (`speakOut:`): the stream as it came, before the engine mixes anything in.
+        let dump = debugOutputURL.flatMap { try? AVAudioFile(forWriting: $0, settings: format.settings) }
         do {
             for try await chunk in stream {
                 var bytes = carry + chunk
@@ -1025,6 +1046,7 @@ final class SpeakEngine {
                 }
                 // The engine may have been replaced while the stream ran (the echo-cancelling unit
                 // let go): a player not wired for this format throws, and that took the app down.
+                try? dump?.write(from: buf)
                 guard outputReady(for: format) else { break }
                 player.scheduleBuffer(buf, completionHandler: nil)
                 if !player.isPlaying { player.play() }
@@ -1064,15 +1086,19 @@ final class SpeakEngine {
     private func outputChanged() {
         guard let format = outFormat else { return }
         let playing = player.isPlaying
+        stopBed()
         out.disconnectNodeOutput(player)
         out.connect(player, to: out.mainMixerNode, format: format)
-        do { try out.start() } catch { debugLog("voice output restart failed: \(error)"); return }
+        out.disconnectNodeOutput(bed)
+        out.connect(bed, to: out.mainMixerNode, format: Ambience.format)
+        do { try startOutput() } catch { debugLog("voice output restart failed: \(error)"); return }
         if playing { player.play() }
         debugLog("voice output: configuration changed, engine restarted (playing=\(playing))")
     }
 
     func resetOutput() {
         player.stop()
+        stopBed()
         out.stop()
         outFormat = nil
         outDeviceUID = nil
@@ -1082,6 +1108,7 @@ final class SpeakEngine {
         let uid = device?.uid ?? ""
         guard outFormat != format || outDeviceUID != uid else { return }
         player.stop()
+        stopBed()
         out.stop()
         if let device, let unit = out.outputNode.audioUnit {
             var id = device.id
@@ -1090,6 +1117,8 @@ final class SpeakEngine {
         }
         out.disconnectNodeOutput(player)
         out.connect(player, to: out.mainMixerNode, format: format)
+        out.disconnectNodeOutput(bed)
+        out.connect(bed, to: out.mainMixerNode, format: Ambience.format)
         outFormat = format
         outDeviceUID = uid
         outDevice = device
@@ -1100,10 +1129,81 @@ final class SpeakEngine {
     private func outputReady(for format: AVAudioFormat) -> Bool {
         if outFormat != format { configureOutput(format: format, device: outDevice) }
         guard !out.isRunning else { return true }
-        do { try out.start(); return true } catch {
+        do { try startOutput(); return true } catch {
             debugLog("voice output failed: \(error)")
             return false
         }
+    }
+
+    private func startOutput() throws {
+        try out.start()
+        resumeBed()
+    }
+
+    // MARK: 环境底噪
+
+    /// Set by the app: a meeting is being listened to with speaking on. The loop plays then, when
+    /// 千问实时翻译 and 环境底噪 are on, a loop is recorded and there is a virtual mic.
+    var meetingOn = false {
+        didSet { if meetingOn != oldValue { refreshBed() } }
+    }
+
+    private var bedWanted: Bool {
+        meetingOn && settings.speakEnabled && settings.speakInterpreter == "qwen" && settings.speakAmbience
+            && Ambience.exists && outputDevice() != nil
+    }
+
+    /// Starts or stops the loop to match `bedWanted`; also called when a setting it reads changes.
+    func refreshBed() {
+        guard bedWanted else {
+            if bedScheduled { fadeBed(to: 0) { [weak self] in self?.stopBed() } }
+            return
+        }
+        if outFormat == nil, let device = outputDevice() { configureOutput(format: Self.streamFormat, device: device) }
+        if out.isRunning { resumeBed() } else { try? startOutput() }
+        if bedScheduled { fadeBed(to: Ambience.gain(settings.speakAmbienceVolume)) }
+    }
+
+    /// After every start of the engine: a stop or a rewiring stopped the loop.
+    private func resumeBed() {
+        guard !bedScheduled, bedWanted, out.isRunning else { return }
+        if bedBuffer == nil { bedBuffer = Ambience.load() }
+        guard let buf = bedBuffer else { return }
+        bed.volume = 0
+        bed.scheduleBuffer(buf, at: nil, options: .loops, completionHandler: nil)
+        bed.play()
+        bedScheduled = true
+        fadeBed(to: Ambience.gain(settings.speakAmbienceVolume))
+        debugLog("ambience: playing a \(String(format: "%.1f", Double(buf.frameLength) / buf.format.sampleRate)) s loop to \(outDevice?.name ?? "-")")
+    }
+
+    private func stopBed() {
+        bedFade?.invalidate()
+        bedFade = nil
+        if bedScheduled { debugLog("ambience: stopped") }
+        bed.stop()
+        bedScheduled = false
+    }
+
+    /// Over 0.4 s: a room that cuts in or out is heard as a mic switching.
+    private func fadeBed(to target: Float, then done: (() -> Void)? = nil) {
+        bedFade?.invalidate()
+        let from = bed.volume
+        var step = 0
+        let t = Timer(timeInterval: 0.02, repeats: true) { [weak self] timer in
+            MainActor.assumeIsolated {
+                guard let self else { timer.invalidate(); return }
+                step += 1
+                self.bed.volume = from + (target - from) * Float(step) / 20
+                if step >= 20 {
+                    timer.invalidate()
+                    self.bedFade = nil
+                    done?()
+                }
+            }
+        }
+        bedFade = t
+        RunLoop.main.add(t, forMode: .common)
     }
 
     /// Plays a short sample through the chosen output so the user can check it.
