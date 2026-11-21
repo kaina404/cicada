@@ -206,6 +206,7 @@ final class AppModel: ObservableObject {
     private var speakerSetting: AnyCancellable?
     private var speakerMemorySetting: AnyCancellable?
     private var handsFreeSetting: AnyCancellable?
+    private var passthroughSetting: AnyCancellable?
     private var ambienceSetting: AnyCancellable?
     private lazy var ambienceRecorder = AmbienceRecorder()
     /// 开始听时打开麦克风 already opened it for this meeting's call.
@@ -432,6 +433,19 @@ final class AppModel: ObservableObject {
                         self.speak.keepUnit = self.settings.speakEnabled && self.running
                         self.speak.meetingOn = self.settings.speakEnabled && self.running
                         self.speak.refreshHandsFree()
+                        self.speak.passthrough = self.settings.speakPassthrough && !on && self.settings.speakEnabled
+                            && !self.settings.hearsRoom && self.running
+                        self.speak.refreshPassthrough()
+                    }
+                }
+            }
+        passthroughSetting = settings.$speakPassthrough.dropFirst()
+            .sink { [weak self] _ in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let self else { return }
+                        self.speak.passthrough = self.settings.speakPassthrough && !self.settings.speakHandsFree
+                            && self.settings.speakEnabled && !self.settings.hearsRoom && self.running
                     }
                 }
             }
@@ -3088,6 +3102,9 @@ final class AppModel: ObservableObject {
         // talkDown / talkUp: the talk key held and let go, with the real microphone (audio tests).
         // handsFree:on|off: 不用按键, as the setting.
         case "handsFree": settings.speakHandsFree = arg != "off"
+        // passthrough:on|off: 不按键时原声直通, as the setting.
+        case "passthrough": settings.speakPassthrough = arg != "off"
+        case "passState": speak.passState()
         case "handsFreeDump": speak.setHandsFreeDump(arg.isEmpty ? nil : arg)
         case "talkDown": speak.pressBegan()
         case "talkUp": speak.pressEnded()

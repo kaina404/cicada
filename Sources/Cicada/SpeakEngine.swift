@@ -105,6 +105,7 @@ final class SpeakEngine {
     private(set) var phase: Phase = .idle {
         didSet {
             if phase == .idle { unitIdle() }
+            if phase != oldValue { updatePassGate() }
             // Hands-free: a sentence said while the last one was translated waits its turn.
             if handsFree, phase == .idle || phase == .speaking, !segments.isEmpty {
                 DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.nextSegment() } }
@@ -169,6 +170,9 @@ final class SpeakEngine {
     /// digital silence between sentences.
     private var bed = AVAudioPlayerNode()
     private var bedBuffer: AVAudioPCMBuffer?
+    /// 原声直通: the mic as it is, into the same virtual mic (`PassthroughBuffer`).
+    private let passBuffer = PassthroughBuffer()
+    private var pass: AVAudioSourceNode!
     private var bedScheduled = false
     private var bedFade: Timer?
     private var ambienceObserver: NSObjectProtocol?
@@ -359,6 +363,8 @@ final class SpeakEngine {
     private func wireOutput() {
         out.attach(player)
         out.attach(bed)
+        pass = Self.passNode(passBuffer)
+        out.attach(pass)
         // Pointing the output at a device (the first sentence, BlackHole installed, headphones
         // plugged in) stops the engine, and the player stays silent until it is wired up again.
         outObserver = NotificationCenter.default.addObserver(forName: .AVAudioEngineConfigurationChange, object: out, queue: .main) { [weak self] _ in
@@ -389,6 +395,7 @@ final class SpeakEngine {
         wireOutput()
         debugLog("voice output: new engine after the voice mic changed")
         refreshBed()
+        readyPassOutput()
     }
 
     var targetCode: String {
@@ -1091,6 +1098,8 @@ final class SpeakEngine {
         out.connect(player, to: out.mainMixerNode, format: format)
         out.disconnectNodeOutput(bed)
         out.connect(bed, to: out.mainMixerNode, format: Ambience.format)
+        out.disconnectNodeOutput(pass)
+        out.connect(pass, to: out.mainMixerNode, format: VoiceMic.format)
         do { try startOutput() } catch { debugLog("voice output restart failed: \(error)"); return }
         if playing { player.play() }
         debugLog("voice output: configuration changed, engine restarted (playing=\(playing))")
@@ -1119,6 +1128,8 @@ final class SpeakEngine {
         out.connect(player, to: out.mainMixerNode, format: format)
         out.disconnectNodeOutput(bed)
         out.connect(bed, to: out.mainMixerNode, format: Ambience.format)
+        out.disconnectNodeOutput(pass)
+        out.connect(pass, to: out.mainMixerNode, format: VoiceMic.format)
         outFormat = format
         outDeviceUID = uid
         outDevice = device
@@ -1138,6 +1149,110 @@ final class SpeakEngine {
     private func startOutput() throws {
         try out.start()
         resumeBed()
+    }
+
+    // MARK: 原声直通
+
+    /// Set by the app: 原声直通 is on, speaking is on and a meeting is listened to (not while
+    /// 打开麦克风 hears the room: everyone at the table would go out as me). Needs the echo-cancelling
+    /// unit: the plain mic would send the meeting from the speakers straight back into it.
+    var passthrough = false {
+        didSet { if passthrough != oldValue { refreshPassthrough() } }
+    }
+    private var passInput: AudioObjectID?
+    private var passTimer: Timer?
+    private var passReopen: DispatchWorkItem?
+
+    /// Attaches or lets go of the mic to match `passthrough` and the devices; checked again every
+    /// 2 s while on (headphones plugged in need a new unit), as 不用按键 is.
+    func refreshPassthrough() {
+        let want = passthrough && settings.speakEnabled && echoCancel && outputDevice() != nil ? echoInput : nil
+        if let d = passInput, want != d || !voiceMic.serves("passthrough", input: d) { stopPassthrough() }
+        if passthrough, passTimer == nil {
+            passTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.refreshPassthrough() }
+            }
+        } else if !passthrough {
+            passTimer?.invalidate()
+            passTimer = nil
+        }
+        guard let d = want, passInput == nil else { return }
+        passInput = d
+        voiceMic.prepare(input: d) { [weak self] ok in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    guard self.passInput == d else {
+                        if self.phase == .idle { self.unitIdle() }
+                        return
+                    }
+                    let buffer = self.passBuffer
+                    let attached = ok && self.voiceMic.attach("passthrough", input: d) { buf in
+                        guard let p = buf.floatChannelData?[0] else { return }
+                        buffer.write(UnsafeBufferPointer(start: p, count: Int(buf.frameLength)))
+                    }
+                    if !attached { self.passInput = nil }
+                    debugLog("passthrough: \(attached ? "on" : "mic not ready, trying again")")
+                    self.readyPassOutput()
+                    self.updatePassGate()
+                }
+            }
+        }
+    }
+
+    /// Made outside the main actor: the block runs on the render thread.
+    private nonisolated static func passNode(_ buffer: PassthroughBuffer) -> AVAudioSourceNode {
+        AVAudioSourceNode(format: VoiceMic.format) { _, _, frames, list in
+            let abl = UnsafeMutableAudioBufferListPointer(list)
+            if let d = abl[0].mData?.assumingMemoryBound(to: Float.self) { buffer.read(into: d, count: Int(frames)) }
+            return noErr
+        }
+    }
+
+    private func stopPassthrough() {
+        guard passInput != nil else { return }
+        passInput = nil
+        voiceMic.detach("passthrough")
+        updatePassGate()
+        if phase == .idle { unitIdle() }
+        debugLog("passthrough: off")
+    }
+
+    /// The output engine runs to the virtual mic the whole time 原声直通 is on, not only for a sentence.
+    private func readyPassOutput() {
+        guard passInput != nil, let device = outputDevice() else { return }
+        if outFormat == nil { configureOutput(format: Self.streamFormat, device: device) }
+        if !out.isRunning { try? startOutput() }
+    }
+
+    /// Shut from the press until its translation has played (the phase is back to idle), then open
+    /// after `passReopenDelay`: the voice's last syllable and my first words after it stay apart.
+    private func updatePassGate() {
+        passReopen?.cancel()
+        passReopen = nil
+        guard passInput != nil, phase == .idle else {
+            if passBuffer.isOpen { passBuffer.isOpen = false; debugLog("passthrough: shut (\(phase))") }
+            return
+        }
+        guard !passBuffer.isOpen else { return }
+        let item = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.passInput != nil, self.phase == .idle else { return }
+                self.passBuffer.isOpen = true
+                debugLog("passthrough: open")
+            }
+        }
+        passReopen = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.passReopenDelay, execute: item)
+    }
+    static let passReopenDelay = 0.3
+
+    /// Debug (`passState`): whether it is on, the gate, and what went to the virtual mic since the last look.
+    func passState() {
+        let st = passBuffer.takeStats()
+        debugLog(String(format: "passthrough: state on=%@ open=%@ phase=%@ out=%@ engine=%@ | open %.1f s at %.1f dBFS, shut %.1f s peak %.5f",
+                        passInput != nil ? "yes" : "no", passBuffer.isOpen ? "yes" : "no", "\(phase)", outDevice?.name ?? "-",
+                        out.isRunning ? "running" : "stopped", st.openSeconds, st.openDB, st.shutSeconds, st.shutPeak))
     }
 
     // MARK: 环境底噪

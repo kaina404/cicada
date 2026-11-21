@@ -72,7 +72,7 @@ On a Mac, the small arrow beside the button picks which microphone to use (an iP
 
 Hold the right `⌥` key and speak so the other side hears your translated voice in the meeting app.
 
-On a Mac, you can also turn on **Hands-free** in **Settings › Interpreting**: just start talking while listening to a meeting, the meeting audio automatically ducks, and your translated voice goes out after a 1-second pause. It pauses while the mic is on, and we recommend switching back to the talk key when others are nearby so their voices aren't mistaken for yours.
+On a Mac, **Without the key** in **Settings › Interpreting** decides what the meeting hears when you aren't holding the key: nothing (**Mute**, the default); **Your own voice**, so you can answer in their language yourself and hold the key only when you need a translation (while you hold it they hear only the translation); or **Translate automatically**: just start talking while listening to a meeting, the meeting audio automatically ducks, and your translated voice goes out after a 1-second pause. It pauses while the mic is on, and we recommend switching back to the talk key when others are nearby so their voices aren't mistaken for yours.
 
 Turning on interpreting switches the system microphone to BlackHole 2ch, a virtual driver you can download and install with one click. With a Ling API key, you can use natural voices or clone your own voice from an 8 to 30 second recording; without a key, you can still use built-in macOS voices. Windows and Linux interpreting, and Android's In person, can use your own voice too, cloned from a 10 to 15 second recording with a Ling key.
 
@@ -175,7 +175,7 @@ The Mac app only asks for a permission when you use the corresponding feature, a
 | Permission | What it's for | Without it |
 |---|---|---|
 | System audio recording (Screen & System Audio Recording) | Hears system audio for subtitles; never records the screen | Subtitles and notes won't work |
-| Microphone | Hold to talk or **Hands-free** for interpreting; click **Turn on mic** to listen to a meeting room | Can't speak to translate or listen to the room |
+| Microphone | Hold to talk, or **Without the key** set to your own voice or automatic translation, for interpreting; click **Turn on mic** to listen to a meeting room | Can't speak to translate or listen to the room |
 | Input Monitoring | Detects the right `⌥` key (doesn't block or log other keys) | Switch to a `⌃`/`⌘` shortcut to skip this permission |
 | Administrator password | Installs the BlackHole 2ch virtual microphone (asked once) | The other side can't hear interpreting; everything else works |
 

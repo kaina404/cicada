@@ -978,7 +978,6 @@
 "把我说的翻译给对方" = "Translate what I say for them";
 "说话" = "Speaking";
 "按住说话" = "Hold to talk";
-"不用按键" = "Hands-free";
 "打开麦克风时暂停" = "Paused while the mic is on";
 "开始听会议后生效" = "Starts when you start listening";
 "开口就翻译，停顿 1 秒后说出去" = "Translates as you speak, sent after a 1-second pause";
@@ -1755,7 +1754,6 @@
 "用我的声音" = "Use my voice";
 "边说边学你的音色" = "Learns your voice as you talk";
 "千问的声音" = "Qwen's voice";
-"边说边翻译；不用按键时仍走默认" = "Translates as you talk; hands-free uses the default";
 "千问没有 key，这句走默认翻译" = "No Qwen key: this one uses the default";
 "千问 key 无效，这句走默认翻译" = "Qwen key rejected: this one uses the default";
 "千问连不上，这句走默认翻译" = "Can't reach Qwen: this one uses the default";
@@ -1784,3 +1782,10 @@
 "换了房间就重录一次" = "Record again after changing rooms";
 "录制时请保持安静" = "Stay quiet while recording";
 "停止" = "Stop";
+"静音" = "Mute";
+"原声直通" = "Your own voice";
+"自动翻译" = "Translate automatically";
+"对方听不到你，按住说话才说出去" = "They hear nothing until you hold the talk key";
+"对方直接听到你的原声，按住说话时只听到译文" = "They hear your own voice; while you hold the talk key, only the translation";
+"不按键时" = "Without the key";
+"边说边翻译；不按键时的自动翻译仍走默认" = "Translates while you speak; automatic translation without the key still uses the default";

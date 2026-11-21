@@ -39,7 +39,13 @@ final class AppSettings: ObservableObject {
     /// 不用按键: interpret whenever I speak, no key held (`HandsFreeDetector`). Mac only: the ports
     /// have no echo cancellation to hear me over the meeting.
     @Published var speakHandsFree: Bool {
-        didSet { save() }
+        didSet { if speakHandsFree { speakPassthrough = false }; save() }
+    }
+    /// 原声直通: with the key not held, my own voice (echo-cancelled) goes to the virtual mic as it
+    /// is, so I can answer in the meeting's language myself and hold the key only for what I'd say in
+    /// mine. Off by default: muttering to myself would reach the room. Excludes 不用按键.
+    @Published var speakPassthrough: Bool {
+        didSet { if speakPassthrough { speakHandsFree = false }; save() }
     }
     /// How a press is interpreted: "" (Ming, or on-device + translation, after the key is let go)
     /// or "qwen" (千问实时翻译: interpreted while I talk, `QwenLiveSession`).
@@ -345,6 +351,7 @@ final class AppSettings: ObservableObject {
         speakFrom = defaults.string(forKey: "speakFrom")
             ?? speakLocale(forLanguage: Cicada.myLanguage(systemLanguages: Locale.preferredLanguages))
         speakHandsFree = defaults.bool(forKey: "speakHandsFree")
+        speakPassthrough = defaults.bool(forKey: "speakPassthrough")
         speakInterpreter = defaults.string(forKey: "speakInterpreter") ?? ""
         speakQwenClone = defaults.object(forKey: "speakQwenClone") as? Bool ?? true
         speakQwenVoice = defaults.string(forKey: "speakQwenVoice") ?? ""
@@ -440,6 +447,7 @@ final class AppSettings: ObservableObject {
         defaults.set(speakConfirmed, forKey: "speakConfirmed")
         defaults.set(speakFrom, forKey: "speakFrom")
         defaults.set(speakHandsFree, forKey: "speakHandsFree")
+        defaults.set(speakPassthrough, forKey: "speakPassthrough")
         defaults.set(speakInterpreter, forKey: "speakInterpreter")
         defaults.set(speakQwenClone, forKey: "speakQwenClone")
         defaults.set(speakQwenVoice, forKey: "speakQwenVoice")

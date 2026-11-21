@@ -506,6 +506,17 @@ struct SettingsView: View {
 
     /// One card says whether the room hears you; it opens into a checklist only when something
     /// is wrong. Below it, plain settings: what you say with, and which microphones.
+    private var idleModes: [(id: String, title: String)] {
+        [("mute", L("静音")), ("pass", L("原声直通")), ("auto", L("自动翻译"))]
+    }
+    private var idleMode: String { settings.speakHandsFree ? "auto" : settings.speakPassthrough ? "pass" : "mute" }
+    private var idleDetail: String {
+        if idleMode == "mute" { return L("对方听不到你，按住说话才说出去") }
+        if settings.hearsRoom { return L("打开麦克风时暂停") }
+        if !model.running { return L("开始听会议后生效") }
+        return idleMode == "pass" ? L("对方直接听到你的原声，按住说话时只听到译文") : L("开口就翻译，停顿 1 秒后说出去")
+    }
+
     private var speak: some View {
         VStack(alignment: .leading, spacing: 14) {
             if model.virtualMic == nil {
@@ -515,12 +526,14 @@ struct SettingsView: View {
             }
             group(L("说话")) {
                 SettingsRow(title: L("按住说话")) { ShortcutField(model: model, role: .talk) }
-                // Hands-free runs only while listening, and pauses with the room mic on (`AppModel.handsFreeSetting`).
-                SettingsRow(title: L("不用按键"),
-                            detail: !settings.speakHandsFree ? L("开口就翻译，停顿 1 秒后说出去")
-                                : settings.hearsRoom ? L("打开麦克风时暂停") : model.running ? L("开口就翻译，停顿 1 秒后说出去") : L("开始听会议后生效")) {
-                    Toggle("不用按键", isOn: $settings.speakHandsFree)
-                        .toggleStyle(.switch).labelsHidden().controlSize(.small).tint(Palette.ink)
+                // 自动翻译 (不用按键) and 原声直通 run only while listening, and pause with the room mic on
+                // (`AppModel.handsFreeSetting`).
+                SettingsRow(title: L("不按键时"), detail: idleDetail) {
+                    PillMenu(value: idleModes.first { $0.id == idleMode }?.title ?? "",
+                             options: idleModes) { pick in
+                        settings.speakHandsFree = pick == "auto"
+                        settings.speakPassthrough = pick == "pass"
+                    }
                 }
                 SettingsRow(title: L("说\(settings.speakFromLang.name)，对方听到")) {
                     PillMenu(value: settings.speakTo == "room" ? L("跟随对方（\(targetName(model.speak.targetCode))）") : targetName(settings.speakTo),
@@ -830,7 +843,7 @@ struct LiveInterpreterRows: View {
 
     var body: some View {
         SettingsRow(title: L("翻译方式"),
-                    detail: settings.speakInterpreter == "qwen" ? L("边说边翻译；不用按键时仍走默认") : nil) {
+                    detail: settings.speakInterpreter == "qwen" ? L("边说边翻译；不按键时的自动翻译仍走默认") : nil) {
             PillMenu(value: settings.speakInterpreter == "qwen" ? L("千问实时翻译") : L("默认"),
                      options: [("", L("默认")), ("qwen", L("千问实时翻译"))]) { settings.speakInterpreter = $0 }
         }
